@@ -1,0 +1,8 @@
+{
+	"DefaultGetUrl": "",
+	"DefaultPutUrl": "",
+	"DefaultPostUrl": "",
+	"ObjectsDir": "../../objects",
+	"AccessTokens": {},
+	"RefreshTokens": {}
+}

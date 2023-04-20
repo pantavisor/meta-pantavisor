@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd $(dirname $BASH_SOURCE)
+. ../poky/oe-init-build-env ../build
