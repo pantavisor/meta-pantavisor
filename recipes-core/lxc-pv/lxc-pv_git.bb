@@ -32,11 +32,12 @@ FILES:${PN} += " /usr/lib/lxc"
 FILES:${PN} += " /usr/var"
 FILES:${PN} += " /lib"
 
-SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=8df1f4f9ed7960f0c93721732ba12daea06a4077"
+SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=132558831e3f65dccb502cc749ec855b843387b2"
 
 S = "${WORKDIR}/git"
 
-EXTRA_OECONF = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow -Wno-error=stringop-overread' --prefix=/usr --localstatedir=/usr/var"
+EXTRA_OECONF = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-O2 -Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow' --prefix=/usr --localstatedir=/usr/var"
+#EXTRA_OECONF = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow -Wno-error=stringop-overread' --prefix=/usr --localstatedir=/usr/var"
 
 inherit autotools pkgconfig
 

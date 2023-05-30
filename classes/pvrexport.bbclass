@@ -11,6 +11,8 @@ S = "${WORKDIR}/pvrexport"
 
 B = "${WORKDIR}/pvrbuild"
 
+do_compile[cleandirs] = "${B}"
+
 do_compile(){
 	cd ${B}
 	pvr clone ${S} ${BPN}-${PV}
@@ -19,6 +21,11 @@ do_compile(){
 do_deploy(){
 	mkdir -p ${DEPLOY_DIR_IMAGE}/${DISTRO}/
 	cd ${B}/${BPN}-${PV}
+	if [ -f ${WORKDIR}/mdev.json ]; then
+	    cp -f ${WORKDIR}/mdev.json ${BPN}/
+	    pvr add ${BPN}/mdev.json
+	    pvr commit
+        fi
 	pvr export ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz
 	ln -fsr ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}.pvrexport.tgz
 }

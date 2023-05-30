@@ -1,0 +1,6 @@
+{
+    "rules": [
+        "$MODALIAS=.* 0:0       0660    */sbin/modprobe -v -b $MODALIAS",
+        ".* 0:0       0600"
+    ]
+}

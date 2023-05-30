@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# we call the delegate
+delegate=$1
+shift
+. $delegate $@
+
+sed -i '/### BEGIN META PANTAVISOR/,/### END META PANTAVISOR/d' $BUILDDIR/conf/local.conf
+
+cat >> $BUILDDIR/conf/local.conf <<EOF
+
+### BEGIN META PANTAVISOR
+
+GOVERSION = "1.20%"
+
+### END META PANTAVISOR
+EOF

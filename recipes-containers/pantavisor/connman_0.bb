@@ -11,5 +11,6 @@ BB_STRICT_CHECKSUM = "0"
 
 SRC_URI = "\
 	https://${PANTAHUB_API}/exports/asacasa/connman-example/0/connman-example-0.tar.gz;subdir=pvrexport \
+	file://mdev.json \
 	"
 

@@ -1,12 +1,11 @@
 
 DEPENDS:append = " pvr-native squashfs-tools-native "
 
-inherit image
-
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES += " pvrexportit "
 IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit', '', d)} ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-bsp', ' pvrexportit ', '', d)} "
 
+inherit image
 
 PVR_FORMAT_OPTS ?= "-comp xz"
 PVR_SOMETHING = "yes"
@@ -16,8 +15,11 @@ PVSTATE = "${WORKDIR}/pvstate"
 do_image_pvrexportit[dirs] = " ${TOPDIR} ${PVSTATE} "
 do_image_pvrexportit[cleandirs] = " "
 
+PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
+
 fakeroot IMAGE_CMD:pvrexportit(){
 
+    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
     echo Ja2: ${D} asa
     cd ${PVSTATE}
     pvr init

@@ -20,6 +20,7 @@ do_image_pvbspit[cleandirs] = " "
 
 fakeroot IMAGE_CMD:pvbspit(){
 
+    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
     cd ${PVBSP}
     mkdir -p ${PVBSP_mods}/lib/modules
     [ -d ${IMAGE_ROOTFS}/lib/modules/ ] && cp -rf ${IMAGE_ROOTFS}/lib/modules/*/* ${PVBSP_mods}
@@ -32,19 +33,28 @@ fakeroot IMAGE_CMD:pvbspit(){
 
     mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
-    gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE}  > ${PVBSPSTATE}/bsp/kernel.img
+    err=0
+    if ! gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img \
+		&& ! [ -s ${PVBSPSTATE}/bsp/kernel.img ]; then
+        echo "ERROR: failed to gunzip kernel for pantavisor"
+	exit 1
+    fi
     cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
-    cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
 
     _pvline='    "initrd": "pantavisor",
     "linux": "kernel.img",'
+
+    if [ -n "${PV_INITIAL_DTB}" ]; then
+        cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
+        _pvline="$_pvline
+    \"fdt\": \"${PV_INITIAL_DTB}\","
+    fi
 
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
     "addons": [],
     "firmware": "firmware.squashfs",
 ${_pvline}
-    "fdt": "${PV_INITIAL_DTB}",
     "initrd_config": "",
     "modules": "modules.squashfs"
 `echo '}'`

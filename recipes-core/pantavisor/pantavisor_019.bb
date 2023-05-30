@@ -28,6 +28,8 @@ FILES:${PN} += " /storage /writable /volumes /exports /pv /etc/pantavisor /lib/ 
 
 inherit cmake
 
+OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
+
 CMAKE_BINARY_DIR = "${S}"
 
 do_install() {
