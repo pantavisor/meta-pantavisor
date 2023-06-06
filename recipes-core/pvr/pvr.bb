@@ -6,7 +6,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "git://${GO_IMPORT};branch=bugfix/no-fakeroot-if-root;protocol=https"
-SRCREV = "a3170f53e1a83966da3eded5c067eaa180267821"
+SRCREV = "0db5530636ee834bbfdac576eca19c77a93ed363"
 UPSTREAM_CHECK_COMMITS = "1"
 
 # DEPENDS:append = "fakeroot-native"
