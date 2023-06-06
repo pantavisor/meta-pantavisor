@@ -80,7 +80,7 @@ def _pvr_pvroot_images_deploy(d, factory, images):
 
                 process = subprocess.run(
                     ['pvr', 'deploy', deployrootfs,
-                     imgpath + '#'+part ],
+                     imgpath + '#_sigs/'+part+'.json,'+part ],
                     cwd=Path(tmpdir),
                     env=my_env
                 )
