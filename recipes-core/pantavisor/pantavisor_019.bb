@@ -5,7 +5,7 @@
 
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
-DEPENDS = "cmake libthttp picohttpparser lxc-pv"
+DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls "
 RDEPENDS:${PN} += " lxc-pv e2fsprogs-resize2fs e2fsprogs-e2fsck "
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -66,5 +66,6 @@ do_install() {
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
 	cp -rf ${WORKDIR}/pantavisor-src/scripts/* ${D}/lib/pv/
 	ln -sf ../../lib/pv ${D}/usr/lib/pv
+	echo "Yes"
 }
 
