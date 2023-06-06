@@ -1,7 +1,7 @@
 
 REMOVE_LIBTOOL_LA = "0"
 
-DEPENDS:append = " pvr-native "
+DEPENDS:append = " pvr-native jq-native "
 
 PVR_COMPRESSION ?= "-comp xz"
 
@@ -18,14 +18,30 @@ do_compile(){
 	pvr clone ${S} ${BPN}-${PV}
 }
 
-do_deploy(){
+fakeroot do_deploy(){
 	mkdir -p ${DEPLOY_DIR_IMAGE}/${DISTRO}/
 	cd ${B}/${BPN}-${PV}
 	if [ -f ${WORKDIR}/mdev.json ]; then
-	    cp -f ${WORKDIR}/mdev.json ${BPN}/
-	    pvr add ${BPN}/mdev.json
-	    pvr commit
+		cp -f ${WORKDIR}/mdev.json ${BPN}/
+		pvr add ${BPN}/mdev.json
+		pvr commit
         fi
+	if [ -f ${WORKDIR}/${BPN}.args.json ]; then
+		cat ${BPN}/src.json | jq --argfile args ${WORKDIR}/${BPN}.args.json \
+		'. * { "args" : $args }' > ${BPN}/src.json.new
+		mv ${BPN}/src.json.new ${BPN}/src.json
+		pvr app install ${BPN}
+	fi
+	if [ -f ${WORKDIR}/${BPN}.config.json ]; then
+		cat ${BPN}/src.json | jq --argfile config ${WORKDIR}/${BPN}.config.json \
+		    '. * { "config" : $config }' > ${BPN}/src.json.new
+		mv ${BPN}/src.json.new ${BPN}/src.json
+		pvr app install ${BPN}
+	fi
+	pvr commit
+	pvr sig up
+	pvr commit
+
 	pvr export ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz
 	ln -fsr ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}.pvrexport.tgz
 }
