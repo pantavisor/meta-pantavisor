@@ -17,6 +17,7 @@ PVR_CONFIG_DIR ?= "${WORKDIR}/pvbspconfig"
 
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_CONFIG_DIR} "
 do_image_pvbspit[cleandirs] = " "
+do_image_pvbspit[depends] += "pantavisor-bsp:do_image_complete"
 
 fakeroot IMAGE_CMD:pvbspit(){
 
