@@ -1,6 +1,6 @@
 SUMMARY = "A small image just capable of allowing a device to boot."
 
-IMAGE_INSTALL = "busybox ${CORE_IMAGE_EXTRA_INSTALL}"
+IMAGE_INSTALL = ""
 
 IMAGE_LINGUAS = " "
 
@@ -11,7 +11,7 @@ FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
 
 SRC_URI = "file://empty.json"
 
-PVROOT_CONTAINERS_CORE = "connman"
+PVROOT_CONTAINERS_CORE = "connman pvr-sdk"
 PVROOT_IMAGE_BSP = "core-image-minimal"
 PVROOT_IMAGE = "no"
 
