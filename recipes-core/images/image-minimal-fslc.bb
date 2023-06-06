@@ -1,10 +1,14 @@
 SUMMARY = "A small image just capable of allowing a device to boot."
 
-IMAGE_INSTALL = "busybox ${CORE_IMAGE_EXTRA_INSTALL}"
+CORE_IMAGE_EXTRA_INSTALL ?= ""
+
+IMAGE_INSTALL = ""
 
 IMAGE_LINGUAS = " "
 
 LICENSE = "MIT"
+
+inherit image pvroot-image
 
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
@@ -24,7 +28,6 @@ do_rootfs_boot_scr(){
 }
 
 
-inherit image pvroot-image
 
 PVROOTFS_POSTPROCESS_COMMAND = "do_rootfs_boot_scr;"
 
