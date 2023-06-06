@@ -5,6 +5,8 @@ delegate=$1
 shift
 . $delegate $@
 
+bitbake-layers add-layer ../meta-pantavisor
+
 sed -i '/### BEGIN META PANTAVISOR/,/### END META PANTAVISOR/d' $BUILDDIR/conf/local.conf
 
 cat >> $BUILDDIR/conf/local.conf <<EOF
