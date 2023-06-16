@@ -1,11 +1,19 @@
 #!/bin/sh
 
+src=$BASH_SOURCE
+dir=`dirname $src`
+absdir=`sh -c "cd $dir; pwd"`
+
 # we call the delegate
 delegate=$1
 shift
 . $delegate $@
 
-bitbake-layers add-layer ../meta-pantavisor
+# adding pantavisor meta
+echo "Ensuring that Pantavisor meta is enabled ..."
+bitbake-layers add-layer $absdir
+
+echo "Setting required tweaks in conf/local.conf ..."
 
 sed -i '/### BEGIN META PANTAVISOR/,/### END META PANTAVISOR/d' $BUILDDIR/conf/local.conf
 
