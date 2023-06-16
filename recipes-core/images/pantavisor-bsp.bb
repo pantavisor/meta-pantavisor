@@ -3,7 +3,9 @@ DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
 
 VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 
-PACKAGE_INSTALL = "pantavisor packagegroup-core-boot dropbear-pv ${VIRTUAL-RUNTIME_base-utils} ${VIRTUAL-RUNTIME_dev_manager} base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
+VIRTUAL-RUNTIME_init_manager = "pantavisor"
+
+PACKAGE_INSTALL = "pantavisor dropbear-pv busybox busybox-mdev base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
@@ -30,17 +32,9 @@ IMAGE_ROOTFS_EXTRA_SPACE = "0"
 # Use the same restriction as initramfs-live-install
 COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm|mips|riscv).*-linux"
 
-python tinyinitrd () {
-  # Modify our init file so the user knows we drop to shell prompt on purpose
-  newinit = None
-  with open(d.expand('${IMAGE_ROOTFS}/init'), 'r') as init:
-    newinit = init.read()
-    newinit = newinit.replace('Cannot find $ROOT_IMAGE file in /run/media/* , dropping to a shell ', 'Poky Tiny Reference Distribution:')
-  with open(d.expand('${IMAGE_ROOTFS}/init'), 'w') as init:
-    init.write(newinit)
+ROOTFS_POSTINSTALL_COMMAND += "do_init_symlink"
+
+do_init_symlink() {
+	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
 }
-
-#IMAGE_PREPROCESS_COMMAND += "tinyinitrd;"
-
-QB_KERNEL_CMDLINE_APPEND += " init=/usr/bin/pantavisor "
 
