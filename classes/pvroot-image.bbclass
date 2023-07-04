@@ -51,9 +51,10 @@ def _pvr_pvroot_images_deploy(d, factory, images):
 
         my_env = os.environ.copy()
         my_env["HOME"] = d.getVar("WORKDIR") + "/home"
-        my_env["PVR_DISABLE_SELFUPGRADE"] = "true"
+        my_env["PVR_DISABLE_SELF_UPGRADE"] = "true"
         Path(d.getVar("WORKDIR") + "/tmp").mkdir(exist_ok=True)
         my_env["TMPDIR"] = d.getVar("WORKDIR") + "/tmp"
+        my_env["FAKEROOT_CMD"] = d.getVar("FAKEROOT_CMD")
 
         bspImage = d.getVar("PVROOT_IMAGE_BSP")
         versionsuffix = d.getVar("IMAGE_VERSION_SUFFIX")
@@ -72,8 +73,8 @@ def _pvr_pvroot_images_deploy(d, factory, images):
                 imgpath = tmpdir + "/" + distro + "/" + img + versionsuffix + ".pvrexport"
                 Path(imgpath).mkdir(parents=True,exist_ok=True)
                 process = subprocess.run(
-                    ['tar', '--no-same-owner', '-C', imgpath, '-xvf', deployimg + "/" + distro + "/"  + img + '.pvrexport.tgz' ],
-                    cwd=Path(tmpdir),
+                    ['tar', '--no-same-owner', '-xvf', deployimg + "/" + distro + "/"  + img + '.pvrexport.tgz' ],
+                    cwd=Path(imgpath),
                     env=my_env
                 )
                 print ("completed tar process: %d" % process.returncode)
@@ -98,8 +99,8 @@ def do_rootfs_mixing(d):
     images = d.getVar("PVROOT_CONTAINERS").split()
     _pvr_pvroot_images_deploy(d, True, images)
 
-do_rootfs[dirs] += " ${WORKDIR}/tmp "
-do_rootfs[cleandirs] += " ${WORKDIR}/tmp "
+do_rootfs[dirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
+do_rootfs[cleandirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 
 fakeroot python do_rootfs(){
     from pathlib import Path
