@@ -5,7 +5,7 @@ VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
 
-PACKAGE_INSTALL = "pantavisor dropbear-pv busybox busybox-mdev base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
+PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
@@ -24,7 +24,7 @@ inherit core-image
 IMAGE_FSTYPES:remove = "pvbspit"
 IMAGE_TYPES:remove = "pvbspit"
 
-TCLIBC = "musl"
+#TCLIBC = "musl"
 
 IMAGE_ROOTFS_SIZE = "8192"
 IMAGE_ROOTFS_EXTRA_SPACE = "0"
@@ -37,4 +37,5 @@ ROOTFS_POSTINSTALL_COMMAND += "do_init_symlink"
 do_init_symlink() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
 }
+
 
