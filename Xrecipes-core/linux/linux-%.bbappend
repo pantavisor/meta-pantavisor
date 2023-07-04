@@ -12,6 +12,6 @@ KERNEL_CONFIG_FRAGMENTS:append = " \
 	${WORKDIR}/pantavisor.cfg \
 	${WORKDIR}/pvcrypt.cfg \
 	${WORKDIR}/pvnocma.cfg \
-	${WORKDIR}/overlay.cfg \
+	${WORKDIR}/overlayfs.cfg \
 "
 
