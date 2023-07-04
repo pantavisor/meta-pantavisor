@@ -25,7 +25,7 @@ fakeroot IMAGE_CMD:pvbspit(){
     cd ${PVBSP}
     mkdir -p ${PVBSP_mods}/lib/modules
     [ -d ${IMAGE_ROOTFS}/lib/modules/ ] && cp -rf ${IMAGE_ROOTFS}/lib/modules/*/* ${PVBSP_mods}
-    cp -rf ${IMAGE_ROOTFS}/lib/firmware/* ${PVBSP_fw}
+    [ -d ${IMAGE_ROOTFS}/lib/firmware/ ] && cp -rf ${IMAGE_ROOTFS}/lib/firmware/* ${PVBSP_fw}
     cd ${PVBSPSTATE}
     pvr init
     [ -d bsp ] || mkdir bsp
@@ -35,11 +35,19 @@ fakeroot IMAGE_CMD:pvbspit(){
     mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
     err=0
-    if ! gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img \
-		&& ! [ -s ${PVBSPSTATE}/bsp/kernel.img ]; then
-        echo "ERROR: failed to gunzip kernel for pantavisor"
-	exit 1
-    fi
+
+    case ${KERNEL_IMAGETYPE} in
+       *.gz)
+           gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
+           ;;
+       Image)
+           cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+           ;;
+       *)
+           echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
+           exit 1
+    esac
+          
     cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
 
     _pvline='    "initrd": "pantavisor",
