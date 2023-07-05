@@ -23,6 +23,10 @@ cat >> $BUILDDIR/conf/local.conf <<EOF
 
 KERNEL_CLASSES += "pvbsp"
 
+# comment out if you want to rather manually add this
+# to the image you want to extract a bsp pvrexport from
+IMAGE_CLASSES += "bspimage-pvrexport"
+
 GOVERSION = "1.20%"
 
 PANTAVISOR_SYSTEM_DISTRO = "yes"
