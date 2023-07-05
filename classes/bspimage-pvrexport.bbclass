@@ -5,7 +5,9 @@ IMAGE_TYPES += " pvbspit "
 IMAGE_FSTYPES += " pvbspit "
 IMAGE_TYPES_MASKED += " ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-bsp', 'pvbspit', '', d)}"
 
-inherit image
+inherit image kernel-artifact-names
+
+INITRAMFS_IMAGE_NAME ?= "pantavisor-bsp-${MACHINE}"
 
 PVR_FORMAT_OPTS ?= "-comp xz"
 
@@ -36,22 +38,31 @@ fakeroot IMAGE_CMD:pvbspit(){
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
     err=0
 
-    case ${KERNEL_IMAGETYPE} in
-       *.gz)
-           gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
-           ;;
-       Image)
-           cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
-           ;;
-       *)
-           echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
-           exit 1
-    esac
-          
-    cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
+    basearts=
+    if echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
+       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME} ${PVBSPSTATE}/bsp/pantavisor.its
+       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME} ${PVBSPSTATE}/bsp/pantavisor.fit
+       basearts='"fit": "pantavisor.fit",'
+    else 
+       case ${KERNEL_IMAGETYPE} in
+          *.gz)
+              gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
+              ;;
+          Image)
+              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+              ;;
+          *)
+              echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
+              exit 1
+       esac
+       cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
+       basearts='
+    "linux": "kernel.img",
+    "initrd": "pantavisor",'
 
-    _pvline='    "initrd": "pantavisor",
-    "linux": "kernel.img",'
+    fi
+          
+    _pvline="$basearts"
 
     if [ -n "${PV_INITIAL_DTB}" ]; then
         cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
