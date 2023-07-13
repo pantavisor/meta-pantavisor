@@ -9,11 +9,10 @@ DEPENDS = "cmake"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
+SRC_URI = "git://gitlab.com/pantacor/picohttpparser;protocol=https;branch=cmake"
+SRCREV = "8dc2781fe98e3a3879092a39ec20d5fb2278a2ac"
 
-SRC_URI = "file://picohttpparser-src"
-
-S = "${WORKDIR}/picohttpparser-src"
+S = "${WORKDIR}/git"
 
 inherit cmake
 

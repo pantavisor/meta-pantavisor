@@ -9,11 +9,9 @@ DEPENDS = "cmake mbedtls"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=bd0a4fad56a916f12a1c3cedb3976612"
 
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
-
-SRC_URI = "file://libthttp-src"
-
-S = "${WORKDIR}/libthttp-src"
+SRC_URI = "git://gitlab.com/pantacor/libthttp;protocol=https;branch=cmake"
+SRCREV = "9a07932fdc1a364ca17ed2c0efd91dc21ffdd088"
+S = "${WORKDIR}/git"
 
 inherit cmake
 
