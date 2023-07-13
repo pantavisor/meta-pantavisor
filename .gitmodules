@@ -2,7 +2,3 @@
 	path = recipes-core/libthttp/files/libthttp-src
 	url = https://gitlab.com/pantacor/libthttp
 	branch = cmake
-[submodule "recipes-core/pantavisor/files/pantavisor-src"]
-	path = recipes-core/pantavisor/files/pantavisor-src
-	url = https://github.com/pantavisor/pantavisor
-	branch = cmake
