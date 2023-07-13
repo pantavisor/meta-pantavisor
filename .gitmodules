@@ -1,4 +1,0 @@
-[submodule "recipes-core/libthttp/files/libthttp-src"]
-	path = recipes-core/libthttp/files/libthttp-src
-	url = https://gitlab.com/pantacor/libthttp
-	branch = cmake
