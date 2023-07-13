@@ -12,13 +12,15 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
-SRC_URI = "file://pantavisor-src"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=cmake2"
+SRCREV  = "1a8d174fbd4b4bae5e9f1e2cf25443dec6dbf2d6"
+
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://pantavisor.config"
 SRC_URI += " file://pantavisor-embedded.config"
 SRC_URI += " file://rev0json"
 
-S = "${WORKDIR}/pantavisor-src"
+S = "${WORKDIR}/git"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
@@ -61,10 +63,10 @@ do_install() {
 	install -d ${D}/lib/pv
 	install -d ${D}/usr/lib
 	install -m 0644 ${WORKDIR}/pantavisor-embedded.config ${D}/etc/pantavisor.config
-	install -m 0644 ${WORKDIR}/pantavisor-src/defaults/groups.json ${D}/usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json
+	install -m 0644 ${WORKDIR}/git/defaults/groups.json ${D}/usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
-	cp -rf ${WORKDIR}/pantavisor-src/scripts/* ${D}/lib/pv/
+	cp -rf ${WORKDIR}/git/scripts/* ${D}/lib/pv/
 	ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
