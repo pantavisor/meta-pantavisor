@@ -38,6 +38,12 @@ fakeroot do_deploy(){
 		mv ${BPN}/src.json.new ${BPN}/src.json
 		pvr app install ${BPN}
 	fi
+	if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
+		export PVR_SIG_KEY="${WORKDIR}/pvs/key.default.pem"
+	fi
+	if [ -n "${WORKDIR}/pvs/x5c.default.pem" ]; then
+		export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
+	fi
 	pvr commit
 	pvr sig up
 	pvr commit
