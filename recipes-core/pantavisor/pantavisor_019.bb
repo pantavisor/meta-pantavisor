@@ -6,7 +6,7 @@
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
 DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls "
-RDEPENDS:${PN} += "lxc-pv e2fsprogs-resize2fs e2fsprogs-e2fsck cryptsetup"
+RDEPENDS:${PN} += "lxc-pv e2fsprogs-resize2fs e2fsprogs-e2fsck e2fsprogs-mke2fs cryptsetup"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
