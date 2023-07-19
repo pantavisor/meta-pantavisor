@@ -30,6 +30,9 @@ python __anonymous () {
         d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_deploy')
     for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
         d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_deploy')
+
+    d.delVarFlag("do_fetch", "noexec")
+    d.delVarFlag("do_unpack", "noexec")
 }
 
 PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig"
@@ -101,6 +104,8 @@ def do_rootfs_mixing(d):
 
 do_rootfs[dirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 do_rootfs[cleandirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
+
+addtask rootfs after do_fetch do_unpack
 
 fakeroot python do_rootfs(){
     from pathlib import Path
