@@ -6,6 +6,7 @@ SRC_URI:append = "\
 	file://pantavisor.cfg \
 	file://pvcrypt.cfg \
 	file://pvnocma.cfg \
+	file://dm.cfg \
 "
 
 KERNEL_CONFIG_FRAGMENTS:append = " \
@@ -13,5 +14,6 @@ KERNEL_CONFIG_FRAGMENTS:append = " \
 	${WORKDIR}/pvcrypt.cfg \
 	${WORKDIR}/pvnocma.cfg \
 	${WORKDIR}/overlayfs.cfg \
+	${WORKDIR}/dm.cfg \
 "
 
