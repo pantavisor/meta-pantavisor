@@ -84,9 +84,12 @@ EOF
     pvr export ${IMGDEPLOYDIR}/${DISTRO}/bsp-${PN}.pvrexport.tgz
 }
 
+addtask rootfs after do_fetch do_unpack
 
 python __anonymous() {
     pn = d.getVar("PN")
+    d.delVarFlag("do_unpack", "noexec")
+    d.delVarFlag("do_fetch", "noexec")
     d.appendVarFlag('do_image_cmd_pvbsp', 'depends', ' virtual/kernel:do_deploy')
     if not d.getVar("PVROOT_IMAGE_BSP") is None and (d.getVar("PVROOT_IMAGE_BSP") != "") and not pn in d.getVar("PVROOT_IMAGE_BSP") and \
        "linux-dummy" not in d.getVar("PREFERRED_PROVIDER_virtual/kernel"):
