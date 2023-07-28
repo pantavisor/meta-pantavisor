@@ -64,7 +64,10 @@ do_install() {
 	install -m 0644 ${WORKDIR}/pantavisor-src/defaults/groups.json ${D}/usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
-	cp -rf ${WORKDIR}/pantavisor-src/scripts/* ${D}/lib/pv/
+	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
+	if [ -f ${WORKDIR}/pantavisor-installer ]; then
+		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
+	fi
 	ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
