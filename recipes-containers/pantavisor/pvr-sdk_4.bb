@@ -10,6 +10,5 @@ BB_STRICT_CHECKSUM = "0"
 SRC_URI = "\
 	https://${PANTAHUB_API}/exports/asacasa/pvr-sdk-example/${PV}/pvr-sdk-${PV}.tar.gz;subdir=pvrexport \
 	file://mdev.json \
-	file://pvr-sdk.args.json \
 	"
 
