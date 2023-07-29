@@ -41,7 +41,7 @@ fakeroot do_deploy(){
 	if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
 		export PVR_SIG_KEY="${WORKDIR}/pvs/key.default.pem"
 	fi
-	if [ -n "${WORKDIR}/pvs/x5c.default.pem" ]; then
+	if [ -f "${WORKDIR}/pvs/x5c.default.pem" ]; then
 		export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
 	fi
 	pvr commit
