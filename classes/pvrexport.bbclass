@@ -13,6 +13,8 @@ B = "${WORKDIR}/pvrbuild"
 
 do_compile[cleandirs] = "${B}"
 
+PVCONT_NAME = "${@'${BPN}'.replace('-pv-container', '')}"
+
 do_compile(){
 	cd ${B}
 	pvr clone ${S} ${BPN}-${PV}
@@ -22,21 +24,21 @@ fakeroot do_deploy(){
 	mkdir -p ${DEPLOY_DIR_IMAGE}/${DISTRO}/
 	cd ${B}/${BPN}-${PV}
 	if [ -f ${WORKDIR}/mdev.json ]; then
-		cp -f ${WORKDIR}/mdev.json ${BPN}/
-		pvr add ${BPN}/mdev.json
+		cp -f ${WORKDIR}/mdev.json ${PVCONT_NAME}/
+		pvr add ${PVCONT_NAME}/mdev.json
 		pvr commit
         fi
 	if [ -f ${WORKDIR}/${BPN}.args.json ]; then
-		cat ${BPN}/src.json | jq --argfile args ${WORKDIR}/${BPN}.args.json \
-		'. * { "args" : $args }' > ${BPN}/src.json.new
-		mv ${BPN}/src.json.new ${BPN}/src.json
-		pvr app install ${BPN}
+		cat ${PVCONT_NAME}/src.json | jq --argfile args ${WORKDIR}/${BPN}.args.json \
+		'. * { "args" : $args }' > ${PVCONT_NAME}/src.json.new
+		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
+		pvr app install ${PVCONT_NAME}
 	fi
 	if [ -f ${WORKDIR}/${BPN}.config.json ]; then
-		cat ${BPN}/src.json | jq --argfile config ${WORKDIR}/${BPN}.config.json \
-		    '. * { "config" : $config }' > ${BPN}/src.json.new
-		mv ${BPN}/src.json.new ${BPN}/src.json
-		pvr app install ${BPN}
+		cat ${PVCONT_NAME}/src.json | jq --argfile config ${WORKDIR}/${BPN}.config.json \
+		    '. * { "config" : $config }' > ${PVCONT_NAME}/src.json.new
+		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
+		pvr app install ${PVCONT_NAME}
 	fi
 	if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
 		export PVR_SIG_KEY="${WORKDIR}/pvs/key.default.pem"

@@ -11,7 +11,7 @@ FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
 
 SRC_URI = "file://empty.json"
 
-PVROOT_CONTAINERS_CORE = "connman pvr-sdk"
+PVROOT_CONTAINERS_CORE = "connman-pv-container pvr-sdk-pv-container"
 PVROOT_IMAGE_BSP = "core-image-minimal"
 PVROOT_IMAGE = "no"
 
