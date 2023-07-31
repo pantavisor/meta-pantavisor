@@ -1,17 +1,38 @@
 setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor pv_storage.device=LABEL=root pv_storage.fstype=ext4"
-setenv pv_ctrl 1
+setenv pv_ctrl 2
 setenv devtype mmc
 setenv envloadaddr ${loadaddr}
 
 pv_mmcdev=${devnum}
-if test -z "${devnum}"; then
+if test -z "${pv_mmcdev}"; then
+	pv_mmcdev=${mmcdev}
+fi
+
+if test -z "${pv_mmcdev}"; then
 	pv_mmcdev=1
 fi
+
 pv_bootpart=${distro_bootpart}
+
+if test -z "${pv_bootpart}"; then
+	pv_bootpart=${mmcpart}
+fi
+
 if test -z "${pv_bootpart}"; then
 	pv_bootpart=1
 fi
 
+if test -z "${ramdisk_addr_r}"; then
+	ramdisk_addr_r=${initrd_addr}
+fi
+
+if test -z "${ramdisk_addr_r}"; then
+	echo "cannot find place to load ramdisk in ramdisk_addr_r nor initrd_addr check your uboot configs and provide these."
+	sleep 5
+	reset
+fi
+
+echo part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
 part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
 if test "${pv_config_size}" = "800"; then
 	echo Found PV OEM Config at ${devtype} ${pv_mmcdev}:2
@@ -65,7 +86,7 @@ fi
 echo Pantavisor bootargs: "${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 ${fdtbootargs} ${configargs} ${localargs}"
 setenv bootargs "${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${localargs}"
 
-if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
+if test -n "${addr_fit}" && load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
 	echo Successfully loaded pantavisor.fit. booting...
         iminfo ${addr_fit}
 	run findfdt
