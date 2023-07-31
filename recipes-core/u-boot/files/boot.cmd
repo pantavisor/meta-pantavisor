@@ -21,6 +21,12 @@ if test "${pv_config_size}" = "800"; then
 	setexpr pv_mmcdata ${pv_ctrl} + 1
 else
 	setexpr pv_mmcdata ${pv_bootpart} + 1
+	if part size mmc ${pv_mmcdev} ${pv_mmcdata}; then
+		echo pv_mmcdata: ${pv_mmcdata}
+	else
+		echo pv_mmcdata: ${pv_bootpart}
+		setenv pv_mmcdata ${pv_bootpart}
+	fi
 fi
 
 echo "mmc root selected = ${pv_mmcdev}:${pv_mmcdata}"
