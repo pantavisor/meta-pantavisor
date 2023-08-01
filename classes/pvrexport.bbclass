@@ -21,7 +21,11 @@ do_compile(){
 fakeroot do_deploy(){
 	mkdir -p ${DEPLOY_DIR_IMAGE}/${DISTRO}/
 	cd ${B}/${BPN}-${PV}
-	if [ -f ${WORKDIR}/mdev.json ]; then
+	if [ -f ${WORKDIR}/${BPN}.mdev.json ]; then
+		cp -f ${WORKDIR}/${BPN}.mdev.json ${BPN}/mdev.json
+		pvr add ${BPN}/mdev.json
+		pvr commit
+	elif [ -f ${WORKDIR}/mdev.json ]; then
 		cp -f ${WORKDIR}/mdev.json ${BPN}/
 		pvr add ${BPN}/mdev.json
 		pvr commit
