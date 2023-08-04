@@ -5,7 +5,7 @@ VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
 
-PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd ${ROOTFS_BOOTSTRAP_INSTALL}"
+PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOTSTRAP_INSTALL}"
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
