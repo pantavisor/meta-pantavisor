@@ -49,7 +49,6 @@ def _pvr_pvroot_images_deploy(d, factory, images):
         configdir=d.getVar("WORKDIR") + "/pvrconfig"
         deployrootfs=d.getVar("IMAGE_ROOTFS") + "/trails/0"
         deployimg=d.getVar("DEPLOY_DIR_IMAGE")
-        distro=d.getVar("DISTRO")
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
         my_env = os.environ.copy()
@@ -67,16 +66,16 @@ def _pvr_pvroot_images_deploy(d, factory, images):
                 continue
 
             if factory is True:
-                shutil.copy2(deployimg + "/" + distro + "/" + img + ".pvrexport.tgz", d.getVar("IMAGE_ROOTFS") + "/factory-pkgs.d/")
+                shutil.copy2(deployimg + "/" + img + ".pvrexport.tgz", d.getVar("IMAGE_ROOTFS") + "/factory-pkgs.d/")
             else:
                 part=img
                 if part.startswith("bsp-"):
                     part="bsp"
 
-                imgpath = tmpdir + "/" + distro + "/" + img + versionsuffix + ".pvrexport"
+                imgpath = tmpdir + "/" + img + versionsuffix + ".pvrexport"
                 Path(imgpath).mkdir(parents=True,exist_ok=True)
                 process = subprocess.run(
-                    ['tar', '--no-same-owner', '-xvf', deployimg + "/" + distro + "/"  + img + '.pvrexport.tgz' ],
+                    ['tar', '--no-same-owner', '-xvf', deployimg + "/" + img + '.pvrexport.tgz' ],
                     cwd=Path(imgpath),
                     env=my_env
                 )

@@ -11,8 +11,6 @@ S = "${WORKDIR}/pvrexport"
 
 B = "${WORKDIR}/pvrbuild"
 
-do_compile[cleandirs] = "${B}"
-
 PVCONT_NAME = "${@'${BPN}'.replace('pv-', '')}"
 
 do_compile(){
@@ -20,8 +18,7 @@ do_compile(){
 	pvr clone ${S} ${BPN}-${PV}
 }
 
-fakeroot do_deploy(){
-	mkdir -p ${DEPLOY_DIR_IMAGE}/${DISTRO}/
+do_deploy(){
 	cd ${B}/${BPN}-${PV}
 	if [ -f ${WORKDIR}/${BPN}.mdev.json ]; then
 		cp -f ${WORKDIR}/${BPN}.mdev.json ${PVCONT_NAME}/mdev.json
@@ -54,8 +51,8 @@ fakeroot do_deploy(){
 	pvr sig up
 	pvr commit
 
-	pvr export ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz
-	ln -fsr ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}-${PV}.pvrexport.tgz ${DEPLOY_DIR_IMAGE}/${DISTRO}/${BPN}.pvrexport.tgz
+	pvr export ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz
+	ln -fsr ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz ${DEPLOYDIR}/${BPN}.pvrexport.tgz
 }
 
 addtask deploy after do_compile
@@ -72,4 +69,6 @@ do_packagedata[noexec] = "1"
 do_package_write_ipk[noexec] = "1"
 do_package_write_deb[noexec] = "1"
 do_package_write_rpm[noexec] = "1"
+
+inherit deploy
 

@@ -85,8 +85,8 @@ ${_pvline}
 `echo '}'`
 EOF
     pvr add; pvr commit
-    mkdir -p ${IMGDEPLOYDIR}/${DISTRO}
-    pvr export ${IMGDEPLOYDIR}/${DISTRO}/bsp-${PN}.pvrexport.tgz
+    mkdir -p ${IMGDEPLOYDIR}
+    pvr export ${IMGDEPLOYDIR}/bsp-${PN}.pvrexport.tgz
 }
 
 addtask rootfs after do_fetch do_unpack

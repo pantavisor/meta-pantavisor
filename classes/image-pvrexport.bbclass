@@ -64,8 +64,8 @@ EOF1
     pvr sig add --noconfig --part ${PN}
     pvr add
     pvr commit
-    mkdir -p ${IMGDEPLOYDIR}/${DISTRO}/
-    pvr export ${IMGDEPLOYDIR}/${DISTRO}/${PN}.pvrexport.tgz
+    mkdir -p ${IMGDEPLOYDIR}/
+    pvr export ${IMGDEPLOYDIR}/${PN}.pvrexport.tgz
 }
 
 addtask rootfs after do_fetch do_unpack
