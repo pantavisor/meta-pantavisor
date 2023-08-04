@@ -29,16 +29,27 @@ fakeroot IMAGE_CMD:pvrexportit(){
     fi
     cd ${PVSTATE}
     pvr init
+    if [ -f ${WORKDIR}/${PN}.args.json ]; then
+        args="--arg-json ${WORKDIR}/${PN}.args.json "
+    elif [ -f ${WORKDIR}/args.json ]; then
+        args="--arg-json ${WORKDIR}/args.json "
+    fi
+    if [ -f ${WORKDIR}/${PN}.config.json ]; then
+        args="$args --config-json ${WORKDIR}/${PN}.config.json "
+    elif [ -f ${WORKDIR}/config.json ]; then
+        args="$args --config-json ${WORKDIR}/config.json "
+    fi
     pvr app add \
 	--force \
     	--type rootfs \
 	--from "${IMAGE_ROOTFS}" \
+	$args \
 	--format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
 	${PN}
     pvr add
     pvr commit
-    if [ -f ${WORKDIR}/mdev.${PN}.json ]; then
-        cp -f ${WORKDIR}/mdev.${PN}.json ./${PN}/mdev.json
+    if [ -f ${WORKDIR}/${PN}.mdev.json ]; then
+        cp -f ${WORKDIR}/${PN}.mdev.json ./${PN}/mdev.json
     else
        cat > ${PN}/mdev.json << EOF1
 {
