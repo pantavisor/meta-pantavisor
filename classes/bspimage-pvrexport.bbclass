@@ -27,7 +27,7 @@ fakeroot IMAGE_CMD:pvbspit(){
 
     export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
     if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
+        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
     mkdir -p ${PVBSP_mods}/lib/modules
