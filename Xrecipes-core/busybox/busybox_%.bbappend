@@ -11,9 +11,9 @@ SRC_URI:remove = "\
 "
 
 SRC_URI:append = "\
-	git://gitlab.com/pantacor/busybox.git;protocol=https;branch=pv/1_35_stable \
+	git://gitlab.com/pantacor/busybox.git;protocol=https;branch=pv/1_31_stable \
 "
-SRCREV = "8143ead4fc16cdaccd0b5a38b13a4883b3809b7b"
+SRCREV = "cce7e93074e1bc82834d61d582ad2d5295b04f8c"
 
 SRC_URI:append = "\
 	file://pantavisor.cfg \

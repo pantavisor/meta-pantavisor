@@ -37,7 +37,7 @@ SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2
 S = "${WORKDIR}/git"
 
 EXTRA_OECONF:libc-musl = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-O2 -Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow' --prefix=/usr --localstatedir=/usr/var"
-EXTRA_OECONF:libc-glibc = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow -Wno-error=stringop-overread' --prefix=/usr --localstatedir=/usr/var"
+EXTRA_OECONF:libc-glibc = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow' --prefix=/usr --localstatedir=/usr/var"
 
 inherit autotools pkgconfig
 
