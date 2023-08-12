@@ -13,7 +13,7 @@ PVROOT_CONTAINERS_CORE ?= ""
 PVROOT_IMAGE_BSP ?= ""
 PVROOT_IMAGE ?= "yes"
 
-DEPENDS += " pvr-native squashfs-tools-native ${INITRAMFS_IMAGE}"
+DEPENDS += " pvr-native squashfs-tools-native pantavisor-bsp"
 
 IMAGE_BUILDINFO_FILE = "pvroot.build"
 
