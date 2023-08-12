@@ -13,7 +13,7 @@ PVROOT_CONTAINERS_CORE ?= ""
 PVROOT_IMAGE_BSP ?= ""
 PVROOT_IMAGE ?= "yes"
 
-DEPENDS += " pvr-native squashfs-tools-native"
+DEPENDS += " pvr-native squashfs-tools-native ${INITRAMFS_IMAGE}"
 
 IMAGE_BUILDINFO_FILE = "pvroot.build"
 
@@ -25,7 +25,7 @@ python __anonymous () {
     pn = d.getVar("PN")
 
     for img in d.getVar("PVROOT_IMAGE_BSP").split():
-        d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_image_complete')
+        d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_image_complete '+img+':do_image_pvbspit')
     for img in d.getVar("PVROOT_CONTAINERS").split():
         d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_deploy')
     for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
@@ -74,20 +74,26 @@ def _pvr_pvroot_images_deploy(d, factory, images):
 
                 imgpath = tmpdir + "/" + img + versionsuffix + ".pvrexport"
                 Path(imgpath).mkdir(parents=True,exist_ok=True)
-                process = subprocess.run(
-                    ['tar', '--no-same-owner', '-xvf', deployimg + "/" + img + '.pvrexport.tgz' ],
-                    cwd=Path(imgpath),
-                    env=my_env
-                )
-                print ("completed tar process: %d" % process.returncode)
+                try:
+                    subprocess.check_output(
+                        ['tar', '--no-same-owner', '-xvf', deployimg + "/" + img + '.pvrexport.tgz' ],
+                        cwd=Path(imgpath),
+                        stderr=subprocess.PIPE,
+                        env=my_env
+                    )
+                except subprocess.CalledProcessError as e:
+                    bb.fatal("failed to extract pvrimage %s: \n%s\n%s" % (img, e.stdout, e.stderr))
 
-                process = subprocess.run(
-                    ['pvr', 'deploy', deployrootfs,
-                     imgpath + '#_sigs/'+part+'.json,'+part ],
-                    cwd=Path(tmpdir),
-                    env=my_env
-                )
-                print ("completed pvr deploy process: %d" % process.returncode)
+                try:
+                    subprocess.check_output(
+                        ['pvr', 'deploy', deployrootfs,
+                        imgpath + '#_sigs/'+part+'.json,'+part ],
+                        cwd=Path(tmpdir),
+                        stderr=subprocess.PIPE,
+                        env=my_env
+                    )
+                except subprocess.CalledProcessError as e:
+                    bb.fatal("failed to deploy pvrimage %s: \n%s\n%s" % (img, e.stdout, e.stderr))
 
 
 def do_rootfs_mixing(d):
