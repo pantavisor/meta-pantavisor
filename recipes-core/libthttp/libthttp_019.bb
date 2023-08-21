@@ -11,7 +11,11 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=bd0a4fad56a916f12a1c3cedb3976612"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
+PACKAGES += "libthttp-certs"
+
 SRC_URI = "file://libthttp-src"
+
+FILES:${PN}-certs += " /certs/* "
 
 S = "${WORKDIR}/libthttp-src"
 
