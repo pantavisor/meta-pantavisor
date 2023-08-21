@@ -25,6 +25,7 @@ FILES:${PN} += " /usr/lib"
 FILES:${PN} += " /var/pantavisor/storage/trails/0/.pvr/json"
 FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
 FILES:${PN} += " /storage /writable /volumes /exports /pv /etc/pantavisor /lib/ "
+FILES:${PN} += " /certs"
 
 inherit cmake
 
