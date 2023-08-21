@@ -9,7 +9,7 @@ PANTAHUB_USER ?= "pantavisor-apps"
 
 BB_STRICT_CHECKSUM = "0"
 
-SRC_URI = "\
+SRC_URI += "\
 	https://${PANTAHUB_API}/exports/asacasa/connman-example/${PV}/connman-example-${PV}.tar.gz;subdir=${BPN}-${PV}/pvrrepo/.pvr \
 	file://mdev.json \
 	"
