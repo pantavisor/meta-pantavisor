@@ -32,7 +32,8 @@ FILES:${PN} += " /usr/lib/lxc"
 FILES:${PN} += " /usr/var"
 FILES:${PN} += " /lib"
 
-SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=132558831e3f65dccb502cc749ec855b843387b2"
+SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=132558831e3f65dccb502cc749ec855b843387b2 \
+	file://0001-add-new-config-lxc.tty.min-as-lower-bound-of-tty-all.patch"
 
 S = "${WORKDIR}/git"
 
