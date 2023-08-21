@@ -19,7 +19,7 @@ PVR_CONFIG_DIR ?= "${WORKDIR}/pvbspconfig"
 
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_CONFIG_DIR} "
 do_image_pvbspit[cleandirs] = " ${PVBSPSTATE} "
-do_image_pvbspit[depends] += "pantavisor-bsp:do_image_complete"
+do_image_pvbspit[depends] += "pantavisor-bsp:do_image_complete virtual/kernel:do_deploy"
 
 PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_CONFIG_DIR}"
 
