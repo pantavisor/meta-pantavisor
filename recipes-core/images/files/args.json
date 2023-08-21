@@ -1,0 +1,3 @@
+{
+   "PV_LXC_EXTRA_CONF": "lxc.tty.min=4\n"
+}
