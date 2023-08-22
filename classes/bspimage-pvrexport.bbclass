@@ -15,19 +15,20 @@ PVBSPSTATE = "${WORKDIR}/pvbspstate"
 PVBSP = "${WORKDIR}/pvbsp"
 PVBSP_mods = "${WORKDIR}/pvbsp-mods"
 PVBSP_fw = "${WORKDIR}/pvbsp-fw"
-PVR_CONFIG_DIR ?= "${WORKDIR}/pvbspconfig"
+PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 
-do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_CONFIG_DIR} "
+do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_image_pvbspit[cleandirs] = " ${PVBSPSTATE} "
 do_image_pvbspit[depends] += "pantavisor-bsp:do_image_complete virtual/kernel:do_deploy"
 
-PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_CONFIG_DIR}"
+PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
 
 fakeroot IMAGE_CMD:pvbspit(){
 
-    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+    export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
+    export PVR_DISABLE_SELF_UPGRADE=true
     if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz --no-same-owner
+        tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
     mkdir -p ${PVBSP_mods}/lib/modules
@@ -84,6 +85,23 @@ ${_pvline}
     "modules": "modules.squashfs"
 `echo '}'`
 EOF
+    cat > ${PVBSPSTATE}/bsp/src.json << EOF1
+`echo '{}'`
+EOF1
+
+    pvr add; pvr commit; pvr checkout -c
+
+    if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
+        export PVR_SIG_KEY="${WORKDIR}/pvs/key.default.pem"
+    fi
+    if [ -f "${WORKDIR}/pvs/x5c.default.pem" ]; then
+        export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
+    fi
+
+    pvr sig add --raw bsp --include 'bsp/**' --include '#spec' --exclude 'bsp/src.json'
+    pvr add; pvr commit
+    pvr sig up
+    pvr sig ls
     pvr add; pvr commit
     mkdir -p ${IMGDEPLOYDIR}
     pvr export ${IMGDEPLOYDIR}/bsp-${PN}.pvrexport.tgz

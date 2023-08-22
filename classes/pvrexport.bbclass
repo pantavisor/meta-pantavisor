@@ -17,6 +17,7 @@ do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 
 do_compile(){
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+	export PVR_DISABLE_SELF_UPGRADE=true
 	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
 		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
 	fi

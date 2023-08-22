@@ -35,9 +35,9 @@ python __anonymous () {
     d.delVarFlag("do_unpack", "noexec")
 }
 
-PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig"
+PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home"
 
-def _pvr_pvroot_images_deploy(d, factory, images):
+def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 
     import tempfile
     import subprocess
@@ -49,14 +49,8 @@ def _pvr_pvroot_images_deploy(d, factory, images):
         configdir=d.getVar("WORKDIR") + "/pvrconfig"
         deployrootfs=d.getVar("IMAGE_ROOTFS") + "/trails/0"
         deployimg=d.getVar("DEPLOY_DIR_IMAGE")
+        Path(deployrootfs).mkdir(parents=True, exist_ok=True)
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
-
-        my_env = os.environ.copy()
-        my_env["HOME"] = d.getVar("WORKDIR") + "/home"
-        my_env["PVR_DISABLE_SELF_UPGRADE"] = "true"
-        Path(d.getVar("WORKDIR") + "/tmp").mkdir(exist_ok=True)
-        my_env["TMPDIR"] = d.getVar("WORKDIR") + "/tmp"
-        my_env["FAKEROOT_CMD"] = d.getVar("FAKEROOT_CMD")
 
         bspImage = d.getVar("PVROOT_IMAGE_BSP")
         versionsuffix = d.getVar("IMAGE_VERSION_SUFFIX")
@@ -90,16 +84,16 @@ def _pvr_pvroot_images_deploy(d, factory, images):
                 print ("completed pvr deploy process: %d" % process.returncode)
 
 
-def do_rootfs_mixing(d):
+def do_rootfs_mixing(d, my_env):
     bspimage = d.getVar("PVROOT_IMAGE_BSP")
     if d.getVar("PVROOT_IMAGE") == "yes":
        _pvr_pvroot_images_deploy(d, False, bspimage.split())
     bspimage = "bsp-" + bspimage
-    _pvr_pvroot_images_deploy(d, False, bspimage.split())
+    _pvr_pvroot_images_deploy(d, False, bspimage.split(), my_env)
     images = d.getVar("PVROOT_CONTAINERS_CORE").split()
-    _pvr_pvroot_images_deploy(d, False, images)
+    _pvr_pvroot_images_deploy(d, False, images, my_env)
     images = d.getVar("PVROOT_CONTAINERS").split()
-    _pvr_pvroot_images_deploy(d, True, images)
+    _pvr_pvroot_images_deploy(d, True, images, my_env)
 
 do_rootfs[dirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 do_rootfs[cleandirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
@@ -110,6 +104,16 @@ fakeroot python do_rootfs(){
     from pathlib import Path
     from oe.utils import execute_pre_post_process
     import shutil
+    import subprocess
+
+    my_env = os.environ.copy()
+    my_env["HOME"] = d.getVar("WORKDIR") + "/home"
+    my_env["PVR_DISABLE_SELF_UPGRADE"] = "true"
+    Path(d.getVar("WORKDIR") + "/tmp").mkdir(exist_ok=True)
+    my_env["TMPDIR"] = d.getVar("WORKDIR") + "/tmp"
+    my_env["FAKEROOT_CMD"] = d.getVar("FAKEROOT_CMD")
+
+    traildir = d.getVar("IMAGE_ROOTFS") + "/trails/0/"
 
     testfile = d.getVar("IMAGE_ROOTFS") + "/test"
     Path(d.getVar("IMAGE_ROOTFS") + "/boot").mkdir(parents=True, exist_ok=True)
@@ -126,7 +130,56 @@ fakeroot python do_rootfs(){
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/pvrconfig"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/config")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/uboot.txt"), d.getVar("IMAGE_ROOTFS") + "/boot/uboot.txt")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/pantahub.config"), d.getVar("IMAGE_ROOTFS") + "/config/pantahub.config")
-    do_rootfs_mixing(d)
+
+    devca = Path(d.getVar("WORKDIR") + "/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz")
+    Path(my_env["HOME"] + "/.pvr").mkdir(parents=True, exist_ok=True)
+    if devca.is_file():
+       process = subprocess.run(
+            ['tar', '-xf', devca.as_posix()],
+            cwd=Path(my_env["HOME"] + "/.pvr"),
+            env=my_env
+       )
+       print ("completed unpack of developer ca in %s of %s: %d" % (my_env["HOME"] + "/.pvr", devca.as_posix(), process.returncode))
+
+    altkey = Path(d.getVar("WORKDIR") + "/pvs/key.default.pem")
+    if altkey.is_file():
+        my_env["PVR_SIG_KEY"] = altkey.as_posix()
+    altx5c = Path(d.getVar("WORKDIR") + "/pvs/x5c.default.pem")
+    if altx5c.is_file():
+        my_env["PVR_X5C_PATH"] = altx5c.as_posix()
+    altca = Path(d.getVar("WORKDIR") + "/pvs/ca-certificates.crt")
+    if altca.is_file():
+        my_env["PVR_SIG_CACERTS"] = altca.as_posix()
+
+    process = subprocess.run(
+         ['pvr', 'checkout', '-c', '-hl'],
+         cwd=Path(traildir),
+         env=my_env
+    )
+    print ("completed pvr checkout -hl for skel process: %d" % process.returncode)
+    process = subprocess.run(
+         ['pvr', 'sig', 'add', '--raw', '_pvskel',
+          '--include', 'device.json',
+          '--include', '#spec',
+          '--exclude', '__pvrsigbug__' ],
+         cwd=Path(traildir),
+         env=my_env
+    )
+    print ("completed pvr sig add for skel process: %d" % process.returncode)
+    process = subprocess.run(
+         ['pvr', 'add'],
+         cwd=Path(traildir),
+         env=my_env
+    )
+    print ("completed pvr add for skel process: %d" % process.returncode)
+    process = subprocess.run(
+         ['pvr', 'commit'],
+         cwd=Path(traildir),
+         env=my_env
+    )
+    print ("completed pvr commit for skel process: %d" % process.returncode)
+
+    do_rootfs_mixing(d, my_env)
 
     execute_pre_post_process(d, d.getVar('PVROOTFS_POSTPROCESS_COMMAND'))
 }
