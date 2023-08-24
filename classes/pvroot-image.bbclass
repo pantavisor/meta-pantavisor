@@ -135,7 +135,7 @@ fakeroot python do_rootfs(){
     Path(my_env["HOME"] + "/.pvr").mkdir(parents=True, exist_ok=True)
     if devca.is_file():
        process = subprocess.run(
-            ['tar', '-xf', devca.as_posix()],
+            ['tar', '--no-same-owner', '-xf', devca.as_posix()],
             cwd=Path(my_env["HOME"] + "/.pvr"),
             env=my_env
        )
