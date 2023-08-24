@@ -18,7 +18,7 @@ SRC_URI = "file://empty.json"
 # PVROOT_CONTAINERS = ""
 PVROOT_CONTAINERS_CORE = "pv-pvr-sdk"
 #PVROOT_IMAGE_BSP = "fsl-image-network-full-cmdline"
-PVROOT_IMAGE_BSP = "fsl-image-multimedia"
+PVROOT_IMAGE_BSP = "fsl-image-gui"
 PVROOT_IMAGE = "yes"
 
 do_rootfs_boot_scr(){
