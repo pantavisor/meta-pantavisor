@@ -87,7 +87,7 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 def do_rootfs_mixing(d, my_env):
     bspimage = d.getVar("PVROOT_IMAGE_BSP")
     if d.getVar("PVROOT_IMAGE") == "yes":
-       _pvr_pvroot_images_deploy(d, False, bspimage.split())
+       _pvr_pvroot_images_deploy(d, False, bspimage.split(), my_env)
     bspimage = "bsp-" + bspimage
     _pvr_pvroot_images_deploy(d, False, bspimage.split(), my_env)
     images = d.getVar("PVROOT_CONTAINERS_CORE").split()
