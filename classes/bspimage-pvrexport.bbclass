@@ -17,6 +17,8 @@ PVBSP_mods = "${WORKDIR}/pvbsp-mods"
 PVBSP_fw = "${WORKDIR}/pvbsp-fw"
 PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 
+PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
+
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_image_pvbspit[cleandirs] = " ${PVBSPSTATE} "
 do_image_pvbspit[depends] += "pantavisor-bsp:do_image_complete virtual/kernel:do_deploy"
