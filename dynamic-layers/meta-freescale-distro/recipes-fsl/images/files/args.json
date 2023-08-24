@@ -1,3 +1,4 @@
 {
-   "PV_LXC_EXTRA_CONF": "lxc.tty.min=4\n"
+   "LXC_TTY_MIN": "8",
+   "LXC_TTY_MAX": "12"
 }
