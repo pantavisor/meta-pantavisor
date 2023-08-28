@@ -21,14 +21,22 @@ cat >> $BUILDDIR/conf/local.conf <<EOF
 
 ### BEGIN META PANTAVISOR
 
+# enable pvbsp kernel class to set correct initramfs
 KERNEL_CLASSES += "pvbsp"
 
-# comment out if you want to rather manually add this
-# to the image you want to extract a bsp pvrexport from
+# enable bspimage-pvrexport class; This one will produce
+# a bsp pvrexport from any image you build
 IMAGE_CLASSES += "bspimage-pvrexport"
 
+# enable image-pvrexport class; This one will produce
+# a root container pvrexport from the rootfs of the images
+# you build;  disable that if you just want the bsp.
+IMAGE_CLASSES += "image-pvrexport"
+
+# lets use our goversion
 GOVERSION = "1.20%"
 
+# enable system_distro build to bring in Xrecipes-core recipes
 PANTAVISOR_SYSTEM_DISTRO = "yes"
 
 ### END META PANTAVISOR
