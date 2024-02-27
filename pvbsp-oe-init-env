@@ -11,7 +11,7 @@ shift
 
 # adding pantavisor meta
 echo "Ensuring that Pantavisor meta is enabled ..."
-bitbake-layers add-layer $absdir
+bitbake-layers add-layer $absdir || true
 
 echo "Setting required tweaks in conf/local.conf ..."
 
@@ -38,6 +38,12 @@ GOVERSION = "1.20%"
 
 # enable system_distro build to bring in Xrecipes-core recipes
 PANTAVISOR_SYSTEM_DISTRO = "yes"
+
+# select mbedtls
+PREFERRED_VERSION_mbedtls = "2.28.2"
+
+DISTRO_FEATURES:remove = "usrmerge"
+AGL_DEFAULT_DISTRO_FEATURES:remove = "usrmerge"
 
 ### END META PANTAVISOR
 EOF
