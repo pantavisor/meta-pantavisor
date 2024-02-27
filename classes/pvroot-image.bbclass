@@ -8,10 +8,10 @@ IMGDEPLOYDIR ?= "${WORKDIR}/deploy-${PN}-image-complete"
 
 do_rootfs[dirs] = "${IMGDEPLOYDIR} ${DEPLOY_DIR_IMAGE}"
 
-PVROOT_CONTAINERS ?= ""
-PVROOT_CONTAINERS_CORE ?= ""
-PVROOT_IMAGE_BSP ?= ""
-PVROOT_IMAGE ?= "yes"
+PVROOT_CONTAINERS ??= ""
+PVROOT_CONTAINERS_CORE ??= ""
+PVROOT_IMAGE_BSP ??= ""
+PVROOT_IMAGE ??= "yes"
 
 DEPENDS += " pvr-native squashfs-tools-native"
 
