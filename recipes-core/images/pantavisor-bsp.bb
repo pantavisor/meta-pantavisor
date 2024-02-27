@@ -9,6 +9,7 @@ PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOT
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
+AGL_FEATURES = ""
 
 IMAGE_BASENAME = "pantavisor-bsp"
 IMAGE_NAME_SUFFIX ?= ""
