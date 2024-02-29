@@ -1,5 +1,6 @@
-setenv pv_platargs "swiotlb=1 coherent_pool=1m earlyprintk console=ttyS2,1500000n8 rw "
-setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor pv_storage.device=/dev/mmcblk1p3 pv_storage.fstype=ext4"
+#setenv pv_platargs "swiotlb=1 coherent_pool=1m earlyprintk console=ttyS2,1500000n8 rw "
+setenv pv_platargs "earlyprintk"
+setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
 setenv pv_ctrl 2
 setenv devtype mmc
 setenv envloadaddr ${loadaddr}
@@ -25,12 +26,6 @@ fi
 
 if test -z "${ramdisk_addr_r}"; then
 	ramdisk_addr_r=${initrd_addr}
-fi
-
-if test -z "${ramdisk_addr_r}"; then
-	echo "cannot find place to load ramdisk in ramdisk_addr_r nor initrd_addr check your uboot configs and provide these."
-	sleep 5
-	reset
 fi
 
 if test -z "${addr_fit}"; then
@@ -114,6 +109,12 @@ if test -n "${addr_fit}" && load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fi
         echo "trying fallback: bootm ${addr_fit}"
         bootm ${addr_fit}${name_fit_config}
         echo "failed to boot fit config ${addr_fit}${name_fit_config} ... resetting in 5"
+	sleep 5
+	reset
+fi
+
+if test -z "${ramdisk_addr_r}"; then
+	echo "cannot find place to load ramdisk in ramdisk_addr_r nor initrd_addr check your uboot configs and provide these."
 	sleep 5
 	reset
 fi
