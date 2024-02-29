@@ -43,7 +43,7 @@ GOVERSION = "1.20%"
 PANTAVISOR_SYSTEM_DISTRO = "yes"
 
 # select mbedtls
-PREFERRED_VERSION_mbedtls = "2.28.2"
+PREFERRED_VERSION_mbedtls = "2.28.%"
 
 DISTRO_FEATURES:remove = "usrmerge"
 AGL_DEFAULT_DISTRO_FEATURES:remove = "usrmerge"
