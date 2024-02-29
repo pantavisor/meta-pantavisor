@@ -68,15 +68,14 @@ fakeroot IMAGE_CMD:pvbspit(){
     "linux": "kernel.img",
     "initrd": "pantavisor",'
 
+       if [ -n "${PV_INITIAL_DTB}" ]; then
+           cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
+           _pvline="$_pvline
+       \"fdt\": \"${PV_INITIAL_DTB}\","
+       fi
     fi
           
     _pvline="$basearts"
-
-    if [ -n "${PV_INITIAL_DTB}" ]; then
-        cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
-        _pvline="$_pvline
-    \"fdt\": \"${PV_INITIAL_DTB}\","
-    fi
 
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
