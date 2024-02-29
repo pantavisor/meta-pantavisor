@@ -19,6 +19,10 @@ IMAGE_BUILDINFO_FILE = "pvroot.build"
 
 IMAGE_TYPES_MASKED += " pvrexportit pvbspit "
 
+# disable all features that distros might inject globally
+# through local.conf or distro.conf (like in case of agl)
+IMAGE_FEATURES = ""
+
 FAKEROOT_CMD = "pseudo"
 
 python __anonymous () {
