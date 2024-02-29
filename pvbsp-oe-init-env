@@ -9,6 +9,9 @@ delegate=$1
 shift
 . $delegate $@
 
+BB_ENV_PASSTHROUGH_ADDITIONS="${BB_ENV_PASSTHROUGH_ADDITIONS} PVROOT_IMAGE_BSP "
+export BB_ENV_PASSTHROUGH_ADDITIONS 
+
 # adding pantavisor meta
 echo "Ensuring that Pantavisor meta is enabled ..."
 bitbake-layers add-layer $absdir || true
