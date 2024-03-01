@@ -1,5 +1,7 @@
 #setenv pv_platargs "swiotlb=1 coherent_pool=1m earlyprintk console=ttyS2,1500000n8 rw "
+if test -z "$pv_platargs"; then
 setenv pv_platargs "earlyprintk"
+fi
 setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
 setenv pv_ctrl 2
 setenv devtype mmc
