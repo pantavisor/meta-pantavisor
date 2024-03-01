@@ -7,7 +7,7 @@ SRC_URI += " \
 " 
 
 UBOOT_ENV_SRC = "boot.cmd"
-UBOOT_ENV_SRC_FRAGS += "boot.cmd.pvgeneric"
+UBOOT_ENV_SRC_FRAGS += " boot.cmd.pvgeneric "
 UBOOT_ENV = "boot"
 UBOOT_ENV_SUFFIX = "scr"
 
