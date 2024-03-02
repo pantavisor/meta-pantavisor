@@ -1,0 +1,301 @@
+#!/bin/sh
+
+set -e
+
+cmd=$0
+dir=$(sh -c "cd $(dirname $cmd); pwd")
+cmd=$(basename $0)
+pvtx_dir=${PVTXDIR:-$PREFIX/var/pvr-sdk/pvtx}
+PVCONTROL=${PVCONTROL:-$dir/pvcontrol}
+VERSION="1.1.0"
+
+usage() {
+	echo "USAGE: $cmd begin|add|remove|abort|commit <positional arguments>"
+	echo "   Transactional updates with pvrexport ingest - good for small disks with no object duplication"
+	echo "   - begin: start a tx with fresh copy of current working state"
+	echo "   - add: ingest a pvrexport tarball adding or replacing existing elements"
+	echo "   - remove: remove all elements of a part of the state json"
+	echo "   - abort: abort and trigger run of GC to clear unused objects"
+	echo "   - commit: apply working draft"
+	echo "   - show: display current working draft json"
+	exit 0
+}
+
+echo_e() {
+	echo $@ 1>&2
+}
+
+touchit() {
+	: >>$1
+}
+
+base64_padding() {
+  local len=$(( ${#1} % 4 ))
+  local padded_b64=''
+  if [ ${len} = 2 ]; then
+    padded_b64="${1}=="
+  elif [ ${len} = 3 ]; then
+    padded_b64="${1}="
+  else
+    padded_b64="${1}"
+  fi
+  echo -n "$padded_b64"
+}
+
+base64url_decode() {
+  base64_padding "$1" | tr -- '-_' '+/' | base64 -d
+}
+
+_check_ingest_spec() {
+	# we only succeed of spec matches ...
+	cat $pvtx_dir/ingest.JSON.sh.1 | grep ^\\[\"\\#spec\"\] | grep -q \""$1"\"
+}
+
+_merge_JSON_sh() {
+	# first lets strip all keys that $2 has so we dont get dupes
+	cat $2 >$pvtx_dir/merge.2 # patch
+	cat $1 >$pvtx_dir/merge.origin
+	
+	# Search for all signatures in patch state
+	cat $pvtx_dir/merge.2 | grep "\[\"_sigs/" | while read -r line; do
+		if ! grep -q "$line" $pvtx_dir/merge.origin; then
+			key=$(echo $line | sed -e 's/\["\([^[:space:]]*\)"\][[:space:]].*$/\1/')
+
+			# Clean signatures of the origin with the same key
+			# _clean_signature_files receive the file and the JSON.sh line to be decoded 
+			_clean_signature_files $pvtx_dir/merge.origin "$(grep "\[\"$key\"\]" $pvtx_dir/merge.origin)"
+		fi
+	done
+
+	cat $pvtx_dir/merge.origin | while read -r line; do
+		key=$(echo $line | sed -e 's/\["\([^[:space:]]*\)"\][[:space:]].*$/\1/')
+		if ! grep -q "\[\"$key\"\]" $pvtx_dir/merge.2; then
+			echo $line
+		fi
+	done >$pvtx_dir/merge.1
+
+	# now we merge through concat and sort
+	cat $pvtx_dir/merge.1 $pvtx_dir/merge.2 | busybox sort -s | busybox uniq
+}
+
+_clean_signature_files() {
+	# if the line is empty just finish without error
+	if [ "$2" == "" ]; then
+		return 0
+	fi
+	
+	value=$(echo $2 | awk '{print $2}' | JSON.sh 1 | grep "\[\"protected\"\]" | awk '{print $2}')
+	
+	# Decode the protected part of the jws in order to read the pvs include and exclude
+	signed_files=$(base64url_decode "${value:1:${#value}-2}")
+	if [ $(echo $signed_files | wc -m) -eq 0 ]; then
+		return 0
+	fi
+
+	echo $signed_files | JSON.sh 2 | grep "\[\"pvs\"," | awk '{print $2}' | tr ',' '\n' | tr -d '"[]' | while read -r file; do
+		# Convert the file matching from pvs to regular expresion
+		regex=$(echo $file | sed -e 's/\/\*\*$/\/\.\*/' | sed -e 's/\/\*$/\/\[\^\/\]\*/')
+		cat $1 | grep -v -E "^\[\"$regex\"\]" >$pvtx_dir/state.JSON.sh.1.filtered
+		mv $pvtx_dir/state.JSON.sh.1.filtered $1
+	done
+}
+
+_clean_signature_removals() {
+	cat $2 > $pvtx_dir/merge.2
+
+	# check the keys that were removed between source and patch
+	# and clean signatures if they where deleted
+	cat $1 | while read -r line; do
+		key=$(echo $line | sed -e 's/\["\([^[:space:]]*\)"\][[:space:]].*$/\1/')
+		if ! grep -q "\[\"$key\"\]" $pvtx_dir/merge.2; then
+			if echo "$key" | grep -q "^_sigs/"; then
+				_clean_signature_files $pvtx_dir/merge.2 "$line"
+			fi
+		fi
+	done >$pvtx_dir/merge.1
+	
+	cat $pvtx_dir/merge.2 | busybox sort -s | busybox uniq
+}
+
+cmd_abort() {
+	rm -rf $pvtx_dir/*
+	# pvcontrol commands rungc
+}
+
+_make_json_draft() {
+	echo -n '{'$(cat $pvtx_dir/state.JSON.sh.1.draft | sed 's/^\[\([^[:space:]]*\)\][[:space:]]\(.*\)/\1:\2/g' | tr '\n' ',')'' | sed -e 's/,$/}/'
+}
+
+cmd_version() {
+	echo "$VERSION"
+}
+
+# cmd_add - add a pvrexport to state json (and replace existing)
+#           This operation requires an active transcation (see begin command)
+#           1. json will be inspected; if not a valid format
+#              the add will be aborted
+#           2. objects will get uploaded to PV
+#           3. json will be patched into state.json
+cmd_add() {
+	if ! [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: no active transaction"
+		return 1
+	fi
+
+	cat $1 | tar -xz --to-command "$dir/pvtx ingest" 2>&1
+}
+
+cmd_remove() {
+	if ! [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: no active transaction"
+		return 3
+	fi
+
+	part=$1
+	if [ -z "$part" ]; then
+		echo_e "ERROR: must remove a part (missing paramter)"
+		return 4
+	fi
+
+	# filter part ... simple
+	cat $pvtx_dir/state.JSON.sh.1.draft | while read -r line; do
+		if ! echo $line | grep -q "^\[\"$part\"" && ! echo $line | grep -q "^\[\"$part/" && ! echo $line | grep -q "^\[\"_sigs/$part\.json"; then
+			echo $line
+		fi
+	done >$pvtx_dir/state.JSON.sh.1._draft
+
+	_clean_signature_removals $pvtx_dir/state.JSON.sh.1 $pvtx_dir/state.JSON.sh.1._draft > $pvtx_dir/state.JSON.sh.1.draft
+}
+
+# ingest a pvr export tarball elements; invoked through tar --to-command
+cmd_ingest() {
+	if ! [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: no active transaction"
+		return 5
+	fi
+
+	if [ -f $pvtx_dir/ingest_failed ]; then
+		cat $pvtx_dir/ingest_failed 1>&2
+		return 6
+	fi
+
+	case "$TAR_FILENAME" in
+	json)
+		cat | JSON.sh 1 >$pvtx_dir/ingest.JSON.sh.1
+		if ! _check_ingest_spec "pantavisor-service-system@1"; then
+			touchit $pvtx_dir/ingest_failed
+			echo_e "Not supported spec:"
+			cat $pvtx_dir/ingest.JSON.sh.1 | grep ^\\[\"\\#spec\"\] 1>&2
+			return 7
+		fi
+
+		# merge JSON.sh
+		_merge_JSON_sh $pvtx_dir/state.JSON.sh.1.draft $pvtx_dir/ingest.JSON.sh.1 >$pvtx_dir/state.JSON.sh.1._draft
+		mv $pvtx_dir/state.JSON.sh.1._draft $pvtx_dir/state.JSON.sh.1.draft
+		;;
+	objects/*)
+		sha=${TAR_FILENAME#objects/}
+		message=$($PVCONTROL objects put -${TAR_SIZE} $sha 2>&1)
+		result=$?
+		if ! [ $result = 0 ]; then
+			echo_e "ERROR: putting object with sha \"$sha\" -- Reason: $result"
+			touchit $pvtx_dir/ingest_failed
+			return 8
+		fi
+		;;
+	*)
+		touchit $pvtx_dir/ingest_failed
+		echo_e "Illegal file in tarball: $TAR_FILENAME"
+		return 9
+		;;
+	esac
+}
+
+cmd_show() {
+	if ! [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: no active transaction"
+		return 10
+	fi
+	_make_json_draft
+}
+
+cmd_commit() {
+	if ! [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: no active transaction"
+		return 11
+	fi
+	_make_json_draft >$pvtx_dir/draft.json
+	hashv=$(cat $pvtx_dir/draft.json | sha256sum | sed 's/[[:space:]].*$//')
+	vers="locals/pvtx-$(date +%s)-$(echo $hashv | head -c 8)-$(($RANDOM % 1000))"
+	$PVCONTROL steps put $pvtx_dir/draft.json $vers
+	echo "$vers"
+	rm -rf $pvtx_dir/*
+}
+
+cmd_begin() {
+	if [ -f $pvtx_dir/state.JSON.sh.1.draft ]; then
+		echo_e "ERROR: active transaction; finish your work with 'commit' or 'abort' first ..."
+		return 12
+	fi
+
+	rm -rf $pvtx_dir/*
+	$PVCONTROL steps get current >$pvtx_dir/state.json
+	cat $pvtx_dir/state.json | JSON.sh 1 >$pvtx_dir/state.JSON.sh.1
+	cp $pvtx_dir/state.JSON.sh.1 $pvtx_dir/state.JSON.sh.1.draft
+}
+
+one=$1
+
+if [ -z "$one" ]; then
+	echo_e "ERROR: no argument 1; see --help"
+	exit 1
+fi
+
+shift 1
+
+if [ "$one" = "--help" ]; then
+	usage
+	exit 0
+fi
+
+if ! [ -d $pvtx_dir ]; then mkdir -p $pvtx_dir; fi
+
+case "$one" in
+abort)
+	cmd_abort $@
+	;;
+add)
+	cmd_add $@
+	;;
+begin)
+	cmd_begin $@
+	;;
+commit)
+	cmd_commit $@
+	;;
+ingest)
+	cmd_ingest $@
+	;;
+remove)
+	cmd_remove $@
+	;;
+show)
+	cmd_show $@
+	;;
+merge)
+	_merge_JSON_sh $@
+	;;
+csc)
+	_clean_signature_removals $@
+	;;
+version)
+	cmd_version $@
+	;;
+--help)
+	usage
+	;;
+*)
+	echo_e "ERROR: unknown first argument $one; see --help"
+	exit 100
+	;;
+esac
