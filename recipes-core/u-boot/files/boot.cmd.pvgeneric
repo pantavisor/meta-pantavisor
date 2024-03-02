@@ -1,6 +1,5 @@
-#setenv pv_platargs "swiotlb=1 coherent_pool=1m earlyprintk console=ttyS2,1500000n8 rw "
 if test -z "$pv_platargs"; then
-setenv pv_platargs "earlyprintk"
+	setenv pv_platargs "earlyprintk"
 fi
 setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
 setenv pv_ctrl 2
@@ -94,23 +93,29 @@ setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_re
 
 if test -n "${addr_fit}" && load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
 	echo Successfully loaded pantavisor.fit. booting...
-        iminfo ${addr_fit}
-        if test -n "${findfdt}"; then
-                run findfdt
-        fi
-        if test -z "${name_fit_config}" -a -n "${fdtfile}"; then
-                echo "setexpr name_fit_config gsub / _ conf-${fdtfile}"
-                setexpr name_fit_config gsub / _ "#conf-${fdtfile}"
-        fi
-        if test -z "${name_fit_config}" -a -n "${fdtfile}"; then
-                echo "setenv name_fit_config conf-${fdtfile}"
-                setenv name_fit_config "#conf-${fdtfile}"
-        fi
-        echo "bootm ${addr_fit}${name_fit_config}"
-        bootm ${addr_fit}${name_fit_config}
-        echo "trying fallback: bootm ${addr_fit}"
-        bootm ${addr_fit}${name_fit_config}
-        echo "failed to boot fit config ${addr_fit}${name_fit_config} ... resetting in 5"
+	iminfo ${addr_fit}
+	# first allow platforms to do their job to set name_fit_config
+	if test -z "${name_fit_config"} -a -n "${pv_plat_set_name_fit_config}"; then
+		run pv_plat_set_name_fit_config
+	else
+		# otherwise lets try the "generic" way we saw on TI and VAR
+		if test -z "${name_fit_config"} -a -n "${findfdt}"; then
+			run findfdt
+	        fi
+		if test -z "${name_fit_config}" -a -n "${fdtfile}"; then
+			echo "setexpr name_fit_config gsub / _ conf-${fdtfile}"
+			setexpr name_fit_config gsub / _ "#conf-${fdtfile}"
+		fi
+		if test -z "${name_fit_config}" -a -n "${fdtfile}"; then
+			echo "setenv name_fit_config conf-${fdtfile}"
+			setenv name_fit_config "#conf-${fdtfile}"
+	        fi
+	fi
+	echo "bootm ${addr_fit}${name_fit_config}"
+	bootm ${addr_fit}${name_fit_config}
+	echo "trying fallback: bootm ${addr_fit}"
+	bootm ${addr_fit}${name_fit_config}
+	echo "failed to boot fit config ${addr_fit}${name_fit_config} ... resetting in 5"
 	sleep 5
 	reset
 fi
@@ -147,4 +152,3 @@ done
 echo "Pantavisor go... : booti ${kernel_addr_r} ${ramdisk_addr_r}:${rd_size} ${fdt_addr_r}"
 booti ${kernel_addr_r} ${ramdisk_addr_r}:${rd_size} ${fdt_addr_r}
 echo "Failed to boot step, rebooting"; sleep 5; reset
-
