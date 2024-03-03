@@ -9,6 +9,8 @@ IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit'
 
 inherit image pvr-ca
 
+IMAGE_INSTALL += "pvcontrol"
+
 PVR_FORMAT_OPTS ?= "-comp xz"
 PVR_SOMETHING = "yes"
 
