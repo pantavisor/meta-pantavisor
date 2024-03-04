@@ -1,5 +1,8 @@
 
-DEPENDS:append = " pvr-native squashfs-tools-native "
+DEPENDS:append = " pvr-native \
+	squashfs-tools-native \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
+"
 
 IMAGE_TYPES += " pvbspit "
 IMAGE_FSTYPES += " pvbspit "
@@ -9,7 +12,7 @@ inherit image kernel-artifact-names pvr-ca
 
 INITRAMFS_IMAGE_NAME ?= "pantavisor-bsp-${MACHINE}"
 
-PVR_FORMAT_OPTS ?= "-comp xz"
+PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 
 PVBSPSTATE = "${WORKDIR}/pvbspstate"
 PVBSP = "${WORKDIR}/pvbsp"

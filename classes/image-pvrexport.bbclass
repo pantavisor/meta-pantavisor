@@ -1,7 +1,10 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-DEPENDS:append = " pvr-native squashfs-tools-native "
+DEPENDS:append = " pvr-native \
+	squashfs-tools-native \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
+"
 
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES += " pvrexportit "
@@ -11,8 +14,7 @@ inherit image pvr-ca
 
 IMAGE_INSTALL += "pvcontrol"
 
-PVR_FORMAT_OPTS ?= "-comp xz"
-PVR_SOMETHING = "yes"
+PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 
 PVSTATE = "${WORKDIR}/pvstate"
 
