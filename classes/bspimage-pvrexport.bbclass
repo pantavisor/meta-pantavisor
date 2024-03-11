@@ -50,7 +50,7 @@ fakeroot IMAGE_CMD:pvbspit(){
     err=0
 
     basearts=
-    if test -e "${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP}"; then
+    if test -n "${PVBSP_UBOOT_LOGO_BMP}" && test -e "${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP}"; then
        cp -fL ${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP} ${PVBSPSTATE}/bsp/uboot-logo.bmp
     fi
     if echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
