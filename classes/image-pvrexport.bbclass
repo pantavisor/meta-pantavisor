@@ -20,6 +20,8 @@ PVSTATE = "${WORKDIR}/pvstate"
 
 PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
 
+PVR_APP_ADD_EXTRA_ARGS ??= ""
+
 do_image_pvrexportit[dirs] = " ${TOPDIR} ${PVSTATE} ${PVR_CONFIG_DIR} "
 do_image_pvrexportit[cleandirs] = " ${PVSTATE} "
 
@@ -47,7 +49,7 @@ fakeroot IMAGE_CMD:pvrexportit(){
 	--force \
     	--type rootfs \
 	--from "${IMAGE_ROOTFS}" \
-	$args \
+	$args ${PVR_APP_ADD_EXTRA_ARGS} \
 	--format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
 	${PN}
     pvr add
