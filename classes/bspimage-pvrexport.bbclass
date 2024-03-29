@@ -14,6 +14,8 @@ INITRAMFS_IMAGE_NAME ?= "pantavisor-initramfs-${MACHINE}"
 
 PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 
+PVS_VENDOR_NAME ??= "generic"
+
 PVBSPSTATE = "${WORKDIR}/pvbspstate"
 PVBSP = "${WORKDIR}/pvbsp"
 PVBSP_mods = "${WORKDIR}/pvbsp-mods"
@@ -32,8 +34,8 @@ fakeroot IMAGE_CMD:pvbspit(){
 
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
     export PVR_DISABLE_SELF_UPGRADE=true
-    if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-        tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz --no-same-owner
+    if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
+        tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
     mkdir -p ${PVBSP_mods}/lib/modules

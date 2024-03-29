@@ -13,6 +13,8 @@ PVROOT_CONTAINERS_CORE ??= ""
 PVROOT_IMAGE_BSP ??= ""
 PVROOT_IMAGE ??= "yes"
 
+PVS_VENDOR_NAME ??= "generic"
+
 DEPENDS += " pvr-native squashfs-tools-native"
 
 IMAGE_BUILDINFO_FILE = "pvroot.build"
@@ -135,7 +137,7 @@ fakeroot python do_rootfs(){
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/uboot.txt"), d.getVar("IMAGE_ROOTFS") + "/boot/uboot.txt")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/pantahub.config"), d.getVar("IMAGE_ROOTFS") + "/config/pantahub.config")
 
-    devca = Path(d.getVar("WORKDIR") + "/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz")
+    devca = Path(d.getVar("WORKDIR") + "/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz")
     Path(my_env["HOME"] + "/.pvr").mkdir(parents=True, exist_ok=True)
     if devca.is_file():
        process = subprocess.run(
