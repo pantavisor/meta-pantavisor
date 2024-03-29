@@ -8,7 +8,7 @@ DEPENDS:append = " pvr-native \
 
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES += " pvrexportit "
-IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit', '', d)} ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-bsp', ' pvrexportit ', '', d)} "
+IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit', '', d)} ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', ' pvrexportit ', '', d)} "
 
 inherit image pvr-ca
 
