@@ -13,15 +13,48 @@ PVCONT_NAME = "${@'${BPN}'.replace('pv-', '')}"
 
 PVR_CONFIG_DIR ?= "${WORKDIR}/pvrconfig"
 
+PVR_SRC_DIR = "${WORKDIR}/pvrsrc"
+
+do_fetch[postfuncs] += "do_fetch_pvr"
+do_fetch[dirs] += "${PVR_CONFIG_DIR}"
+do_fetch[cleandirs] += "${PVR_SRC_DIR}"
+do_fetch[depends] += "pvr-native:do_populate_sysroot"
+do_fetch_pvr() {
+	export PVR_DISABLE_SELF_UPGRADE=true
+	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+	echo "do_fetch_pvr: ${PVR_SRC_DIR}"
+	cd ${PVR_SRC_DIR}
+	if [ -n "${PVR_SRC_URI}" ]; then
+		echo "creating pvr repo empty at $PWD"
+		pvr init
+		echo "getting remote pvr repo ${PVR_SRC_URI}"
+		pvr get ${PVR_SRC_URI}
+	fi
+}
+
+do_unpack[postfuncs] += "do_unpack_pvr"
+do_unpack_pvr() {
+	export PVR_DISABLE_SELF_UPGRADE=true
+	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+	echo "do_unpack_pvr: $PWD ${B}/pvrrepo"
+	mkdir -p ${B}/pvrrepo
+	cd ${B}/pvrrepo
+	if [ -n "${PVR_SRC_URI}" ]; then
+		echo "getting from clonedir ${PVR_SRC_DIR}"
+		pvr init
+		pvr get ${PVR_SRC_DIR}/.pvr
+	fi
+	pvr checkout
+}
+
 do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 
 do_compile(){
-	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
 	export PVR_DISABLE_SELF_UPGRADE=true
+	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
 	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
 		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
 	fi
-	pvr checkout
 
 	if [ -f ${WORKDIR}/${BPN}.mdev.json ]; then
 		cp -f ${WORKDIR}/${BPN}.mdev.json ${PVCONT_NAME}/mdev.json
