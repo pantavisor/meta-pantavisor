@@ -12,6 +12,8 @@ inherit image kernel-artifact-names pvr-ca
 
 INITRAMFS_IMAGE_NAME ?= "pantavisor-initramfs-${MACHINE}"
 
+INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
+
 PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 
 PVS_VENDOR_NAME ??= "generic"
@@ -26,7 +28,8 @@ PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
 
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_image_pvbspit[cleandirs] = " ${PVBSPSTATE} "
-do_image_pvbspit[depends] += "pantavisor-initramfs:do_image_complete virtual/kernel:do_deploy"
+do_image_pvbspit[depends] += "${@oe.utils.conditional('${INITRAMFS_MULTICONFIG}', '', 'pantavisor-initramfs:do_image_complete virtual/kernel:do_deploy', '', d)} virtual/kernel:do_deploy"
+do_image_pvbspit[mcdepends] += "${@oe.utils.conditional('${INITRAMFS_MULTICONFIG}', '', '', 'mc::${INITRAMFS_MULTICONFIG}:pantavisor-initramfs:do_image_complete', d)}"
 
 PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
 
@@ -67,11 +70,14 @@ fakeroot IMAGE_CMD:pvbspit(){
           Image)
               cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
               ;;
+          zImage)
+              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+              ;;
           *)
               echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
               exit 1
        esac
-       cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-initramfs-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
+       cp -f ${INITRAMFS_DEPLOY_DIR_IMAGE}/pantavisor-initramfs-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
        basearts='
     "linux": "kernel.img",
     "initrd": "pantavisor",'
