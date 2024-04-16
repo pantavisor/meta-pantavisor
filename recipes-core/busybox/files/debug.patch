@@ -1,0 +1,56 @@
+diff --git a/util-linux/mdev.c b/util-linux/mdev.c
+index 68b0b0727..73f9f01a3 100644
+--- a/util-linux/mdev.c
++++ b/util-linux/mdev.c
+@@ -261,7 +261,7 @@
+  * SUBSYSTEM=block
+  */
+ 
+-#define DEBUG_LVL 2
++#define DEBUG_LVL 3
+ 
+ #if DEBUG_LVL >= 1
+ # define dbg1(...) do { if (G.verbose) bb_error_msg(__VA_ARGS__); } while(0)
+@@ -593,6 +593,8 @@ static void make_device(char *device_name, char *path, int operation)
+ 	char *path_end = path + path_len;
+ 	struct stat s;
+ 
++	dbg3("make device path: %s", path);
++
+ #if ENABLE_FEATURE_MDEV_FOLLOW_X_ROOT
+ 	if (newrootdev && !(!access(newrootdev, X_OK) && !stat(newrootdev, &s) && (S_IFDIR & s.st_mode))){
+ 		dbg1("following x root...");
+@@ -662,6 +664,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 				G.modalias_env = strdup(tok);
+ 				dbg3("MODALIAS: %s", G.modalias_env);
+ 				putenv(G.modalias_env);
++				break;
+ 			}
+ 			tok = strtok(NULL, "\n");
+ 		}
+@@ -678,6 +681,8 @@ static void make_device(char *device_name, char *path, int operation)
+ 		}
+ 	}
+ 
++	dbg3("DEVNAME parsed: %s", device_name);
++
+ 	/* Determine device type */
+ 	/*
+ 	 * http://kernel.org/doc/pending/hotplug.txt says that only
+@@ -725,7 +730,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 		}
+ 		/* else: str_to_match = device_name */
+ 
+-		if (rule->regex_compiled) {
++		if (rule->regex_compiled && operation != OP_modalias) {
+ 			int regex_match = regexec(&rule->match, str_to_match, ARRAY_SIZE(off), off, 0);
+ 			dbg3("regex_match for '%s':%d", str_to_match, regex_match);
+ 			//bb_error_msg("matches:");
+@@ -741,6 +746,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 			 || off[0].rm_so != 0
+ 			 || (int)off[0].rm_eo != (int)strlen(str_to_match)
+ 			) {
++				dbg3("REGEX not matching, continuing");
+ 				continue; /* this rule doesn't match */
+ 			}
+ 		}
