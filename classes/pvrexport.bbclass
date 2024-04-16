@@ -1,9 +1,9 @@
 
-inherit deploy pvr-ca
+inherit deploy pvr-ca dockerarch
 
 REMOVE_LIBTOOL_LA = "0"
 
-DEPENDS:append = " pvr-native jq-native "
+DEPENDS += "pvr-native jq-native virtual/fakeroot-native"
 
 PVR_COMPRESSION ?= "-comp xz"
 
@@ -15,11 +15,15 @@ PVR_CONFIG_DIR ?= "${WORKDIR}/pvrconfig"
 
 PVR_SRC_DIR = "${WORKDIR}/pvrsrc"
 
+PVR_SRC_URI ?= ""
+PVR_DOCKER_REF ?= ""
+
 do_fetch[postfuncs] += "do_fetch_pvr"
 do_fetch[dirs] += "${PVR_CONFIG_DIR}"
 do_fetch[cleandirs] += "${PVR_SRC_DIR}"
-do_fetch[depends] += "pvr-native:do_populate_sysroot"
-do_fetch_pvr() {
+do_fetch[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot"
+
+fakeroot do_fetch_pvr() {
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
 	echo "do_fetch_pvr: ${PVR_SRC_DIR}"
@@ -29,6 +33,12 @@ do_fetch_pvr() {
 		pvr init
 		echo "getting remote pvr repo ${PVR_SRC_URI}"
 		pvr get ${PVR_SRC_URI}
+	elif [ -n "${PVR_DOCKER_REF}" ]; then
+		echo "pulling docker ${PVR_DOCKER_REF}"
+		pvr init
+		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" "${PVCONT_NAME}"
+		pvr add .
+		pvr commit
 	fi
 }
 
@@ -39,7 +49,7 @@ do_unpack_pvr() {
 	echo "do_unpack_pvr: $PWD ${B}/pvrrepo"
 	mkdir -p ${B}/pvrrepo
 	cd ${B}/pvrrepo
-	if [ -n "${PVR_SRC_URI}" ]; then
+	if [ -d "${PVR_SRC_DIR}/.pvr" ]; then
 		echo "getting from clonedir ${PVR_SRC_DIR}"
 		pvr init
 		pvr get ${PVR_SRC_DIR}/.pvr
