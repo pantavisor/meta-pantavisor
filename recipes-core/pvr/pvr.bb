@@ -6,10 +6,8 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "git://${GO_IMPORT};branch=bugfix/no-fakeroot-if-root;protocol=https"
-SRCREV = "ded241a5f75707c9f03e2080873d770361722a70"
+SRCREV = "a16c7df04375b4cc15fc1eecba811fcfdc95b3dd"
 UPSTREAM_CHECK_COMMITS = "1"
-
-# DEPENDS:append = "fakeroot-native"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
