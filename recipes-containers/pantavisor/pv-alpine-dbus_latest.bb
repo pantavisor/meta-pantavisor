@@ -10,7 +10,6 @@ PANTAHUB_USER ?= "pantavisor-apps"
 BB_STRICT_CHECKSUM = "0"
 
 SRC_URI += "\
-	file://mdev.json \
 	file://args.${BPN}.json \
 	"
 
