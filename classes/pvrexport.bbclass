@@ -12,21 +12,26 @@ PANTAHUB_API ?= "api.pantahub.com"
 PVCONT_NAME = "${@'${BPN}'.replace('pv-', '')}"
 
 PVR_CONFIG_DIR ?= "${WORKDIR}/pvrconfig"
-
 PVR_SRC_DIR = "${WORKDIR}/pvrsrc"
 PVR_TMPDIR = "${WORKDIR}/tmp"
+PVR_HOME_DIR = "${WORKDIR}/home"
 
 PVR_SRC_URI ?= ""
 PVR_DOCKER_REF ?= ""
+PVR_APP_ADD_EXTRA_ARGS ?= ""
 
 do_fetch_pvr[dirs] += "${PVR_CONFIG_DIR}"
 do_fetch_pvr[cleandirs] += "${PVR_SRC_DIR} ${PVR_TMPDIR}"
 do_fetch_pvr[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot"
 do_fetch_pvr[network] = "1"
 
+PSEUDO_IGNORE_PATHS .= ",${PVR_SRC_DIR},${PVR_CONFIG_DIR},${PVR_HOME_DIR}"
+
 fakeroot do_fetch_pvr() {
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+	export TMPDIR="${PVR_TMPDIR}"
+	export HOME="${PVR_HOME_DIR}"
 	echo "do_fetch_pvr: ${PVR_SRC_DIR}"
 	cd ${PVR_SRC_DIR}
 	if [ -n "${PVR_SRC_URI}" ]; then
@@ -39,7 +44,7 @@ fakeroot do_fetch_pvr() {
 		pvr init
 		echo "pvr app add from docker ${PVR_DOCKER_REF}"
 		pvr init
-		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" "${PVCONT_NAME}"
+		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" ${PVR_APP_ADD_EXTRA_ARGS} "${PVCONT_NAME}"
 		pvr add .
 		pvr commit
 	fi

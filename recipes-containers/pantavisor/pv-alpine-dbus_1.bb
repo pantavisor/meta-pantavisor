@@ -11,7 +11,15 @@ BB_STRICT_CHECKSUM = "0"
 
 SRC_URI += "\
 	file://mdev.json \
+	file://args.${PN}.json \
 	"
 
-PVR_SRC_URI = "https://pvr.pantahub.com/asacasa/alpine-dbus_arm64v8/${PV}"
+PVR_APP_ADD_EXTRA_ARGS += " \
+	--volume /var/pvr-volume-boot:boot \
+	--volume /var/pvr-volume-revision:revision \
+	--volume /var/pvr-volume-permanent:permanent \
+	"
+
+#PVR_SRC_URI = "https://pvr.pantahub.com/asacasa/alpine-dbus_arm64v8/${PV}"
+PVR_DOCKER_REF = "asac/alpine-dbus:latest"
 
