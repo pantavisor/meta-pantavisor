@@ -11,7 +11,7 @@ BB_STRICT_CHECKSUM = "0"
 
 SRC_URI += "\
 	file://mdev.json \
-	file://args.${PN}.json \
+	file://args.${BPN}.json \
 	"
 
 PVR_APP_ADD_EXTRA_ARGS += " \
