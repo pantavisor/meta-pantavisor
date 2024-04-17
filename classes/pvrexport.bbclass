@@ -56,6 +56,9 @@ do_unpack[postfuncs] += "do_unpack_pvr"
 do_unpack_pvr() {
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
+		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
+	fi
 	echo "do_unpack_pvr: $PWD ${B}/pvrrepo"
 	mkdir -p ${B}/pvrrepo
 	cd ${B}/pvrrepo
@@ -65,6 +68,12 @@ do_unpack_pvr() {
 		pvr get ${PVR_SRC_DIR}/.pvr
 	fi
 	pvr checkout
+	if [ -f "_sigs/${PVCONT_NAME}.json" ]; then
+		pvr sig up _sigs/${PVCONT_NAME}.json
+	else
+		pvr sig add -n --part ${PVCONT_NAME}
+	fi
+	pvr commit
 }
 
 do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
@@ -72,9 +81,6 @@ do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 do_compile(){
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
-	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
-	fi
 
 	if [ -f ${WORKDIR}/${BPN}.mdev.json ]; then
 		cp -f ${WORKDIR}/${BPN}.mdev.json ${PVCONT_NAME}/mdev.json
@@ -86,14 +92,14 @@ do_compile(){
 		pvr commit
         fi
 	if [ -f ${WORKDIR}/${BPN}.args.json ]; then
-		cat ${PVCONT_NAME}/src.json | jq --argfile args ${WORKDIR}/${BPN}.args.json \
-		'. * { "args" : $args }' > ${PVCONT_NAME}/src.json.new
+		cat ${PVCONT_NAME}/src.json | jq --slurpfile args ${WORKDIR}/${BPN}.args.json \
+		'. * { "args" : $args[0] }' > ${PVCONT_NAME}/src.json.new
 		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
 		pvr app install ${PVCONT_NAME}
 	fi
 	if [ -f ${WORKDIR}/${BPN}.config.json ]; then
-		cat ${PVCONT_NAME}/src.json | jq --argfile config ${WORKDIR}/${BPN}.config.json \
-		    '. * { "config" : $config }' > ${PVCONT_NAME}/src.json.new
+		cat ${PVCONT_NAME}/src.json | jq --slurpfile config ${WORKDIR}/${BPN}.config.json \
+		    '. * { "config" : $config[0] }' > ${PVCONT_NAME}/src.json.new
 		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
 		pvr app install ${PVCONT_NAME}
 	fi
