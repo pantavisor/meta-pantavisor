@@ -1,0 +1,6 @@
+{
+	"PV_VOLUME_IMPORTS": [
+		"core-image-minimal:/run/dbus:/run/dbus:rw"
+	]
+}
+
