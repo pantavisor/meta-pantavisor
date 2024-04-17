@@ -47,6 +47,8 @@ fakeroot do_fetch_pvr() {
 		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" ${PVR_APP_ADD_EXTRA_ARGS} "${PVCONT_NAME}"
 		pvr add .
 		pvr commit
+		pvr sig add -n --part ${PVCONT_NAME}
+		pvr commit
 	fi
 }
 
