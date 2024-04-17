@@ -10,7 +10,7 @@ PANTAHUB_USER ?= "pantavisor-apps"
 BB_STRICT_CHECKSUM = "0"
 
 SRC_URI += "\
-	file://args.${BPN}.json \
+	file://${BPN}.args.json \
 	"
 
 PVR_APP_ADD_EXTRA_ARGS += " \
