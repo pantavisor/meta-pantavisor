@@ -22,7 +22,7 @@ PVR_APP_ADD_EXTRA_ARGS ?= ""
 
 do_fetch_pvr[dirs] += "${PVR_CONFIG_DIR}"
 do_fetch_pvr[cleandirs] += "${PVR_SRC_DIR} ${PVR_TMPDIR}"
-do_fetch_pvr[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot"
+do_fetch_pvr[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot virtual/fakeroot-native:do_populate_sysroot"
 do_fetch_pvr[network] = "1"
 
 PSEUDO_IGNORE_PATHS .= ",${PVR_SRC_DIR},${PVR_CONFIG_DIR},${PVR_HOME_DIR}"
