@@ -1,21 +1,23 @@
+LICENSE = "MIT"
+LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
+
+inherit deploy kernel-artifact-names pvr-ca
 
 DEPENDS:append = " \
-	pantavisor-initramfs \
-	 pvr-native \
+	pvr-native \
 	squashfs-tools-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 "
 
-inherit deploy kernel-artifact-names pvr-ca
-
-LICENSE = "MIT"
-LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
-
-INITRAMFS_IMAGE_NAME ?= "pantavisor-bsp-${MACHINE}"
+INITRAMFS_IMAGE ?= "pantavisor-initramfs"
+INITRAMFS_IMAGE_NAME ?= "${@['${INITRAMFS_IMAGE}-${MACHINE}', ''][d.getVar('INITRAMFS_IMAGE') == '']}"
+INITRAMFS_MULTICONFIG ?= ""
+INITRAMFS_DEPLOY_DIR_IMAGE = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${DEPLOY_DIR_IMAGE}", "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}", d)}'
 
 PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
-
 PVS_VENDOR_NAME ??= "generic"
+PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
+PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
 
 PVBSPSTATE = "${WORKDIR}/pvbspstate"
 PVBSP = "${WORKDIR}/pvbsp"
@@ -23,12 +25,15 @@ PVBSP_mods = "${WORKDIR}/pvbsp-mods"
 PVBSP_fw = "${WORKDIR}/pvbsp-fw"
 PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 
-PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
-
 do_compile[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
-do_compile[cleandirs] = " ${PVBSPSTATE} "
+do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} "
 
-PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
+compile_depends = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} virtual/kernel:do_deploy'
+do_compile[depends] += "${compile_depends}"
+
+compile_mcdepends = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }'
+do_compile[mcdepends] += '${compile_mcdepends}'
+
 
 fakeroot do_compile(){
 
@@ -38,8 +43,7 @@ fakeroot do_compile(){
         tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
-    mkdir -p ${PVBSP_mods}/lib/modules
-    [ -d ${IMAGE_ROOTFS}/lib/modules/ ] && cp -rf ${IMAGE_ROOTFS}/lib/modules/*/* ${PVBSP_mods}
+    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/modules-${MODULE_TARBALL_LINK_NAME}.tgz
     [ -d ${IMAGE_ROOTFS}/lib/firmware/ ] && cp -rf ${IMAGE_ROOTFS}/lib/firmware/* ${PVBSP_fw}
     cd ${PVBSPSTATE}
     pvr init
@@ -64,14 +68,14 @@ fakeroot do_compile(){
           *.gz)
               gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
               ;;
-          Image)
+          *Image)
               cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
               ;;
           *)
               echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
               exit 1
        esac
-       cp -f ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
+       cp -f ${INITRAMFS_DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE_NAME}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
        basearts='
     "linux": "kernel.img",
     "initrd": "pantavisor",'
@@ -115,6 +119,4 @@ EOF1
     mkdir -p ${DEPLOY_DIR_IMAGE}
     pvr export ${DEPLOY_DIR_IMAGE}/${PN}-${MACHINE}.pvrexport.tgz
 }
-
-
 
