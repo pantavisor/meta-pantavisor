@@ -14,6 +14,9 @@ INITRAMFS_IMAGE_NAME ?= "pantavisor-initramfs-${MACHINE}"
 
 INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
 
+# set some default MULTICONFIG
+INITRAMFS_MULTICONFIG ??= ""
+
 PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 
 PVS_VENDOR_NAME ??= "generic"
@@ -27,9 +30,14 @@ PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
 
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
+
 do_image_pvbspit[cleandirs] = " ${PVBSPSTATE} "
-do_image_pvbspit[depends] += "${@oe.utils.conditional('${INITRAMFS_MULTICONFIG}', '', 'pantavisor-initramfs:do_image_complete virtual/kernel:do_deploy', '', d)} virtual/kernel:do_deploy"
-do_image_pvbspit[mcdepends] += "${@oe.utils.conditional('${INITRAMFS_MULTICONFIG}', '', '', 'mc::${INITRAMFS_MULTICONFIG}:pantavisor-initramfs:do_image_complete', d)}"
+
+image_depends = "${@oe.utils.conditional('INITRAMFS_MULTICONFIG', '', 'pantavisor-initramfs:do_image_complete', '', d)} virtual/kernel:do_deploy"
+do_image_pvbspit[depends] += "${image_depends}"
+
+image_mcdepends = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:pantavisor-initramfs:do_image_complete", d) }'
+do_image_pvbspit[mcdepends] += '${image_mcdepends}'
 
 PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
 
