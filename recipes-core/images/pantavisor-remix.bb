@@ -13,7 +13,7 @@ inherit image pvroot-image
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
 
-SRC_URI = "file://empty.json"
+SRC_URI = "file://device.json"
 
 PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk"
 PVROOT_IMAGE_BSP ?= "core-image-minimal"
