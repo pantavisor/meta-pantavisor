@@ -75,10 +75,10 @@ fakeroot IMAGE_CMD:pvbspit(){
           *.gz)
               gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
               ;;
-          Image)
+          vmlinu*)
               cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
               ;;
-          zImage)
+          *Image)
               cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
               ;;
           *)
