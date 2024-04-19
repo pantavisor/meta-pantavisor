@@ -27,8 +27,8 @@ DEPENDS:append = " pvr-native \
 
 inherit core-image
 
-IMAGE_FSTYPES:remove = "pvbspit"
-IMAGE_TYPES:remove = "pvbspit"
+IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
+IMAGE_TYPES:remove = "pvbspit pvrexportit"
 
 IMAGE_ROOTFS_SIZE = "8192"
 IMAGE_ROOTFS_EXTRA_SPACE = "0"
