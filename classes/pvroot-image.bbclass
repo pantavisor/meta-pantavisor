@@ -132,7 +132,7 @@ fakeroot python do_rootfs(){
     Path(d.getVar("IMAGE_ROOTFS") + "/trails/0/.pv").mkdir(parents=True, exist_ok=True)
     Path(d.getVar("IMAGE_ROOTFS") + "/trails/0/.pv/README").write_text('hardlinks to artifacts loaded by bootloader')
     Path(d.getVar("IMAGE_ROOTFS") + "/logs").mkdir(parents=True, exist_ok=True)
-    shutil.copy2(Path(d.getVar("THISDIR") + "/files/empty.json"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/json")
+    shutil.copy2(Path(d.getVar("THISDIR") + "/files/device.json"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/json")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/pvrconfig"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/config")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/uboot.txt"), d.getVar("IMAGE_ROOTFS") + "/boot/uboot.txt")
     shutil.copy2(Path(d.getVar("THISDIR") + "/files/pantahub.config"), d.getVar("IMAGE_ROOTFS") + "/config/pantahub.config")
