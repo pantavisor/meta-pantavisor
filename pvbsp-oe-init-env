@@ -24,8 +24,10 @@ cat >> $BUILDDIR/conf/local.conf <<EOF
 
 ### BEGIN META PANTAVISOR
 
-# enable pvbsp kernel class to set correct initramfs
-KERNEL_CLASSES += "pvbsp"
+TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+INITRAMFS_IMAGE = "pantavisor-initramfs"
+INITRAMFS_MULTICONFIG = "pv-initramfs"
+INITRAMFS_DEPLOY_DIR_IMAGE = "${TMPDIR}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
 
 # enable bspimage-pvrexport class; This one will produce
 # a bsp pvrexport from any image you build
@@ -37,7 +39,7 @@ IMAGE_CLASSES += "bspimage-pvrexport"
 IMAGE_CLASSES += "image-pvrexport"
 
 # lets use our goversion
-GOVERSION = "1.20%"
+GOVERSION = "1.20.%"
 
 # enable system_distro build to bring in Xrecipes-core recipes
 PANTAVISOR_SYSTEM_DISTRO = "yes"
