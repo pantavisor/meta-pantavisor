@@ -28,12 +28,17 @@ PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 do_compile[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} "
 
-compile_depends = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} virtual/kernel:do_deploy'
+compile_depends = ' \
+	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
+	empty-image:do_image_complete \
+	virtual/kernel:do_deploy \
+	'
 do_compile[depends] += "${compile_depends}"
 
-compile_mcdepends = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }'
+compile_mcdepends = '\
+	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d)} \
+	'
 do_compile[mcdepends] += '${compile_mcdepends}'
-
 
 fakeroot do_compile(){
 
@@ -44,7 +49,7 @@ fakeroot do_compile(){
     fi
     cd ${PVBSP}
     tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/modules-${MODULE_TARBALL_LINK_NAME}.tgz
-    [ -d ${IMAGE_ROOTFS}/lib/firmware/ ] && cp -rf ${IMAGE_ROOTFS}/lib/firmware/* ${PVBSP_fw}
+    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/empty-image-${MACHINE}.tar.gz --strip-components=2 ./lib/firmware
     cd ${PVBSPSTATE}
     pvr init
     [ -d bsp ] || mkdir bsp
@@ -71,6 +76,10 @@ fakeroot do_compile(){
           *Image)
               cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
               ;;
+          vmlinu*)
+              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+              ;;
+
           *)
               echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
               exit 1
