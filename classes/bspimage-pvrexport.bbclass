@@ -71,28 +71,44 @@ fakeroot IMAGE_CMD:pvbspit(){
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME} ${PVBSPSTATE}/bsp/pantavisor.fit
        basearts='"fit": "pantavisor.fit",'
     else 
-       case ${KERNEL_IMAGETYPE} in
+       kernel_imagetype=${KERNEL_IMAGETYPE}
+       if test -n "${KERNEL_ALT_IMAGETYPE}"; then
+           kernel_imagetype=${KERNEL_ALT_IMAGETYPE}
+       fi
+       if test -n "${PVROOT_KERNEL_IMAGETYPE}"; then
+           kernel_imagetype=${PVROOT_KERNEL_IMAGETYPE}
+       fi
+       case ${kernel_imagetype} in
           *.gz)
-              gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
+              gunzip -c ${DEPLOY_DIR_IMAGE}/${kernel_imagetype} > ${PVBSPSTATE}/bsp/kernel.img
               ;;
           vmlinu*)
-              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+              echo "COPYING vmlinux type of kernel to bsp: cp -f ${DEPLOY_DIR_IMAGE}/${kernel_imagetype} ${PVBSPSTATE}/bsp/kernel.img"
+              cp -f ${DEPLOY_DIR_IMAGE}/${kernel_imagetype} ${PVBSPSTATE}/bsp/kernel.img
               ;;
           *Image)
-              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+              cp -f ${DEPLOY_DIR_IMAGE}/${kernel_imagetype} ${PVBSPSTATE}/bsp/kernel.img
               ;;
           *)
-              echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
+              echo "Unknown kernel type: ${kernel_imagetype}"
               exit 1
        esac
-       cp -f ${INITRAMFS_DEPLOY_DIR_IMAGE}/pantavisor-initramfs-${MACHINE}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
+       for imagetype in ${INITRAMFS_FSTYPES}; do
+           if cp ${INITRAMFS_DEPLOY_DIR_IMAGE}/pantavisor-initramfs-${MACHINE}.${imagetype} ${PVBSPSTATE}/bsp/pantavisor; then
+               break
+           fi
+       done
+       if ! [ -f ${PVBSPSTATE}/bsp/pantavisor ]; then
+           echo "ERROR: no pantavisor initramfs found for types ${INITRAMFS_FSTYPES}"
+           exit 2
+       fi
        basearts='
     "linux": "kernel.img",
     "initrd": "pantavisor",'
 
        if [ -n "${PV_INITIAL_DTB}" ]; then
            cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
-           _pvline="$_pvline
+           basearts="$basearts
        \"fdt\": \"${PV_INITIAL_DTB}\","
        fi
     fi
