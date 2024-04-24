@@ -1,0 +1,24 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+
+# The machine as it is written into the `local.conf` of bitbake.
+machine: qemumips
+local_conf_header:
+  kas-machine-qemu: |
+    PREFERRED_PROVIDER_virtual/bootloader = "u-boot"
+    PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
+    IMAGE_FSTYPES += "wic"
+    WKS_FILE = "qemuriscv.wks"
+    QB_DEFAULT_FSTYPE = "wic"
+    QB_DRIVE_TYPE = "/dev/hd"
+    INITRAMFS_FSTYPES = "cpio.xz"
+    PVROOT_KERNEL_IMAGETYPE = "uImage"
+    UBOOT_DTB_NAME = "malta.dtb"
+    #    HOSTTOOLS += "docker fakeroot"
+

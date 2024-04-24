@@ -1,0 +1,159 @@
+# pantavisor kas choices
+
+choice
+        prompt "Select Build Type"
+        default BUILD_TYPE_BSP_MULTI
+
+config BUILD_TYPE_BSP_MULTI
+        bool "multiconfig"
+
+config BUILD_TYPE_BSP_PLAIN
+        bool "singleconfig"
+
+endchoice
+
+choice
+        prompt "Select Codename to build"
+        default CODENAME_KIRKSTONE
+
+config CODENAME_KIRKSTONE
+        bool "kirkstone"
+
+config CODENAME_SCARTHGAP
+        bool "scarthgap"
+
+endchoice
+
+choice
+        prompt "Select Machine"
+        default MACHINE_QEMUARM
+
+config MACHINE_QEMUARM
+        bool "qemuarm"
+
+config MACHINE_QEMUX86_64
+        bool "qemux86-64"
+
+config MACHINE_QEMUMIPS
+        bool "qemumips"
+
+config MACHINE_RPI_ARMV8
+        bool "raspberrypi-armv8"
+
+config MACHINE_RPI_ARMV7
+        bool "raspberrypi-armv7"
+	depends on CODENAME_SCARTHGAP
+
+config MACHINE_IMX8MN_VAR_SOM
+        bool "variscite imx8mn-var-som"
+	depends on CODENAME_KIRKSTONE
+
+config MACHINE_IMX8MM_VAR_DART
+        bool "variscite imx8mm-var-dart"
+	depends on CODENAME_KIRKSTONE
+
+config MACHINE_ROCKCHIP_RK3328_EVB
+        bool "rockchip rk3328-evb"
+	depends on CODENAME_KIRKSTONE
+
+config MACHINE_ROCKCHIP_RK3328_ROCK64
+        bool "rockchip rk3328-rock64"
+	depends on CODENAME_KIRKSTONE
+
+config MACHINE_ROCKCHIP_RK3399PRO_EVB
+        bool "rockchip rk3399pro-evb"
+	depends on CODENAME_KIRKSTONE
+
+config MACHINE_SUNXI_NANOPI_R1
+        bool "sunxi nanopi r1"
+
+config MACHINE_SUNXI_ORANGE_PI_R1
+        bool "sunxi orange pi r1"
+
+endchoice
+
+config KAS_INCLUDE_MACHINE
+        string
+        default "kas/machines/qemux86-64.yaml" if MACHINE_QEMUX86_64
+        default "kas/machines/qemuarm.yaml" if MACHINE_QEMUARM
+        default "kas/machines/qemumips.yaml" if MACHINE_QEMUMIPS
+        default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RASPBERRYPI_ARMV8
+        default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RASPBERRYPI_ARMV7
+        default "kas/machines/imx8mn-var-som.yaml" if MACHINE_IMX8MN_VAR_SOM
+        default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
+        default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
+        default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
+        default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
+        default "kas/machines/sunxi-nanopi-r1.yaml" if MACHINE_SUNXI_NANOPI_R1
+        default "kas/machines/sunxi-orange-pi-r1.yaml" if MACHINE_SUNXI_ORANGE_PI_R1
+
+config KAS_INCLUDE_CODENAME
+        string
+        default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
+        default "kas/scarthgap.yaml" if CODENAME_SCARTHGAP
+
+config KAS_INCLUDE_BUILD_TYPE
+        string
+        default "kas/bsp-base.yaml" if BUILD_TYPE_BSP_PLAIN
+        default "kas/bsp-multi.yaml" if BUILD_TYPE_BSP_MULTI
+
+
+config KAS_INCLUDE_VARISCITE
+	string
+	default "kas/kirkstone-var.yaml" if MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART
+
+choice
+        prompt "Select Build Target"
+        default BUILD_BSP
+
+config BUILD_BSP
+	bool "pantavisor-bsp"
+
+config BUILD_REMIX
+	bool "pantavisor-remix"
+
+endchoice
+
+config KAS_TARGET_BUILD
+        string
+        default "pantavisor-bsp" if BUILD_BSP
+        default "pantavisor-remix" if BUILD_REMIX
+
+config PVBSP_FIRMWARE_PKG
+	string "BSP Firmware"
+	default "${MACHINE_FIRMWARE} linux-firmware"
+	depends on BUILD_BSP
+
+menu "Containers"
+	depends on BUILD_REMIX
+
+config USE_PVROOT_IMAGE
+	bool "Make root container"
+	default y
+	depends on BUILD_REMIX
+
+config PVROOT_IMAGE
+	string
+	default "yes"
+	depends on USE_PVROOT_IMAGE
+
+config PVROOT_IMAGE_BSP
+	string "Root Container Image"
+	default "core-image-minimal"
+	depends on USE_PVROOT_IMAGE
+
+config CONTAINER_PV_CONNMAN
+	bool "pv-connman"
+
+config KAS_LOCAL_PV_CONNMAN
+	string
+	default "PVROOT_CONTAINER_CORE += \"pv-connman\"" if CONTAINER_PV_CONNMAN
+
+config CONTAINER_PV_PVR_SDK
+	bool  "pv-pvr-sdk"
+
+config KAS_LOCAL_PV_PVR_SDK
+	string
+	default "PVROOT_CONTAINER_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
+endmenu
+

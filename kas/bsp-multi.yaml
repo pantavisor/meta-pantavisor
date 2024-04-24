@@ -1,0 +1,17 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+  includes:
+    - kas/bsp-base.yaml
+
+local_conf_header:
+  meta-pantavisor-multi: |
+    BBMULTICONFIG = "default pv-initramfs-panta"
+    INITRAMFS_MULTICONFIG = "pv-initramfs-panta"
+    INITRAMFS_DEPLOY_DIR_IMAGE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
+

@@ -1,0 +1,27 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+
+# The machine as it is written into the `local.conf` of bitbake.
+repos:
+  meta-freescale:
+    url: "https://github.com/Freescale/meta-freescale.git"
+
+  meta-freescale-3rdparty:
+    url: "https://github.com/Freescale/meta-freescale-3rdparty.git"
+
+  meta-freescale-ml:
+    url: "https://github.com/Freescale/meta-freescale-ml.git"
+
+  meta-freescale-distro:
+    url: "https://github.com/Freescale/meta-freescale-distro.git"
+
+local_conf_header:
+  platform-freescale: |
+     ACCEPT_FSL_EULA = "1"
+
