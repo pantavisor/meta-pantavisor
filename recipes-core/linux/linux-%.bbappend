@@ -1,11 +1,16 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
+KERNEL_IMAGETYPES:qemumips += "uImage"
+KERNEL_CLASSES:qemumips += "kernel-uimage"
+
+KBUILD_DEFCONFIG:qemumips = "malta_defconfig"
+KERNEL_DEVICETREE:qemumips = "mti/malta.dtb"
+
 PANTAVISOR_SRC_URI = " \
 	file://overlayfs.cfg \
 	file://pantavisor.cfg \
 	file://pvcrypt.cfg \
-	file://pvnocma.cfg \
 	file://dm.cfg \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
 "
