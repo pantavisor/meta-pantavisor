@@ -1,9 +1,13 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
+PV_MACHINE_UBOOT_CONFIGS ?= ""
+PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
+
 SRC_URI += " \
 	file://boot.cmd.pvgeneric \
 	file://pv.cfg \
+	${PV_MACHINE_UBOOT_CONFIGS} \
 " 
 
 UBOOT_ENV_SRC = "boot.cmd"
