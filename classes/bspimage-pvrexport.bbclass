@@ -1,4 +1,5 @@
 
+
 DEPENDS:append = " pvr-native \
 	squashfs-tools-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
@@ -11,14 +12,14 @@ IMAGE_TYPES_MASKED += " ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initr
 inherit image kernel-artifact-names pvr-ca
 
 INITRAMFS_IMAGE_NAME ?= "pantavisor-initramfs-${MACHINE}"
-
 INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
-
 # set some default MULTICONFIG
 INITRAMFS_MULTICONFIG ??= ""
 
-PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
+UBOOT_DTB_NAME ?= ""
 
+PV_UBOOT_AUTOFDT ?= ""
+PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
 PVS_VENDOR_NAME ??= "generic"
 
 PVBSPSTATE = "${WORKDIR}/pvbspstate"
@@ -27,7 +28,8 @@ PVBSP_mods = "${WORKDIR}/pvbsp-mods"
 PVBSP_fw = "${WORKDIR}/pvbsp-fw"
 PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 
-PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
+# we check for MACHINE_UBOOT_AUTOFDT flag; if not set this machine assumes dtb is same as UBOOT_DTB_NAME
+PV_INITIAL_DTB ?= "${@oe.utils.conditional('PV_UBOOT_AUTOFDT', '1', '', '${UBOOT_DTB_NAME}', d)}"
 
 do_image_pvbspit[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 
@@ -111,8 +113,14 @@ fakeroot IMAGE_CMD:pvbspit(){
            basearts="$basearts
        \"fdt\": \"${PV_INITIAL_DTB}\","
        fi
+       if [ -n "${PV_UBOOT_AUTOFDT}" -a -n "${KERNEL_DEVICETREE}" ]; then
+           for dtb in ${KERNEL_DEVICETREE}; do
+               dtb_file=`basename $dtb`
+               cp -f ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/
+           done
+       fi
     fi
-          
+
     _pvline="$basearts"
 
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
