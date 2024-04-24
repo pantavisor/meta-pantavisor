@@ -11,6 +11,9 @@ header:
 
 # The machine as it is written into the `local.conf` of bitbake.
 repos:
+  meta-freescale-ml:
+    url: "https://github.com/Freescale/meta-freescale-ml.git"
+
   meta-openembedded:
     layers:
       meta-multimedia:

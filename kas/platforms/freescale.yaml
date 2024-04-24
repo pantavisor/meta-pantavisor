@@ -15,9 +15,6 @@ repos:
   meta-freescale-3rdparty:
     url: "https://github.com/Freescale/meta-freescale-3rdparty.git"
 
-  meta-freescale-ml:
-    url: "https://github.com/Freescale/meta-freescale-ml.git"
-
   meta-freescale-distro:
     url: "https://github.com/Freescale/meta-freescale-distro.git"
 
