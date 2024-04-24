@@ -11,11 +11,9 @@ header:
 repos:
   meta-sunxi:
     url: "https://github.com/linux-sunxi/meta-sunxi"
-    branch: master
 
   meta-arm:
     url: git://git.yoctoproject.org/meta-arm
-    branch: master
     layers:
       meta-arm:
       meta-arm-toolchain:
