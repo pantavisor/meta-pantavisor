@@ -70,6 +70,10 @@ config MACHINE_SUNXI_NANOPI_R1
 config MACHINE_SUNXI_ORANGE_PI_R1
         bool "sunxi orange pi r1"
 
+config MACHINE_CORAL_DEV
+        bool "google coral dev"
+	depends on CODENAME_SCARTHGAP
+
 endchoice
 
 config KAS_INCLUDE_MACHINE
@@ -86,6 +90,7 @@ config KAS_INCLUDE_MACHINE
         default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
         default "kas/machines/sunxi-nanopi-r1.yaml" if MACHINE_SUNXI_NANOPI_R1
         default "kas/machines/sunxi-orange-pi-r1.yaml" if MACHINE_SUNXI_ORANGE_PI_R1
+        default "kas/machines/coral-dev.yaml" if MACHINE_CORAL_DEV
 
 config KAS_INCLUDE_CODENAME
         string
@@ -100,7 +105,11 @@ config KAS_INCLUDE_BUILD_TYPE
 
 config KAS_INCLUDE_VARISCITE
 	string
-	default "kas/kirkstone-var.yaml" if MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART
+	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
+
+config KAS_INCLUDE_FREESCALE
+	string
+	default "kas/scarthgap-freescale.yaml" if CODENAME_SCARTHGAP && MACHINE_CORAL_DEV
 
 choice
         prompt "Select Build Target"
