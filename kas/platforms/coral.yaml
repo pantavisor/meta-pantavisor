@@ -11,21 +11,12 @@ header:
 
 # The machine as it is written into the `local.conf` of bitbake.
 repos:
-  meta-freescale-ml:
-    url: "https://github.com/Freescale/meta-freescale-ml.git"
+  meta-coral:
+    url: "https://github.com/mirzak/meta-coral.git"
+    branch: master
 
-  meta-openembedded:
-    layers:
-      meta-multimedia:
-
-  meta-variscite-bsp:
-    url: "https://github.com/varigit/meta-variscite-bsp.git"
-
-  meta-variscite-hab:
-    url: "https://github.com/varigit/meta-variscite-hab.git"
-
-  meta-variscite-sdk:
-    url: "https://github.com/varigit/meta-variscite-sdk.git"
+  meta-clang:
+    url: "https://github.com/kraj/meta-clang.git"
 
 local_conf_header:
   platform-variscite:
