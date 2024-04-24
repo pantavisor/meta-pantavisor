@@ -5,7 +5,7 @@
 
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
-DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls "
+DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native"
 RDEPENDS:${PN} += "lxc-pv e2fsprogs-resize2fs e2fsprogs-e2fsck e2fsprogs-mke2fs cryptsetup libthttp-certs gptfdisk "
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
 LICENSE = "MIT"
@@ -27,6 +27,7 @@ FILES:${PN} += " /var/pantavisor/storage/trails/0/.pvr/json"
 FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
 FILES:${PN} += " /storage /writable /volumes /exports /pv /etc/pantavisor /lib/ "
 FILES:${PN} += " /certs"
+FILES:${PN} += " /init"
 
 inherit cmake
 
