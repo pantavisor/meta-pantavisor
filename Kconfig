@@ -1,119 +1,32 @@
 # pantavisor kas choices
 
 choice
-        prompt "Select Build Type"
-        default BUILD_TYPE_BSP_MULTI
+	prompt "Select Build Type"
+	default BUILD_TYPE_BSP_MULTI
 
 config BUILD_TYPE_BSP_MULTI
-        bool "multiconfig"
+	bool "multiconfig"
 
 config BUILD_TYPE_BSP_PLAIN
-        bool "singleconfig"
+	bool "singleconfig"
 
 endchoice
 
 choice
-        prompt "Select Codename to build"
-        default CODENAME_KIRKSTONE
+	prompt "Select Codename to build"
+	default CODENAME_KIRKSTONE
 
 config CODENAME_KIRKSTONE
-        bool "kirkstone"
+	bool "kirkstone"
 
 config CODENAME_SCARTHGAP
-        bool "scarthgap"
+	bool "scarthgap"
 
 endchoice
 
 choice
-        prompt "Select Machine"
-        default MACHINE_QEMUARM
-
-config MACHINE_QEMUARM
-        bool "qemuarm"
-
-config MACHINE_QEMUX86_64
-        bool "qemux86-64"
-
-config MACHINE_QEMUMIPS
-        bool "qemumips"
-
-config MACHINE_RPI_ARMV8
-        bool "raspberrypi-armv8"
-
-config MACHINE_RPI_ARMV7
-        bool "raspberrypi-armv7"
-	depends on CODENAME_SCARTHGAP
-
-config MACHINE_IMX8MN_VAR_SOM
-        bool "variscite imx8mn-var-som"
-	depends on CODENAME_KIRKSTONE
-
-config MACHINE_IMX8MM_VAR_DART
-        bool "variscite imx8mm-var-dart"
-	depends on CODENAME_KIRKSTONE
-
-config MACHINE_ROCKCHIP_RK3328_EVB
-        bool "rockchip rk3328-evb"
-	depends on CODENAME_KIRKSTONE
-
-config MACHINE_ROCKCHIP_RK3328_ROCK64
-        bool "rockchip rk3328-rock64"
-	depends on CODENAME_KIRKSTONE
-
-config MACHINE_ROCKCHIP_RK3399PRO_EVB
-        bool "rockchip rk3399pro-evb"
-	depends on CODENAME_KIRKSTONE
-
-config MACHINE_SUNXI_NANOPI_R1
-        bool "sunxi nanopi r1"
-
-config MACHINE_SUNXI_ORANGE_PI_R1
-        bool "sunxi orange pi r1"
-
-config MACHINE_CORAL_DEV
-        bool "google coral dev"
-	depends on CODENAME_SCARTHGAP
-
-endchoice
-
-config KAS_INCLUDE_MACHINE
-        string
-        default "kas/machines/qemux86-64.yaml" if MACHINE_QEMUX86_64
-        default "kas/machines/qemuarm.yaml" if MACHINE_QEMUARM
-        default "kas/machines/qemumips.yaml" if MACHINE_QEMUMIPS
-        default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RASPBERRYPI_ARMV8
-        default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RASPBERRYPI_ARMV7
-        default "kas/machines/imx8mn-var-som.yaml" if MACHINE_IMX8MN_VAR_SOM
-        default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
-        default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
-        default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
-        default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
-        default "kas/machines/sunxi-nanopi-r1.yaml" if MACHINE_SUNXI_NANOPI_R1
-        default "kas/machines/sunxi-orange-pi-r1.yaml" if MACHINE_SUNXI_ORANGE_PI_R1
-        default "kas/machines/coral-dev.yaml" if MACHINE_CORAL_DEV
-
-config KAS_INCLUDE_CODENAME
-        string
-        default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
-        default "kas/scarthgap.yaml" if CODENAME_SCARTHGAP
-
-config KAS_INCLUDE_BUILD_TYPE
-        string
-        default "kas/bsp-base.yaml" if BUILD_TYPE_BSP_PLAIN
-        default "kas/bsp-multi.yaml" if BUILD_TYPE_BSP_MULTI
-
-
-config KAS_INCLUDE_VARISCITE
-	string
-	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
-
-config KAS_INCLUDE_FREESCALE
-	string
-	default "kas/scarthgap-freescale.yaml" if CODENAME_SCARTHGAP && MACHINE_CORAL_DEV
-
-choice
-        prompt "Select Build Target"
-        default BUILD_BSP
+	prompt "Select Build Target"
+	default BUILD_BSP
 
 config BUILD_BSP
 	bool "pantavisor-bsp"
@@ -124,9 +37,9 @@ config BUILD_REMIX
 endchoice
 
 config KAS_TARGET_BUILD
-        string
-        default "pantavisor-bsp" if BUILD_BSP
-        default "pantavisor-remix" if BUILD_REMIX
+	string
+	default "pantavisor-bsp" if BUILD_BSP
+	default "pantavisor-remix" if BUILD_REMIX
 
 config PVBSP_FIRMWARE_PKG
 	string "BSP Firmware"
@@ -165,4 +78,190 @@ config KAS_LOCAL_PV_PVR_SDK
 	string
 	default "PVROOT_CONTAINER_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
 endmenu
+
+config MACHINE_FILTER_ALL
+	bool "Show All Machines"
+	default y
+
+choice
+	prompt "Filter Machines"
+	default PLATFORM_QEMU
+	depends on MACHINE_FILTER_ALL = n
+
+config MACHINE_FILTER_QEMU
+	bool "qemu"
+
+config MACHINE_FILTER_VARISCITE
+	bool "Variscite NXP"
+
+config MACHINE_FILTER_CORAL
+	bool "Coral NXP"
+	depends on CODENAME_SCARTHGAP
+
+config MACHINE_FILTER_RPI
+	bool "Raspberry Pi"
+
+config MACHINE_FILTER_ROCKCHIP
+	bool "Rockchip"
+
+config MACHINE_FILTER_SUNXI
+	bool "sunxi"
+
+endchoice
+
+config PLATFORM_CORAL
+	bool
+
+config PLATFORM_QEMU
+	bool
+
+config PLATFORM_RPI
+	bool
+
+config PLATFORM_VARISCITE
+	bool
+
+choice
+	prompt "Machine"
+	default MACHINE_QEMUARM
+
+config MACHINE_QEMUARM
+	bool "qemuarm"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_QEMU
+	select PLATFORM_QEMU
+
+config MACHINE_QEMUX86_64
+	bool "qemux86-64"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_QEMU
+	select PLATFORM_QEMU
+
+config MACHINE_QEMUMIPS
+	bool "qemumips"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_QEMU
+	select PLATFORM_QEMU
+
+config MACHINE_RPI_ARMV8
+	bool "raspberrypi-armv8"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RPI
+	select PLATFORM_RPI
+
+config MACHINE_RPI_ARMV7
+	bool "raspberrypi-armv7"
+	depends on CODENAME_SCARTHGAP
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RPI
+	select PLATFORM_RPI
+
+config MACHINE_IMX8MN_VAR_SOM
+	bool "imx8mn-var-som"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
+	select PLATFORM_VARISCITE
+
+config MACHINE_IMX8MM_VAR_DART
+	bool "imx8mm-var-dart"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
+	select PLATFORM_VARISCITE
+
+config MACHINE_CORAL_DEV
+	bool "Google Coral Dev"
+	depends on CODENAME_SCARTHGAP
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_CORAL
+	select PLATFORM_CORAL
+
+config MACHINE_ROCKCHIP_RK3328_EVB
+	bool "rockchip rk3328-evb"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+
+config MACHINE_ROCKCHIP_RK3328_ROCK64
+	bool "rockchip rk3328-rock64"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+
+config MACHINE_ROCKCHIP_RK3399PRO_EVB
+	bool "rockchip rk3399pro-evb"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+
+config MACHINE_SUNXI_NANOPI_R1
+	bool "sunxi nanopi r1"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+
+config MACHINE_SUNXI_ORANGE_PI_R1
+	bool "sunxi orange pi r1"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+
+endchoice
+
+config KAS_INCLUDE_MACHINE_QEMUX86_64
+	string
+	default "kas/machines/qemux86-64.yaml" if MACHINE_QEMUX86_64
+
+config KAS_INCLUDE_MACHINE_QEMUARM
+	string
+	default "kas/machines/qemuarm.yaml" if MACHINE_QEMUARM
+
+config KAS_INCLUDE_MACHINE_QEMUMIPS
+	string
+	default "kas/machines/qemumips.yaml" if MACHINE_QEMUMIPS
+
+config KAS_INCLUDE_MACHINE_RASPBERRYPI_ARMV8
+	string
+	default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RASPBERRYPI_ARMV8
+
+config KAS_INCLUDE_MACHINE_RASPBERRYPI_ARMV7
+	string
+	default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RASPBERRYPI_ARMV7
+
+config KAS_INCLUDE_MACHINE_IMX8MN_VAR_SOM
+	string
+	default "kas/machines/imx8mn-var-som.yaml" if MACHINE_IMX8MN_VAR_SOM
+
+config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
+	string
+	default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
+
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
+	string
+	default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
+
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_ROCK64
+	string
+	default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
+
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399PRO_EVB
+	string
+	default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
+
+config KAS_INCLUDE_MACHINE_SUNXI_NANOPI_R1
+	string
+	default "kas/machines/sunxi-nanopi-r1.yaml" if MACHINE_SUNXI_NANOPI_R1
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_R1
+	string
+	default "kas/machines/sunxi-orange-pi-r1.yaml" if MACHINE_SUNXI_ORANGE_PI_R1
+
+config KAS_INCLUDE_MACHINE_CORAL_DEV
+	string
+	default "kas/machines/coral-dev.yaml" if MACHINE_CORAL_DEV
+
+config KAS_INCLUDE_CODENAME
+	string
+	default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
+	default "kas/scarthgap.yaml" if CODENAME_SCARTHGAP
+
+config KAS_INCLUDE_BUILD_TYPE
+	string
+	default "kas/bsp-base.yaml" if BUILD_TYPE_BSP_PLAIN
+	default "kas/bsp-multi.yaml" if BUILD_TYPE_BSP_MULTI
+
+
+config KAS_INCLUDE_VARISCITE
+	string
+	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
+
+config KAS_INCLUDE_SCARTHGAP_FREESCALE
+	string
+	default "kas/scarthgap-freescale.yaml" if CODENAME_SCARTHGAP && MACHINE_CORAL_DEV
 
