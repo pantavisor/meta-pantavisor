@@ -1,0 +1,10 @@
+diff --git a/wic/sunxi-sdcard-image.wks.in b/wic/sunxi-sdcard-image.wks.in
+index 43c31a1..aef95d2 100644
+--- a/wic/sunxi-sdcard-image.wks.in
++++ b/wic/sunxi-sdcard-image.wks.in
+@@ -15,4 +15,4 @@
+ 
+ part u-boot --source rawcopy --sourceparams="file=${SPL_BINARY}" --ondisk mmcblk0 --no-table --align 8
+ part /boot --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 2048 --fixed-size ${SUNXI_BOOT_SPACE}
+-part /     --source rootfs --ondisk mmcblk0 --fstype=ext4 --align 2048
++part /     --source rootfs --ondisk mmcblk0 --fstype=ext4 --align 2048 --label root

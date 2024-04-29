@@ -11,6 +11,10 @@ header:
 repos:
   meta-sunxi:
     url: "https://github.com/linux-sunxi/meta-sunxi"
+    patches:
+      wks-root-label:
+        repo: meta-pantavisor
+        path: patches/meta-sunxi/0001-wks-root-label.patch
 
   meta-arm:
     url: git://git.yoctoproject.org/meta-arm
