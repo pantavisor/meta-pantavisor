@@ -9,9 +9,20 @@ header:
   includes:
     - kas/bsp-base.yaml
 
+repos:
+  poky:
+    patches:
+      fit-image-multiconfig:
+        repo: meta-pantavisor
+        path: patches/poky/0001-fit-image-multiconfig.patch
+
+
 local_conf_header:
   meta-pantavisor-multi: |
-    BBMULTICONFIG = "default pv-initramfs-panta"
+    BBMULTICONFIG = "default pv-initramfs-panta pv-panta"
     INITRAMFS_MULTICONFIG = "pv-initramfs-panta"
     INITRAMFS_DEPLOY_DIR_IMAGE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
+    PANTA_MULTICONFIG = "pv-panta"
+    PANTA_DEPLOY_DIR_IMAGE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-pv-panta/deploy/images/${MACHINE}"
+  pantavisor-remix: "# overriden empty by bsp-multi; done through multiconfig"
 
