@@ -31,9 +31,12 @@ repos:
 
 local_conf_header:
   panta-base: |
-    DISTRO_FEATURES += "pantavisor-system"
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     PREFERRED_VERSION_busybox = "1.35.%"
+  pantavisor-system: |
+    DISTRO_FEATURES += "pantavisor-system"
+    INITRAMFS_IMAGE = "pantavisor-initramfs"
+  pantavisor-remix: |
     IMAGE_CLASSES += "bspimage-pvrexport"
     IMAGE_CLASSES += "image-pvrexport"
 
