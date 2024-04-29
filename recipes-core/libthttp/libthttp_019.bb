@@ -13,11 +13,12 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 PACKAGES += "libthttp-certs"
 
-SRC_URI = "file://libthttp-src"
+SRC_URI = "git://gitlab.com/pantacor/libthttp.git;protocol=https;branch=cmake"
+SRCREV = "04515beddfc00b00fa20d5c34dcb1980d5676a21"
 
 FILES:${PN}-certs += " /certs/* "
 
-S = "${WORKDIR}/libthttp-src"
+S = "${WORKDIR}/git"
 
 inherit cmake
 
