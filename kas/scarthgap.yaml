@@ -10,3 +10,9 @@ defaults:
   repos:
     branch: scarthgap
 
+defaults:
+  repos:
+    meta-arm:
+      branch: master
+
+
