@@ -112,6 +112,9 @@ config MACHINE_FILTER_ROCKCHIP
 config MACHINE_FILTER_SUNXI
 	bool "sunxi"
 
+config MACHINE_FILTER_TI
+	bool "ti"
+
 endchoice
 
 config PLATFORM_CORAL
@@ -196,6 +199,10 @@ config MACHINE_SUNXI_NANOPI_R1
 config MACHINE_SUNXI_ORANGE_PI_R1
 	bool "sunxi orange pi r1"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+
+config MACHINE_TI_AM62AXX_EVM
+	bool "TI AVM62axx EVM"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
 
 endchoice
 
