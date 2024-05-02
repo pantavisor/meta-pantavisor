@@ -36,6 +36,11 @@ config BUILD_REMIX
 
 endchoice
 
+config KAS_LOCAL_BUILD_BSP
+	string
+	default "DISTROOVERRIDES .= \":pvbsp\"" if BUILD_BSP
+
+
 config KAS_TARGET_BUILD
 	string
 	default "pantavisor-bsp" if BUILD_BSP
