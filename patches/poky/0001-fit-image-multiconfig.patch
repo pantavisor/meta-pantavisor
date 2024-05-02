@@ -1,0 +1,32 @@
+diff --git a/meta/classes/kernel-fitimage.bbclass b/meta/classes/kernel-fitimage.bbclass
+index 27e17db951..dbea0fd1e2 100644
+--- a/meta/classes/kernel-fitimage.bbclass
++++ b/meta/classes/kernel-fitimage.bbclass
+@@ -1,5 +1,8 @@
+ inherit kernel-uboot kernel-artifact-names uboot-sign
+ 
++INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
++INITRAMFS_MULTICONFIG ?= ""
++
+ def get_fit_replacement_type(d):
+     kerneltypes = d.getVar('KERNEL_IMAGETYPES') or ""
+     replacementtype = ""
+@@ -32,7 +35,8 @@ python __anonymous () {
+ 
+         image = d.getVar('INITRAMFS_IMAGE')
+         if image:
+-            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', ' ${INITRAMFS_IMAGE}:do_image_complete')
++            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}", "", d) }')
++            d.appendVarFlag('do_assemble_fitimage_initramfs', 'mcdepends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc:${BB_CURRENT_MC}:${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }')
+ 
+         ubootenv = d.getVar('UBOOT_ENV')
+         if ubootenv:
+@@ -595,7 +599,7 @@ fitimage_assemble() {
+ 		# Find and use the first initramfs image archive type we find
+ 		found=
+ 		for img in ${FIT_SUPPORTED_INITRAMFS_FSTYPES}; do
+-			initramfs_path="${DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE_NAME}.$img"
++			initramfs_path="${INITRAMFS_DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE_NAME}.$img"
+ 			if [ -e "$initramfs_path" ]; then
+ 				bbnote "Found initramfs image: $initramfs_path"
+ 				found=true
