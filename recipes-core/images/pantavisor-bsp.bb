@@ -26,7 +26,7 @@ PVBSP_fw = "${WORKDIR}/pvbsp-fw"
 PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 
 do_compile[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
-do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} "
+do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} ${PVBSP_fw}"
 
 compile_depends = ' \
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
