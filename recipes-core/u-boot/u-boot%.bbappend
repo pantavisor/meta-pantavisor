@@ -10,14 +10,17 @@ SRC_URI += " \
 	${PV_MACHINE_UBOOT_CONFIGS} \
 " 
 
+UBOOT_ENV = "boot"
 UBOOT_ENV_SRC = "boot.cmd"
 UBOOT_ENV_SRC_FRAGS += " boot.cmd.pvgeneric "
-UBOOT_ENV = "boot"
 UBOOT_ENV_SUFFIX = "scr"
+UBOOT_ENV_SRC:pvbsp = ""
+UBOOT_ENV:pvbsp = ""
+UBOOT_ENV_SUFFIX:pvbsp = ""
 
 do_prepcompile() {
 
-	if [ -z "${UBOOT_ENV_SRC_FRAGS}" ]; then
+	if [ -z "${UBOOT_ENV}" -o -z "${UBOOT_ENV_SRC_FRAGS}" ]; then
 		return 0
 	fi
 
