@@ -27,15 +27,20 @@ IMAGE_FEATURES = ""
 
 FAKEROOT_CMD = "pseudo"
 
+PANTA_MULTICONFIG ?= ""
+PANTA_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
+
 python __anonymous () {
     pn = d.getVar("PN")
 
+    mc = d.getVar("PANTA_MULTICONFIG")
+
     for img in d.getVar("PVROOT_IMAGE_BSP").split():
-        d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_image_complete')
+        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
     for img in d.getVar("PVROOT_CONTAINERS").split():
-        d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_deploy')
+        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
     for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
-        d.appendVarFlag('do_rootfs', 'depends', ' '+img+':do_deploy')
+        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
 
     d.delVarFlag("do_fetch", "noexec")
     d.delVarFlag("do_unpack", "noexec")
@@ -54,7 +59,7 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
         tmpdir=d.getVar("WORKDIR") + "/pvrrepo"
         configdir=d.getVar("WORKDIR") + "/pvrconfig"
         deployrootfs=d.getVar("IMAGE_ROOTFS") + "/trails/0"
-        deployimg=d.getVar("DEPLOY_DIR_IMAGE")
+        deployimg=d.getVar("PANTA_DEPLOY_DIR_IMAGE")
         Path(deployrootfs).mkdir(parents=True, exist_ok=True)
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
