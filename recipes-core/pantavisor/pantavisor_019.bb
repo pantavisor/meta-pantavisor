@@ -19,6 +19,8 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=feat
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://pantavisor.config"
 SRC_URI += " file://pantavisor-embedded.config"
+SRC_URI += " file://policies/"
+SRC_URI += " file://ssh/"
 SRC_URI += " file://rev0json"
 
 SRCREV = "25614eeb9f537d8d6158a720cb0bccfe3028fd1a"
@@ -40,6 +42,9 @@ CMAKE_BINARY_DIR = "${S}"
 do_install() {
 	cmake_do_install
 	install -d ${D}/etc
+	install -d ${D}/etc/pantavisor
+	install -d ${D}/etc/pantavisor/policies
+	install -d ${D}/etc/pantavisor/ssh
 	install -d ${D}/var/pantavisor/structure
 	install -d ${D}/usr/share/pantavisor/skel/etc/pantavisor/defaults
 	install -d ${D}/usr/share/pantavisor/skel/writable
@@ -65,7 +70,8 @@ do_install() {
 	install -d ${D}/var/pantavisor/ovl/upper
 	install -d ${D}/lib/pv
 	install -d ${D}/usr/lib
-	install -m 0644 ${WORKDIR}/pantavisor-embedded.config ${D}/etc/pantavisor.config
+	install -m 0644 ${WORKDIR}/policies/* ${D}/etc/pantavisor/policies/
+	install -m 0644 ${WORKDIR}/ssh/* ${D}/etc/pantavisor/ssh/
 	install -m 0644 ${S}/defaults/groups.json ${D}/usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
