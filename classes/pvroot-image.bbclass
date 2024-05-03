@@ -170,7 +170,7 @@ fakeroot python do_rootfs(){
     print ("completed pvr checkout -hl for skel process: %d" % process.returncode)
     process = subprocess.run(
          ['pvr', 'sig', 'add', '--raw', '_pvskel',
-          '--include', 'device.json',
+          '--include', 'device-envelope.json',
           '--include', '#spec',
           '--exclude', '__pvrsigbug__' ],
          cwd=Path(traildir),

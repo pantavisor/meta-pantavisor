@@ -40,6 +40,14 @@ compile_mcdepends = '\
 	'
 do_compile[mcdepends] += '${compile_mcdepends}'
 
+PVBSP_VENDORID_FILE ?= ""
+
+SRC_URI += " \
+	file://device.json \
+	file://drivers.json \
+	${@oe.utils.conditional('PVBSP_VENDORID_FILE', '', '', 'file://${PVBSP_VENDORID_FILE}', d)} \
+"
+
 fakeroot do_compile(){
 
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
@@ -55,6 +63,10 @@ fakeroot do_compile(){
     [ -d bsp ] || mkdir bsp
     [ -f bsp/modules.squashfs ] && rm -f bsp/modules.squashfs
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
+
+    # copy the skeleton
+    cp -rf ${WORKDIR}/device.json .
+    cp -rf ${WORKDIR}/drivers.json bsp/
 
     mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}

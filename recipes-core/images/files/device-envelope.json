@@ -1,0 +1,52 @@
+{ 
+    "#spec": "pantavisor-service-system@1",
+    "device.json": {
+	"disks": [
+            {
+		"name": "dm-internal-secrets",
+		"path": "/storage/dm-crypt-files/dm-internal-secrets/versatile.img,2,versatile_key-internal_secrets",
+		"type": "dm-crypt-versatile"
+            }
+	],
+	"groups": [
+            {
+		"description": "Containers which volumes we want to mount but not to be started",
+		"name": "data",
+		"restart_policy": "system",
+		"status_goal": "MOUNTED",
+		"timeout": 30
+            },
+            {
+		"description": "Container or containers that are in charge of setting network connectivity up for the board",
+		"name": "root",
+		"restart_policy": "system",
+		"status_goal": "STARTED",
+		"timeout": 30
+            },
+            {
+		"description": "Middleware and utility containers",
+		"name": "platform",
+		"restart_policy": "system",
+		"status_goal": "STARTED",
+		"timeout": 30
+            },
+            {
+		"description": "Application level containers",
+		"name": "app",
+		"restart_policy": "container",
+		"status_goal": "STARTED",
+		"timeout": 30
+            }
+	],
+	"volumes": {
+            "pv--devmeta": {
+		"disk": "dm-internal-secrets",
+		"persistence": "permanent"
+            },
+            "pv--usrmeta": {
+		"disk": "dm-internal-secrets",
+		"persistence": "permanent"
+            }
+	}
+    }
+}
