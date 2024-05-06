@@ -258,6 +258,11 @@ config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string
 	default "kas/machines/coral-dev.yaml" if MACHINE_CORAL_DEV
 
+config KAS_INCLUDE_MACHINE_TI_AM62AXX_EVM
+	string
+	default "kas/machines/ti-am62axx-evm.yaml" if MACHINE_TI_AM62AXX_EVM
+
+
 config KAS_INCLUDE_CODENAME
 	string
 	default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
