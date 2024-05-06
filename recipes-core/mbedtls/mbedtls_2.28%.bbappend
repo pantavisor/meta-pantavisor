@@ -1,4 +1,8 @@
 
+SRC_URI += " \
+	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
+	"
+
 TARGET_CFLAGS += " \
         -I${S}/configs \
         -DMBEDTLS_CONFIG_FILE='<config-mini-tls1_1.h>' \
