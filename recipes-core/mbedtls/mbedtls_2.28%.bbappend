@@ -1,3 +1,4 @@
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}"
 
 SRC_URI += " \
 	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
