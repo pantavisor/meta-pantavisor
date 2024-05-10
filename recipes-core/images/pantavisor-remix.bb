@@ -1,17 +1,14 @@
 SUMMARY = "A small image just capable of allowing a device to boot."
-
-CORE_IMAGE_EXTRA_INSTALL ?= ""
-
-IMAGE_INSTALL = ""
-
-IMAGE_LINGUAS = " "
-
 LICENSE = "MIT"
 
 inherit image pvroot-image
 
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
+
+IMAGE_INSTALL = ""
+IMAGE_LINGUAS = ""
+IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 
 SRC_URI = "file://device.json"
 
