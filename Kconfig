@@ -204,6 +204,14 @@ config MACHINE_TI_AM62AXX_EVM
 	bool "TI AVM62axx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
 
+config MACHINE_TI_AM65XX_EVM
+	bool "TI AVM65xx EVM"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+
+config MACHINE_TI_BEAGLEPLAY
+	bool "TI Beagleplay"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+
 endchoice
 
 config KAS_INCLUDE_MACHINE_QEMUX86_64
@@ -262,6 +270,13 @@ config KAS_INCLUDE_MACHINE_TI_AM62AXX_EVM
 	string
 	default "kas/machines/ti-am62axx-evm.yaml" if MACHINE_TI_AM62AXX_EVM
 
+config KAS_INCLUDE_MACHINE_TI_AM65XX_EVM
+	string
+	default "kas/machines/ti-am65xx-evm.yaml" if MACHINE_TI_AM65XX_EVM
+
+config KAS_INCLUDE_MACHINE_TI_BEAGLEPLAY
+	string
+	default "kas/machines/ti-beagleplay.yaml" if MACHINE_TI_BEAGLEPLAY
 
 config KAS_INCLUDE_CODENAME
 	string
