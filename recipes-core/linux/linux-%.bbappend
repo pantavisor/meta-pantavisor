@@ -1,6 +1,8 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
+INITRAMFS_IMAGE ?= "pantavisor-initramfs"
+
 KERNEL_IMAGETYPES:qemumips += "uImage"
 KERNEL_CLASSES:qemumips += "kernel-uimage"
 
