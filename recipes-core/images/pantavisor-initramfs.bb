@@ -27,7 +27,7 @@ DEPENDS:append = " pvr-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 "
 
-inherit core-image
+inherit image
 
 IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
 IMAGE_TYPES:remove = "pvbspit pvrexportit"
