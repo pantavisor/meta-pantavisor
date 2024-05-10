@@ -7,6 +7,8 @@ VIRTUAL-RUNTIME_init_manager = "pantavisor"
 
 PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOTSTRAP_INSTALL}"
 
+IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
+
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
 AGL_FEATURES = ""
