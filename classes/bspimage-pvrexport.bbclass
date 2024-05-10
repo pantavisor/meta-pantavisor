@@ -7,9 +7,11 @@ DEPENDS:append = " pvr-native \
 
 IMAGE_TYPES += " pvbspit "
 IMAGE_FSTYPES += " pvbspit "
-IMAGE_TYPES_MASKED += " ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', 'pvbspit', '', d)}"
+
 
 inherit image kernel-artifact-names pvr-ca
+
+IMAGE_TYPES_MASKED += ' ${@oe.utils.conditional("PVROOT_IMAGE_BSP", "${PN}", "wic wic.*", "", d)}'
 
 INITRAMFS_IMAGE_NAME ?= "pantavisor-initramfs-${MACHINE}"
 INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
