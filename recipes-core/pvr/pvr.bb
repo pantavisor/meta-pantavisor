@@ -5,8 +5,8 @@ HOMEPAGE = "https://golang.org/"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI = "git://${GO_IMPORT};branch=bugfix/no-fakeroot-if-root;protocol=https"
-SRCREV = "a16c7df04375b4cc15fc1eecba811fcfdc95b3dd"
+SRC_URI = "git://${GO_IMPORT};branch=feature/pvr-improvements-for-yocto;protocol=https"
+SRCREV = "74b2d467d8bdddf555a18f2e847db8025a0375fb"
 UPSTREAM_CHECK_COMMITS = "1"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
