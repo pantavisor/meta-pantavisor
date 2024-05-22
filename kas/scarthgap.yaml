@@ -9,10 +9,10 @@ header:
 defaults:
   repos:
     branch: scarthgap
-
-defaults:
-  repos:
-    meta-arm:
-      branch: master
-
+repos:
+  poky:
+    patches:
+      fit-image-multiconfig:
+        repo: meta-pantavisor
+        path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
 

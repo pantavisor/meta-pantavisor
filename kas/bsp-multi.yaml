@@ -9,14 +9,6 @@ header:
   includes:
     - kas/bsp-base.yaml
 
-repos:
-  poky:
-    patches:
-      fit-image-multiconfig:
-        repo: meta-pantavisor
-        path: patches/poky/0001-fit-image-multiconfig.patch
-
-
 local_conf_header:
   meta-pantavisor-multi: |
     BBMULTICONFIG = "default pv-initramfs-panta pv-panta"
