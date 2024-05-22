@@ -16,7 +16,7 @@ index 27e17db951..dbea0fd1e2 100644
          image = d.getVar('INITRAMFS_IMAGE')
          if image:
 -            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', ' ${INITRAMFS_IMAGE}:do_image_complete')
-+            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}", "", d) }')
++            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d) }')
 +            d.appendVarFlag('do_assemble_fitimage_initramfs', 'mcdepends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc:${BB_CURRENT_MC}:${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }')
  
          ubootenv = d.getVar('UBOOT_ENV')
