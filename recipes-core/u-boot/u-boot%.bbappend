@@ -1,6 +1,8 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
+OVERRIDES =. "mc-${BB_CURRENT_MC}:"
+
 PV_MACHINE_UBOOT_CONFIGS ?= ""
 PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
 
@@ -10,13 +12,18 @@ SRC_URI += " \
 	${PV_MACHINE_UBOOT_CONFIGS} \
 " 
 
-UBOOT_ENV = "boot"
-UBOOT_ENV_SRC = "boot.cmd"
-UBOOT_ENV_SRC_FRAGS += " boot.cmd.pvgeneric "
-UBOOT_ENV_SUFFIX = "scr"
-UBOOT_ENV_SRC:pvbsp = ""
-UBOOT_ENV:pvbsp = ""
-UBOOT_ENV_SUFFIX:pvbsp = ""
+uboot_env:mc-default = "boot"
+uboot_env_src:mc-default = "boot.txt"
+uboot_env_src_frags:mc-default += " boot.cmd.pvgeneric "
+uboot_env_suffix:mc-default ?= "scr"
+uboot_env_src:pvbsp = ""
+uboot_env:pvbsp = ""
+uboot_env_suffix:pvbsp = ""
+
+UBOOT_ENV = "${uboot_env}"
+UBOOT_ENV_SRC = "${uboot_env_src}"
+UBOOT_ENV_SRC_FRAGS = "${uboot_env_src_frags}"
+UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
 
 do_prepcompile() {
 
@@ -30,5 +37,5 @@ do_prepcompile() {
 	done
 }
 
-addtask prepcompile before do_compile after do_patch
+addtask prepcompile before do_configure do_compile after do_fetch do_patch
 
