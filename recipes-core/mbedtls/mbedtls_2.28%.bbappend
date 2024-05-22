@@ -1,9 +1,9 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}-${PV}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 OVERRIDES =. "${DISTRO_CODENAME}:"
 
 SRC_URI += " \
-	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
+	file://${PV}/0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
 	"
 
 TARGET_CFLAGS += " \
