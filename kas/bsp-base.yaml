@@ -32,7 +32,10 @@ repos:
 local_conf_header:
   panta-base: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
-    PREFERRED_VERSION_busybox = "1.35.%"
+  panta-busybox: |
+    PREFERRED_VERSION_busybox = "1.36%"
+  panta-mbedtls: |
+    PREFERRED_VERSION_mbedtls = "2.28.%"
   pantavisor-system: |
     DISTRO_FEATURES += "pantavisor-system"
     INITRAMFS_IMAGE = "pantavisor-initramfs"

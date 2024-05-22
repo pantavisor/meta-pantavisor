@@ -16,5 +16,7 @@ local_conf_header:
     INITRAMFS_DEPLOY_DIR_IMAGE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
     PANTA_MULTICONFIG = "pv-panta"
     PANTA_DEPLOY_DIR_IMAGE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-pv-panta/deploy/images/${MACHINE}"
-  pantavisor-remix: "# overriden empty by bsp-multi; done through multiconfig"
+  pantavisor-remix: "# overriden empty by bsp-multi; done through conf/multiconfig/pv-panta.conf"
+  panta-busybox: "# empty panta busybox version fix; will be set in pv-initramfs-panta.conf multiconfig"
+  panta-mbedtls: "# empty panta mbedtls version fix; will be set in pv-initramfs-panta.conf multiconfig"
 
