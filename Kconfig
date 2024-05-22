@@ -113,7 +113,10 @@ config MACHINE_FILTER_SUNXI
 	bool "sunxi"
 
 config MACHINE_FILTER_TI
-	bool "ti"
+	bool "TI"
+
+config MACHINE_FILTER_RISCV
+	bool "RISC-V"
 
 endchoice
 
@@ -127,6 +130,18 @@ config PLATFORM_RPI
 	bool
 
 config PLATFORM_VARISCITE
+	bool
+
+config PLATFORM_TI
+	bool
+
+config PLATFORM_RISCV
+	bool
+
+config PLATFORM_ROCKCHIP
+	bool
+
+config PLATFORM_SUNXI
 	bool
 
 choice
@@ -181,36 +196,54 @@ config MACHINE_ROCKCHIP_RK3328_EVB
 	bool "rockchip rk3328-evb"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+	select PLATFORM_ROCKCHIP
 
 config MACHINE_ROCKCHIP_RK3328_ROCK64
 	bool "rockchip rk3328-rock64"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+	select PLATFORM_ROCKCHIP
 
 config MACHINE_ROCKCHIP_RK3399PRO_EVB
 	bool "rockchip rk3399pro-evb"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
+	select PLATFORM_ROCKCHIP
 
 config MACHINE_SUNXI_NANOPI_R1
 	bool "sunxi nanopi r1"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
 
 config MACHINE_SUNXI_ORANGE_PI_R1
 	bool "sunxi orange pi r1"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
 
 config MACHINE_TI_AM62AXX_EVM
 	bool "TI AVM62axx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+	select PLATFORM_TI
 
 config MACHINE_TI_AM65XX_EVM
 	bool "TI AVM65xx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+	select PLATFORM_TI
+
+config MACHINE_TI_BEAGLEBONE
+	bool "TI Beaglebone"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+	select PLATFORM_TI
 
 config MACHINE_TI_BEAGLEPLAY
 	bool "TI Beagleplay"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
+	select PLATFORM_TI
+
+config MACHINE_RISCV_VISIONFIVE2
+	bool "RISC-V Visionfive2"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RISCV
+	select PLATFORM_RISCV
 
 endchoice
 
@@ -274,20 +307,27 @@ config KAS_INCLUDE_MACHINE_TI_AM65XX_EVM
 	string
 	default "kas/machines/ti-am65xx-evm.yaml" if MACHINE_TI_AM65XX_EVM
 
+config KAS_INCLUDE_MACHINE_TI_BEAGLEBONE
+	string
+	default "kas/machines/ti-beaglebone.yaml" if MACHINE_TI_BEAGLEBONE
+
 config KAS_INCLUDE_MACHINE_TI_BEAGLEPLAY
 	string
 	default "kas/machines/ti-beagleplay.yaml" if MACHINE_TI_BEAGLEPLAY
 
-config KAS_INCLUDE_CODENAME
+config KAS_INCLUDE_MACHINE_RISCV_VISIONFIVE2
 	string
-	default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
-	default "kas/scarthgap.yaml" if CODENAME_SCARTHGAP
+	default "kas/machines/riscv-visionfive2.yaml" if MACHINE_RISCV_VISIONFIVE2
 
 config KAS_INCLUDE_BUILD_TYPE
 	string
 	default "kas/bsp-base.yaml" if BUILD_TYPE_BSP_PLAIN
 	default "kas/bsp-multi.yaml" if BUILD_TYPE_BSP_MULTI
 
+config KAS_INCLUDE_CODENAME
+	string
+	default "kas/kirkstone.yaml" if CODENAME_KIRKSTONE
+	default "kas/scarthgap.yaml" if CODENAME_SCARTHGAP
 
 config KAS_INCLUDE_VARISCITE
 	string
@@ -296,4 +336,12 @@ config KAS_INCLUDE_VARISCITE
 config KAS_INCLUDE_SCARTHGAP_FREESCALE
 	string
 	default "kas/scarthgap-freescale.yaml" if CODENAME_SCARTHGAP && MACHINE_CORAL_DEV
+
+config KAS_INCLUDE_SCARTHGAP_TI
+	string
+	default "kas/scarthgap-ti.yaml" if CODENAME_SCARTHGAP && PLATFORM_TI
+
+config KAS_INCLUDE_SCARTHGAP_RISCV
+	string
+	default "kas/scarthgap-riscv.yaml" if CODENAME_SCARTHGAP && PLATFORM_RISCV
 
