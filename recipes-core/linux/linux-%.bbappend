@@ -1,4 +1,6 @@
 
+OVERRIDES =. "mc-${BB_CURRENT_MC}:"
+
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 INITRAMFS_IMAGE ?= "pantavisor-initramfs"
@@ -35,3 +37,14 @@ KERNEL_CONFIG_FRAGMENTS:append = " \
 "
 
 COMPATIBLE_MACHINE:qemuarm-pv = "qemuarm-pv"
+
+
+# for bootscript in fitimage
+uboot_env:mc-default = "boot"
+uboot_env_suffix:mc-default ?= "scr"
+uboot_env_src:pvbsp = ""
+uboot_env_suffix:pvbsp = ""
+
+UBOOT_ENV = "${uboot_env}"
+UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
+
