@@ -1,19 +1,9 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}-${PV}:"
 
 OVERRIDES =. "${DISTRO_CODENAME}:"
 
-PATCHES ?= ""
-
-PATCHES:kirkstone += " \
-	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
-	"
-
-PATCHES:scarthgap += " \
-	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.scarthgap.patch \
-	"
-
 SRC_URI += " \
-	${PATCHES} \
+	file://0001-make-pk_wrap.c-support-validating-ANSI-X9.62-FIPS-18.patch \
 	"
 
 TARGET_CFLAGS += " \
