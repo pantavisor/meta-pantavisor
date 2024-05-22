@@ -23,7 +23,7 @@ SRC_URI += " file://policies/"
 SRC_URI += " file://ssh/"
 SRC_URI += " file://rev0json"
 
-SRCREV = "cb462404293242af37230f9312aa0325b461e31b"
+SRCREV = "6802f06e27297ba3c4079be2b65ae39a6c5fe7fc"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
