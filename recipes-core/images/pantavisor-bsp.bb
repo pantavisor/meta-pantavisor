@@ -132,7 +132,17 @@ EOF1
         export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
     fi
 
-    pvr sig add --raw bsp --include 'bsp/**' --include '#spec' --exclude 'bsp/src.json'
+    if [ "${UBOOT_SIGN_ENABLE}" = "1" -a -f "bsp/pantavisor.fit" ]; then
+        pvr_extra_sig_args="--exclude bsp/pantavisor.fit"
+    fi
+
+    pvr sig add --raw bsp \
+	--include 'bsp/**' \
+	--include 'device.json' \
+	--include '#spec' \
+	--exclude 'bsp/src.json' \
+	${pvr_extra_sig_args}
+
     pvr add; pvr commit
     pvr sig up
     pvr sig ls
