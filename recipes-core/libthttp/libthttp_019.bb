@@ -13,8 +13,8 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 PACKAGES += "libthttp-certs"
 
-SRC_URI = "git://gitlab.com/pantacor/libthttp.git;protocol=https;branch=cmake"
-SRCREV = "04515beddfc00b00fa20d5c34dcb1980d5676a21"
+SRC_URI = "git://gitlab.com/pantacor/libthttp.git;protocol=https;branch=master"
+SRCREV = "a51d14e3ece654013558043a5ae2e1b68b4ef93f"
 
 FILES:${PN}-certs += " /certs/* "
 
