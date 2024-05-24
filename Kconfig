@@ -204,14 +204,8 @@ config MACHINE_CORAL_DEV
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_CORAL
 	select PLATFORM_CORAL
 
-config MACHINE_ROCKCHIP_RK3328_EVB
-	bool "rockchip rk3328-evb"
-	depends on CODENAME_KIRKSTONE
-	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
-	select PLATFORM_ROCKCHIP
-
-config MACHINE_ROCKCHIP_RK3328_ROCK64
-	bool "rockchip rk3328-rock64"
+config MACHINE_ROCKCHIP_ROCK64
+	bool "rockchip rock64 rk3328b"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
@@ -296,9 +290,9 @@ config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
 	string
 	default "kas/machines/imx8qxp-b0-mek.yaml" if MACHINE_IMX8QXP_B0_MEK
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
+config KAS_INCLUDE_MACHINE_ROCKCHIP_ROCK64
 	string
-	default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
+	default "kas/machines/rockchip-rock64.yaml" if MACHINE_ROCKCHIP_ROCK64
 
 config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_ROCK64
 	string
