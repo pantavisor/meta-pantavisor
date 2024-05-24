@@ -28,7 +28,7 @@ bblayers_conf_header:
     "
 
 local_conf_header:
-  platform-rockchip: |
+  platform-ti: |
     PV_UBOOT_AUTOFDT = "1"
     TI_COMMON_DEPLOY = "${TOPDIR}/deploy-ti-${DISTRO_CODENAME}"
     IMAGE_BOOT_FILES += "boot.scr ${SPL_BINARYNAME} u-boot.${UBOOT_SUFFIX} tiboot3.bin"

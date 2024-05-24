@@ -33,7 +33,7 @@ local_conf_header:
   panta-base: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
   panta-busybox: |
-    PREFERRED_VERSION_busybox = "1.36%"
+    PREFERRED_VERSION_busybox = "1.36~pv.%"
   panta-mbedtls: |
     PREFERRED_VERSION_mbedtls = "2.28.%"
   pantavisor-system: |

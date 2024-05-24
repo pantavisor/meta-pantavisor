@@ -10,5 +10,5 @@ header:
     - kas/platforms/ti.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: am62axx-evm
+machine: am62xx-evm
 
