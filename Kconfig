@@ -205,13 +205,13 @@ config MACHINE_CORAL_DEV
 	select PLATFORM_CORAL
 
 config MACHINE_ROCKCHIP_ROCK64
-	bool "rockchip rock64 rk3328b"
+	bool "rockchip rk3328b rock64"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
-config MACHINE_ROCKCHIP_RK3399PRO_EVB
-	bool "rockchip rk3399pro-evb"
+config MACHINE_ROCKCHIP_RK3399_NANOPI_m4
+	bool "rockchip rk3399 nanopi m4"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
@@ -298,9 +298,9 @@ config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_ROCK64
 	string
 	default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399PRO_EVB
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399_NANOPI_M4
 	string
-	default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
+	default "kas/machines/rockchip-nanopi-m4.yaml" if MACHINE_ROCKCHIP_RK3399_NANOPI_M4
 
 config KAS_INCLUDE_MACHINE_SUNXI_NANOPI_R1
 	string

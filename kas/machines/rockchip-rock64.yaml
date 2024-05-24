@@ -10,5 +10,5 @@ header:
     - kas/platforms/rockchip.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: rockchip-rk3328-evb
+machine: rock64
 
