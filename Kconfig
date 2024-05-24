@@ -97,7 +97,10 @@ config MACHINE_FILTER_QEMU
 	bool "qemu"
 
 config MACHINE_FILTER_VARISCITE
-	bool "Variscite NXP"
+	bool "Variscite"
+
+config MACHINE_FILTER_NXP
+	bool "NXP"
 
 config MACHINE_FILTER_CORAL
 	bool "Coral NXP"
@@ -127,6 +130,9 @@ config PLATFORM_QEMU
 	bool
 
 config PLATFORM_RPI
+	bool
+
+config PLATFORM_NXP
 	bool
 
 config PLATFORM_VARISCITE
@@ -185,6 +191,12 @@ config MACHINE_IMX8MM_VAR_DART
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
 	select PLATFORM_VARISCITE
+
+config MACHINE_IMX8QXP_B0_MEK
+	bool "imx8qxp-b0-mek"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
+	select PLATFORM_NXP
 
 config MACHINE_CORAL_DEV
 	bool "Google Coral Dev"
@@ -280,6 +292,10 @@ config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
 	string
 	default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
 
+config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
+	string
+	default "kas/machines/imx8qxp-b0-mek.yaml" if MACHINE_IMX8QXP_B0_MEK
+
 config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
 	string
 	default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
@@ -341,6 +357,10 @@ config KAS_INCLUDE_CODENAME
 config KAS_INCLUDE_VARISCITE
 	string
 	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
+
+config KAS_INCLUDE_NXP
+	string
+	default "kas/kirkstone-nxp.yaml" if CODENAME_KIRKSTONE && PLATFORM_NXP
 
 config KAS_INCLUDE_SCARTHGAP_FREESCALE
 	string
