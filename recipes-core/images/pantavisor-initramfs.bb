@@ -33,6 +33,8 @@ EXTRA_IMAGEDEPENDS = ""
 UBOOT_ENV = ""
 KERNEL_DEPLOY_DEPEND = ""
 
+NO_RECOMMENDATIONS = "1"
+
 IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
 IMAGE_TYPES:remove = "pvbspit pvrexportit"
 
