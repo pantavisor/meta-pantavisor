@@ -15,7 +15,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=feature/cmake"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=master"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://pantavisor.config"
 SRC_URI += " file://pantavisor-embedded.config"
@@ -23,7 +23,7 @@ SRC_URI += " file://policies/"
 SRC_URI += " file://ssh/"
 SRC_URI += " file://rev0json"
 
-SRCREV = "6802f06e27297ba3c4079be2b65ae39a6c5fe7fc"
+SRCREV = "905f44b9a03f4424f7fc575f8b4795bd62b505a1"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
