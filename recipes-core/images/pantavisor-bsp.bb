@@ -56,7 +56,7 @@ fakeroot do_compile(){
         tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
-    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/modules-${MODULE_TARBALL_LINK_NAME}.tgz --strip-components=3
+    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/empty-image-${MACHINE}.tar.gz --strip-components=3 ./lib/modules
     tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/empty-image-${MACHINE}.tar.gz --strip-components=2 ./lib/firmware
     cd ${PVBSPSTATE}
     pvr init
