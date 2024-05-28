@@ -1,7 +1,7 @@
 LICENSE = "MIT"
 LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit deploy kernel-artifact-names pvr-ca
+inherit deploy kernel-artifact-names pvr-ca image-artifact-names
 
 DEPENDS:append = " \
 	pvr-native \
@@ -48,6 +48,8 @@ SRC_URI += " \
 	${@oe.utils.conditional('PVBSP_VENDORID_FILE', '', '', 'file://${PVBSP_VENDORID_FILE}', d)} \
 "
 
+empty_image_name = "empty-image${IMAGE_MACHINE_SUFFIX}${IMAGE_NAME_SUFFIX}"
+
 fakeroot do_compile(){
 
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
@@ -56,8 +58,8 @@ fakeroot do_compile(){
         tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
-    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/empty-image-${MACHINE}.tar.gz --strip-components=3 ./lib/modules
-    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/empty-image-${MACHINE}.tar.gz --strip-components=2 ./lib/firmware
+    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=4 ./lib/modules
+    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=3 ./lib/firmware
     cd ${PVBSPSTATE}
     pvr init
     [ -d bsp ] || mkdir bsp
