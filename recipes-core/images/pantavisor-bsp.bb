@@ -48,8 +48,6 @@ SRC_URI += " \
 	${@oe.utils.conditional('PVBSP_VENDORID_FILE', '', '', 'file://${PVBSP_VENDORID_FILE}', d)} \
 "
 
-empty_image_name = "empty-image${IMAGE_MACHINE_SUFFIX}${IMAGE_NAME_SUFFIX}"
-
 fakeroot do_compile(){
 
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
@@ -58,6 +56,12 @@ fakeroot do_compile(){
         tar -C ${PVR_PVBSPIT_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVBSP}
+
+    # make up empty_image_name by using IMAGE_LINK_NAME and replacing the ${PN}
+    # prefix with empty-image
+    empty_image_name="${IMAGE_LINK_NAME}"
+    pn="${PN}"
+    empty_image_name=empty-image-"${empty_image_name#$pn-}"
     tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=4 ./lib/modules
     tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=3 ./lib/firmware
     cd ${PVBSPSTATE}
