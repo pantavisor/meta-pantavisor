@@ -69,6 +69,7 @@ fakeroot do_compile(){
     # copy the skeleton
     cp -rf ${WORKDIR}/device.json .
     cp -rf ${WORKDIR}/drivers.json bsp/
+    [ -f "${WORKDIR}/${PVBSP_VENDORID_FILE}" ] && cp -f ${WORKDIR}/${PVBSP_VENDORID_FILE} bsp/
 
     mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
