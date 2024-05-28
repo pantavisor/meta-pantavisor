@@ -10,7 +10,7 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 repos:
   meta-rockchip:
-    url: "git://git.yoctoproject.org/meta-rockchip"
+    url: "https://github.com/JeffyCN/meta-rockchip"
     patches:
       machine-rockchip-rk3328-rock64:
         repo: meta-pantavisor
