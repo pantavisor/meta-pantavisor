@@ -147,7 +147,7 @@ EOF1
         export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
     fi
 
-    pvr sig add --raw bsp --include 'bsp/**' --include '#spec' --exclude 'bsp/src.json'
+    pvr sig add --raw bsp --include device.json --include 'bsp/**' --include '#spec' --exclude 'bsp/src.json'
     pvr add; pvr commit
     pvr sig up
     pvr sig ls
