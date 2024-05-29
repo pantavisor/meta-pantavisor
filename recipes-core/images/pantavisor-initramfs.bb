@@ -1,3 +1,5 @@
+inherit image
+
 # Simple initramfs image artifact generation for tiny images.
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
 
@@ -27,7 +29,6 @@ DEPENDS:append = " pvr-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 "
 
-inherit image
 
 EXTRA_IMAGEDEPENDS = ""
 UBOOT_ENV = ""
