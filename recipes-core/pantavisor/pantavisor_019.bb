@@ -15,7 +15,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=master"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;nobranch=1"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://pantavisor.config"
 SRC_URI += " file://pantavisor-embedded.config"
@@ -23,7 +23,7 @@ SRC_URI += " file://policies/"
 SRC_URI += " file://ssh/"
 SRC_URI += " file://rev0json"
 
-SRCREV = "905f44b9a03f4424f7fc575f8b4795bd62b505a1"
+SRCREV = "58b77c668640c7c23a2a94ffaca8ae867bf67e95"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
@@ -34,6 +34,8 @@ FILES:${PN} += " /certs"
 FILES:${PN} += " /init"
 
 inherit cmake
+
+EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
 
@@ -68,7 +70,6 @@ do_install() {
 	install -d ${D}/var/pantavisor/tmpfs
 	install -d ${D}/var/pantavisor/ovl/work
 	install -d ${D}/var/pantavisor/ovl/upper
-	install -d ${D}/lib/pv
 	install -d ${D}/usr/lib
 	install -m 0644 ${WORKDIR}/policies/* ${D}/etc/pantavisor/policies/
 	install -m 0644 ${WORKDIR}/ssh/* ${D}/etc/pantavisor/ssh/
@@ -79,7 +80,7 @@ do_install() {
 	if [ -f ${WORKDIR}/pantavisor-installer ]; then
 		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
 	fi
-	ln -sf ../../lib/pv ${D}/usr/lib/pv
+	[ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
 
