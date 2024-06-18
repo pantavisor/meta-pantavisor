@@ -5,14 +5,18 @@ if test -z "$pv_platargs"; then
 fi
 setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
 setenv pv_ctrl 2
-if test -z $devtype; then
-setenv devtype mmc
+if test -z "${devtype}"; then
+	setenv devtype mmc
 fi
 setenv envloadaddr ${loadaddr}
-
+i
 pv_mmcdev=${devnum}
 if test -z "${pv_mmcdev}"; then
 	pv_mmcdev=${mmcdev}
+fi
+
+if test ! -z "${console}" && test ! -z "${baudrate}"; then
+	setenv pv_baseargs ${pv_baseargs} console=${console},${baudrate}
 fi
 
 if test -z "${pv_mmcdev}"; then
@@ -100,6 +104,10 @@ echo Pantavisor bootargs: "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev
 setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${localargs}"
 
 echo "Trying to load fit: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit"
+
+if test -z "${fdtfile}"; then
+	setenv fdtfile ${fdt_file}
+fi
 
 if test -n "${addr_fit}" && load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
 	echo Successfully loaded pantavisor.fit. booting...

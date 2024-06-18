@@ -27,5 +27,7 @@ repos:
       meta-sdk:
 
 local_conf_header:
-  platform-nxp:
+  platform-nxp: |
     PV_UBOOT_AUTOFDT = "1"
+    VIRTUAL-RUNTIME_initscripts = "initscripts-pv"
+    EXTRA_IMAGE_FEATURES = "debug-tweaks"

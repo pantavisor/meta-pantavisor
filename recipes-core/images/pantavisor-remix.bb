@@ -25,5 +25,6 @@ do_rootfs_boot_scr(){
 	fi
 }
 
-PVROOTFS_POSTPROCESS_COMMAND = "do_rootfs_boot_scr;"
+IMAGE_BOOT_FILES:append = "boot.scr"
 
+PVROOTFS_POSTPROCESS_COMMAND = "do_rootfs_boot_scr;"
