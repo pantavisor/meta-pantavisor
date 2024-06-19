@@ -78,7 +78,7 @@ do_install() {
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
-	install -m 0755 ${WORKDIR}/pantavisor-embedded.config ${D}/etc/pantavisor.config
+	install -m 0755 ${WORKDIR}/pantavisor.config ${D}/etc/pantavisor.config
 	if [ -f ${WORKDIR}/pantavisor-installer ]; then
 		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
 	fi

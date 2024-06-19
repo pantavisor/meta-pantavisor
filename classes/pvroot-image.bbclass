@@ -21,6 +21,9 @@ IMAGE_BUILDINFO_FILE = "pvroot.build"
 
 IMAGE_TYPES_MASKED += " pvrexportit pvbspit "
 
+UBOOT_ENV_SUFFIX ?= "scr"
+IMAGE_BOOT_FILES += "boot.${UBOOT_ENV_SUFFIX}"
+
 # disable all features that distros might inject globally
 # through local.conf or distro.conf (like in case of agl)
 IMAGE_FEATURES = ""
