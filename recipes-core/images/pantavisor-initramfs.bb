@@ -17,7 +17,7 @@ IMAGE_BASENAME = "pantavisor-initramfs"
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_LINGUAS = ""
 
-SRC_URI = "file://pantavisor-embedded.config"
+SRC_URI = "file://pantavisor.config"
 
 LICENSE = "MIT"
 
