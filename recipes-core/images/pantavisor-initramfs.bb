@@ -19,6 +19,8 @@ IMAGE_BASENAME = "pantavisor-initramfs"
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_LINGUAS = ""
 
+SRC_URI = "file://pantavisor.config"
+
 LICENSE = "MIT"
 
 # don't actually generate an image, just the artifacts needed for one
@@ -45,9 +47,9 @@ IMAGE_ROOTFS_EXTRA_SPACE = "0"
 # Use the same restriction as initramfs-live-install
 COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm|mips|riscv).*-linux"
 
-ROOTFS_POSTINSTALL_COMMAND += "do_init_symlink"
+ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
-do_init_symlink() {
+do_finish_rootfs() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
+        install -m 0755 ${WORKDIR}/pantavisor-embedded.config ${IMAGE_ROOTFS}/etc/pantavisor.config
 }
-

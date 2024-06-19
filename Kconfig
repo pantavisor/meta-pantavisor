@@ -74,14 +74,14 @@ config CONTAINER_PV_CONNMAN
 
 config KAS_LOCAL_PV_CONNMAN
 	string
-	default "PVROOT_CONTAINER_CORE += \"pv-connman\"" if CONTAINER_PV_CONNMAN
+	default "PVROOT_CONTAINERS_CORE += \"pv-connman\"" if CONTAINER_PV_CONNMAN
 
 config CONTAINER_PV_PVR_SDK
 	bool  "pv-pvr-sdk"
 
 config KAS_LOCAL_PV_PVR_SDK
 	string
-	default "PVROOT_CONTAINER_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
+	default "PVROOT_CONTAINERS_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
 endmenu
 
 config MACHINE_FILTER_ALL
@@ -198,6 +198,12 @@ config MACHINE_IMX8QXP_B0_MEK
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
 
+config MACHINE_IMX8QXPC0MEK
+	bool "imx8qxpc0mek"
+	depends on CODENAME_KIRKSTONE
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
+	select PLATFORM_NXP
+
 config MACHINE_CORAL_DEV
 	bool "Google Coral Dev"
 	depends on CODENAME_SCARTHGAP
@@ -289,6 +295,10 @@ config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
 config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
 	string
 	default "kas/machines/imx8qxp-b0-mek.yaml" if MACHINE_IMX8QXP_B0_MEK
+
+config KAS_INCLUDE_MACHINE_IMX8QXPC0MEK
+	string
+	default "kas/machines/imx8qxpc0mek.yaml" if MACHINE_IMX8QXPC0MEK
 
 config KAS_INCLUDE_MACHINE_ROCKCHIP_ROCK64
 	string

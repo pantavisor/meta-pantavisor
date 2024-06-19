@@ -18,14 +18,14 @@ S = "${WORKDIR}/git"
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;nobranch=1"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://pantavisor.config"
-SRC_URI += " file://pantavisor-embedded.config"
 SRC_URI += " file://policies/"
 SRC_URI += " file://ssh/"
 SRC_URI += " file://rev0json"
 
-SRCREV = "58b77c668640c7c23a2a94ffaca8ae867bf67e95"
+SRCREV = "3cb27d0e4d4f54bbe3154b175dc825f548e27c83"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
+FILES:${PN} += " /etc/pantavisor.config"
 FILES:${PN} += " /usr/lib"
 FILES:${PN} += " /var/pantavisor/storage/trails/0/.pvr/json"
 FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
@@ -37,7 +37,7 @@ inherit cmake
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 
-OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
+OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON"
 
 CMAKE_BINARY_DIR = "${S}"
 
@@ -77,6 +77,7 @@ do_install() {
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
+	install -m 0755 ${WORKDIR}/pantavisor.config ${D}/etc/pantavisor.config
 	if [ -f ${WORKDIR}/pantavisor-installer ]; then
 		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
 	fi

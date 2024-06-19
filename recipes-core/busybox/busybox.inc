@@ -517,3 +517,5 @@ pkg_prerm:${PN}-syslog () {
 PROVIDES:${PN} = "busybox"
 RPROVIDES:${PN} = "busybox"
 RPROVIDES:${PN} += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '/bin/sh /bin/ash', '', d)}"
+PROVIDES:${PN} += "busybox-hwclock busybox-udhcpc busybox-syslog"
+RPROVIDES:${PN} += "busybox-hwclock busybox-udhcpc busybox-syslog"

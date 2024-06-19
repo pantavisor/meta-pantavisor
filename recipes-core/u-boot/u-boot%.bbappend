@@ -36,6 +36,4 @@ do_prepcompile() {
 		cat ${WORKDIR}/$frag >> ${WORKDIR}/${UBOOT_ENV_SRC}
 	done
 }
-
 addtask prepcompile before do_configure do_compile after do_fetch do_patch
-

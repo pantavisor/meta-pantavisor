@@ -26,4 +26,3 @@ do_rootfs_boot_scr(){
 }
 
 PVROOTFS_POSTPROCESS_COMMAND = "do_rootfs_boot_scr;"
-
