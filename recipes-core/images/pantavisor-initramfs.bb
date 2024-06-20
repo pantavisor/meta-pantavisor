@@ -53,3 +53,9 @@ do_finish_rootfs() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
         install -m 0755 ${WORKDIR}/pantavisor.config ${IMAGE_ROOTFS}/etc/pantavisor.config
 }
+
+unset do_fetch[noexec]
+unset do_unpack[noexec]
+addtask do_rootfs after do_fetch do_unpack
+
+
