@@ -51,5 +51,5 @@ ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
-        install -m 0755 ${WORKDIR}/pantavisor-embedded.config ${IMAGE_ROOTFS}/etc/pantavisor.config
+        install -m 0755 ${WORKDIR}/pantavisor.config ${IMAGE_ROOTFS}/etc/pantavisor.config
 }
