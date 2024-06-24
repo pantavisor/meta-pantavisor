@@ -66,7 +66,7 @@ config PVROOT_IMAGE
 
 config PVROOT_IMAGE_BSP
 	string "Root Container Image"
-	default "core-image-minimal"
+	default "core-image-base"
 	depends on USE_PVROOT_IMAGE
 
 config CONTAINER_PV_CONNMAN
@@ -232,6 +232,11 @@ config MACHINE_SUNXI_ORANGE_PI_R1
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
 	select PLATFORM_SUNXI
 
+config MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+	bool "sunxi orange pi zero plus2 h3"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
 config MACHINE_TI_AM62XX_EVM
 	bool "TI AVM62xx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
@@ -319,6 +324,10 @@ config KAS_INCLUDE_MACHINE_SUNXI_NANOPI_R1
 config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_R1
 	string
 	default "kas/machines/sunxi-orange-pi-r1.yaml" if MACHINE_SUNXI_ORANGE_PI_R1
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+	string
+	default "kas/machines/sunxi-orange-pi-zero-plus2-h3.yaml" if MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 
 config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string
