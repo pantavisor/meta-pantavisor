@@ -27,7 +27,16 @@ RDEPENDS_${PN} = " \
 		util-linux-getopt \
 "
 
-FILES:${PN} += " /usr/bin/lxc-*"
+# Split off some essential tools to be installed, do not install the rest of the ${bindir}/lxc* tools
+PACKAGES =+ "${PN}-essentials ${PN}-noinst"
+PACKAGE_EXCLUDE:${PN} = "${PN}-noinst"
+RDEPENDS:${PN} += "${PN}-essentials"
+FILES:${PN}-essentials = "${bindir}/lxc-console"
+FILES:${PN}-essentials += "${bindir}/lxc-info"
+FILES:${PN}-essentials += "${bindir}/lxc-ls"
+FILES:${PN}-essentials += "${bindir}/lxc-top"
+FILES:${PN}-noinst+= " ${bindir}/lxc-*"
+
 FILES:${PN} += " /usr/lib/lxc"
 FILES:${PN} += " /usr/var"
 FILES:${PN} += " /lib"
