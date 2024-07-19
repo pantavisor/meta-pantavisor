@@ -30,6 +30,4 @@ relocate_source() {
 }
 do_unpack[postfuncs] += "relocate_source"
 
-do_compile[network] = "1"
-
 BBCLASSEXTEND = "native nativesdk"
