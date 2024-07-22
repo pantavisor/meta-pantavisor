@@ -14,8 +14,8 @@ SRC_URI = " \
 	https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
 "
 
-SRC_URI[pvr.sha256sum] = "91b80423b86c7434358f8e7442d01e23a6d295fe3c5fb20aeb2adfbb4ba09e12"
-SRC_URI[vendor.sha256sum] = "cc12a787eb626843f81464b238712fda2ab9650a17ff389c26b7466e2f7c4675"
+SRC_URI[pvr.sha256sum] = "406976aeabbc36f6c8ace86bef8d41ff9c7413358a1c4d919515a0255b922e67"
+SRC_URI[vendor.sha256sum] = "b0b95318758cea6901be91e11bbb683af41faa77c1976cd91e9328695f169ce2"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
@@ -26,7 +26,7 @@ CGO_ENABLED = "0"
 
 do_unpack[cleandirs] += "${S}/src/${GO_IMPORT}"
 relocate_source() {
-  cp -r ${S}/pvr-${PV}/* ${S}/src/${GO_IMPORT}
+  cp -fr ${S}/pvr-*/* ${S}/src/${GO_IMPORT}
 }
 do_unpack[postfuncs] += "relocate_source"
 
