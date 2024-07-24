@@ -40,6 +40,7 @@ local_conf_header:
     DISTRO_FEATURES += "pantavisor-system"
     INITRAMFS_IMAGE = "pantavisor-initramfs"
   pantavisor-remix: |
-    IMAGE_CLASSES += "bspimage-pvrexport"
     IMAGE_CLASSES += "image-pvrexport"
+env:
+  PVROOT_IMAGE_BSP: null
 

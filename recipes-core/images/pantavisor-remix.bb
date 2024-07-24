@@ -14,7 +14,6 @@ SRC_URI = "file://device.json"
 
 PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk"
 PVROOT_IMAGE_BSP ?= "core-image-minimal"
-PVROOT_IMAGE ?= "yes"
 
 do_rootfs[depends] += "virtual/bootloader:do_deploy"
 

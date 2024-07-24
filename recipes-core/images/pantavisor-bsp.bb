@@ -28,9 +28,11 @@ PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 do_compile[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} ${PVBSP_fw}"
 
+PVROOT_IMAGE_BSP ?= "empty-image"
+
 compile_depends = ' \
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
-	empty-image:do_image_complete \
+	${PVROOT_IMAGE_BSP}:do_image_complete \
 	virtual/kernel:do_deploy \
 	'
 do_compile[depends] += "${compile_depends}"
@@ -57,13 +59,17 @@ fakeroot do_compile(){
     fi
     cd ${PVBSP}
 
-    # make up empty_image_name by using IMAGE_LINK_NAME and replacing the ${PN}
-    # prefix with empty-image
-    empty_image_name="${IMAGE_LINK_NAME}"
+    # make up proto_image_name by using IMAGE_LINK_NAME and replacing the ${PN}
+    # prefix with proto image (PVROOT_IMAGE_BSP or empty-image)
+    proto_image_name="${IMAGE_LINK_NAME}"
     pn="${PN}"
-    empty_image_name=empty-image-"${empty_image_name#$pn-}"
-    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=4 ./lib/modules
-    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/${empty_image_name}.tar.gz --strip-components=3 ./lib/firmware
+    proto_image_name=${PVROOT_IMAGE_BSP}-"${proto_image_name#$pn-}"
+    image_fstypes="${IMAGE_FSTYPES}"
+    fstype=`echo $image_fstypes | sed 's/.*tar/tar/;s/ .*//'`
+    mkdir -p ${PVBSP_mods}/lib/modules
+    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=4 ./lib/modules || true
+    mkdir -p ${PVBSP_mods}/lib/firmware
+    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=3 ./lib/firmware || true
     cd ${PVBSPSTATE}
     pvr init
     [ -d bsp ] || mkdir bsp

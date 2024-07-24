@@ -11,7 +11,7 @@ do_rootfs[dirs] = "${IMGDEPLOYDIR} ${DEPLOY_DIR_IMAGE}"
 PVROOT_CONTAINERS ??= ""
 PVROOT_CONTAINERS_CORE ??= ""
 PVROOT_IMAGE_BSP ??= ""
-PVROOT_IMAGE ??= "yes"
+PVROOT_IMAGE ??= ""
 
 PVS_VENDOR_NAME ??= "generic"
 
@@ -38,8 +38,10 @@ python __anonymous () {
 
     mc = d.getVar("PANTA_MULTICONFIG")
 
-    for img in d.getVar("PVROOT_IMAGE_BSP").split():
-        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
+    d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":pantavisor-bsp" if mc != "" else "pantavisor-bsp" ) +':do_compile')
+    if d.getVar("PVROOT_IMAGE") == "yes":
+        for img in d.getVar("PVROOT_IMAGE_BSP").split():
+            d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
     for img in d.getVar("PVROOT_CONTAINERS").split():
         d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
     for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
@@ -60,6 +62,7 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 
     if True:
         tmpdir=d.getVar("WORKDIR") + "/pvrrepo"
+        machine=d.getVar("MACHINE")
         configdir=d.getVar("WORKDIR") + "/pvrconfig"
         deployrootfs=d.getVar("IMAGE_ROOTFS") + "/trails/0"
         deployimg=d.getVar("PANTA_DEPLOY_DIR_IMAGE")
@@ -76,10 +79,6 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
             if factory is True:
                 shutil.copy2(deployimg + "/" + img + ".pvrexport.tgz", d.getVar("IMAGE_ROOTFS") + "/factory-pkgs.d/")
             else:
-                part=img
-                if part.startswith("bsp-"):
-                    part="bsp"
-
                 imgpath = tmpdir + "/" + img + versionsuffix + ".pvrexport"
                 Path(imgpath).mkdir(parents=True,exist_ok=True)
                 process = subprocess.run(
@@ -97,13 +96,30 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
                 )
                 print ("completed pvr deploy process: %d" % process.returncode)
 
+        # always mix-in pantavisor-bsp pvrexport
+        pvrexportpath= deployimg + "/pantavisor-bsp-" + machine + '.pvrexport.tgz'
+        imgpath = tmpdir + "/pantavisor-bsp-" + machine + versionsuffix + ".pvrexport"
+        Path(imgpath).mkdir(parents=True,exist_ok=True)
+        process = subprocess.run(
+            ['tar', '--no-same-owner', '-xvf', pvrexportpath ],
+             cwd=Path(imgpath),
+             env=my_env
+        )
+        print ("completed tar process: %d" % process.returncode)
+
+        process = subprocess.run(
+                    ['pvr', 'deploy', deployrootfs,
+                     imgpath ],
+                    cwd=Path(tmpdir),
+                    env=my_env
+                )
+        print ("completed pvr deploy process: %d" % process.returncode)
+
 
 def do_rootfs_mixing(d, my_env):
     bspimage = d.getVar("PVROOT_IMAGE_BSP")
     if d.getVar("PVROOT_IMAGE") == "yes":
        _pvr_pvroot_images_deploy(d, False, bspimage.split(), my_env)
-    bspimage = "bsp-" + bspimage
-    _pvr_pvroot_images_deploy(d, False, bspimage.split(), my_env)
     images = d.getVar("PVROOT_CONTAINERS_CORE").split()
     _pvr_pvroot_images_deploy(d, False, images, my_env)
     images = d.getVar("PVROOT_CONTAINERS").split()

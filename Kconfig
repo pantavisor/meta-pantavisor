@@ -69,6 +69,10 @@ config PVROOT_IMAGE_BSP
 	default "core-image-base"
 	depends on USE_PVROOT_IMAGE
 
+config KAS_LOCAL_PVROOT_IMAGE
+	string
+	default "PVROOT_IMAGE = \"yes\"" if PVROOT_IMAGE
+
 config CONTAINER_PV_CONNMAN
 	bool "pv-connman"
 
