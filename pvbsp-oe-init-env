@@ -29,10 +29,6 @@ INITRAMFS_IMAGE = "pantavisor-initramfs"
 INITRAMFS_MULTICONFIG = "pv-initramfs"
 INITRAMFS_DEPLOY_DIR_IMAGE = "${TMPDIR}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
 
-# enable bspimage-pvrexport class; This one will produce
-# a bsp pvrexport from any image you build
-IMAGE_CLASSES += "bspimage-pvrexport"
-
 # enable image-pvrexport class; This one will produce
 # a root container pvrexport from the rootfs of the images
 # you build;  disable that if you just want the bsp.
