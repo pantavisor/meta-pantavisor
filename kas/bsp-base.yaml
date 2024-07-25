@@ -38,6 +38,8 @@ local_conf_header:
     PREFERRED_VERSION_mbedtls = "2.28.%"
   pantavisor-system: |
     DISTRO_FEATURES += "pantavisor-system"
+    PANTAVISOR_FEATURES += "dm-crypt"
+    PANTAVISOR_FEATURES += "dm-verity"
     INITRAMFS_IMAGE = "pantavisor-initramfs"
   pantavisor-remix: |
     IMAGE_CLASSES += "image-pvrexport"
