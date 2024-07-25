@@ -287,9 +287,9 @@ config KAS_INCLUDE_MACHINE_RPI_ARMV8
 	string
 	default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RPI_ARMV8
 
-config KAS_INCLUDE_MACHINE_RPI_ARMV8
+config KAS_INCLUDE_MACHINE_RPI_ARMV7
 	string
-	default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RPI_ARMV8
+	default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RPI_ARMV7
 
 config KAS_INCLUDE_MACHINE_IMX8MN_VAR_SOM
 	string
