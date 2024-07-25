@@ -12,12 +12,14 @@ repos:
   meta-raspberrypi:
     url: https://github.com/agherzan/meta-raspberrypi
     path: meta-raspberrypi
-    branch: master
+    patches:
+      uboot-env:
+        repo: meta-pantavisor
+        path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
 
   meta-qt5:
     url: https://github.com/meta-qt5/meta-qt5/
     path: meta-qt5
-    branch: master
 
 local_conf_header:
   platform-raspberrypi: |
