@@ -9,14 +9,9 @@ header:
 
 repos:
   meta-imx:
-    branch: kirkstone-5.15.71-2.2.2
-    patches:
-      imx-boot-conflict:
-        repo: meta-pantavisor
-        path: patches/meta-imx/imx-boot-conflict.patch
+    branch: scarthgap-6.6.23-2.0.0
     layers:
-      meta-bsp:
-      meta-ml:
-      meta-sdk:
- 
+      meta-imx-bsp:
+      meta-imx-ml:
+      meta-imx-sdk:
 

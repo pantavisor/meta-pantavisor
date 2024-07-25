@@ -198,13 +198,11 @@ config MACHINE_IMX8MM_VAR_DART
 
 config MACHINE_IMX8QXP_B0_MEK
 	bool "imx8qxp-b0-mek"
-	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
 
 config MACHINE_IMX8QXPC0MEK
 	bool "imx8qxpc0mek"
-	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
 
@@ -378,6 +376,7 @@ config KAS_INCLUDE_VARISCITE
 config KAS_INCLUDE_NXP
 	string
 	default "kas/kirkstone-nxp.yaml" if CODENAME_KIRKSTONE && PLATFORM_NXP
+	default "kas/scarthgap-nxp.yaml" if CODENAME_SCARTHGAP && PLATFORM_NXP
 
 config KAS_INCLUDE_SCARTHGAP_FREESCALE
 	string
