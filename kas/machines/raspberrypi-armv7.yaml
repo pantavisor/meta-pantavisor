@@ -6,9 +6,9 @@ header:
   # out if it is compatible with this file. The version is an integer that
   # is increased on every format change.
   version: 16
+  includes:
+    - kas/platforms/raspberrypi.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
 machine: raspberrypi-armv7
-includes:
-  - platforms/raspberrypi.yaml
 

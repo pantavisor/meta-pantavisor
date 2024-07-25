@@ -283,13 +283,13 @@ config KAS_INCLUDE_MACHINE_QEMUMIPS
 	string
 	default "kas/machines/qemumips.yaml" if MACHINE_QEMUMIPS
 
-config KAS_INCLUDE_MACHINE_RASPBERRYPI_ARMV8
+config KAS_INCLUDE_MACHINE_RPI_ARMV8
 	string
-	default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RASPBERRYPI_ARMV8
+	default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RPI_ARMV8
 
-config KAS_INCLUDE_MACHINE_RASPBERRYPI_ARMV7
+config KAS_INCLUDE_MACHINE_RPI_ARMV8
 	string
-	default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RASPBERRYPI_ARMV7
+	default "kas/machines/raspberrypi-armv7.yaml" if MACHINE_RPI_ARMV8
 
 config KAS_INCLUDE_MACHINE_IMX8MN_VAR_SOM
 	string
