@@ -76,6 +76,14 @@ config KAS_LOCAL_PV_CONNMAN
 	string
 	default "PVROOT_CONTAINERS_CORE += \"pv-connman\"" if CONTAINER_PV_CONNMAN
 
+config CONTAINER_PV_WIFICONNECT
+        bool "pv-wificonnect"
+        depends on CONTAINER_PV_CONNMAN
+
+config KAS_LOCAL_PV_WIFICONNECT
+        string
+        default "PVROOT_CONTAINERS_CORE += \"pv-pvwificonnect\"" if CONTAINER_PV_WIFICONNECT
+
 config CONTAINER_PV_PVR_SDK
 	bool  "pv-pvr-sdk"
 
@@ -237,6 +245,11 @@ config MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
 	select PLATFORM_SUNXI
 
+config MACHINE_SUNXI_ORANGE_PI_3LTS
+	bool "sunxi orange pi 3 LTS"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
 config MACHINE_TI_AM62XX_EVM
 	bool "TI AVM62xx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
@@ -328,6 +341,10 @@ config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_R1
 config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	string
 	default "kas/machines/sunxi-orange-pi-zero-plus2-h3.yaml" if MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+	string
+	default "kas/machines/sunxi-orange-pi-3lts.yaml" if MACHINE_SUNXI_ORANGE_PI_3LTS
 
 config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string

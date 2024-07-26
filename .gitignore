@@ -1,0 +1,7 @@
+build
+/meta-*
+poky
+.vscode
+.config.yaml
+.config.yaml.old
+

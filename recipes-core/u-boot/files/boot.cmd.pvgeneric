@@ -181,6 +181,8 @@ echo "load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_re
 if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb; then
 	echo "Successfully loaded pv-fdt.dtb"
 else
+	# sanitize fdt file in case of leading directories (always flat in PV BSP)
+	setexpr fdtfile gsub '.*/' '' ${fdtfile}
 	if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/bsp/${fdtfile}; then
 		echo "successfully loaded fdt directly"
 	else

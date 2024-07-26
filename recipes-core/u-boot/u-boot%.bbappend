@@ -35,5 +35,8 @@ do_prepcompile() {
 	for frag in ${UBOOT_ENV_SRC_FRAGS}; do
 		cat ${WORKDIR}/$frag >> ${WORKDIR}/${UBOOT_ENV_SRC}
 	done
+
+	# override hardcoded sources
+	cp ${WORKDIR}/${UBOOT_ENV_SRC} ${WORKDIR}/boot.cmd
 }
 addtask prepcompile before do_configure do_compile after do_fetch do_patch
