@@ -14,6 +14,9 @@ repos:
       imx-boot-conflict:
         repo: meta-pantavisor
         path: patches/meta-imx/imx-boot-conflict.patch
+      imx-wifi:
+        repo: meta-pantavisor
+        path: patches/meta-imx/0001-add-fix-for-linux-imx.patch
     layers:
       meta-bsp:
       meta-ml:
