@@ -52,6 +52,7 @@ SRC_URI += " \
 
 fakeroot do_compile(){
 
+    set -x
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
     export PVR_DISABLE_SELF_UPGRADE=true
     if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
@@ -64,12 +65,11 @@ fakeroot do_compile(){
     proto_image_name="${IMAGE_LINK_NAME}"
     pn="${PN}"
     proto_image_name=${PVROOT_IMAGE_BSP}-"${proto_image_name#$pn-}"
-    image_fstypes="${IMAGE_FSTYPES}"
-    fstype=`echo $image_fstypes | sed 's/.*tar/tar/;s/ .*//'`
+    fstype="tar.gz"
     mkdir -p ${PVBSP_mods}/lib/modules
-    tar -C ${PVBSP_mods} -xf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=4 ./lib/modules || true
+    tar -C ${PVBSP_mods} -xvf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=4 ./lib/modules || true
     mkdir -p ${PVBSP_mods}/lib/firmware
-    tar -C ${PVBSP_fw} -xf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=3 ./lib/firmware || true
+    tar -C ${PVBSP_fw} -xvf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=3 ./lib/firmware || true
     cd ${PVBSPSTATE}
     pvr init
     [ -d bsp ] || mkdir bsp
@@ -118,6 +118,12 @@ fakeroot do_compile(){
            cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
            _pvline="$_pvline
        \"fdt\": \"${PV_INITIAL_DTB}\","
+       fi
+       if [ -n "${PV_UBOOT_AUTOFDT}" -a -n "${KERNEL_DEVICETREE}" ]; then
+           for dtb in ${KERNEL_DEVICETREE}; do
+               dtb_file=`basename $dtb`
+               cp -f ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/
+           done
        fi
     fi
           
