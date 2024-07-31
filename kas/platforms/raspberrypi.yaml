@@ -23,6 +23,7 @@ repos:
 
 local_conf_header:
   platform-raspberrypi: |
+    LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
     RPI_USE_U_BOOT = "1"
     ENABLE_UART = "1"
 
