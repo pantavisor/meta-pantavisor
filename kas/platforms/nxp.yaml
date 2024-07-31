@@ -32,8 +32,10 @@ local_conf_header:
     EXTRA_IMAGE_FEATURES = "debug-tweaks"
     PANTAVISOR_MACHINE_FIRMWARE = ""
     PANTAVISOR_MACHINE_KERNEL_MODULES = ""
+    PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
 
 bblayers_conf_header:
   platform-nxp: |
-    BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
+        BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
+        BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
 

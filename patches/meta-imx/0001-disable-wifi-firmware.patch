@@ -1,0 +1,17 @@
+diff --git a/meta-bsp/conf/layer.conf b/meta-bsp/conf/layer.conf
+index a161ce65fd..1469348737 100644
+--- a/meta-bsp/conf/layer.conf
++++ b/meta-bsp/conf/layer.conf
+@@ -110,8 +110,8 @@ MACHINE_FIRMWARE:append:mx8ulp-nxp-bsp = " sof-imx sof-zephyr"
+-MACHINE_FIRMWARE:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8987', 'linux-firmware-nxp89xx', '', d)}"
++MACHINE_FIRMWARE:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8987', '', '', d)}"
+-MACHINE_FIRMWARE:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8997', 'linux-firmware-nxp89xx', '', d)}"
++MACHINE_FIRMWARE:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8997', '', '', d)}"
+ MACHINE_FIRMWARE:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'iw612', 'linux-firmware-nxp89xx', '', d)}"
+-MACHINE_EXTRA_RRECOMMENDS:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8987', 'nxp-wlan-sdk kernel-module-nxp89xx', '', d)}"
+-MACHINE_EXTRA_RRECOMMENDS:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8997', 'nxp-wlan-sdk kernel-module-nxp89xx', '', d)}"
++MACHINE_EXTRA_RRECOMMENDS:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8987', 'kernel-module-nxp89xx', '', d)}"
++MACHINE_EXTRA_RRECOMMENDS:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'nxp8997', 'kernel-module-nxp89xx', '', d)}"
+ MACHINE_EXTRA_RRECOMMENDS:append = " ${@bb.utils.contains('MACHINE_FEATURES', 'iw612', 'iw612-sdk kernel-module-iw612', '', d)}"
+ 
+ # MCore Demo apps to /lib/firmware
