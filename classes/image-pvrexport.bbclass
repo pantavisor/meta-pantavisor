@@ -8,9 +8,12 @@ DEPENDS:append = " pvr-native \
 
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES += " pvrexportit "
-IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit', '', d)} ${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', ' pvrexportit ', '', d)} "
+IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit', '', d)} \
+	${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', '', ' pvrexportit ', d)} \
+	${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', ' pvrexportit ', '', d)} \
+"
 
-inherit image pvr-ca
+inherit ${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', 'image pvr-ca', '', d)}
 
 IMAGE_INSTALL += "pvcontrol"
 
