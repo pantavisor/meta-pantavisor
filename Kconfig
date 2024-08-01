@@ -86,6 +86,42 @@ config CONTAINER_PV_PVR_SDK
 config KAS_LOCAL_PV_PVR_SDK
 	string
 	default "PVROOT_CONTAINERS_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
+
+config CONTAINER_PV_ALPINE_CONNMAN
+	bool "pv-alpine-connman"
+
+config KAS_LOCAL_PV_ALPINE_CONNMAN
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-alpine-connman\"" if CONTAINER_PV_ALPINE_CONNMAN
+
+config CONTAINER_PV_PVWIFICONNECT
+	bool "pv-pvwificonnect"
+	depends on CONTAINER_PV_CONNMAN || CONTAINER_PV_DEBIAN_NM || CONTAINER_PV_ALPINE_CONNMAN
+
+config KAS_LOCAL_PV_PVWIFICONNECT
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-pvwificonnect\"" if CONTAINER_PV_PVWIFICONNECT
+
+config CONTAINER_PV_DEBIAN_NM
+	bool "pv-debian-nm"
+
+config KAS_LOCAL_PV_DEBIAN_NM
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-debian-nm\"" if CONTAINER_PV_DEBIAN_NM
+
+config CONTAINER_PV_AWCONNECT
+	bool  "pv-awconnect"
+
+config KAS_LOCAL_PV_AWCONNECT
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-awconnect\"" if CONTAINER_PV_AWCONNECT
+
+config CONTAINER_PV_TAILSCALE
+	bool  "pv-tailscale"
+
+config KAS_LOCAL_PV_TAILSCALE
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_AWCONNECT
 endmenu
 
 config MACHINE_FILTER_ALL
