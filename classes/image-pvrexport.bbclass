@@ -23,7 +23,7 @@ PVSTATE = "${WORKDIR}/pvstate"
 
 PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
 
-PVR_APP_ADD_EXTRA_ARGS ??= ""
+PVR_APP_ADD_EXTRA_ARGS ??= "  --volume ovl:/var:permanent"
 PVR_APP_ADD_GROUP ??= "root"
 
 do_image_pvrexportit[dirs] = " ${TOPDIR} ${PVSTATE} ${PVR_CONFIG_DIR} "
