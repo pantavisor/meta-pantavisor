@@ -6,3 +6,4 @@ poky
 .config.yaml.old
 .netrc
 recipes-containers/vendors
+Kconfig.custom
