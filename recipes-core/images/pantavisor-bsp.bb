@@ -122,7 +122,7 @@ fakeroot do_compile(){
        if [ -n "${PV_UBOOT_AUTOFDT}" -a -n "${KERNEL_DEVICETREE}" ]; then
            for dtb in ${KERNEL_DEVICETREE}; do
                dtb_file=`basename $dtb`
-               cp -f ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/
+               install -D -m 0644 ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/$dtb
            done
        fi
     fi
