@@ -6,9 +6,12 @@ OVERRIDES =. "mc-${BB_CURRENT_MC}:"
 PV_MACHINE_UBOOT_CONFIGS ?= ""
 PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
 
+PV_BOOT_OEMARGS ?= ""
+
 SRC_URI += " \
 	file://boot.cmd.pvgeneric \
 	file://pv.cfg \
+	file://oemEnv.txt \
 	${PV_MACHINE_UBOOT_CONFIGS} \
 " 
 
@@ -25,6 +28,7 @@ UBOOT_ENV_SRC = "${uboot_env_src}"
 UBOOT_ENV_SRC_FRAGS = "${uboot_env_src_frags}"
 UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
 
+
 do_prepcompile() {
 
 	if [ -z "${UBOOT_ENV}" -o -z "${UBOOT_ENV_SRC_FRAGS}" ]; then
@@ -36,4 +40,12 @@ do_prepcompile() {
 		cat ${WORKDIR}/$frag >> ${WORKDIR}/${UBOOT_ENV_SRC}
 	done
 }
+
 addtask prepcompile before do_configure do_compile after do_fetch do_patch
+
+do_deploy:append() {
+	cat ${WORKDIR}/oemEnv.txt | \
+		sed -e 's/@@PV_BOOT_OEMARGS@@/${PV_BOOT_OEMARGS}/' \
+		> ${WORKDIR}/oemEnv.txt.final
+	install -D -m 644 ${WORKDIR}/oemEnv.txt.final ${DEPLOYDIR}/oemEnv.txt
+}

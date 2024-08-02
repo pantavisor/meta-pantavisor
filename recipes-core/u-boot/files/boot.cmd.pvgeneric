@@ -49,6 +49,12 @@ if test -z "${fdt_addr_r}"; then
 	fdt_addr_r=$fdt_addr
 fi
 
+echo Trying to load oemEnv.txt
+if load ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} oemEnv.txt; then
+	echo Importing oemEnv.txt ...
+	env import ${envloadaddr} ${filesize}
+fi
+
 echo part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
 part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
 if test "${pv_config_size}" = "800"; then
@@ -100,8 +106,8 @@ else
 	setenv boot_rev ${pv_rev}
 fi
 
-echo Pantavisor bootargs: "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 ${fdtbootargs} ${configargs} ${localargs}"
-setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${localargs}"
+echo Pantavisor bootargs: "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 ${fdtbootargs} ${configargs} ${oemargs} ${localargs}"
+setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${oemargs} ${localargs}"
 
 echo "Trying to load fit: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit"
 
