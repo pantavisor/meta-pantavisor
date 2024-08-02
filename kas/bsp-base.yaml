@@ -45,4 +45,5 @@ local_conf_header:
     IMAGE_CLASSES:append = " image-pvrexport"
 env:
   PVROOT_IMAGE_BSP: null
+  PV_BOOT_OEMARGS: null
 
