@@ -7,6 +7,9 @@ inputs:
   command:  # command
     description: 'command'
     required: false
+  config-dir:  # command
+    description: 'bitbake arguments'
+    required: false
   bitbake-args:  # command
     description: 'bitbake arguments'
     required: false
