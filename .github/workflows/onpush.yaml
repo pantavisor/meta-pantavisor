@@ -9,4 +9,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Build Kas
+        uses: ./.github/actions/kas-build
+        id: build-kas
 
