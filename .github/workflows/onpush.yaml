@@ -1,0 +1,12 @@
+name: 'Build Basic'
+
+on:
+  push:
+
+jobs:
+  build-bsp:
+    runs-on: ["ubuntu-latest"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
