@@ -1,0 +1,23 @@
+name: 'Build Kas'
+description: 'Build a KAS target'
+inputs:
+  target:  # id of input
+    description: 'target'
+    required: false
+  command:  # command
+    description: 'command'
+    required: false
+  bitbake-args:  # command
+    description: 'bitbake arguments'
+    required: false
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - '${{ inputs.target }}'
+    - '${{ inputs.command }}'
+    - '${{ inputs.bitbake-args }}'
+
