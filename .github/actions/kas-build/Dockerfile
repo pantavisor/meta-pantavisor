@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM ghcr.io/pantacor/kas/kas:next-v1
 
 COPY entrypoint.sh /entrypoint.sh
 
