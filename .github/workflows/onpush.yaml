@@ -1,0 +1,15 @@
+name: 'Build Basic'
+
+on:
+  push:
+
+jobs:
+  build-remix-sunxi-orange-pi-3lts-remix-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      config: sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
+  build-remix-sunxi-orange-pi-r1-remix-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      config: sunxi/sunxi-orange-pi-r1-remix-scarthgap.yaml
+
