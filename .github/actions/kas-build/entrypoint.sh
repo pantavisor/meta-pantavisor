@@ -1,13 +1,23 @@
 #!/bin/sh
 
-target=$1
-command=$2
-bbargs=$3
+set -xe
 
-echo Target: $target
-echo Command: $command
-echo BBARGS: $bbargs
-echo Workspace: $GITHUB_WORKSPACE
+KAS_BUILD_ACTION_CONFIG_DIR=${KAS_BUILD_ACTION_CONFIG_DIR:-kas-build.configs/}
+KAS_BUILD_ACTION_TARGET=${KAS_BUILD_ACTION_TARGET}
+KAS_BUILD_ACTION_COMMAND=${KAS_BUILD_ACTION_COMMAND}
+KAS_BUILD_ACTION_BBARGS=${KAS_BUILD_ACTION_BBARGS}
 
-ls $GITHUB_WORKSPACE/
+echo Target: $KAS_BUILD_ACTION_TARGET
+echo Command: $KAS_BUILD_ACTION_COMMAND
+echo Config-Dir: $KAS_BUILD_ACTION_CONFIG_DIR
+echo BBARGS: $KAS_BUILD_ACTION_BBARGS
+
+for c in ${KAS_BUILD_ACTION_CONFIG_DIR}/*.yaml; do
+	echo "Building $c"
+	kas build \
+		${KAS_BUILD_ACTION_TARGET:+--target $KAS_BUILD_ACTION_TARGET} \
+		${KAS_BUILD_ACTION_COMMAND:+--cmd $KAS_BUILD_ACTION_COMMAND} \
+		$c \
+		-- ${KAS_BUILD_ACTION_BBARGS}
+done
 

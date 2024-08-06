@@ -19,8 +19,9 @@ outputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  args:
-    - '${{ inputs.target }}'
-    - '${{ inputs.command }}'
-    - '${{ inputs.bitbake-args }}'
+  env:
+    KAS_BUILD_ACTION_CONFIG_DIR: ${{ inputs.config-dir }}
+    KAS_BUILD_ACTION_TARGET: ${{ inputs.target }}
+    KAS_BUILD_ACTION_COMMAND: ${{ inputs.command }}
+    KAS_BUILD_ACTION_BBARGS: ${{ inputs.bitbake-args }}
 
