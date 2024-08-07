@@ -29,7 +29,7 @@ for c in ${KAS_BUILD_ACTION_CONFIG_DIR}/*.yaml; do
 		$c \
 		${KAS_BUILD_ACTION_BBARGS}; then
 		res=$?
-		if $res; then
+		if test $res -ne 0; then
 			err="${err:+$err $res}${err:-$res}"
 		fi
 	fi
