@@ -16,4 +16,4 @@ jobs:
       - name: shared
         run: sudo mkdir -p /shared/sstate && sudo chown builder:builder /shared/sstate && sudo mkdir -p /shared/dldir && sudo chown builder:builder /shared/dldir
       - name: Build Kas
-        run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
+        run: ls .github/configs/*.yaml && kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
