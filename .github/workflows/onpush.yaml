@@ -6,46 +6,10 @@ on:
 jobs:
   build-remix-sunxi:
     runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build Kas
-        uses: ./.github/actions/kas-build
-        id: build-kas
-        with:
-          target: "pantavisor-remix"
-          config-dir: ".github/configs/sunxi"
-  build-bsp-sunxi:
-    runs-on: ["self-hosted"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build Kas
-        uses: ./.github/actions/kas-build
-        id: build-kas
-        with:
-          target: "pantavisor-bsp"
-          config-dir: ".github/configs/sunxi"
-  build-remix-nxp:
-    runs-on: ["self-hosted"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build Kas
-        uses: ./.github/actions/kas-build
-        id: build-kas
-        with:
-          target: "pantavisor-remix"
-          config-dir: ".github/configs/nxp"
-  build-bsp-nxp:
-    runs-on: ["self-hosted"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build Kas
-        uses: ./.github/actions/kas-build
-        id: build-kas
-        with:
-          target: "pantavisor-bsp"
-          config-dir: ".github/configs/nxp"
-
+        run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
