@@ -10,7 +10,5 @@ jobs:
       image: ghcr.io/pantacor/kas/kas:next-v1
       options: --user root
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Build Kas
         run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
