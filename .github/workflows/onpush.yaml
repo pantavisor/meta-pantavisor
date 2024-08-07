@@ -10,6 +10,6 @@ jobs:
       image: ghcr.io/pantacor/kas/kas:next-v1
     steps:
       - name: chown
-        run: chown -R builder:builder .
+        run: sudo chown -R builder:builder .
       - name: Build Kas
         run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
