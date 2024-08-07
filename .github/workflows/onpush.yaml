@@ -7,7 +7,7 @@ jobs:
   build-remix-sunxi:
     runs-on: ["self-hosted"]
     container:
-      image: ghcr.io/pantacor/kas/kas:next-v1
+      image: ghcr.io/pantacor/kas/kas:next-v2
       volumes:
         - shared:/shared
     steps:
