@@ -1,0 +1,8 @@
+_source_dir: .
+header:
+  version: 16
+local_conf_header:
+  __voldirs: |-
+    SSTATE_DIR="/shared/sstate"
+    DL_DIR="/shared/dldir"
+

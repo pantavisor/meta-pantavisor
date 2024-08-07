@@ -8,8 +8,12 @@ jobs:
     runs-on: ["self-hosted"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v1
+      volumes:
+        - shared:/shared
     steps:
       - name: chown
         run: sudo chown -R builder:builder .
+      - name: shared
+        run: sudo mkdir /shared/sstate && sudo chown builder:build /shared/sstate && sudo mkdir /shared/dldir && sudo chown builder:builder /shared/dldir
       - name: Build Kas
-        run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
+        run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
