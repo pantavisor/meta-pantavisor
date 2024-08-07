@@ -8,7 +8,8 @@ jobs:
     runs-on: ["self-hosted"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v1
-      options: --user root
     steps:
+      - name: chown
+        run: chown -R builder:builder .
       - name: Build Kas
         run: kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
