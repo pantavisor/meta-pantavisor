@@ -17,6 +17,8 @@ jobs:
         run: sudo mkdir -p /shared/sstate && sudo chown builder:builder /shared/sstate && sudo mkdir -p /shared/dldir && sudo chown builder:builder /shared/dldir
       - name: Build Kas
         run: git fetch origin $GITHUB_SHA && rm -rf build/ && git reset --hard $GITHUB_SHA && git clean -f -d && env && kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
+      - name: chown
+        run: sudo chown -R root:root .
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
