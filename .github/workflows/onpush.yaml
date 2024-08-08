@@ -19,6 +19,8 @@ jobs:
         run: git fetch origin $GITHUB_SHA && rm -rf build/ && git reset --hard $GITHUB_SHA && git clean -f -d && env && kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
       - name: chown
         run: sudo chown -R builder:builder $RUNNER_TEMP
+      - name: chmod
+        run: sudo chmod -R 777 $RUNNER_TEMP
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
