@@ -12,7 +12,7 @@ jobs:
         - shared:/shared
     steps:
       - name: chown
-        run: sudo chown -R builder:builder $GITHUB_WORKSPACE
+        run: sudo chown -R builder:builder $RUNNER_WORKSPACE
       - name: chowna
         run: sudo chown -R builder:builder /__w
       - name: shared
