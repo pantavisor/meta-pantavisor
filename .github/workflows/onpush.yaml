@@ -18,7 +18,7 @@ jobs:
       - name: shared
         run: sudo mkdir -p /shared/sstate && sudo chown builder:builder /shared/sstate && sudo mkdir -p /shared/dldir && sudo chown builder:builder /shared/dldir
       - name: Build Kas
-        run: echo pwd: && pwd && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && rm .gitignore && git clean -f -d && rm -rf meta- poky && ls -la && env && kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
+        run: echo pwd && pwd && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && rm .gitignore && git clean -f -d && rm -rf meta- poky && ls -la && env && kas build .github/configs/sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml:.github/configs/shared-vols.yaml
       - name: chown
         run: sudo chown -R builder:builder $GITHUB_WORKSPACE
       - name: chmod
