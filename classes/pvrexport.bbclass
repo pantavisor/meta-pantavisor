@@ -40,9 +40,7 @@ fakeroot do_fetch_pvr() {
 		echo "getting remote pvr repo ${PVR_SRC_URI}"
 		pvr get ${PVR_SRC_URI}
 	elif [ -n "${PVR_DOCKER_REF}" ]; then
-		echo "pvr app add from docker ${PVR_DOCKER_REF}"
-		pvr init
-		echo "pvr app add from docker ${PVR_DOCKER_REF}"
+		echo "pvr app add from docker ${PVR_DOCKER_REF} with ${DOCKER_PLATFORM} as ${PVCONT_NAME}"
 		pvr init
 		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" ${PVR_APP_ADD_EXTRA_ARGS} "${PVCONT_NAME}"
 		pvr add .
@@ -136,5 +134,3 @@ do_packagedata[noexec] = "1"
 do_package_write_ipk[noexec] = "1"
 do_package_write_deb[noexec] = "1"
 do_package_write_rpm[noexec] = "1"
-
-

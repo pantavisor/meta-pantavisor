@@ -86,6 +86,42 @@ config CONTAINER_PV_PVR_SDK
 config KAS_LOCAL_PV_PVR_SDK
 	string
 	default "PVROOT_CONTAINERS_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
+
+config CONTAINER_PV_ALPINE_CONNMAN
+	bool "pv-alpine-connman"
+
+config KAS_LOCAL_PV_ALPINE_CONNMAN
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-alpine-connman\"" if CONTAINER_PV_ALPINE_CONNMAN
+
+config CONTAINER_PV_PVWIFICONNECT
+	bool "pv-pvwificonnect"
+	depends on CONTAINER_PV_CONNMAN || CONTAINER_PV_DEBIAN_NM || CONTAINER_PV_ALPINE_CONNMAN
+
+config KAS_LOCAL_PV_PVWIFICONNECT
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-pvwificonnect\"" if CONTAINER_PV_PVWIFICONNECT
+
+config CONTAINER_PV_DEBIAN_NM
+	bool "pv-debian-nm"
+
+config KAS_LOCAL_PV_DEBIAN_NM
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-debian-nm\"" if CONTAINER_PV_DEBIAN_NM
+
+config CONTAINER_PV_AWCONNECT
+	bool  "pv-awconnect"
+
+config KAS_LOCAL_PV_AWCONNECT
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-awconnect\"" if CONTAINER_PV_AWCONNECT
+
+config CONTAINER_PV_TAILSCALE
+	bool  "pv-tailscale"
+
+config KAS_LOCAL_PV_TAILSCALE
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_AWCONNECT
 endmenu
 
 config MACHINE_FILTER_ALL
@@ -218,7 +254,7 @@ config MACHINE_ROCKCHIP_ROCK64
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
-config MACHINE_ROCKCHIP_RK3399_NANOPI_m4
+config MACHINE_ROCKCHIP_RK3399_NANOPI_M4
 	bool "rockchip rk3399 nanopi m4"
 	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
@@ -236,6 +272,11 @@ config MACHINE_SUNXI_ORANGE_PI_R1
 
 config MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	bool "sunxi orange pi zero plus2 h3"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
+config MACHINE_SUNXI_ORANGE_PI_3LTS
+	bool "sunxi orange pi 3 lts"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
 	select PLATFORM_SUNXI
 
@@ -330,6 +371,10 @@ config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_R1
 config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	string
 	default "kas/machines/sunxi-orange-pi-zero-plus2-h3.yaml" if MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_3LTS
+	string
+	default "kas/machines/sunxi-orange-pi-3lts.yaml" if MACHINE_SUNXI_ORANGE_PI_3LTS
 
 config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string

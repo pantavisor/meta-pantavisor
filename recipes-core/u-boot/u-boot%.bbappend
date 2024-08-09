@@ -1,4 +1,3 @@
-
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 OVERRIDES =. "mc-${BB_CURRENT_MC}:"
@@ -39,6 +38,10 @@ do_prepcompile() {
 	for frag in ${UBOOT_ENV_SRC_FRAGS}; do
 		cat ${WORKDIR}/$frag >> ${WORKDIR}/${UBOOT_ENV_SRC}
 	done
+
+	# example: meta-sunxi is doing their own compilation in do_compile so
+	# lets ensure our source is also available in boot.cmd
+	cp ${WORKDIR}/${UBOOT_ENV_SRC} ${WORKDIR}/boot.cmd
 }
 
 addtask prepcompile before do_configure do_compile after do_fetch do_patch
