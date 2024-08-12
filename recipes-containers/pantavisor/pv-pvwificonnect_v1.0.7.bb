@@ -1,5 +1,5 @@
 SUMMARY = "Pantahub Apps hosted packages"
-LICENSE = "MIT"
+LICENSE = "CLOSED"
 
 inherit pvrexport
 
