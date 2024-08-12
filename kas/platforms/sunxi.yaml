@@ -28,4 +28,3 @@ repos:
 local_conf_header:
   platform-sunxi: |
     PV_UBOOT_AUTOFDT = "1"
-    EXTRA_IMAGE_FEATURES = "debug-tweaks"

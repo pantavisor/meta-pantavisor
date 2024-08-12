@@ -69,6 +69,11 @@ config PVROOT_IMAGE_BSP
 	default "core-image-base"
 	depends on USE_PVROOT_IMAGE
 
+config EXTRA_IMAGE_FEATURES
+	string "Extra features"
+	default "debug-tweaks"
+	depends on USE_PVROOT_IMAGE
+
 config KAS_LOCAL_PVROOT_IMAGE
 	string
 	default "PVROOT_IMAGE = \"yes\"" if PVROOT_IMAGE
@@ -121,7 +126,7 @@ config CONTAINER_PV_TAILSCALE
 
 config KAS_LOCAL_PV_TAILSCALE
 	string
-	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_AWCONNECT
+	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
 endmenu
 
 config MACHINE_FILTER_ALL
