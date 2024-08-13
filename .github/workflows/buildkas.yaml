@@ -3,6 +3,9 @@ name: 'Build Kas'
 on:
   workflow_call:
     inputs:
+      name:
+        required: true
+        type: string
       configs:
         required: true
         type: string
@@ -31,13 +34,13 @@ jobs:
       - name: Archive image artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pantavisor-remix-images
+          name: pantavisor-remix-${{ inputs.name }}
           path: |
             build/tmp-*/deploy/images/*/pantavisor-remix*.wic.*
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pvrexports
+          name: pvrexports-${{ inputs.name }}
           path: |
             build/tmp-*/deploy/images/*/*pvrexport.*
 

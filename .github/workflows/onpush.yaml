@@ -8,20 +8,25 @@ jobs:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      name: sunxi-orange-pi-3lts-scarthgap
   remix-sunxi-orange-pi-r1-remix-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      name: sunxi-orange-pi-r1-scarthgap
   remix-sunxi-nanopi-r1-remix-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      name: sunxi-nanopi-r1-scarthgap
   remix-nxp-imx8qxpc0mek-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: kas/machines/imx8qxpc0mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml
+      name: nxp-imx8qxpc0mek-scarthgap
   remix-raspberrypi-armv8-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      name: raspberrypi-armv8-scarthgap
 
