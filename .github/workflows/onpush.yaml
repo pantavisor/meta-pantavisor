@@ -1,15 +1,27 @@
-name: 'Build Basic'
+name: 'Build On Push'
 
 on:
   push:
 
 jobs:
-  build-remix-sunxi-orange-pi-3lts-remix-scarthgap:
+  remix-sunxi-orange-pi-3lts-remix-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      config: sunxi/sunxi-orange-pi-3lts-remix-scarthgap.yaml
-  build-remix-sunxi-orange-pi-r1-remix-scarthgap:
+      configs: kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+  remix-sunxi-orange-pi-r1-remix-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      config: sunxi/sunxi-orange-pi-r1-remix-scarthgap.yaml
+      configs: kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+  remix-sunxi-nanopi-r1-remix-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+  remix-nxp-imx8qxpc0mek-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: kas/machines/imx8qxpc0mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml
+  remix-raspberrypi-armv8-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
 
