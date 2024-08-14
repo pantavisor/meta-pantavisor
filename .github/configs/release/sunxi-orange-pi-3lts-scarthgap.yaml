@@ -1,0 +1,76 @@
+header:
+    version: 16
+repos:
+    meta-sunxi:
+        commit: 8f5b915749709f21c2af543fdcde0898aff60154
+        patches:
+            orange-pi-3lts:
+                path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
+                repo: meta-pantavisor
+            wks-root-label:
+                path: patches/meta-sunxi/0001-wks-root-label.patch
+                repo: meta-pantavisor
+        url: https://github.com/linux-sunxi/meta-sunxi
+    meta-arm:
+        commit: 38bce82e42ea093333a53c4a10e51d1b26cbc989
+        layers:
+            meta-arm:
+            meta-arm-toolchain:
+        url: git://git.yoctoproject.org/meta-arm
+    meta-pantavisor:
+    poky:
+        url: https://github.com/yoctoproject/poky.git
+        layers:
+            meta:
+            meta-poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+        commit: 0b37512fb4b231cc106768e2a7328431009b3b70
+    meta-virtualization:
+        commit: 54b806b1985f3989722ee308e1073530fe3328c1
+        url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: 2338409efc51cf2022ff5610a9fb689251706e2b
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-sunxi: |
+        PV_UBOOT_AUTOFDT = "1"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    panta-busybox: |
+        PREFERRED_VERSION_busybox = "1.36~pv.%"
+    panta-mbedtls: |
+        PREFERRED_VERSION_mbedtls = "2.28.%"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-remix: |
+        IMAGE_CLASSES:append = " image-pvrexport"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        PVROOT_IMAGE = "yes"
+        PVROOT_IMAGE_BSP = "core-image-base"
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+    __voldirs: |-
+        SSTATE_DIR="/shared/sstate"
+        DL_DIR="/shared/dldir"
+machine: orange-pi-3lts
+target:
+- pantavisor-remix
+build_system: oe
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
+defaults:
+    repos:
+        branch: scarthgap
+_source_dir: .

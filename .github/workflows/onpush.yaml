@@ -29,6 +29,11 @@ jobs:
     with:
       configs: kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
       name: raspberrypi-armv8-scarthgap
+  remix-rockchip-rk3328-evb-kirkstone:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: kas/machines/rockchip-rk3328-evb.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml
+      name: rockchip-rk3328-evb-kirkstone
   remix-rockchip-rk3328-evb-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
