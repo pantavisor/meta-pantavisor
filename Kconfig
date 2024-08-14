@@ -253,15 +253,13 @@ config MACHINE_CORAL_DEV
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_CORAL
 	select PLATFORM_CORAL
 
-config MACHINE_ROCKCHIP_ROCK64
-	bool "rockchip rk3328b rock64"
-	depends on CODENAME_KIRKSTONE
+config MACHINE_ROCKCHIP_RK3328_EVB
+	bool "rockchip rk3328 evb"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
-config MACHINE_ROCKCHIP_RK3399_NANOPI_M4
-	bool "rockchip rk3399 nanopi m4"
-	depends on CODENAME_KIRKSTONE
+config MACHINE_ROCKCHIP_RK3399PRO_EVB
+	bool "rockchip rk3399pro evb"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
@@ -353,17 +351,13 @@ config KAS_INCLUDE_MACHINE_IMX8QXPC0MEK
 	string
 	default "kas/machines/imx8qxpc0mek.yaml" if MACHINE_IMX8QXPC0MEK
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_ROCK64
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
 	string
-	default "kas/machines/rockchip-rock64.yaml" if MACHINE_ROCKCHIP_ROCK64
+	default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_ROCK64
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399PRO_EVB
 	string
-	default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
-
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399_NANOPI_M4
-	string
-	default "kas/machines/rockchip-nanopi-m4.yaml" if MACHINE_ROCKCHIP_RK3399_NANOPI_M4
+	default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
 
 config KAS_INCLUDE_MACHINE_SUNXI_NANOPI_R1
 	string
