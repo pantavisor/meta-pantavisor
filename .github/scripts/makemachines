@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+targetdir=$1
+
+m=`ls kas/machines/*`
+configsuffix=:.github/configs/build-base-remix.yaml:.github/configs/shared-vols.yaml
+
+configs=" \
+	kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+	kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+	kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+	kas/machines/imx8qxpc0mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml$configsuffix \
+	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+"
+
+echo "Processing configs:
+
+$configs"
+
+rm -f .github/configs/release/*-scarthgap.yaml
+
+for cc in $configs; do
+	echo CC: $cc
+	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+	KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
+	echo "new config for machine: $m"
+	cat .github/configs/release/$m-scarthgap.yaml
+done
+
+git add .github/configs/release/
+
+

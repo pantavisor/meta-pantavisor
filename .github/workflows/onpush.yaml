@@ -2,6 +2,9 @@ name: 'Build On Push'
 
 on:
   push:
+    paths-ignore:
+      - '.github/scripts/**'
+      - '.github/workflows/updaterelease.yaml'
 
 jobs:
   remix-sunxi-orange-pi-3lts-remix-scarthgap:
