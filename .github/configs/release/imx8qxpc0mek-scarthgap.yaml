@@ -2,7 +2,7 @@ header:
     version: 16
 repos:
     meta-freescale:
-        commit: dc6b22f9151e5487258a22de1aa564f5239c0e1b
+        commit: 0f8091c63dd8805610c09b08409bc58492a3b16f
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 8b61684f0b1ba8bacdf3a69d993445e9791d4932
@@ -43,7 +43,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 5241a967c1d8d85cc22c5fd0dcf09816523e7947
+        commit: 0b37512fb4b231cc106768e2a7328431009b3b70
     meta-virtualization:
         commit: 54b806b1985f3989722ee308e1073530fe3328c1
         url: git://git.yoctoproject.org/meta-virtualization
