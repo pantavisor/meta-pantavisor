@@ -1,11 +1,12 @@
 header:
     version: 16
+_source_dir: .
 repos:
     meta-freescale:
-        commit: 0f8091c63dd8805610c09b08409bc58492a3b16f
+        commit: 1425fda62f7fa2f6bedaf0b2c41b2dae9ec1c3e7
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
-        commit: 8b61684f0b1ba8bacdf3a69d993445e9791d4932
+        commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
     meta-freescale-distro:
         commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
@@ -18,7 +19,7 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: 2338409efc51cf2022ff5610a9fb689251706e2b
+        commit: 64c481d017c1b5b5eae619a367a5e8fa00f1b156
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         branch: scarthgap-6.6.23-2.0.0
@@ -92,4 +93,3 @@ env:
 defaults:
     repos:
         branch: scarthgap
-_source_dir: .

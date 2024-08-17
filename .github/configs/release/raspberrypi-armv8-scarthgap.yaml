@@ -1,5 +1,6 @@
 header:
     version: 16
+_source_dir: .
 repos:
     meta-raspberrypi:
         commit: 1918a27419dcd5e79954c0dc0edddcde91057a7e
@@ -28,7 +29,7 @@ repos:
         commit: 54b806b1985f3989722ee308e1073530fe3328c1
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2338409efc51cf2022ff5610a9fb689251706e2b
+        commit: 64c481d017c1b5b5eae619a367a5e8fa00f1b156
         layers:
             meta-filesystems:
             meta-networking:
@@ -71,4 +72,3 @@ env:
 defaults:
     repos:
         branch: scarthgap
-_source_dir: .
