@@ -19,7 +19,7 @@ echo "Processing configs:
 
 $configs"
 
-rm -f .github/configs/release/*-scarthgap.yaml
+rm -f .github/configs/release/*-scarthgap.yaml*
 
 cat > .github/workflows/onpush.yaml <<EOF
 name: 'Build On Push'
@@ -51,4 +51,7 @@ done
 
 git add .github/configs/release/
 git add .github/workflows/onpush.yaml
+
+echo DIFF:
+git diff HEAD .github/
 
