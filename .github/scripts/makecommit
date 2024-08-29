@@ -1,9 +1,8 @@
 #!/bin/sh
 
-git add .github/configs/release/
 set -xe
 
-changed=`git diff HEAD | lsdiff | sed 's/.\///'`
+changed=`git diff HEAD .github/configs/release | lsdiff | sed 's/.\///'`
 
 if [ -z "$changed" ]; then
 	echo "NO changes"
