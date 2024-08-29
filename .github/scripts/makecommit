@@ -94,6 +94,8 @@ for change in $changed; do
 	done
 done
 
+rm -rf $gitdirs
+
 echo "Commit msg:"
 cat $commitmsg
 set -x
