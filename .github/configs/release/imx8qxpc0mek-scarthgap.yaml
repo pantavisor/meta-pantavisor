@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 1425fda62f7fa2f6bedaf0b2c41b2dae9ec1c3e7
+        commit: 01d9ff233a7ae41d39af436f9508103504708b58
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
@@ -19,7 +19,7 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: 64c481d017c1b5b5eae619a367a5e8fa00f1b156
+        commit: 1235dd4ed4a57e67683c045ad76b6a0f9e896b45
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         branch: scarthgap-6.6.23-2.0.0
@@ -27,7 +27,7 @@ repos:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: ae04eecd48e557437ec90366795b8cf202d0ce14
+        commit: f08206cdb6a47f5f52ec84e6286bcc5d8fd53cec
     meta-arm:
         commit: 38bce82e42ea093333a53c4a10e51d1b26cbc989
         layers:
@@ -44,7 +44,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 0b37512fb4b231cc106768e2a7328431009b3b70
+        commit: c5627ab06fc07221237b9a7059ac378ea80578f8
     meta-virtualization:
         commit: 54b806b1985f3989722ee308e1073530fe3328c1
         url: git://git.yoctoproject.org/meta-virtualization
