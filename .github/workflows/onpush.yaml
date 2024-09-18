@@ -7,39 +7,28 @@ on:
       - '.github/workflows/updaterelease.yaml'
 
 jobs:
-  remix-sunxi-orange-pi-3lts-remix-scarthgap:
+  build-sunxi-orange-pi-3lts-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
       name: sunxi-orange-pi-3lts-scarthgap
-  remix-sunxi-orange-pi-r1-remix-scarthgap:
+  build-sunxi-orange-pi-r1-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      configs: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
       name: sunxi-orange-pi-r1-scarthgap
-  remix-sunxi-nanopi-r1-remix-scarthgap:
+  build-sunxi-nanopi-r1-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      configs: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
       name: sunxi-nanopi-r1-scarthgap
-  remix-nxp-imx8qxpc0mek-scarthgap:
+  build-imx8qxpc0mek-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: kas/machines/imx8qxpc0mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml
-      name: nxp-imx8qxpc0mek-scarthgap
-  remix-raspberrypi-armv8-scarthgap:
+      configs: .github/configs/release/imx8qxpc0mek-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: imx8qxpc0mek-scarthgap
+  build-raspberrypi-armv8-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
+      configs: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
       name: raspberrypi-armv8-scarthgap
-  remix-rockchip-rk3328-evb-kirkstone:
-    uses: ./.github/workflows/buildkas.yaml
-    with:
-      configs: kas/machines/rockchip-rk3328-evb.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml
-      name: rockchip-rk3328-evb-kirkstone
-  remix-rockchip-rk3328-evb-scarthgap:
-    uses: ./.github/workflows/buildkas.yaml
-    with:
-      configs: kas/machines/rockchip-rk3328-evb.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml
-      name: rockchip-rk3328-evb-scarthgap
-
