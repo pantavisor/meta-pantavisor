@@ -45,7 +45,7 @@ for cc in $configs; do
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: $ccnew
-      name: $-scartgap
+      name: $m-scarthgap
 EOF1
 done
 
