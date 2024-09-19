@@ -4,10 +4,10 @@ inherit image
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
 
 VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
-
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
+VIRTUAL_RUNTIME_pantavisor_config ??= "pantavisor-default-config"
 
-PACKAGE_INSTALL = "pantavisor dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOTSTRAP_INSTALL}"
+PACKAGE_INSTALL = "pantavisor ${VIRTUAL_RUNTIME_pantavisor_config} dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOTSTRAP_INSTALL}"
 
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 
