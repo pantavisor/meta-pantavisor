@@ -35,7 +35,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVI
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 
-OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON -DPANTAVISOR_SKIP_PVS_INSTALL=ON"
+OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON -DPANTAVISOR_PVS_SKIP_INSTALL=ON"
 
 CMAKE_BINARY_DIR = "${S}"
 
