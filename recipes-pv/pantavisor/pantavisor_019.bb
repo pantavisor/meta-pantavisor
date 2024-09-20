@@ -19,7 +19,7 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;nobranch=1"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
-SRCREV = "5fc9cfc2c4d3ee7b3af8c4e6bee4708aec8fcb2d"
+SRCREV = "f55dd3f2985d1d9faf6df9ddeb571da7ced3d57f"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
@@ -35,7 +35,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVI
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 
-OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON"
+OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON -DPANTAVISOR_SKIP_PVS_INSTALL=ON"
 
 CMAKE_BINARY_DIR = "${S}"
 
