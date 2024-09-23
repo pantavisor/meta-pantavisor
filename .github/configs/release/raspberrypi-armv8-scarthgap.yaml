@@ -24,9 +24,9 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: c5627ab06fc07221237b9a7059ac378ea80578f8
+        commit: 1678bb9ee2a1ce476b5b153d9e79bb9813c33574
     meta-virtualization:
-        commit: 54b806b1985f3989722ee308e1073530fe3328c1
+        commit: 66ee8d268db25a9f2848bda6858c284c745f549f
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
         commit: 1235dd4ed4a57e67683c045ad76b6a0f9e896b45
