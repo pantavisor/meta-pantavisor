@@ -1,9 +1,0 @@
-name: Do things every 4 hours
-on:
-  schedule:
-    - cron: "25 * * * *"
-
-jobs:
-  update-release-machines:
-    uses: ./.github/workflows/updaterelease.yaml
-

@@ -1,8 +1,14 @@
-name: 'Update Release Machines'
+name: 'Update Machines'
 
 on:
-  workflow_call:
   workflow_dispatch:
+  schedule:
+    - cron: "25 * * * *"
+  push:
+    paths:
+      - .github/scripts/**
+      - .github/workflows/updaterelease.yaml
+      - .github/workflows/onpush-update.yaml
 
 jobs:
   updaterelease:
