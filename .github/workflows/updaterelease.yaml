@@ -2,6 +2,7 @@ name: 'Update Release Machines'
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   updaterelease:
