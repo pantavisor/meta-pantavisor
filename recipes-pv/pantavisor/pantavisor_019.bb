@@ -19,7 +19,7 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;nobranch=1"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
-SRCREV = "f55dd3f2985d1d9faf6df9ddeb571da7ced3d57f"
+SRCREV = "88c3e58e75ce8117994148f52d1790addfcda8f1"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
