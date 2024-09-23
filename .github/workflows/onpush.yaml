@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - '.github/scripts/**'
       - '.github/workflows/updaterelease.yaml'
+      - '.github/workflows/onpush-update.yaml'
 
 jobs:
   build-sunxi-orange-pi-3lts-scarthgap:

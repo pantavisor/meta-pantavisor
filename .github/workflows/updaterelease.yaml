@@ -3,11 +3,6 @@ name: 'Update Release Machines'
 on:
   workflow_call:
 
-  push:
-    paths:
-      - .github/scripts/**
-      - .github/workflows/updaterelease.yaml
-
 jobs:
   updaterelease:
     runs-on: ["self-hosted"]

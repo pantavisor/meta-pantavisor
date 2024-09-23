@@ -1,0 +1,12 @@
+name: 'Update Machines On Push'
+
+on:
+  push:
+    paths:
+      - .github/scripts/**
+      - .github/workflows/updaterelease.yaml
+      - .github/workflows/onpush-update.yaml
+
+jobs:
+  update-release-machines:
+    uses: ./.github/workflows/updaterelease.yaml
