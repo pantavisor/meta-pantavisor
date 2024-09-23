@@ -3,13 +3,14 @@
 set -xe
 
 changed=`git diff HEAD .github/configs/release | lsdiff | sed 's/.\///'`
+changed2=`git diff HEAD .github/workflows/onpush.yaml | lsdiff | sed 's/.\///'`
 
-if [ -z "$changed" ]; then
+if [ -z "$changed" -a -z "$changed2" ]; then
 	echo "NO changes"
 	exit 0
 fi
 
-echo "Changes: $changed"
+echo "Changes: $changed $changed2"
 
 gitdirs=$PWD/.github/git-dirs/
 mkdir -p $gitdirs
@@ -92,6 +93,11 @@ for change in $changed; do
 		unset GIT_DIR
 	done
 done
+
+if [ -n "$changed2" ]; then
+	echo >> $commitmsg
+	echo "Changed: $changed2" >> $commitmsg
+fi
 
 rm -rf $gitdirs
 
