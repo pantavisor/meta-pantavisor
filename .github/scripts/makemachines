@@ -37,14 +37,13 @@ for cc in $configs; do
 	echo CC: $cc
 	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
 	KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
-	ccnew=`echo $cc | sed "s#.*:#.github/configs/release/$m-scarthgap.yaml:#g"`
 	echo "new config for machine: $m"
 	cat .github/configs/release/$m-scarthgap.yaml
 	cat >> .github/workflows/onpush.yaml << EOF1
   build-$m-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: $ccnew
+      configs: .github/configs/release/$m-scarthgap.yaml
       name: $m-scarthgap
 EOF1
 done
