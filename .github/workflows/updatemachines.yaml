@@ -7,8 +7,7 @@ on:
   push:
     paths:
       - .github/scripts/**
-      - .github/workflows/updaterelease.yaml
-      - .github/workflows/onpush-update.yaml
+      - .github/workflows/updatemachines.yaml
 
 jobs:
   updaterelease:
