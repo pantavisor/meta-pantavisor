@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# obsolete
 source=$BASH_SOURCE
 dir=`dirname $source`
 absdir=`sh -c "cd $dir; pwd"`

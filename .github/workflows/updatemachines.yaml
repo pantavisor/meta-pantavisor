@@ -1,0 +1,31 @@
+name: 'Update Machines'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "25 * * * *"
+  push:
+    paths:
+      - .github/scripts/**
+      - .github/workflows/updaterelease.yaml
+      - .github/workflows/onpush-update.yaml
+
+jobs:
+  updaterelease:
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v5
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - run: ls .github/scripts
+      - run: pwd
+      - run: git config --global --add safe.directory $GITHUB_WORKSPACE
+      - run: .github/scripts/makemachines
+      - run: git config --global user.email "pantavisor-meta@ci.pantavisor.io"
+      - run: git config --global user.name "Pantavisor Meta Layer CI"
+      - run: .github/scripts/makecommit
+      - run: git push
+

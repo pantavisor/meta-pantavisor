@@ -1,0 +1,105 @@
+#!/bin/sh
+
+set -xe
+
+changed=`git diff HEAD .github/configs/release | lsdiff | sed 's/.\///'`
+
+if [ -z "$changed" ]; then
+	echo "NO changes"
+	exit 0
+fi
+
+echo "Changes: $changed"
+
+gitdirs=$PWD/.github/git-dirs/
+mkdir -p $gitdirs
+
+commitmsg=`mktemp -t commitmsg.XXXXXXX`
+
+echo "" > $commitmsg
+
+echo_cm(){
+	echo "$@" >> $commitmsg
+}
+
+for change in $changed; do
+	original=$change.orig
+	git diff HEAD -- $change | patch -f -R -p1 -s -o $original
+	removed=
+	if [ -f $change ]; then
+		repos=`cat $change | yq ".repos | keys()[]"`
+	else
+		repos=`cat $original | yq ".repos | keys()[]"`
+		removed=yes
+	fi
+	
+	change_listed=
+
+	for repo in $repos; do
+		repourl=null
+		repocommit=null
+		if [ -f $change ]; then
+			repourl=`cat $change | yq ".repos.$repo.url"`
+			repocommit=`cat $change | yq ".repos.$repo.commit"`
+		fi
+		repourlorig=null
+		repocommitorig=null
+		if [ -f $original ]; then
+			repourlorig=`cat $original | yq ".repos.$repo.url"`
+			repocommitorig=`cat $original | yq ".repos.$repo.commit"`
+		fi
+
+		if [ -n "$repocommit" -a "$repocommit" = "$repocommitorig" ]; then
+			echo "$change/$repo: no change"
+			continue
+		fi
+		set -x
+		if [ -z "$change_listed" ]; then
+			echo_cm "== $change${removed:+ (REMOVED)} =="
+			change_listed=yes
+			echo_cm
+		fi
+		echo_cm "  $repo:"
+		echo_cm
+
+		origdir=$PWD
+		export GIT_DIR=$gitdirs/$repo
+
+		if [ "$repocommitorig" = "null" ]; then
+			echo_cm "    Adding repo $repo from $repourl"
+		        echo_cm "           commit $repocommit"
+			echo_cm
+		elif [ "$repocommit" = "null" ]; then
+			echo_cm "    Removing repo $repo from $repourlorig"
+		        echo_cm "             commit $repocommitorig"
+			echo_cm
+		else
+			gittemp=`mktemp -t -d gittemp.XXXXXX`
+			echo_cm "    Changed repo $repourlorig => $repourl"
+		        echo_cm "            commit $repocommitorig => $repocommit"
+			cd $gittemp
+			git init
+			git remote remove current && true
+			git remote remove orig && true
+			git remote add current $repourl
+			git remote add orig $repourlorig
+			git fetch --all -v
+			git log --oneline $repocommitorig..$repocommit | sed 's/^/      * /' >> $commitmsg
+			echo_cm
+			cd $origdir
+			rm -rf $gittemp
+		fi
+		unset GIT_DIR
+	done
+done
+
+rm -rf $gitdirs
+
+echo "Commit msg:"
+cat $commitmsg
+set -x
+pwd
+git diff
+git commit -a -F $commitmsg
+rm -f $commitmsg
+

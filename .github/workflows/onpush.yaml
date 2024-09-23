@@ -1,0 +1,35 @@
+name: 'Build On Push'
+
+on:
+  push:
+    paths-ignore:
+      - '.github/scripts/**'
+      - '.github/workflows/updaterelease.yaml'
+      - '.github/workflows/onpush-update.yaml'
+
+jobs:
+  build-sunxi-orange-pi-3lts-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: sunxi-orange-pi-3lts-scarthgap
+  build-sunxi-orange-pi-r1-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: sunxi-orange-pi-r1-scarthgap
+  build-sunxi-nanopi-r1-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: sunxi-nanopi-r1-scarthgap
+  build-imx8qxpc0mek-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/imx8qxpc0mek-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: imx8qxpc0mek-scarthgap
+  build-raspberrypi-armv8-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: raspberrypi-armv8-scarthgap
