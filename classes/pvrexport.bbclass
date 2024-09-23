@@ -65,7 +65,14 @@ do_unpack_pvr() {
 		pvr init
 		pvr get ${PVR_SRC_DIR}/.pvr
 	fi
-	pvr checkout
+	if [ -d .pvr ]; then
+		pvr checkout
+	else
+		cp -rf ${PVR_SRC_DIR}/* .
+		pvr init
+		pvr add
+		pvr commit
+	fi
 	if [ -f "_sigs/${PVCONT_NAME}.json" ]; then
 		pvr sig up _sigs/${PVCONT_NAME}.json
 	else
