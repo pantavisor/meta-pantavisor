@@ -1,0 +1,25 @@
+From dc2e71f060c25b94f011fce12ef59d2f5ae4e6a9 Mon Sep 17 00:00:00 2001
+From: Dmitry Eremin-Solenikov <dmitry_eremin@mentor.com>
+Date: Thu, 9 Apr 2015 23:01:48 +0300
+Subject: [PATCH] %% original patch: lxc-fix-B-S.patch
+
+---
+ config/init/upstart/Makefile.am | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/config/init/upstart/Makefile.am b/config/init/upstart/Makefile.am
+index 5552d32..186ae3d 100644
+--- a/config/init/upstart/Makefile.am
++++ b/config/init/upstart/Makefile.am
+@@ -3,9 +3,9 @@ EXTRA_DIST = lxc.conf lxc-instance.conf lxc-net.conf.in
+ if INIT_SCRIPT_UPSTART
+ install-upstart: lxc.conf lxc-instance.conf lxc-net.conf
+ 	$(MKDIR_P) $(DESTDIR)$(sysconfdir)/init/
+-	$(INSTALL_DATA) lxc.conf $(DESTDIR)$(sysconfdir)/init/
++	$(INSTALL_DATA) $(srcdir)/lxc.conf $(DESTDIR)$(sysconfdir)/init/
+ 	$(INSTALL_DATA) $(srcdir)/lxc-instance.conf $(DESTDIR)$(sysconfdir)/init/
+-	$(INSTALL_DATA) lxc-net.conf $(DESTDIR)$(sysconfdir)/init/
++	$(INSTALL_DATA) $(srcdir)/lxc-net.conf $(DESTDIR)$(sysconfdir)/init/
+ 
+ uninstall-upstart:
+ 	rm -f $(DESTDIR)$(sysconfdir)/init/lxc.conf

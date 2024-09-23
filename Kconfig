@@ -69,6 +69,11 @@ config PVROOT_IMAGE_BSP
 	default "core-image-base"
 	depends on USE_PVROOT_IMAGE
 
+config EXTRA_IMAGE_FEATURES
+	string "Extra features"
+	default "debug-tweaks"
+	depends on USE_PVROOT_IMAGE
+
 config KAS_LOCAL_PVROOT_IMAGE
 	string
 	default "PVROOT_IMAGE = \"yes\"" if PVROOT_IMAGE
@@ -121,7 +126,7 @@ config CONTAINER_PV_TAILSCALE
 
 config KAS_LOCAL_PV_TAILSCALE
 	string
-	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_AWCONNECT
+	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
 endmenu
 
 config MACHINE_FILTER_ALL
@@ -248,15 +253,13 @@ config MACHINE_CORAL_DEV
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_CORAL
 	select PLATFORM_CORAL
 
-config MACHINE_ROCKCHIP_ROCK64
-	bool "rockchip rk3328b rock64"
-	depends on CODENAME_KIRKSTONE
+config MACHINE_ROCKCHIP_RK3328_EVB
+	bool "rockchip rk3328 evb"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
-config MACHINE_ROCKCHIP_RK3399_NANOPI_m4
-	bool "rockchip rk3399 nanopi m4"
-	depends on CODENAME_KIRKSTONE
+config MACHINE_ROCKCHIP_RK3399PRO_EVB
+	bool "rockchip rk3399pro evb"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
 
@@ -272,6 +275,11 @@ config MACHINE_SUNXI_ORANGE_PI_R1
 
 config MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	bool "sunxi orange pi zero plus2 h3"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
+config MACHINE_SUNXI_ORANGE_PI_3LTS
+	bool "sunxi orange pi 3 lts"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
 	select PLATFORM_SUNXI
 
@@ -343,17 +351,13 @@ config KAS_INCLUDE_MACHINE_IMX8QXPC0MEK
 	string
 	default "kas/machines/imx8qxpc0mek.yaml" if MACHINE_IMX8QXPC0MEK
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_ROCK64
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
 	string
-	default "kas/machines/rockchip-rock64.yaml" if MACHINE_ROCKCHIP_ROCK64
+	default "kas/machines/rockchip-rk3328-evb.yaml" if MACHINE_ROCKCHIP_RK3328_EVB
 
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_ROCK64
+config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399PRO_EVB
 	string
-	default "kas/machines/rockchip-rk3328-rock64.yaml" if MACHINE_ROCKCHIP_RK3328_ROCK64
-
-config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3399_NANOPI_M4
-	string
-	default "kas/machines/rockchip-nanopi-m4.yaml" if MACHINE_ROCKCHIP_RK3399_NANOPI_M4
+	default "kas/machines/rockchip-rk3399pro-evb.yaml" if MACHINE_ROCKCHIP_RK3399PRO_EVB
 
 config KAS_INCLUDE_MACHINE_SUNXI_NANOPI_R1
 	string
@@ -366,6 +370,10 @@ config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_R1
 config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 	string
 	default "kas/machines/sunxi-orange-pi-zero-plus2-h3.yaml" if MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_3LTS
+	string
+	default "kas/machines/sunxi-orange-pi-3lts.yaml" if MACHINE_SUNXI_ORANGE_PI_3LTS
 
 config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string

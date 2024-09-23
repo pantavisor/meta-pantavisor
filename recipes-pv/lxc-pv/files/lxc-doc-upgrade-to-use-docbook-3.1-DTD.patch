@@ -1,0 +1,29 @@
+From 85d1e77acbfde2aa1045cfda877a91a9e57c405d Mon Sep 17 00:00:00 2001
+From: Jim Somerville <Jim.Somerville@windriver.com>
+Date: Tue, 11 Aug 2015 14:05:00 -0400
+Subject: [PATCH] lxc: doc: upgrade to use docbook 3.1 DTD
+
+docbook2man fails to build the man pages in poky
+due to missing the ancient Davenport 3.0 DTD.
+Poky meta has the Oasis 3.1 version so upgrade
+to use that instead.
+
+Signed-off-by: Jim Somerville <Jim.Somerville@windriver.com>
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 90a4bd4..a3272e9 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -227,7 +227,7 @@ AM_CONDITIONAL([ENABLE_DOCBOOK], [test "x$db2xman" != "x"])
+ AM_CONDITIONAL([USE_DOCBOOK2X], [test "x$db2xman" != "xdocbook2man"])
+ 
+ if test "x$db2xman" = "xdocbook2man"; then
+-	docdtd="\"-//Davenport//DTD DocBook V3.0//EN\""
++	docdtd="\"-//OASIS//DTD DocBook V3.1//EN\""
+ else
+ 	docdtd="\"-//OASIS//DTD DocBook XML\" \"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd\""
+ fi

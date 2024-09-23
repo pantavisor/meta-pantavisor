@@ -1,0 +1,10 @@
+
+inherit core-image
+IMAGE_FSTYPES = "tar.gz"
+PANTAVISOR_MACHINE_FIRMWARE ?= "linux-firmware"
+KERNEL_PACKAGE_NAME ?= "kernel"
+PANTAVISOR_MACHINE_KERNEL_MODULES ?= "${KERNEL_PACKAGE_NAME}-modules"
+CORE_IMAGE_EXTRA_INSTALL += "${PANTAVISOR_MACHINE_FIRMWARE} ${PANTAVISOR_MACHINE_KERNEL_MODULES}"
+IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
+IMAGE_TYPES:remove = "pvbspit pvrexportit"
+

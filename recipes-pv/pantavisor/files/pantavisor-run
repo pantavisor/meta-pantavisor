@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -xe
+
+if [ -z "$1" ]; then
+	exec unshare --mount-proc -m -p -f $0 run
+fi
+
+umount /var/pantavisor/tmpfs || true
+mount -t tmpfs none /var/pantavisor/tmpfs
+cp -rf /usr/share/pantavisor/skel/* /var/pantavisor/tmpfs/
+mount -t overlay -o lowerdir=/:/var/pantavisor/tmpfs,workdir=/var/pantavisor/ovl/work,upperdir=/var/pantavisor/ovl/upper none /var/pantavisor/root
+mount -t tmpfs none /var/pantavisor/root/pv
+mount -obind /var/pantavisor/storage /var/pantavisor/root/storage
+
+cd /var/pantavisor/root/
+pivot_root . old
+
+mount -t sysfs none /sys
+mount -t proc none /proc
+mount -t devtmpfs none /dev
+
+# umount all from hostns
+mount | grep old | awk '{print $3}' | sort -r | while read -r line; do
+	umount $line || umount -l $line
+done
+
+pantavisor --cmdline "pv_control.remote=0 pv_log.server.outputs=filetree"
+
