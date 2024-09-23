@@ -3,7 +3,7 @@ name: 'Update Machines'
 on:
   workflow_dispatch:
   schedule:
-    - cron: "25 * * * *"
+    - cron: "15 */8 * * *"
   push:
     paths:
       - .github/scripts/**
