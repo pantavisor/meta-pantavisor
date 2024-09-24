@@ -10,5 +10,5 @@ header:
     - kas/platforms/nxp.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: imx8qxpc0mek
+machine: imx8qxp-mek
 
