@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: 05827e296c2cb09043141b241153468deb4428d0
+        commit: 8f5b915749709f21c2af543fdcde0898aff60154
         patches:
             orange-pi-3lts:
                 path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
@@ -13,7 +13,7 @@ repos:
                 repo: meta-pantavisor
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: 1947c000299c0330e8a866996505221a14c0e1ea
+        commit: 313ad2a0e600655d9bfbe53646e356372ff02644
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -28,7 +28,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 1678bb9ee2a1ce476b5b153d9e79bb9813c33574
+        commit: 703740d19f0e144d56ad000b532d92197ec8ddf1
     meta-virtualization:
         commit: 66ee8d268db25a9f2848bda6858c284c745f549f
         url: git://git.yoctoproject.org/meta-virtualization
@@ -61,6 +61,7 @@ local_conf_header:
         PVROOT_IMAGE = "yes"
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
     __voldirs: |-
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"

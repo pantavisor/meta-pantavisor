@@ -3,10 +3,10 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: a5213ff1f0d1c67e0155b41231d935da962eb79a
+        commit: 0f8091c63dd8805610c09b08409bc58492a3b16f
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
-        commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
+        commit: 8b61684f0b1ba8bacdf3a69d993445e9791d4932
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
     meta-freescale-distro:
         commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
@@ -24,16 +24,16 @@ repos:
         url: https://github.com/nxp-imx/meta-imx.git
         branch: scarthgap-6.6.23-2.0.0
         patches:
-          u-boot-deploy-fix:
-            repo: meta-pantavisor
-            path: patches/meta-imx/0001-u-boot-imx-Take-patch-from-meta-freescale-to-fix-bui.patch
+            u-boot-deploy-fix:
+                path: patches/meta-imx/0001-u-boot-imx-Take-patch-from-meta-freescale-to-fix-bui.patch
+                repo: meta-pantavisor
         layers:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: f08206cdb6a47f5f52ec84e6286bcc5d8fd53cec
+        commit: ae04eecd48e557437ec90366795b8cf202d0ce14
     meta-arm:
-        commit: 1947c000299c0330e8a866996505221a14c0e1ea
+        commit: 313ad2a0e600655d9bfbe53646e356372ff02644
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -48,7 +48,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 1678bb9ee2a1ce476b5b153d9e79bb9813c33574
+        commit: 703740d19f0e144d56ad000b532d92197ec8ddf1
     meta-virtualization:
         commit: 66ee8d268db25a9f2848bda6858c284c745f549f
         url: git://git.yoctoproject.org/meta-virtualization
@@ -80,6 +80,7 @@ local_conf_header:
         PVROOT_IMAGE = "yes"
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
     __voldirs: |-
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"

@@ -22,11 +22,11 @@ jobs:
     with:
       configs: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml
       name: sunxi-nanopi-r1-scarthgap
-  build-imx8qxpc0mek-scarthgap:
+  build-imx8qxp-mek-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
       configs: .github/configs/release/imx8qxp-mek-scarthgap.yaml
-      name: imx8qxpc0mek-scarthgap
+      name: imx8qxp-mek-scarthgap
   build-raspberrypi-armv8-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:

@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 6df7e028a2b7b2d8cab0745dc0ed2eebc3742a17
+        commit: 1918a27419dcd5e79954c0dc0edddcde91057a7e
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -24,7 +24,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 1678bb9ee2a1ce476b5b153d9e79bb9813c33574
+        commit: 703740d19f0e144d56ad000b532d92197ec8ddf1
     meta-virtualization:
         commit: 66ee8d268db25a9f2848bda6858c284c745f549f
         url: git://git.yoctoproject.org/meta-virtualization
@@ -59,6 +59,7 @@ local_conf_header:
         PVROOT_IMAGE = "yes"
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
     __voldirs: |-
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
