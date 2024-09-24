@@ -23,6 +23,10 @@ repos:
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         branch: scarthgap-6.6.23-2.0.0
+        patches:
+          u-boot-deploy-fix:
+            repo: meta-pantavisor
+            path: patches/meta-imx/0001-u-boot-imx-Take-patch-from-meta-freescale-to-fix-bui.patch
         layers:
             meta-imx-bsp:
             meta-imx-ml:
@@ -83,7 +87,7 @@ bblayers_conf_header:
     platform-nxp: |
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
-machine: imx8qxpc0mek
+machine: imx8qxp-mek
 target:
 - pantavisor-remix
 build_system: oe

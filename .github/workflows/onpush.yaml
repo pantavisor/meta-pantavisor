@@ -25,7 +25,7 @@ jobs:
   build-imx8qxpc0mek-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/imx8qxpc0mek-scarthgap.yaml
+      configs: .github/configs/release/imx8qx-mek-scarthgap.yaml
       name: imx8qxpc0mek-scarthgap
   build-raspberrypi-armv8-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
