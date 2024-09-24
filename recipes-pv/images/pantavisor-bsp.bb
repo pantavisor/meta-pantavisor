@@ -28,11 +28,14 @@ PVR_PVBSPIT_CONFIG_DIR ?= "${WORKDIR}/pvrpvbspitconfig"
 do_compile[dirs] = "${TOPDIR} ${PVBSPSTATE} ${PVBSP} ${PVBSP_mods} ${PVBSP_fw} ${PVR_PVBSPIT_CONFIG_DIR} "
 do_compile[cleandirs] = " ${PVBSPSTATE} ${PVBSP_mods} ${PVBSP_fw}"
 
+VIRTUAL-RUNTIME_pantavisor_skel ??= "pantavisor-default-skel"
+
 PVROOT_IMAGE_BSP ?= "empty-image"
 
 compile_depends = ' \
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
 	${PVROOT_IMAGE_BSP}:do_image_complete \
+	${VIRTUAL-RUNTIME_pantavisor_skel}:do_deploy \
 	virtual/kernel:do_deploy \
 	'
 do_compile[depends] += "${compile_depends}"
@@ -41,14 +44,6 @@ compile_mcdepends = '\
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d)} \
 	'
 do_compile[mcdepends] += '${compile_mcdepends}'
-
-PVBSP_VENDORID_FILE ?= ""
-
-SRC_URI += " \
-	file://device.json \
-	file://drivers.json \
-	${@oe.utils.conditional('PVBSP_VENDORID_FILE', '', '', 'file://${PVBSP_VENDORID_FILE}', d)} \
-"
 
 fakeroot do_compile(){
 
@@ -72,14 +67,11 @@ fakeroot do_compile(){
     tar -C ${PVBSP_fw} -xvf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=3 ./lib/firmware || true
     cd ${PVBSPSTATE}
     pvr init
+    pvr get ${DEPLOY_DIR_IMAGE}/${VIRTUAL-RUNTIME_pantavisor_skel}.pvrexport.tgz
+    pvr checkout
     [ -d bsp ] || mkdir bsp
     [ -f bsp/modules.squashfs ] && rm -f bsp/modules.squashfs
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
-
-    # copy the skeleton
-    cp -rf ${WORKDIR}/device.json .
-    cp -rf ${WORKDIR}/drivers.json bsp/
-    [ -f "${WORKDIR}/${PVBSP_VENDORID_FILE}" ] && cp -f ${WORKDIR}/${PVBSP_VENDORID_FILE} bsp/
 
     mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
     mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
