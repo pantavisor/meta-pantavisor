@@ -26,7 +26,7 @@ repos:
                 repo: meta-pantavisor
         commit: 2034fc38eb4e63984d9bd6b260aa1bf95ce562e4
     meta-virtualization:
-        commit: 46856f63065bd30c7f90cc524b2ff5c7d7be1132
+        commit: 9d42883b978cd896051f5553a35c06a3fcd277a2
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
         commit: 735ae0310870ffce07ce0c55c4f87c20ac161ff9
