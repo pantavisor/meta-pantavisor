@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 7e2d72128f06568d2359d4fbe8f9c18e1295ea38
+        commit: 3f0f8a3ca8b9a957425b6e647dd212cd8986cd5a
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
