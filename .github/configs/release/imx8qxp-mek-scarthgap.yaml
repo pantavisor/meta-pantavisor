@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 3f0f8a3ca8b9a957425b6e647dd212cd8986cd5a
+        commit: 9f432c61e9ec030ef35d2db467c5ad99222aa31b
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
@@ -31,7 +31,7 @@ repos:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: f08206cdb6a47f5f52ec84e6286bcc5d8fd53cec
+        commit: 239073c47124f41f46581871afbde643f48d6a3b
     meta-arm:
         commit: 950a4afce46a359def2958bd9ae33fc08ff9bb0d
         layers:
