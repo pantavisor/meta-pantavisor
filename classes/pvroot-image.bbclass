@@ -1,5 +1,26 @@
+#
 # pvroot image class
 #
+
+inherit image
+
+cmd_tidy() {
+	rm -rf ${IMAGE_ROOTFS}/etc
+	rm -rf ${IMAGE_ROOTFS}/var
+}
+
+
+PACKAGE_INSTALL = "pantavisor-pvroot"
+IMAGE_INSTALL = ""
+IMAGE_LINGUAS = ""
+IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
+IMAGE_PREPROCESS_COMMAND += "cmd_tidy"
+
+ROOTFS_BOOTSTRAP_INSTALL = ""
+MACHINE_FEATURES = ""
+DISTRO_FEATURES = ""
+IMAGE_FEATURES = ""
+
 # allow to assemble pvroot images by making special rootfs
 # allow bundling multiple pvrexports to initial state
 
@@ -19,8 +40,6 @@ DEPENDS += " pvr-native squashfs-tools-native"
 
 IMAGE_BUILDINFO_FILE = "pvroot.build"
 
-IMAGE_TYPES_MASKED += " pvrexportit pvbspit "
-
 UBOOT_ENV_SUFFIX ?= "scr"
 IMAGE_BOOT_FILES += "boot.${UBOOT_ENV_SUFFIX}"
 IMAGE_BOOT_FILES += "oemEnv.txt"
@@ -39,15 +58,16 @@ python __anonymous () {
 
     mc = d.getVar("PANTA_MULTICONFIG")
 
-    d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":pantavisor-bsp" if mc != "" else "pantavisor-bsp" ) +':do_compile')
+    d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":pantavisor-bsp" if mc != "" else "pantavisor-bsp" ) +':do_compile')
     if d.getVar("PVROOT_IMAGE") == "yes":
         for img in d.getVar("PVROOT_IMAGE_BSP").split():
-            d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
+            d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
     for img in d.getVar("PVROOT_CONTAINERS").split():
-        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
+        d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
     for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
-        d.appendVarFlag('do_rootfs', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
+        d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
 
+    d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":virtual/bootloader"+img if mc != "" else "virtual/bootloader" ) +':do_deploy')
     d.delVarFlag("do_fetch", "noexec")
     d.delVarFlag("do_unpack", "noexec")
 }
@@ -129,9 +149,9 @@ def do_rootfs_mixing(d, my_env):
 do_rootfs[dirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 do_rootfs[cleandirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 
-addtask rootfs after do_fetch do_unpack
+addtask rootfs_pvroot after do_rootfs before do_image
 
-fakeroot python do_rootfs(){
+fakeroot python do_rootfs_pvroot(){
     from pathlib import Path
     from oe.utils import execute_pre_post_process
     import shutil
@@ -147,20 +167,6 @@ fakeroot python do_rootfs(){
     traildir = d.getVar("IMAGE_ROOTFS") + "/trails/0/"
 
     testfile = d.getVar("IMAGE_ROOTFS") + "/test"
-    Path(d.getVar("IMAGE_ROOTFS") + "/boot").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/config").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/factory-pkgs.d").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/trails").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/objects").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/trails/0").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/trails/0/.pv").mkdir(parents=True, exist_ok=True)
-    Path(d.getVar("IMAGE_ROOTFS") + "/trails/0/.pv/README").write_text('hardlinks to artifacts loaded by bootloader')
-    Path(d.getVar("IMAGE_ROOTFS") + "/logs").mkdir(parents=True, exist_ok=True)
-    shutil.copy2(Path(d.getVar("THISDIR") + "/files/device.json"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/json")
-    shutil.copy2(Path(d.getVar("THISDIR") + "/files/pvrconfig"), d.getVar("IMAGE_ROOTFS") + "/trails/0/.pvr/config")
-    shutil.copy2(Path(d.getVar("THISDIR") + "/files/uboot.txt"), d.getVar("IMAGE_ROOTFS") + "/boot/uboot.txt")
-    shutil.copy2(Path(d.getVar("THISDIR") + "/files/pantahub.config"), d.getVar("IMAGE_ROOTFS") + "/config/pantahub.config")
 
     devca = Path(d.getVar("WORKDIR") + "/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz")
     Path(my_env["HOME"] + "/.pvr").mkdir(parents=True, exist_ok=True)
