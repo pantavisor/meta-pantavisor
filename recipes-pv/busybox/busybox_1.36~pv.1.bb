@@ -15,6 +15,7 @@ REPENDS:append = "\
 SRC_URI = " \
 	git://gitlab.com/pantacor/busybox.git;protocol=https;branch=pv/1_35_stable \
 	file://defconfig \
+	file://trim.cfg \
 	file://pantavisor.cfg \
 	file://debug.patch \
 "
