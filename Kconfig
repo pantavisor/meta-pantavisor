@@ -242,8 +242,8 @@ config MACHINE_IMX8QXP_B0_MEK
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
 
-config MACHINE_IMX8QXPC0MEK
-	bool "imx8qxpc0mek"
+config MACHINE_IMX8QXP_MEK
+	bool "imx8qxp-mek"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
 
@@ -347,9 +347,9 @@ config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
 	string
 	default "kas/machines/imx8qxp-b0-mek.yaml" if MACHINE_IMX8QXP_B0_MEK
 
-config KAS_INCLUDE_MACHINE_IMX8QXPC0MEK
+config KAS_INCLUDE_MACHINE_IMX8QXP_MEK
 	string
-	default "kas/machines/imx8qxpc0mek.yaml" if MACHINE_IMX8QXPC0MEK
+	default "kas/machines/imx8qxp-mek.yaml" if MACHINE_IMX8QXP_MEK
 
 config KAS_INCLUDE_MACHINE_ROCKCHIP_RK3328_EVB
 	string
