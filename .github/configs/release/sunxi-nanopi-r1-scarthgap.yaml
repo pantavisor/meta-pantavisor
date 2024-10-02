@@ -11,16 +11,19 @@ repos:
             wks-root-label:
                 path: patches/meta-sunxi/0001-wks-root-label.patch
                 repo: meta-pantavisor
+        path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
         commit: 950a4afce46a359def2958bd9ae33fc08ff9bb0d
         layers:
             meta-arm:
             meta-arm-toolchain:
+        path: layers/meta-arm
         url: git://git.yoctoproject.org/meta-arm
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
         layers:
             meta:
             meta-poky:
@@ -28,9 +31,10 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 2034fc38eb4e63984d9bd6b260aa1bf95ce562e4
+        commit: c799f73a47fa35d6059456291328f7ff10fdb273
     meta-virtualization:
         commit: e5878c864aacd24fe8f09ab7221f0ada13cd22d3
+        path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
         commit: 735ae0310870ffce07ce0c55c4f87c20ac161ff9
@@ -39,6 +43,7 @@ repos:
             meta-networking:
             meta-oe:
             meta-python:
+        path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
     platform-sunxi: |

@@ -4,12 +4,15 @@ _source_dir: .
 repos:
     meta-freescale:
         commit: 9f432c61e9ec030ef35d2db467c5ad99222aa31b
+        path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
+        path: layers/meta-freescale-3rdparty
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
     meta-freescale-distro:
         commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+        path: layers/meta-freescale-distro
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-openembedded:
         layers:
@@ -19,9 +22,11 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
+        path: layers/meta-openembedded
         commit: 735ae0310870ffce07ce0c55c4f87c20ac161ff9
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
+        path: layers/meta-imx
         branch: scarthgap-6.6.23-2.0.0
         patches:
             u-boot-deploy-fix:
@@ -37,10 +42,12 @@ repos:
         layers:
             meta-arm:
             meta-arm-toolchain:
+        path: layers/meta-arm
         url: git://git.yoctoproject.org/meta-arm
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
         layers:
             meta:
             meta-poky:
@@ -48,15 +55,17 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 2034fc38eb4e63984d9bd6b260aa1bf95ce562e4
+        commit: c799f73a47fa35d6059456291328f7ff10fdb273
     meta-virtualization:
         commit: e5878c864aacd24fe8f09ab7221f0ada13cd22d3
+        path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
     platform-freescale: |
         ACCEPT_FSL_EULA = "1"
     platform-nxp: |
         PV_UBOOT_AUTOFDT = "1"
+        PV_UBOOT_FLATFDT = "1"
         VIRTUAL-RUNTIME_initscripts = "initscripts-pv"
         EXTRA_IMAGE_FEATURES = "debug-tweaks"
         PANTAVISOR_MACHINE_FIRMWARE = ""

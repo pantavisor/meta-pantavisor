@@ -8,15 +8,16 @@ repos:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
                 repo: meta-pantavisor
-        path: meta-raspberrypi
+        path: layers/meta-raspberrypi
         url: https://github.com/agherzan/meta-raspberrypi
     meta-qt5:
         commit: eb828418264a49b8d00035cb3d7b12fcea3be801
-        path: meta-qt5
+        path: layers/meta-qt5
         url: https://github.com/meta-qt5/meta-qt5/
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
         layers:
             meta:
             meta-poky:
@@ -24,9 +25,10 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 2034fc38eb4e63984d9bd6b260aa1bf95ce562e4
+        commit: c799f73a47fa35d6059456291328f7ff10fdb273
     meta-virtualization:
         commit: e5878c864aacd24fe8f09ab7221f0ada13cd22d3
+        path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
         commit: 735ae0310870ffce07ce0c55c4f87c20ac161ff9
@@ -35,6 +37,7 @@ repos:
             meta-networking:
             meta-oe:
             meta-python:
+        path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
     platform-raspberrypi: |
