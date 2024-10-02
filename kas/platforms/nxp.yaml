@@ -28,6 +28,7 @@ repos:
 local_conf_header:
   platform-nxp: |
     PV_UBOOT_AUTOFDT = "1"
+    PV_UBOOT_FLATFDT = "1"
     VIRTUAL-RUNTIME_initscripts = "initscripts-pv"
     EXTRA_IMAGE_FEATURES = "debug-tweaks"
     PANTAVISOR_MACHINE_FIRMWARE = ""
