@@ -1,14 +1,12 @@
 #
 # pvroot image class
 #
-
 inherit image
 
 cmd_tidy() {
 	rm -rf ${IMAGE_ROOTFS}/etc
 	rm -rf ${IMAGE_ROOTFS}/var
 }
-
 
 PACKAGE_INSTALL = "pantavisor-pvroot"
 IMAGE_INSTALL = ""
@@ -72,7 +70,7 @@ python __anonymous () {
     d.delVarFlag("do_unpack", "noexec")
 }
 
-PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home"
+PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home,${WORKDIR}/tmp"
 
 def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 
@@ -189,11 +187,11 @@ fakeroot python do_rootfs_pvroot(){
         my_env["PVR_SIG_CACERTS"] = altca.as_posix()
 
     process = subprocess.run(
-         ['pvr', 'checkout', '-c', '-hl'],
+         ['pvr', 'checkout', '-c'],
          cwd=Path(traildir),
          env=my_env
     )
-    print ("completed pvr checkout -hl for skel process: %d" % process.returncode)
+    print ("completed pvr checkout -c for skel process: %d" % process.returncode)
     process = subprocess.run(
          ['pvr', 'sig', 'add', '--raw', '_pvskel',
           '--include', 'device-envelope.json',
