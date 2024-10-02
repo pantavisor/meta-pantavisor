@@ -13,18 +13,23 @@ header:
 repos:
   meta-freescale-ml:
     url: "https://github.com/Freescale/meta-freescale-ml.git"
+    path: layers/meta-freescale-ml
 
   meta-openembedded:
+    path: layers/meta-openembedded
     layers:
       meta-multimedia:
 
   meta-variscite-bsp:
+    path: layers/meta-variscite-bsp
     url: "https://github.com/varigit/meta-variscite-bsp.git"
 
   meta-variscite-hab:
+    path: layers/meta-variscite-hab
     url: "https://github.com/varigit/meta-variscite-hab.git"
 
   meta-variscite-sdk:
+    path: layers/meta-variscite-sdk
     url: "https://github.com/varigit/meta-variscite-sdk.git"
 
 local_conf_header:

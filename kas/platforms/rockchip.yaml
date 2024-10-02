@@ -11,8 +11,10 @@ header:
 repos:
   meta-rockchip:
     url: "https://github.com/JeffyCN/meta-rockchip"
+    path: layers/meta-rockchip
   meta-arm:
     url: git://git.yoctoproject.org/meta-arm
+    path: layers/meta-arm
     layers:
       meta-arm:
       meta-arm-toolchain:

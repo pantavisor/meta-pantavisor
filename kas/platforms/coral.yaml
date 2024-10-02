@@ -13,10 +13,12 @@ header:
 repos:
   meta-coral:
     url: "https://github.com/mirzak/meta-coral.git"
+    path: layers/meta-coral
     branch: master
 
   meta-clang:
     url: "https://github.com/kraj/meta-clang.git"
+    path: layers/meta-clang
 
 local_conf_header:
   platform-variscite:

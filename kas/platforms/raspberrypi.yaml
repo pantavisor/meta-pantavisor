@@ -11,7 +11,7 @@ header:
 repos:
   meta-raspberrypi:
     url: https://github.com/agherzan/meta-raspberrypi
-    path: meta-raspberrypi
+    path: layers/meta-raspberrypi
     patches:
       uboot-env:
         repo: meta-pantavisor
@@ -19,7 +19,7 @@ repos:
 
   meta-qt5:
     url: https://github.com/meta-qt5/meta-qt5/
-    path: meta-qt5
+    path: layers/meta-qt5
 
 local_conf_header:
   platform-raspberrypi: |

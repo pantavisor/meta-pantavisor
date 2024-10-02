@@ -15,15 +15,18 @@ repos:
 
   poky:
     url: "https://github.com/yoctoproject/poky.git"
+    path: layers/poky
     layers:
       meta-poky:
       meta:
 
   meta-virtualization:
     url: "git://git.yoctoproject.org/meta-virtualization"
+    path: layers/meta-virtualization
 
   meta-openembedded:
     url: "https://github.com/openembedded/meta-openembedded.git"
+    path: layers/meta-openembedded
     layers:
       meta-filesystems:
       meta-networking:

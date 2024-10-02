@@ -11,6 +11,7 @@ header:
 repos:
   meta-riscv:
     url: "https://github.com/riscv/meta-riscv"
+    path: layers/meta-riscv
 
 local_conf_header:
   platform-sunxi: |
