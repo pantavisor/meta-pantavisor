@@ -75,7 +75,7 @@ do_unpack_pvr() {
 	fi
 	if [ -f "_sigs/${PVCONT_NAME}.json" ]; then
 		pvr sig up _sigs/${PVCONT_NAME}.json
-	else
+	elif [ -d "${PVCONT_NAME}" ]; then
 		pvr sig add -n --part ${PVCONT_NAME}
 	fi
 	pvr commit
