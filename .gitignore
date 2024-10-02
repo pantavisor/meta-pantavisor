@@ -9,3 +9,4 @@ poky
 .netrc
 recipes-containers/vendors
 Kconfig.custom
+layers
