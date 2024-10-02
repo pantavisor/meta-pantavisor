@@ -17,9 +17,11 @@ repos:
 
   meta-imx:
     url: "https://github.com/nxp-imx/meta-imx.git"
+    path: layers/meta-imx
 
   meta-arm:
     url: git://git.yoctoproject.org/meta-arm
+    path: layers/meta-arm
     layers:
       meta-arm:
       meta-arm-toolchain:

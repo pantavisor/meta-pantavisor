@@ -11,12 +11,15 @@ header:
 repos:
   meta-freescale:
     url: "https://github.com/Freescale/meta-freescale.git"
+    path: layers/meta-freescale
 
   meta-freescale-3rdparty:
     url: "https://github.com/Freescale/meta-freescale-3rdparty.git"
+    path: layers/meta-freescale-3rdparty
 
   meta-freescale-distro:
     url: "https://github.com/Freescale/meta-freescale-distro.git"
+    path: layers/meta-freescale-distro
 
 local_conf_header:
   platform-freescale: |
