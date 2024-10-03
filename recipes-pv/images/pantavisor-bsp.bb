@@ -48,6 +48,8 @@ do_compile[mcdepends] += '${compile_mcdepends}'
 fakeroot do_compile(){
 
     set -x
+    export TMPDIR=${WORKDIR}/tmp
+    mkdir -p $TMPDIR
     export PVR_CONFIG_DIR="${PVR_PVBSPIT_CONFIG_DIR}"
     export PVR_DISABLE_SELF_UPGRADE=true
     if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
