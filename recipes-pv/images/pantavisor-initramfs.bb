@@ -19,8 +19,6 @@ IMAGE_BASENAME = "pantavisor-initramfs"
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_LINGUAS = ""
 
-SRC_URI = "file://pantavisor.config"
-
 LICENSE = "MIT"
 
 # don't actually generate an image, just the artifacts needed for one
@@ -51,7 +49,6 @@ ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
-        install -m 0755 ${WORKDIR}/pantavisor.config ${IMAGE_ROOTFS}/etc/pantavisor.config
 }
 
 unset do_fetch[noexec]
