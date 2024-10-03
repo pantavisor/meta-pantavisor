@@ -1,5 +1,14 @@
+From a349edef5358194b626f92f7dbe1f6ec342ed91f Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Thu, 3 Oct 2024 10:27:52 +0000
+Subject: [PATCH] kernel-fitimage.bbclass: support multiconfig
+
+---
+ meta/classes-recipe/kernel-fitimage.bbclass | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
 diff --git a/meta/classes-recipe/kernel-fitimage.bbclass b/meta/classes-recipe/kernel-fitimage.bbclass
-index 4b74ddc201..a292707b9c 100644
+index 18ab17bd2c..5c93a1cebb 100644
 --- a/meta/classes-recipe/kernel-fitimage.bbclass
 +++ b/meta/classes-recipe/kernel-fitimage.bbclass
 @@ -6,6 +6,9 @@
@@ -14,14 +23,14 @@ index 4b74ddc201..a292707b9c 100644
      replacementtype = ""
 @@ -38,7 +41,8 @@ python __anonymous () {
  
-         image = d.getVar('INITRAMFS_IMAGE')
-         if image:
--            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', ' ${INITRAMFS_IMAGE}:do_image_complete')
-+            d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d) }')
-+            d.appendVarFlag('do_assemble_fitimage_initramfs', 'mcdepends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc:${BB_CURRENT_MC}:${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }')
+     image = d.getVar('INITRAMFS_IMAGE')
+     if image:
+-        d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', ' ${INITRAMFS_IMAGE}:do_image_complete')
++        d.appendVarFlag('do_assemble_fitimage_initramfs', 'depends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d) }')
++        d.appendVarFlag('do_assemble_fitimage_initramfs', 'mcdepends', '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc:${BB_CURRENT_MC}:${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d) }')
  
-         ubootenv = d.getVar('UBOOT_ENV')
-         if ubootenv:
+     ubootenv = d.getVar('UBOOT_ENV')
+     if ubootenv:
 @@ -683,7 +687,7 @@ fitimage_assemble() {
  		# Find and use the first initramfs image archive type we find
  		found=
@@ -31,3 +40,6 @@ index 4b74ddc201..a292707b9c 100644
  			if [ -e "$initramfs_path" ]; then
  				bbnote "Found initramfs image: $initramfs_path"
  				found=true
+-- 
+2.34.1
+
