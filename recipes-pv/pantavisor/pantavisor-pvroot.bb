@@ -14,7 +14,6 @@ FILES:${PN} += " \
 "
 
 SRC_URI += " \
-	file://device.json \
 	file://pantahub.config \
 	file://pvrconfig \
 	file://uboot.txt \
@@ -30,7 +29,6 @@ fakeroot do_install() {
 
     install -m 0755 ${WORKDIR}/uboot.txt ${D}/boot/uboot.txt
     install -m 0755 ${WORKDIR}/pantahub.config ${D}/config/
-    install -m 0755 ${WORKDIR}/device.json ${D}/trails/0/device.json
     cd ${D}/trails/0/
     echo "pvr init ..."
     export PVR_DISABLE_SELF_UPGRADE=true
