@@ -283,6 +283,16 @@ config MACHINE_SUNXI_ORANGE_PI_3LTS
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
 	select PLATFORM_SUNXI
 
+config MACHINE_SUNXI_ORANGE_PI_PC_PLUS
+	bool "sunxi orange pi pc plus"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
+config MACHINE_SUNXI_ORANGE_PI_PC2
+	bool "sunxi orange pi pc2"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_SUNXI
+	select PLATFORM_SUNXI
+
 config MACHINE_TI_AM62XX_EVM
 	bool "TI AVM62xx EVM"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TI
@@ -374,6 +384,14 @@ config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_ZERO_PLUS2_H3
 config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_3LTS
 	string
 	default "kas/machines/sunxi-orange-pi-3lts.yaml" if MACHINE_SUNXI_ORANGE_PI_3LTS
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_PC_PLUS
+	string
+	default "kas/machines/sunxi-orange-pi-pc-plus.yaml" if MACHINE_SUNXI_ORANGE_PI_PC_PLUS
+
+config KAS_INCLUDE_MACHINE_SUNXI_ORANGE_PI_PC2
+	string
+	default "kas/machines/sunxi-orange-pi-pc2.yaml" if MACHINE_SUNXI_ORANGE_PI_PC2
 
 config KAS_INCLUDE_MACHINE_CORAL_DEV
 	string
