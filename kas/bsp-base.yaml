@@ -34,6 +34,8 @@ repos:
       meta-python:
 
 local_conf_header:
+  rm_work: |
+    INHERIT += "rm_work"
   panta-base: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
   panta-busybox: |
