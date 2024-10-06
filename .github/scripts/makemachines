@@ -26,9 +26,11 @@ name: 'Build On Push'
 
 on:
   push:
-    paths-ignore:
-      - '.github/scripts/**'
-      - '.github/workflows/updatemachines.yaml'
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
 
 jobs:
 EOF
