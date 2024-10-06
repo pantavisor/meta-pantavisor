@@ -29,11 +29,11 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 "
 
 SRC_URI:append = " \
-	${@bb.utils.contains('DISTRO_FEATURES', 'pantavisor-system', '${PANTAVISOR_SRC_URI}', '', d)} \
+	${@bb.utils.contains_any('DISTRO_FEATURES', 'pantavisor-system pantavisor-kernel', '${PANTAVISOR_SRC_URI}', '', d)} \
 "
 
 KERNEL_CONFIG_FRAGMENTS:append = " \
-	${@bb.utils.contains('DISTRO_FEATURES', 'pantavisor-system', '${PANTAVISOR_KERNEL_FRAGMENTS}', '', d)} \
+	${@bb.utils.contains_any('DISTRO_FEATURES', 'pantavisor-system pantavisor-kernel', '${PANTAVISOR_KERNEL_FRAGMENTS}', '', d)} \
 "
 
 COMPATIBLE_MACHINE:qemuarm-pv = "qemuarm-pv"
