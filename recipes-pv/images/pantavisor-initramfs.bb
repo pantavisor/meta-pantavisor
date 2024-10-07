@@ -7,7 +7,13 @@ VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
 VIRTUAL-RUNTIME_pantavisor_config ??= "pantavisor-default-config"
 
-PACKAGE_INSTALL = "pantavisor ${VIRTUAL-RUNTIME_pantavisor_config} dropbear-pv busybox base-passwd kmod ${ROOTFS_BOOTSTRAP_INSTALL}"
+PACKAGE_INSTALL = "pantavisor \
+	${VIRTUAL-RUNTIME_pantavisor_config} \
+	dropbear-pv \
+	busybox \
+	base-passwd \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
+	${ROOTFS_BOOTSTRAP_INSTALL}"
 
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 
@@ -49,6 +55,7 @@ ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
 	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
+	rm -rf ${IMAGE_ROOTFS}/usr/lib/opkg
 }
 
 unset do_fetch[noexec]
