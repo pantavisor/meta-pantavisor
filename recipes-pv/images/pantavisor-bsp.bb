@@ -171,5 +171,9 @@ EOF1
     pvr add; pvr commit
     mkdir -p ${DEPLOY_DIR_IMAGE}
     pvr export ${DEPLOY_DIR_IMAGE}/${PN}-${MACHINE}.pvrexport.tgz
+
+    # export pvs
+    rm -rf ${DEPLOY_DIR_IMAGE}/${PN}-pvs
+    cp -rf ${PVR_PVBSPIT_CONFIG_DIR}/pvs ${DEPLOY_DIR_IMAGE}/${PN}-pvs
 }
 
