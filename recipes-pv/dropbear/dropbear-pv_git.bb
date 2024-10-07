@@ -26,9 +26,8 @@ inherit autotools
 
 CVE_PRODUCT = "dropbear_ssh"
 
-SBINCOMMANDS = "dropbear dropbearkey dropbearconvert"
-BINCOMMANDS = "dbclient ssh scp"
-EXTRA_OEMAKE = 'MULTI=1 SCPPROGRESS=1 PROGRAMS="${SBINCOMMANDS} ${BINCOMMANDS}"'
+SBINCOMMANDS = "dropbear"
+EXTRA_OEMAKE = 'MULTI=1 SCPPROGRESS=1 PROGRAMS="${SBINCOMMANDS}"'
 
 # This option appends to CFLAGS and LDFLAGS from OE
 # This is causing [textrel] QA warning
@@ -40,18 +39,11 @@ EXTRA_OECONF:append:libc-musl = " --disable-wtmp --disable-lastlog"
 do_install() {
 	install -d ${D}${sysconfdir} \
 		${D}${sysconfdir}/dropbear \
-		${D}${bindir} \
 		${D}${sbindir} \
 		${D}${localstatedir}
 
 	install -m 0755 dropbearmulti ${D}${sbindir}/
 
-	for i in ${BINCOMMANDS}
-	do
-		# ssh and scp symlinks are created by update-alternatives
-		if [ $i = ssh ] || [ $i = scp ]; then continue; fi
-		ln -s ${sbindir}/dropbearmulti ${D}${bindir}/$i
-	done
 	for i in ${SBINCOMMANDS}
 	do
 		ln -s ./dropbearmulti ${D}${sbindir}/$i
@@ -61,8 +53,3 @@ do_install() {
 inherit update-alternatives
 
 ALTERNATIVE_PRIORITY = "20"
-ALTERNATIVE:${PN} = "${@bb.utils.filter('BINCOMMANDS', 'scp ssh', d)}"
-
-ALTERNATIVE_TARGET = "${sbindir}/dropbearmulti"
-
-FILES:${PN} += "${bindir}"
