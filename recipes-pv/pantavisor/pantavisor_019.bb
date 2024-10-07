@@ -6,7 +6,13 @@
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
 DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native"
-RDEPENDS:${PN} += "lxc-pv e2fsprogs-resize2fs e2fsprogs-e2fsck e2fsprogs-mke2fs cryptsetup libthttp-certs gptfdisk "
+RDEPENDS:${PN} += "lxc-pv \
+	e2fsprogs-e2fsck \
+	e2fsprogs-mke2fs \
+	cryptsetup \
+	libthttp-certs \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
+	"
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -32,6 +38,7 @@ FILES:${PN} += " /init"
 inherit cmake
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON"
