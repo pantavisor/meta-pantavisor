@@ -84,8 +84,8 @@ fakeroot do_compile(){
        cp -fL ${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP} ${PVBSPSTATE}/bsp/uboot-logo.bmp
     fi
     if echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
-       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME} ${PVBSPSTATE}/bsp/pantavisor.its
-       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME} ${PVBSPSTATE}/bsp/pantavisor.fit
+       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
+       cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_NAME_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.fit
        basearts='"fit": "pantavisor.fit",'
     else 
        case ${KERNEL_IMAGETYPE} in
