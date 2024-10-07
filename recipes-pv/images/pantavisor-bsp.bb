@@ -14,7 +14,13 @@ INITRAMFS_IMAGE_NAME ?= "${@['${INITRAMFS_IMAGE}-${MACHINE}', ''][d.getVar('INIT
 INITRAMFS_MULTICONFIG ?= ""
 INITRAMFS_DEPLOY_DIR_IMAGE = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${DEPLOY_DIR_IMAGE}", "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}", d)}'
 
-PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
+OVERRIDES =. "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'pv-squash-lz4:', '', d)}"
+OVERRIDES =. "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-zstd', 'pv-squash-zstd:', '', d)}"
+
+PVR_FORMAT_OPTS:pv-squash-lz4 ?= "-comp lz4 -Xhc"
+PVR_FORMAT_OPTS:pv-squash-zstd ?= "-comp zstd"
+PVR_FORMAT_OPTS ?= "-comp xz"
+
 PVS_VENDOR_NAME ??= "generic"
 PV_INITIAL_DTB ?= "${UBOOT_DTB_NAME}"
 PSEUDO_IGNORE_PATHS .= ",${PVBSPSTATE},${PVR_PVBSPIT_CONFIG_DIR}"
