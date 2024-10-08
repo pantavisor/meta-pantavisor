@@ -10,9 +10,9 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 inherit pvr-ca
 
-SRC_URI += "file://etcdir-embedded/"
+SRC_URI += "file://etcdir-appengine/"
 
 do_install() {
-	cp -rf ${WORKDIR}/etcdir-embedded ${D}/etc
+	cp -rf ${WORKDIR}/etcdir-appengine ${D}/etc
 }
 
