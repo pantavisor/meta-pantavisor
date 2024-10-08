@@ -44,6 +44,8 @@ local_conf_header:
         LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
         RPI_USE_U_BOOT = "1"
         ENABLE_UART = "1"
+    rm_work: |
+        INHERIT += "rm_work"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     panta-busybox: |

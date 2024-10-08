@@ -48,6 +48,8 @@ repos:
 local_conf_header:
     platform-sunxi: |
         PV_UBOOT_AUTOFDT = "1"
+    rm_work: |
+        INHERIT += "rm_work"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     panta-busybox: |

@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 508c4188205c1430740fa1bc635d9ee6cc9b8e0b
+        commit: 9f432c61e9ec030ef35d2db467c5ad99222aa31b
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -71,6 +71,8 @@ local_conf_header:
         PANTAVISOR_MACHINE_FIRMWARE = ""
         PANTAVISOR_MACHINE_KERNEL_MODULES = ""
         PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
+    rm_work: |
+        INHERIT += "rm_work"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     panta-busybox: |

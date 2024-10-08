@@ -35,6 +35,8 @@ for change in $changed; do
 	fi
 	
 	change_listed=
+	echo_cm "== $change${removed:+ (REMOVED)} =="
+	echo_cm
 
 	for repo in $repos; do
 		repourl=null
@@ -55,11 +57,6 @@ for change in $changed; do
 			continue
 		fi
 		set -x
-		if [ -z "$change_listed" ]; then
-			echo_cm "== $change${removed:+ (REMOVED)} =="
-			change_listed=yes
-			echo_cm
-		fi
 		echo_cm "  $repo:"
 		echo_cm
 
