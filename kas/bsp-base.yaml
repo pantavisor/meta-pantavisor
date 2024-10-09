@@ -9,6 +9,7 @@ header:
 
 target: pantavisor-bsp
 build_system: oe
+distro: panta-distro
 _source_dir: .
 repos:
   meta-pantavisor:
