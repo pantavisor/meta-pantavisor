@@ -73,6 +73,7 @@ machine: raspberrypi-armv8
 target:
 - pantavisor-remix
 build_system: oe
+distro: panta-distro
 env:
     PVROOT_IMAGE_BSP:
     PV_BOOT_OEMARGS:
