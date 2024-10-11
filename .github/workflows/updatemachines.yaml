@@ -26,5 +26,5 @@ jobs:
       - run: git config --global user.email "pantavisor-meta@ci.pantavisor.io"
       - run: git config --global user.name "Pantavisor Meta Layer CI"
       - run: .github/scripts/makecommit
-      - run: git push origin HEAD:autopr/machine-update-$GITHUB_REF--$GITHUB_SHA
+      - run: git push origin -f HEAD:autopr/machine-update-$GITHUB_REF_NAME--$GITHUB_SHA
 
