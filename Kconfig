@@ -135,7 +135,7 @@ config MACHINE_FILTER_ALL
 
 choice
 	prompt "Filter Machines"
-	default PLATFORM_QEMU
+	default MACHINE_FILTER_QEMU
 	depends on MACHINE_FILTER_ALL = n
 
 config MACHINE_FILTER_QEMU
