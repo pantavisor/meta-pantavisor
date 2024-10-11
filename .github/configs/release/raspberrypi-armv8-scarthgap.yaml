@@ -27,7 +27,7 @@ repos:
                 repo: meta-pantavisor
         commit: c799f73a47fa35d6059456291328f7ff10fdb273
     meta-virtualization:
-        commit: e5878c864aacd24fe8f09ab7221f0ada13cd22d3
+        commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
@@ -73,6 +73,7 @@ machine: raspberrypi-armv8
 target:
 - pantavisor-remix
 build_system: oe
+distro: panta-distro
 env:
     PVROOT_IMAGE_BSP:
     PV_BOOT_OEMARGS:
