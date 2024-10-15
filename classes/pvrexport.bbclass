@@ -20,8 +20,8 @@ PVR_SRC_URI ?= ""
 PVR_DOCKER_REF ?= ""
 PVR_APP_ADD_EXTRA_ARGS ?= ""
 
-do_fetch_pvr[dirs] += "${PVR_CONFIG_DIR}"
-do_fetch_pvr[cleandirs] += "${PVR_SRC_DIR} ${PVR_TMPDIR}"
+do_fetch_pvr[dirs] += "${PVR_HOME_DIR}"
+do_fetch_pvr[cleandirs] += "${PVR_CONFIG_DIR} ${PVR_SRC_DIR} ${PVR_TMPDIR}"
 do_fetch_pvr[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot virtual/fakeroot-native:do_populate_sysroot"
 do_fetch_pvr[network] = "1"
 
@@ -42,7 +42,7 @@ fakeroot do_fetch_pvr() {
 	elif [ -n "${PVR_DOCKER_REF}" ]; then
 		echo "pvr app add from docker ${PVR_DOCKER_REF} with ${DOCKER_PLATFORM} as ${PVCONT_NAME}"
 		pvr init
-		pvr app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" ${PVR_APP_ADD_EXTRA_ARGS} "${PVCONT_NAME}"
+		pvr -d app add --platform="${DOCKER_PLATFORM}" --from="${PVR_DOCKER_REF}" ${PVR_APP_ADD_EXTRA_ARGS} "${PVCONT_NAME}"
 		pvr add .
 		pvr commit
 	fi
@@ -83,6 +83,8 @@ do_unpack_pvr() {
 
 do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 
+PV_DBUS_PROVIDER ??= "${PVROOT_IMAGE_BSP}"
+
 do_compile(){
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
@@ -98,14 +100,16 @@ do_compile(){
         fi
 	if [ -f ${WORKDIR}/${BPN}.args.json ]; then
 		cat ${PVCONT_NAME}/src.json | jq --slurpfile args ${WORKDIR}/${BPN}.args.json \
-		'. * { "args" : $args[0] }' > ${PVCONT_NAME}/src.json.new
-		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
+		    '. * { "args" : $args[0] }' > ${PVCONT_NAME}/src.json.new
+		cat ${PVCONT_NAME}/src.json.new | sed 's/::PV_DBUS_PROVIDER::/${PV_DBUS_PROVIDER}/' > ${PVCONT_NAME}/src.json
+		rm -f ${PVCONT_NAME}/src.json.new
 		pvr app install ${PVCONT_NAME}
 	fi
 	if [ -f ${WORKDIR}/${BPN}.config.json ]; then
 		cat ${PVCONT_NAME}/src.json | jq --slurpfile config ${WORKDIR}/${BPN}.config.json \
 		    '. * { "config" : $config[0] }' > ${PVCONT_NAME}/src.json.new
-		mv ${PVCONT_NAME}/src.json.new ${PVCONT_NAME}/src.json
+		cat ${PVCONT_NAME}/src.json.new | sed 's/::PV_DBUS_PROVIDER::/${PV_DBUS_PROVIDER}/' > ${PVCONT_NAME}/src.json
+		rm -f ${PVCONT_NAME}/src.json.new
 		pvr app install ${PVCONT_NAME}
 	fi
 	if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
@@ -123,6 +127,7 @@ do_compile(){
 do_deploy[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 
 do_deploy(){
+	cd ${B}/pvrrepo
 	pvr export ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz
 	ln -fsr ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz ${DEPLOYDIR}/${BPN}.pvrexport.tgz
 }
@@ -141,3 +146,4 @@ do_packagedata[noexec] = "1"
 do_package_write_ipk[noexec] = "1"
 do_package_write_deb[noexec] = "1"
 do_package_write_rpm[noexec] = "1"
+
