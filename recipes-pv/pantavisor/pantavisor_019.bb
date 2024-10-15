@@ -21,7 +21,9 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;nobranch=1"
+PANTAVISOR_BRANCH ??= "master"
+
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
