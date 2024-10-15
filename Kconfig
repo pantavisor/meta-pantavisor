@@ -92,6 +92,13 @@ config KAS_LOCAL_PV_PVR_SDK
 	string
 	default "PVROOT_CONTAINERS_CORE += \"pv-pvr-sdk\"" if CONTAINER_PV_PVR_SDK
 
+config CONTAINER_PV_ALPINE_DBUS
+	bool "pv-alpine-dbus"
+
+config KAS_LOCAL_PV_ALPINE_DBUS
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-alpine-dbus\"" if CONTAINER_PV_ALPINE_DBUS
+
 config CONTAINER_PV_ALPINE_CONNMAN
 	bool "pv-alpine-connman"
 
