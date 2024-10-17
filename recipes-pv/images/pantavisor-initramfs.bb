@@ -12,6 +12,7 @@ PACKAGE_INSTALL = "pantavisor \
 	dropbear-pv \
 	busybox \
 	base-passwd \
+	rng-tools \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
