@@ -4,7 +4,6 @@ OVERRIDES =. "mc-${BB_CURRENT_MC}:"
 
 PV_MACHINE_UBOOT_CONFIGS ?= ""
 PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
-PV_MACHINE_UBOOT_CONFIGS:rk3588s ?= "file://pv.radxa.cfg"
 
 PV_BOOT_OEMARGS ?= ""
 
