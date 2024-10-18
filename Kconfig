@@ -166,6 +166,9 @@ config MACHINE_FILTER_TI
 config MACHINE_FILTER_RISCV
 	bool "RISC-V"
 
+config MACHINE_FILTER_RADXA
+	bool "Radxa"
+
 endchoice
 
 config PLATFORM_CORAL
@@ -193,6 +196,9 @@ config PLATFORM_ROCKCHIP
 	bool
 
 config PLATFORM_SUNXI
+	bool
+
+config PLATFORM_RADXA
 	bool
 
 choice
@@ -323,6 +329,12 @@ config MACHINE_RISCV_VISIONFIVE2
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RISCV
 	select PLATFORM_RISCV
 
+config MACHINE_RADXA_ROCK5A
+	bool "radxa rock5a"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RADXA
+	select PLATFORM_RADXA
+
+
 endchoice
 
 config KAS_INCLUDE_MACHINE_QEMUX86_64
@@ -451,4 +463,8 @@ config KAS_INCLUDE_SCARTHGAP_TI
 config KAS_INCLUDE_SCARTHGAP_RISCV
 	string
 	default "kas/scarthgap-riscv.yaml" if CODENAME_SCARTHGAP && PLATFORM_RISCV
+
+config KAS_INCLUDE_MACHINE_RADXA_ROCK5A
+	string
+	default "kas/machines/radxa-rock5a.yaml" if MACHINE_RADXA_ROCK5A
 
