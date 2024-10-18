@@ -1,0 +1,25 @@
+From 44cf6391261a521b3813464fe473ab65761cb102 Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@gmail.com>
+Date: Wed, 16 Oct 2024 11:38:20 +0200
+Subject: [PATCH] wic: Fix root label
+
+Signed-off-by: Marek Belisko <marek.belisko@gmail.com>
+---
+ wic/rockchip.wks | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/wic/rockchip.wks b/wic/rockchip.wks
+index cabdb65..0b939ad 100644
+--- a/wic/rockchip.wks
++++ b/wic/rockchip.wks
+@@ -26,6 +26,6 @@ part uboot_env --offset 8128s  --fixed-size 32K   --fstype=none --part-name uboo
+ part reserved2 --offset 8192s  --fixed-size 4096K --fstype=none --part-name reserved2
+ part loader2   --offset 16384s --fixed-size 4096K --fstype=none --part-name loader2   --source rawcopy --sourceparams="file=u-boot.${UBOOT_SUFFIX}"
+ part atf       --offset 24576s --fixed-size 4096K --fstype=none --part-name atf
+-part /         --label rootfsA --active           --fstype=ext4 --part-name rootfsA   --source rootfs  --part-type ${ROOT_DPS}
++part /         --label root    --active           --fstype=ext4 --part-name root      --source rootfs  --part-type ${ROOT_DPS}
+ 
+ bootloader --ptable gpt
+-- 
+2.25.1
+
