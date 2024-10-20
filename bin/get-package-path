@@ -1,0 +1,73 @@
+#!/bin/sh
+
+#
+# Copyright (c) 2024 Pantacor Ltd.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+cmd=`basename $0`
+
+echo_e() {
+	echo $@ 1>&2
+}
+
+error_usage() {
+	echo_e "ERROR: $1"
+	echo_e 
+	echo_e "$cmd <package-recipe>"
+	echo_e 
+	echo_e "	Returns the path to the package produced by the recipe. This"
+	echo_e "	assumes we are in an environment where bitbake <packagerecipe>"
+	echo_e "	would build the intended package."
+	echo_e 
+	echo_e "	Example: $0 pantavisor-pvroot"
+	exit 1
+}
+
+pkg=$1
+
+if [ -z $pkg ]; then
+	error_usage "Must provide at least one argument"
+fi
+
+eval `bitbake -e $pkg | grep -E '^(PACKAGE_ARCH|DEPLOY_DIR_IMAGE|DEPLOY_DIR_DEB|DEPLOY_DIR_RPM|DEPLOY_DIR_IPK|IMAGE_PKGTYPE|PF)='`
+
+deploy_dir_pkg=
+
+case $IMAGE_PKGTYPE in
+	rpm)
+		deploy_dir_pkg=$DEPLOY_DIR_RPM
+		;;
+	deb)
+		deploy_dir_pkg=$DEPLOY_DIR_DEB
+		;;
+	ipk)
+		deploy_dir_pkg=$DEPLOY_DIR_IPK
+		;;
+	*)
+		error_usage "Unknown package type: $IMAGE_PKGTYPE"
+		;;
+esac
+
+pkgarch=`echo $PACKAGE_ARCH | tr '-' '_'`
+
+# output the path to package
+echo $deploy_dir_pkg/$pkgarch/$PF.$pkgarch.$IMAGE_PKGTYPE
+
