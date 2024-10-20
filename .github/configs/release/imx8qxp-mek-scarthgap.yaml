@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: b70cec85b6a1a9cad70251623dc17e34f426cdf9
+        commit: 53650cefee8914fa9c2736ff9011558f22dbdfe1
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -55,9 +55,9 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: c799f73a47fa35d6059456291328f7ff10fdb273
+        commit: 200d12b6a58ad961d60a7774ca0f7a9d29498724
     meta-virtualization:
-        commit: e5878c864aacd24fe8f09ab7221f0ada13cd22d3
+        commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
@@ -104,6 +104,7 @@ machine: imx8qxp-mek
 target:
 - pantavisor-remix
 build_system: oe
+distro: panta-distro
 env:
     PVROOT_IMAGE_BSP:
     PV_BOOT_OEMARGS:
