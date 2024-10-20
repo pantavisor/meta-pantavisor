@@ -21,6 +21,8 @@ GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
 
 GOBUILDFLAGS += "-mod=vendor"
+GO_LINKMODE:class-nativesdk = ""
+GO_LINKMODE:class-native = ""
 
 CGO_ENABLED = "0"
 
