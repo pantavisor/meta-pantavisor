@@ -1,5 +1,5 @@
 
-inherit allarch
+inherit allarch deploy image-artifact-names
 
 DESCRIPTION = "Pantavisor pvroot skeleton package"
 LICENSE = "MIT"
@@ -20,6 +20,7 @@ SRC_URI += " \
 	file://pvrconfig \
 	file://uboot.txt \
 "
+PSEUDO_IGNORE_PATHS .= ",/tmp,${DEPLOYDIR}"
 
 fakeroot do_install() {
     install -d -m 0755 ${D}/boot
@@ -40,4 +41,15 @@ fakeroot do_install() {
     echo "pvr commit ..."
     pvr commit
     chown -R 0:0 ${D}/trails/
+
+    echo tar -C "${D}" -cvzf ${B}/${IMAGE_NAME}.tar.gz .
+    tar -C "${D}" -cvzf ${B}/${IMAGE_NAME}.tar.gz .
 }
+
+
+do_deploy() {
+    cp -f ${B}/${IMAGE_NAME}.tar.gz ${DEPLOYDIR}/${IMAGE_NAME}.tar.gz
+    ln -sf ${IMAGE_NAME}.tar.gz ${DEPLOYDIR}/${IMAGE_LINK_NAME}.tar.gz
+}
+
+addtask deploy after do_install
