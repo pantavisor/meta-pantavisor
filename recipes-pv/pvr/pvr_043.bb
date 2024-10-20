@@ -2,7 +2,7 @@ DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program.
 SECTION = "pantavisor"
 HOMEPAGE = "https://golang.org/"
 
-inherit go-mod native
+inherit go-mod deploy native
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -29,5 +29,14 @@ relocate_source() {
   cp -fr ${S}/pvr-*/* ${S}/src/${GO_IMPORT}
 }
 do_patch[postfuncs] += "relocate_source"
+
+do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
+do_deploy[dirs] += "${DEPLOY_DIR_TOOLS}"
+
+do_deploy() {
+	install -m 755 ${B}/bin/pvr ${DEPLOY_DIR_TOOLS}/pvr-${PACKAGE_ARCH}
+}
+
+addtask deploy after do_install
 
 BBCLASSEXTEND = "native nativesdk"
