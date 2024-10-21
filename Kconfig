@@ -341,6 +341,10 @@ config MACHINE_RADXA_ROCK5A
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RADXA
 	select PLATFORM_RADXA
 
+config MACHINE_RADXA_ROCK5B
+	bool "radxa rock5b"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RADXA
+	select PLATFORM_RADXA
 
 endchoice
 
@@ -475,3 +479,6 @@ config KAS_INCLUDE_MACHINE_RADXA_ROCK5A
 	string
 	default "kas/machines/radxa-rock5a.yaml" if MACHINE_RADXA_ROCK5A
 
+config KAS_INCLUDE_MACHINE_RADXA_ROCK5B
+	string
+	default "kas/machines/radxa-rock5b.yaml" if MACHINE_RADXA_ROCK5B
