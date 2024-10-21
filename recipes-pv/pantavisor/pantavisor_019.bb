@@ -23,7 +23,7 @@ S = "${WORKDIR}/git"
 
 PANTAVISOR_BRANCH ??= "master"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH}"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
