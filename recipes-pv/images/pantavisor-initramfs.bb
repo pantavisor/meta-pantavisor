@@ -13,6 +13,7 @@ PACKAGE_INSTALL = "pantavisor \
 	busybox \
 	base-passwd \
 	rng-tools \
+	util-linux-losetup \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
