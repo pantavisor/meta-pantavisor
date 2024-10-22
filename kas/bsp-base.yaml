@@ -39,10 +39,6 @@ local_conf_header:
     INHERIT += "rm_work"
   panta-base: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
-  panta-busybox: |
-    PREFERRED_VERSION_busybox = "1.36~pv.%"
-  panta-mbedtls: |
-    PREFERRED_VERSION_mbedtls = "2.28.%"
   pantavisor-system: |
     DISTRO_FEATURES:append = " pantavisor-system "
     PANTAVISOR_FEATURES:append = " dm-crypt"
