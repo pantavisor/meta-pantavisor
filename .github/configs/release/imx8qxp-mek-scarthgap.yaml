@@ -75,18 +75,12 @@ local_conf_header:
         INHERIT += "rm_work"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
-    panta-busybox: |
-        PREFERRED_VERSION_busybox = "1.36~pv.%"
-    panta-mbedtls: |
-        PREFERRED_VERSION_mbedtls = "2.28.%"
     pantavisor-system: |
         DISTRO_FEATURES:append = " pantavisor-system "
         PANTAVISOR_FEATURES:append = " dm-crypt"
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
-    pantavisor-remix: |
-        IMAGE_CLASSES:append = " image-pvrexport"
     __menu_config_locals: ''
     __menu_config_vars: |-
         PVROOT_IMAGE = "yes"
@@ -101,6 +95,7 @@ bblayers_conf_header:
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
 machine: imx8qxp-mek
+distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe
