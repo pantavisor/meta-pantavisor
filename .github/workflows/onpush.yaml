@@ -14,11 +14,11 @@ jobs:
     with:
       configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml
       name: sunxi-orange-pi-3lts-scarthgap
-  build-sunxi-orange-pi-r1-scarthgap:
+  build-rockchip-rock64-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml
-      name: sunxi-orange-pi-r1-scarthgap
+      configs: .github/configs/release/rockchip-rock64-scarthgap.yaml
+      name: rockchip-rock64-scarthgap
   build-sunxi-nanopi-r1-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:

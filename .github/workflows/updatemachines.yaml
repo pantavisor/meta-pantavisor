@@ -19,6 +19,8 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.META_PANTAVISOR_PAT }}
       - run: ls .github/scripts
       - run: pwd
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE
