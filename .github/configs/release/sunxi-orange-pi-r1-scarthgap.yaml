@@ -2,10 +2,17 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-rockchip:
-        commit: e641dba980efa885df7e992ac5c8783270aa375d
-        path: layers/meta-rockchip-mainline
-        url: https://git.yoctoproject.org/meta-rockchip
+    meta-sunxi:
+        commit: 05827e296c2cb09043141b241153468deb4428d0
+        patches:
+            orange-pi-3lts:
+                path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
+                repo: meta-pantavisor
+            wks-root-label:
+                path: patches/meta-sunxi/0001-wks-root-label.patch
+                repo: meta-pantavisor
+        path: layers/meta-sunxi
+        url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
         commit: 60e31ef2c4983c0bdb8682dee6a6ec5f2e9d5f0a
         layers:
@@ -39,7 +46,7 @@ repos:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-rockchip: |
+    platform-sunxi: |
         PV_UBOOT_AUTOFDT = "1"
     rm_work: |
         INHERIT += "rm_work"
@@ -66,7 +73,7 @@ local_conf_header:
     __voldirs: |-
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
-machine: rock64
+machine: orange-pi-r1
 target:
 - pantavisor-remix
 build_system: oe
