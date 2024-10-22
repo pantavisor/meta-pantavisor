@@ -58,8 +58,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
-    pantavisor-remix: |
-        IMAGE_CLASSES:append = " image-pvrexport"
     __menu_config_locals: ''
     __menu_config_vars: |-
         PVROOT_IMAGE = "yes"
