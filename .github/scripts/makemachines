@@ -47,6 +47,7 @@ for cc in $configs; do
     with:
       configs: .github/configs/release/$m-scarthgap.yaml
       name: $m-scarthgap
+      secrets: inherit
 EOF1
 done
 
