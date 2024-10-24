@@ -30,9 +30,10 @@ jobs:
       - run: .github/scripts/makemachines
       - run: git config --global user.email "pantavisor-meta@ci.pantavisor.io"
       - run: git config --global user.name "Pantavisor Meta Layer CI"
+      - run: git checkout -b autopr/machine-update-$GITHUB_REF_NAME-next
       - run: .github/scripts/makecommit
-      - run: git push origin -f HEAD:autopr/machine-update-$GITHUB_REF_NAME-next
-      - run: gh pr create --base $GITHUB_REF_NAME --fill
+      - run: git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next
+      - run: gh pr create --base $GITHUB_REF_NAME --fill 2>&1 | grep github.com.*pull
         env:
           GH_TOKEN: ${{ github.token }}
 
