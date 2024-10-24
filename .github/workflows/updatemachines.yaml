@@ -33,3 +33,6 @@ jobs:
       - run: .github/scripts/makecommit
       - run: git push origin -f HEAD:autopr/machine-update-$GITHUB_REF_NAME-next
       - run: gh pr create --base $GITHUB_REF_NAME --fill
+        env:
+          GH_TOKEN: ${{ github.token }}
+
