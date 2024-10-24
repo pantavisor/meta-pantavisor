@@ -8,6 +8,9 @@ on:
     paths:
       - .github/scripts/**
       - .github/workflows/updatemachines.yaml
+    branches:
+      - master
+      - feature/**
 
 jobs:
   updaterelease:
