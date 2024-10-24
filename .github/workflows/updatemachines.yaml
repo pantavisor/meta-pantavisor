@@ -16,7 +16,7 @@ jobs:
   updaterelease:
     runs-on: ["self-hosted"]
     container:
-      image: ghcr.io/pantacor/kas/kas:next-v6
+      image: ghcr.io/pantacor/kas/kas:next-v7
       volumes:
         - shared:/shared
       options: --user root
