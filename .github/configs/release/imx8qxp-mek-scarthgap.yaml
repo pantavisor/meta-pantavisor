@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: cb16b9c0191549925e08458c37b8eaae613b6e4e
+        commit: 31986d570103dbd40be02f3f99c088284dafd373
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -55,7 +55,7 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: c799f73a47fa35d6059456291328f7ff10fdb273
+        commit: 200d12b6a58ad961d60a7774ca0f7a9d29498724
     meta-virtualization:
         commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
         path: layers/meta-virtualization
@@ -95,7 +95,6 @@ bblayers_conf_header:
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
 machine: imx8qxp-mek
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe

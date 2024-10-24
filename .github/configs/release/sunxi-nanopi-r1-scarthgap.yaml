@@ -68,7 +68,6 @@ local_conf_header:
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
 machine: nanopi-r1
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe
