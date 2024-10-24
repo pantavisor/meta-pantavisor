@@ -64,7 +64,6 @@ local_conf_header:
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
 machine: raspberrypi-armv8
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe
