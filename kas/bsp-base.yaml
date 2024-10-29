@@ -37,6 +37,8 @@ repos:
 local_conf_header:
   rm_work: |
     INHERIT += "rm_work"
+  package_management: |
+    PACKAGE_CLASSES = "package_rpm"
   panta-base: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
   pantavisor-system: |
