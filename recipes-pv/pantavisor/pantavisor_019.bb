@@ -12,7 +12,10 @@ RDEPENDS:${PN} += "lxc-pv \
 	cryptsetup \
 	libthttp-certs \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'uboot-ab', 'u-boot-fw-utils', '', d)} \
 	"
+
+
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -26,6 +29,7 @@ PANTAVISOR_BRANCH ??= "master"
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH}"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
+SRC_URI += " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'uboot-ab', 'file://fw_env.config', '', d)}"
 
 SRCREV = "88c3e58e75ce8117994148f52d1790addfcda8f1"
 
@@ -80,6 +84,9 @@ do_install() {
 	install -m 0644 ${WORKDIR}/rev0json ${D}/var/pantavisor/storage/trails/0/.pvr/json
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
 	install -m 0755 ${WORKDIR}/pantavisor-run ${D}/usr/bin/pantavisor-run
+	if [ -f ${WORKDIR}/fw_env.config ]; then
+	    install -m 0644 ${WORKDIR}/fw_env.config ${D}/etc/fw_env.config
+	fi
 	if [ -f ${WORKDIR}/pantavisor-installer ]; then
 		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
 	fi
