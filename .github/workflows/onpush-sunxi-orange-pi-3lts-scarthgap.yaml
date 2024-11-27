@@ -1,0 +1,18 @@
+name: 'Build On Push'
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+
+  build-sunxi-orange-pi-3lts-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml
+      name: sunxi-orange-pi-3lts-scarthgap
+    secrets: inherit

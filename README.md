@@ -12,4 +12,10 @@ For now visit:
 
 To find information and get support on how to use it.
 
+![imx8qxp-mek](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-imx8qxp-mek-scarthgap.yaml/badge.svg)
+![raspberrypi](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-raspberrypi-armv8-scarthgap.yaml/badge.svg)
+![sunxi-nanopi-r1](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-sunxi-nanopi-r1-scarthgap.yaml/badge.svg)
+![sunxi-orange-pi-3lts](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-sunxi-orange-pi-3lts-scarthgap.yaml/badge.svg)
+![sunxi-orange-pi-r1](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-sunxi-orange-pi-r1-scarthgap.yaml/badge.svg)
+
 
