@@ -21,7 +21,13 @@ $configs"
 
 rm -f .github/configs/release/*-scarthgap.yaml*
 
-cat > .github/workflows/onpush.yaml <<EOF
+for cc in $configs; do
+	echo CC: $cc
+	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+	#KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
+	echo "new config for machine: $m"
+#	cat .github/configs/release/$m-scarthgap.yaml
+	cat >> .github/workflows/onpush-$m-scarthgap.yaml << EOF1
 name: 'Build On Push'
 
 on:
@@ -33,15 +39,7 @@ on:
       - '!.github/workflows/updatemachines.yaml'
 
 jobs:
-EOF
 
-for cc in $configs; do
-	echo CC: $cc
-	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
-	KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
-	echo "new config for machine: $m"
-	cat .github/configs/release/$m-scarthgap.yaml
-	cat >> .github/workflows/onpush.yaml << EOF1
   build-$m-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
