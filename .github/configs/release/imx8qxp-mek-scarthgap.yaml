@@ -3,11 +3,11 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: cb16b9c0191549925e08458c37b8eaae613b6e4e
+        commit: 62bd604f7575a1b272f0ab7f4cdb6ee9f12e76eb
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
-        commit: 6c063450d464eb2f380443c7d9af1b94ce9b9d75
+        commit: 2602df3c730d970b8a4aa685b9f43d7ccd2c5d0f
         path: layers/meta-freescale-3rdparty
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
     meta-freescale-distro:
@@ -38,7 +38,7 @@ repos:
             meta-imx-sdk:
         commit: 239073c47124f41f46581871afbde643f48d6a3b
     meta-arm:
-        commit: 60e31ef2c4983c0bdb8682dee6a6ec5f2e9d5f0a
+        commit: 7088279c0ab00c7dabefdd4544951b4746b48476
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -55,9 +55,9 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: c799f73a47fa35d6059456291328f7ff10fdb273
+        commit: fd5231a5445f0a61d3a7678d1980a94dc1c80544
     meta-virtualization:
-        commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
+        commit: 450941a1b6df96285691e8c23d4f332d3c88a994
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
@@ -73,6 +73,8 @@ local_conf_header:
         PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
     rm_work: |
         INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     pantavisor-system: |
@@ -95,7 +97,6 @@ bblayers_conf_header:
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
 machine: imx8qxp-mek
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe

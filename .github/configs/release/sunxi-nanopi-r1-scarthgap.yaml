@@ -14,7 +14,7 @@ repos:
         path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: 60e31ef2c4983c0bdb8682dee6a6ec5f2e9d5f0a
+        commit: 7088279c0ab00c7dabefdd4544951b4746b48476
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -31,9 +31,9 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 200d12b6a58ad961d60a7774ca0f7a9d29498724
+        commit: fd5231a5445f0a61d3a7678d1980a94dc1c80544
     meta-virtualization:
-        commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
+        commit: 450941a1b6df96285691e8c23d4f332d3c88a994
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
@@ -50,6 +50,8 @@ local_conf_header:
         PV_UBOOT_AUTOFDT = "1"
     rm_work: |
         INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     pantavisor-system: |
@@ -68,7 +70,6 @@ local_conf_header:
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
 machine: nanopi-r1
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe
