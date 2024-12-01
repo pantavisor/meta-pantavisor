@@ -11,6 +11,7 @@ defaults:
     branch: scarthgap
 repos:
   poky:
+    commit: scarthgap-5.0.4
     patches:
       fit-image-multiconfig:
         repo: meta-pantavisor

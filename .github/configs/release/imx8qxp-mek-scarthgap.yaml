@@ -47,6 +47,7 @@ repos:
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
+        commit: scarthgap-5.0.4
         path: layers/poky
         layers:
             meta:
