@@ -45,7 +45,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPAN
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON"
 
-OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -DPANTAVISOR_DEBUG=ON"
+OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
 
 CMAKE_BINARY_DIR = "${S}"
 
