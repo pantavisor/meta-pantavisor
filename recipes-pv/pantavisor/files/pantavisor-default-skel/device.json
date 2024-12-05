@@ -44,6 +44,10 @@
 	"pv--usrmeta": {
 	    "disk": "dm-internal-secrets",
 	    "persistence": "permanent"
-	}
+	},
+        "pv--phconfig": {
+            "disk": "dm-internal-secrets",
+            "persistence": "permanent"
+        }
     }
 }
