@@ -24,10 +24,7 @@ cat >> $BUILDDIR/conf/local.conf <<EOF
 
 ### BEGIN META PANTAVISOR
 
-TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
-INITRAMFS_IMAGE = "pantavisor-initramfs"
-INITRAMFS_MULTICONFIG = "pv-initramfs"
-INITRAMFS_DEPLOY_DIR_IMAGE = "${TMPDIR}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}"
+TMPDIR = "${TOPDIR}/tmp/${DISTRO_CODENAME}"
 
 # enable image-pvrexport class; This one will produce
 # a root container pvrexport from the rootfs of the images
@@ -42,6 +39,8 @@ PANTAVISOR_SYSTEM_DISTRO = "yes"
 
 # select mbedtls
 PREFERRED_VERSION_mbedtls = "2.28.%"
+# select busybox
+PREFERRED_VERSION_busybox = "1.36~%"
 
 DISTRO_FEATURES:remove = "usrmerge"
 AGL_DEFAULT_DISTRO_FEATURES:remove = "usrmerge"

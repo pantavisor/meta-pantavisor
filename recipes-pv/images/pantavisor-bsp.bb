@@ -12,7 +12,7 @@ DEPENDS:append = " \
 INITRAMFS_IMAGE ?= "pantavisor-initramfs"
 INITRAMFS_IMAGE_NAME ?= "${@['${INITRAMFS_IMAGE}-${MACHINE}', ''][d.getVar('INITRAMFS_IMAGE') == '']}"
 INITRAMFS_MULTICONFIG ?= ""
-INITRAMFS_DEPLOY_DIR_IMAGE = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${DEPLOY_DIR_IMAGE}", "${TOPDIR}/tmp-${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}", d)}'
+INITRAMFS_DEPLOY_DIR_IMAGE = '${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${DEPLOY_DIR_IMAGE}", "${TOPDIR}/tmp/${DISTRO_CODENAME}-${INITRAMFS_MULTICONFIG}/deploy/images/${MACHINE}", d)}'
 
 OVERRIDES =. "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'pv-squash-lz4:', '', d)}"
 OVERRIDES =. "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-zstd', 'pv-squash-zstd:', '', d)}"

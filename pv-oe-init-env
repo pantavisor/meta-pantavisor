@@ -25,7 +25,7 @@ cat >> $BUILDDIR/conf/local.conf <<EOF
 
 ### BEGIN META PANTAVISOR
 
-TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+TMPDIR = "${TOPDIR}/tmp/${DISTRO_CODENAME}"
 
 GOVERSION = "1.20.%"
 

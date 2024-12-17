@@ -13,7 +13,8 @@ IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit'
 	${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', ' pvrexportit ', '', d)} \
 "
 
-inherit ${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', 'image pvr-ca', '', d)}
+inherit image
+inherit ${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', 'pvr-ca', '', d)}
 
 IMAGE_INSTALL += "pvcontrol"
 

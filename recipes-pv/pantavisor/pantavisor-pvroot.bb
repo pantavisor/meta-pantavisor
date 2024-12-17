@@ -20,9 +20,16 @@ SRC_URI += " \
 	file://pvrconfig \
 	file://uboot.txt \
 "
-PSEUDO_IGNORE_PATHS .= ",/tmp,${DEPLOYDIR}"
+PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/tmp,${DEPLOYDIR}"
+
+do_install[cleandirs] += " ${WORKDIR}/tmp "
+
 
 fakeroot do_install() {
+
+    oldtmp=$TMPDIR
+    export TMPDIR=${WORKDIR}/tmp
+
     install -d -m 0755 ${D}/boot
     install -d -m 0755 ${D}/config
     install -d -m 0755 ${D}/logs
@@ -44,6 +51,7 @@ fakeroot do_install() {
 
     echo tar -C "${D}" -cvzf ${B}/${IMAGE_NAME}.tar.gz .
     tar -C "${D}" -cvzf ${B}/${IMAGE_NAME}.tar.gz .
+    export TMPDIR=$oldtmp
 }
 
 
