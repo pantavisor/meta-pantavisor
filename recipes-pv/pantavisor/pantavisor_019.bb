@@ -21,13 +21,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/losetup_dio"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;branch=feature/losetup_dio;protocol=https"
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
-SRCREV = "161bce061d9c756a9ac525a85a8a5e2d52246ea2"
+SRCREV = "f75289bddfdc8e02189423993af52a07948598b6"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
