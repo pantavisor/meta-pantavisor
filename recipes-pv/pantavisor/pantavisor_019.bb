@@ -27,7 +27,7 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;branch=feature/losetup_dio
 SRC_URI += " file://pantavisor-run"
 SRC_URI += " file://rev0json"
 
-SRCREV = "e126ce4d1b8d6f418f1697bde2ff812a3308aae8"
+SRCREV = "fb6f3e1f98c97b3b478178330339e9b9658a1e99"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
