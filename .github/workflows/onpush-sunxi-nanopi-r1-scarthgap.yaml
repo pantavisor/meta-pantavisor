@@ -16,3 +16,21 @@ jobs:
       configs: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml
       name: sunxi-nanopi-r1-scarthgap
     secrets: inherit
+name: 'Build On Push'
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+
+  build-sunxi-nanopi-r1-scarthgap:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml
+      name: sunxi-nanopi-r1-scarthgap
+    secrets: inherit
