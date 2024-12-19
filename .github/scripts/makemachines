@@ -50,7 +50,6 @@ EOF1
 done
 
 git add .github/configs/release/
-git add .github/workflows/onpush.yaml
 
 echo DIFF:
 git diff HEAD .github/
