@@ -27,7 +27,7 @@ for cc in $configs; do
 	#KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
 	echo "new config for machine: $m"
 #	cat .github/configs/release/$m-scarthgap.yaml
-	cat >> .github/workflows/onpush-$m-scarthgap.yaml << EOF1
+	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
 name: 'Build On Push'
 
 on:
