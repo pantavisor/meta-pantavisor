@@ -25,13 +25,13 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 200d12b6a58ad961d60a7774ca0f7a9d29498724
+        commit: 60b5842348f50ad44b6a64fc6201952bbbc46849
     meta-virtualization:
-        commit: 6f3c1d8f90947408a6587be222fec575a1ca5195
+        commit: 2ec66285d050ef3cd29a5ea57c71341e6b17b36f
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2e3126c9c16bb3df0560f6b3896d01539a3bfad7
+        commit: 3c293e14492f01e22a64004e2330fb620c27578a
         layers:
             meta-filesystems:
             meta-networking:
@@ -46,6 +46,8 @@ local_conf_header:
         ENABLE_UART = "1"
     rm_work: |
         INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
     panta-base: |
         TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
     pantavisor-system: |
@@ -64,7 +66,6 @@ local_conf_header:
         SSTATE_DIR="/shared/sstate"
         DL_DIR="/shared/dldir"
 machine: raspberrypi-armv8
-distro: panta-distro
 target:
 - pantavisor-remix
 build_system: oe
