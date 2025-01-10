@@ -9,11 +9,7 @@ header:
 
 repos:
   meta-imx:
-    branch: scarthgap-6.6.23-2.0.0
-    patches:
-      u-boot-deploy-fix:
-        repo: meta-pantavisor
-        path: patches/meta-imx/0001-u-boot-imx-Take-patch-from-meta-freescale-to-fix-bui.patch
+    branch: origin/scarthgap-6.6.52-2.2.0
     layers:
       meta-imx-bsp:
       meta-imx-ml:
