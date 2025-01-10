@@ -27,16 +27,12 @@ repos:
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
-        branch: scarthgap-6.6.23-2.0.0
-        patches:
-            u-boot-deploy-fix:
-                path: patches/meta-imx/0001-u-boot-imx-Take-patch-from-meta-freescale-to-fix-bui.patch
-                repo: meta-pantavisor
+        branch: scarthgap-6.6.52-2.2.0
         layers:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: e06f8574e9abb3b98a60d5a8129d1ec4f79b4ca0
+        commit: 219f6d04a4c339eb6f2dc626f944bbdf9a716ff5
     meta-arm:
         commit: a8fe9d22eaefc294f91096c6a32663e2f4ab3b10
         layers:
