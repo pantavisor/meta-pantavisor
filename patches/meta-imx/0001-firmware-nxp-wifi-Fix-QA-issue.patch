@@ -1,0 +1,29 @@
+From 449bc92e5952976a7cf248f5691cd90f09b5d1a9 Mon Sep 17 00:00:00 2001
+From: Marek Belisko <marek.belisko@gmail.com>
+Date: Mon, 13 Jan 2025 08:54:47 +0100
+Subject: [PATCH] firmware-nxp-wifi: Fix QA issue
+
+Fix following:
+ERROR: firmware-nxp-wifi-1.0-r0 do_package: QA Issue: firmware-nxp-wifi-nxpiw610-sdio is listed in PACKAGES multiple times, this leads to packaging errors. [packages-list]
+
+Signed-off-by: Marek Belisko <marek.belisko@gmail.com>
+---
+ .../recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend b/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend
+index 40fa643edb..26e9193b02 100644
+--- a/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend
++++ b/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend
+@@ -35,7 +35,7 @@ FILES:${PN}-nxpiw612-sdio += " \
+     ${nonarch_base_libdir}/firmware/nxp/uartuart_n61x_v1.bin.se \
+ "
+ 
+-PACKAGES += "${PN}-nxpiw610-sdio ${PN}-all-sdio ${PN}-all-pcie"
++PACKAGES += "${PN}-all-sdio ${PN}-all-pcie"
+ 
+ RDEPENDS:${PN}-all-sdio = " \
+     ${PN}-nxp8801-sdio \
+-- 
+2.25.1
+
