@@ -9,7 +9,7 @@ header:
 
 repos:
   meta-imx:
-    branch: origin/scarthgap-6.6.52-2.2.0
+    branch: scarthgap-6.6.52-2.2.0
     layers:
       meta-imx-bsp:
       meta-imx-ml:
