@@ -27,6 +27,10 @@ repos:
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
+        patches:
+            u-boot-deploy-fix:
+                path: patches/meta-imx/0001-firmware-nxp-wifi-Fix-QA-issue.patch
+                repo: meta-pantavisor
         branch: scarthgap-6.6.52-2.2.0
         layers:
             meta-imx-bsp:
