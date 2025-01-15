@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: a839e9ebe75e2bfd53024e5132414481c0a72bf7
+        commit: d015b23d0ac89c744557848a8bce79729dc9e351
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -28,7 +28,7 @@ repos:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
         patches:
-            u-boot-deploy-fix:
+            qa-issue-fix:
                 path: patches/meta-imx/0001-firmware-nxp-wifi-Fix-QA-issue.patch
                 repo: meta-pantavisor
         branch: scarthgap-6.6.52-2.2.0
