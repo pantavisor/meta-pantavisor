@@ -96,7 +96,7 @@ bblayers_conf_header:
     platform-nxp: |
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
-machine: imx8qxp-mek
+machine: imx8qxp-b0-mek
 target:
 - pantavisor-remix
 build_system: oe
