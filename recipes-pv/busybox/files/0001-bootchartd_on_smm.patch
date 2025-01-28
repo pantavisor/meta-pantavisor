@@ -1,0 +1,39 @@
+diff --git a/init/bootchartd.c b/init/bootchartd.c
+index ae1ee9d9a..6446ca598 100644
+--- a/init/bootchartd.c
++++ b/init/bootchartd.c
+@@ -186,7 +186,7 @@ static int dump_procs(FILE *fp, int look_for_login_process)
+ 
+ static char *make_tempdir(void)
+ {
+-	char template[] = "/tmp/bootchart.XXXXXX";
++	char template[] = "/tmpbootchart.XXXXXX";
+ 	char *tempdir = xstrdup(mkdtemp(template));
+ 	if (!tempdir) {
+ #ifdef __linux__
+@@ -197,11 +197,11 @@ static char *make_tempdir(void)
+ 		 */
+ 		static const char dirs[] ALIGN1 = "/mnt\0""/tmp\0""/boot\0""/proc\0";
+ 		const char *try_dir = dirs;
+-		while (mount("none", try_dir, "tmpfs", MS_SILENT, "size=16m") != 0) {
+-			try_dir += strlen(try_dir) + 1;
+-			if (!try_dir[0])
+-				bb_perror_msg_and_die("can't %smount tmpfs", "");
+-		}
++		// while (mount("none", try_dir, "tmpfs", MS_SILENT, "size=16m") != 0) {
++		// 	try_dir += strlen(try_dir) + 1;
++		// 	if (!try_dir[0])
++		// 		bb_perror_msg_and_die("can't %smount tmpfs", "");
++		// }
+ 		//bb_error_msg("mounted tmpfs on %s", try_dir);
+ 		xchdir(try_dir);
+ 		if (umount2(try_dir, MNT_DETACH) != 0) {
+@@ -315,7 +315,7 @@ static void finalize(char *tempdir, const char *prog, int process_accounting)
+ 	fclose(header_fp);
+ 
+ 	/* Package log files */
+-	system(xasprintf("tar -zcf /var/log/bootlog.tgz header %s *.log", process_accounting ? "kernel_pacct" : ""));
++	system(xasprintf("tar -zcf /bootlog.tgz header %s *.log", process_accounting ? "kernel_pacct" : ""));
+ 	/* Clean up (if we are not in detached tmpfs) */
+ 	if (tempdir) {
+ 		unlink("header");
