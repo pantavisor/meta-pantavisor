@@ -1,0 +1,17 @@
+Bootchartd support
+==================
+
+Pantavisor includes the option to enable bootchartd to create a bootchartd.tgz tarball.
+To achieve this, just add `bootchartd` to the `PANTAVISOR_FEATURES` variable.
+
+Passing this option enable the following in busybox:
+* CONFIG_TAR
+* CONFIG_FEATURE_TAR_CREATE
+* CONFIG_BOOTCHARTD
+
+Bootchartd regurlarly uses `/tmp` and `/var/log` to store data, this is not possible
+in Pantavisor, and since this is not configurable, we include a patch to write all in
+the root directory `/`.
+
+When this support is activated, it's possible to boot with `rdinit=/sbin/bootchartd`
+in order to generate the bootchartd tarball.
