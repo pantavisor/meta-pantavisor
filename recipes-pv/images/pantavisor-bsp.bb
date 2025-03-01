@@ -116,27 +116,31 @@ fakeroot do_compile(){
 
        if [ -n "${PV_INITIAL_DTB}" ]; then
            cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
-           _pvline="$_pvline
+           basearts="$basearts
        \"fdt\": \"${PV_INITIAL_DTB}\","
        fi
        if [ -n "${PV_UBOOT_AUTOFDT}" -a -n "${KERNEL_DEVICETREE}" ]; then
+           firstdtb=""
            for dtb in ${KERNEL_DEVICETREE}; do
                dtb_file=`basename $dtb`
                if [ -n "${PV_UBOOT_FLATFDT}" ]; then
                    dtb=""
                fi
                install -D -m 0644 ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/$dtb
+               if [ -z "$firstdtb" ]; then
+                   firstdtb=${dtb:-$dtb_file}
+               fi
+               basearts="$basearts
+      \"fdt\": \"${firstdtb}\","
            done
        fi
     fi
           
-    _pvline="$basearts"
-
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
     "addons": [],
     "firmware": "firmware.squashfs",
-${_pvline}
+${basearts}
     "initrd_config": "",
     "modules": "modules.squashfs"
 `echo '}'`
