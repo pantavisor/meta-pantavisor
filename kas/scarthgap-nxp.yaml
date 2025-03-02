@@ -20,8 +20,3 @@ repos:
       meta-imx-ml:
       meta-imx-sdk:
 
-  meta-freescale:
-    patches:
-      fix-build-issue:
-        path: patches/meta-freescale/0001-Revert-conf-machine-Update-dtb-list-for-6.6.52_2.0.0.patch
-        repo: meta-pantavisor

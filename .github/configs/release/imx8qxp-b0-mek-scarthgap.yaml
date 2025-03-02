@@ -3,13 +3,9 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        url: https://github.com/Freescale/meta-freescale.git
-        path: layers/meta-freescale
-        patches:
-            fix-build-issue:
-                path: patches/meta-freescale/0001-Revert-conf-machine-Update-dtb-list-for-6.6.52_2.0.0.patch
-                repo: meta-pantavisor
         commit: a8a6b9d1b274f1a24e4d75243af1bbde011b2ebb
+        path: layers/meta-freescale
+        url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
         commit: 1dfc65dd2006b51d156be5bcda0e3c72c936ad0a
         path: layers/meta-freescale-3rdparty
