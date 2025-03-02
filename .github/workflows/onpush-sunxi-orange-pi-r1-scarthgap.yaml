@@ -13,6 +13,6 @@ jobs:
   build-sunxi-orange-pi-r1-scarthgap:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml
+      configs: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
       name: sunxi-orange-pi-r1-scarthgap
     secrets: inherit

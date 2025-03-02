@@ -17,7 +17,8 @@ mkdir -p $gitdirs
 
 commitmsg=`mktemp -t commitmsg.XXXXXXX`
 
-echo "" > $commitmsg
+echo "AutoPR: update kas meta layers to latest branch commits" > $commitmsg
+echo "" >> $commitmsg
 
 echo_cm(){
 	echo "$@" >> $commitmsg
