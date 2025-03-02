@@ -89,9 +89,6 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-    __voldirs: |-
-        SSTATE_DIR="/shared/sstate"
-        DL_DIR="/shared/dldir"
 bblayers_conf_header:
     platform-nxp: |
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
