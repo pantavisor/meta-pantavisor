@@ -1,4 +1,4 @@
-From a349edef5358194b626f92f7dbe1f6ec342ed91f Mon Sep 17 00:00:00 2001
+From b22f487215e5395c86eaa2746e4f1b78fdf0bf90 Mon Sep 17 00:00:00 2001
 From: Alexander Sack <asac@pantacor.com>
 Date: Thu, 3 Oct 2024 10:27:52 +0000
 Subject: [PATCH] kernel-fitimage.bbclass: support multiconfig
@@ -8,12 +8,12 @@ Subject: [PATCH] kernel-fitimage.bbclass: support multiconfig
  1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/meta/classes-recipe/kernel-fitimage.bbclass b/meta/classes-recipe/kernel-fitimage.bbclass
-index 18ab17bd2c..5c93a1cebb 100644
+index 3e20c3248b..d99256541c 100644
 --- a/meta/classes-recipe/kernel-fitimage.bbclass
 +++ b/meta/classes-recipe/kernel-fitimage.bbclass
-@@ -6,6 +6,9 @@
- 
+@@ -7,6 +7,9 @@
  inherit kernel-uboot kernel-artifact-names uboot-config
+ require conf/image-fitimage.conf
  
 +INITRAMFS_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
 +INITRAMFS_MULTICONFIG ?= ""
@@ -21,7 +21,7 @@ index 18ab17bd2c..5c93a1cebb 100644
  def get_fit_replacement_type(d):
      kerneltypes = d.getVar('KERNEL_IMAGETYPES') or ""
      replacementtype = ""
-@@ -38,7 +41,8 @@ python __anonymous () {
+@@ -39,7 +42,8 @@ python __anonymous () {
  
      image = d.getVar('INITRAMFS_IMAGE')
      if image:
@@ -31,7 +31,7 @@ index 18ab17bd2c..5c93a1cebb 100644
  
      ubootenv = d.getVar('UBOOT_ENV')
      if ubootenv:
-@@ -683,7 +687,7 @@ fitimage_assemble() {
+@@ -632,7 +636,7 @@ fitimage_assemble() {
  		# Find and use the first initramfs image archive type we find
  		found=
  		for img in ${FIT_SUPPORTED_INITRAMFS_FSTYPES}; do
