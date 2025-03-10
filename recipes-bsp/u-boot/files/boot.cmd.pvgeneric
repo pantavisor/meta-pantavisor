@@ -3,7 +3,7 @@ echo "Pantavisor Starts"
 if test -z "$pv_platargs"; then
 	setenv pv_platargs "earlyprintk"
 fi
-setenv pv_baseargs "root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
+setenv pv_baseargs "panic=3 root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
 setenv pv_ctrl 2
 if test -z "${devtype}"; then
 	setenv devtype mmc
