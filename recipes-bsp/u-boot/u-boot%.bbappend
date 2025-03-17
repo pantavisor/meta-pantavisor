@@ -27,7 +27,6 @@ UBOOT_ENV_SRC = "${uboot_env_src}"
 UBOOT_ENV_SRC_FRAGS = "${uboot_env_src_frags}"
 UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
 
-
 do_prepcompile() {
 
 	if [ -z "${UBOOT_ENV}" -o -z "${UBOOT_ENV_SRC_FRAGS}" ]; then
@@ -42,6 +41,7 @@ do_prepcompile() {
 	# example: meta-sunxi is doing their own compilation in do_compile so
 	# lets ensure our source is also available in boot.cmd
 	cp ${WORKDIR}/${UBOOT_ENV_SRC} ${WORKDIR}/boot.cmd
+	cp ${WORKDIR}/${UBOOT_ENV_SRC} ${WORKDIR}/boot.cmd.in
 }
 
 addtask prepcompile before do_configure do_compile after do_fetch do_patch

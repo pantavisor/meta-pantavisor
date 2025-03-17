@@ -180,4 +180,3 @@ EOF1
     rm -rf ${DEPLOY_DIR_IMAGE}/${PN}-pvs
     cp -rf ${PVR_PVBSPIT_CONFIG_DIR}/pvs ${DEPLOY_DIR_IMAGE}/${PN}-pvs
 }
-
