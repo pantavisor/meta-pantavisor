@@ -62,5 +62,3 @@ do_finish_rootfs() {
 unset do_fetch[noexec]
 unset do_unpack[noexec]
 addtask do_rootfs after do_fetch do_unpack
-
-

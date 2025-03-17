@@ -1,0 +1,21 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+  includes:
+    - kas/platforms/toradex.yaml
+
+# The machine as it is written into the `local.conf` of bitbake.
+machine: colibri-imx6ull
+
+local_conf_header:
+  platform-colibri-imx6ull: |
+        include conf/machine/include/colibri-imx6ull.inc
+        IMAGE_CLASSES:remove:pn-pantavisor-initramfs = " image_type_pv_tezi"
+        IMAGE_FSTYPES:remove:pn-pantavisor-initramfs = " pv_teziimg"
+        IMAGE_CLASSES:remove:pn-core-image-base = " image_type_pv_tezi"
+        IMAGE_FSTYPES:remove:pn-core-image-base = " pv_teziimg"

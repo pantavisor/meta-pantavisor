@@ -1,0 +1,26 @@
+From ceb19b1e7100a976aad4a3f53b048438c51a24f9 Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Fri, 23 May 2025 10:07:27 -0300
+Subject: [PATCH] enabled-pv-formated-tezi
+
+---
+ conf/machine/include/colibri-imx6ull.inc | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/conf/machine/include/colibri-imx6ull.inc b/conf/machine/include/colibri-imx6ull.inc
+index 1650118..edc13d9 100644
+--- a/conf/machine/include/colibri-imx6ull.inc
++++ b/conf/machine/include/colibri-imx6ull.inc
+@@ -1,5 +1,7 @@
+-IMAGE_CLASSES:append = " image_type_tezi"
+-IMAGE_FSTYPES:append = " teziimg"
++IMAGE_CLASSES:append = " image_type_pv_tezi"
++IMAGE_TYPEDEP:pv_teziimg = "tar.xz"
++IMAGE_FSTYPES:append = " pv_teziimg"
++
+ TORADEX_PRODUCT_IDS = "0036 0040 0044 0045"
+ TORADEX_PRODUCT_IDS[0036] = "imx6ull-colibri-eval-v3.dtb"
+ TORADEX_PRODUCT_IDS[0040] = "imx6ull-colibri-wifi-eval-v3.dtb"
+-- 
+2.43.0
+
