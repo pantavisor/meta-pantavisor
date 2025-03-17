@@ -1,0 +1,4 @@
+pv_bootcmd=ubi part ubi; ubifsmount ubi0:pvboot; ubifsload ${loadaddr} /boot.scr; source ${loadaddr}
+bootcmd=run pv_bootcmd || run ubiboot || run distro_bootcmd
+bootdelay=1
+baudrate=115200
