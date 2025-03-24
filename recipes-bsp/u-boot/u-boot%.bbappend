@@ -47,7 +47,6 @@ do_prepcompile() {
 addtask prepcompile before do_configure do_compile after do_fetch do_patch
 
 do_deploy:append() {
-        rm -f ${DEPLOYDIR}/oemEnv.txt
 	cat ${WORKDIR}/oemEnv.txt | \
 		sed -e 's/@@PV_BOOT_OEMARGS@@/${PV_BOOT_OEMARGS}/' \
 		> ${WORKDIR}/oemEnv.txt.final
