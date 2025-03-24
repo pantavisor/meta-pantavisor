@@ -52,3 +52,9 @@ do_deploy:append() {
 		> ${WORKDIR}/oemEnv.txt.final
 	install -D -m 644 ${WORKDIR}/oemEnv.txt.final ${DEPLOYDIR}/oemEnv.txt
 }
+
+do_compile:append() {
+    if [ -n "${UBOOT_ENV}" ] && [ "${UBOOT_ENV_SUFFIX}" = "scr" ]; then
+        cp ${WORKDIR}/${UBOOT_ENV_SRC} ${B}/u-boot-initial-env
+    fi
+}
