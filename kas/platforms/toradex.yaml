@@ -22,11 +22,6 @@ repos:
     url: "https://git.toradex.com/meta-toradex-nxp.git"
     branch: scarthgap-7.x.y
 
-  meta-toradex-distro:
-    path: layers/meta-toradex-distro
-    url: "https://git.toradex.com/meta-toradex-distro.git"
-    branch: scarthgap-7.x.y
-
 local_conf_header:
   platform-toradex:
     PV_UBOOT_AUTOFDT = "1"
