@@ -2,6 +2,7 @@ SUMMARY = "A small image just capable of allowing a device to boot."
 LICENSE = "MIT"
 
 inherit image pvroot-image
+inherit image_type_pv_tezi
 
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
@@ -19,3 +20,6 @@ do_rootfs_boot_scr(){
 }
 
 PVROOTFS_POSTPROCESS_COMMAND = "do_rootfs_boot_scr;"
+
+IMAGE_FSTYPES:append:colibri-imx6ull = " tar.xz pv_teziimg"
+IMAGE_TYPEDEP:pv_teziimg:colibri-imx6ull = "tar.xz"

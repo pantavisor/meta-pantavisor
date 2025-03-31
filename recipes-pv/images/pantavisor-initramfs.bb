@@ -63,4 +63,4 @@ unset do_fetch[noexec]
 unset do_unpack[noexec]
 addtask do_rootfs after do_fetch do_unpack
 
-
+IMAGE_FSTYPES:remove:colibri-imx6ull = " teziimg"

@@ -2,6 +2,7 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 inherit deploy kernel-artifact-names pvr-ca image-artifact-names
+inherit image_type_pv_tezi
 
 DEPENDS:append = " \
 	pvr-native \
@@ -181,3 +182,5 @@ EOF1
     cp -rf ${PVR_PVBSPIT_CONFIG_DIR}/pvs ${DEPLOY_DIR_IMAGE}/${PN}-pvs
 }
 
+IMAGE_FSTYPES:append:colibri-imx6ull = " tar.xz pv_teziimg"
+IMAGE_TYPEDEP:pv_teziimg:colibri-imx6ull = "tar.xz"
