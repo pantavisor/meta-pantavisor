@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 6df7e028a2b7b2d8cab0745dc0ed2eebc3742a17
+        commit: c153c694bd7a08de474470d7c1c7fd550117b162
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -25,13 +25,13 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: f93188cb87bebd6bf8b6cf0f18ba4e078feaf12b
+        commit: 2af52d4819aea9ca746f0671e2b2f8b5c7de2960
     meta-virtualization:
-        commit: 79673f5c67b022e7aadeb231872470295e5b9188
+        commit: 52cf1d59c5af5b795a2efec6f6f33df78ce61c48
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 4f11a12b2352bbdfafb6b7d956bf424af4992977
+        commit: 67ad83dd7c2485dae0c90eac345007af6195b84d
         layers:
             meta-filesystems:
             meta-networking:
@@ -56,6 +56,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
     __menu_config_vars: |-
         PVROOT_IMAGE = "yes"
