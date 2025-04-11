@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: a8a6b9d1b274f1a24e4d75243af1bbde011b2ebb
+        commit: 3db229f14e8794238fa43b4066a6439fac506622
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: 4f11a12b2352bbdfafb6b7d956bf424af4992977
+        commit: 67ad83dd7c2485dae0c90eac345007af6195b84d
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -36,9 +36,9 @@ repos:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: 219f6d04a4c339eb6f2dc626f944bbdf9a716ff5
+        commit: 156518d2ba42d69086f564c2656705d850b23b63
     meta-arm:
-        commit: 3cadb81ffaa9f03b92e302843cb22a9cd41df34b
+        commit: f3640941c600d03ea53ce5b9254f0fead18f8bc0
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -55,9 +55,9 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: f93188cb87bebd6bf8b6cf0f18ba4e078feaf12b
+        commit: 78626a6f1861361bbd78a411cb27b093e34b466b
     meta-virtualization:
-        commit: 79673f5c67b022e7aadeb231872470295e5b9188
+        commit: 9287a355b338361e42027ce371444111a791d64f
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
@@ -83,6 +83,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
     __menu_config_vars: |-
         PVROOT_IMAGE = "yes"
