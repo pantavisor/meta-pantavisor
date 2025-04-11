@@ -23,9 +23,11 @@ S = "${WORKDIR}/git"
 
 PANTAVISOR_BRANCH ??= "master"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH}"
-SRC_URI += " file://pantavisor-run"
-SRC_URI += " file://rev0json"
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
+           file://pantavisor-run \
+           file://rev0json \
+           file://0001-CMakeLists.txt-install-skel-only-if-PANTAVISOR_DEFAU.patch \
+           "
 
 SRCREV = "8b7f75159bcbb8011fd5478ae58603ebe72dff9d"
 
@@ -43,7 +45,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVI
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
-EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON"
+EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON -DPANTAVISOR_DEFAULTS_SKIP_INSTALL=ON"
 
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
 
