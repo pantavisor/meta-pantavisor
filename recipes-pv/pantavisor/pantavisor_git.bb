@@ -30,6 +30,8 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PA
            "
 
 SRCREV = "8b7f75159bcbb8011fd5478ae58603ebe72dff9d"
+PE = "1"
+PKGV = "019+git0+${GITPKGV}"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
@@ -39,7 +41,7 @@ FILES:${PN} += " /storage /writable /volumes /exports /pv /etc/pantavisor /lib/ 
 FILES:${PN} += " /certs"
 FILES:${PN} += " /init"
 
-inherit cmake
+inherit cmake gitpkgv
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
