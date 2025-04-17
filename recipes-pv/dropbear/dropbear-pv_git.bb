@@ -19,10 +19,12 @@ RDEPENDS:${PN}-dev = ""
 
 SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/master;protocol=https"
 SRCREV = "9665557b28c687d66a9203f0c77706ad10994e03"
+PE = "1"
+PKGV = "2020.81+git0+pv+${GITPKGV}"
 
 S = "${WORKDIR}/git"
 
-inherit autotools
+inherit autotools gitpkgv
 
 CVE_PRODUCT = "dropbear_ssh"
 

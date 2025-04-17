@@ -43,13 +43,15 @@ FILES:${PN} += " /lib"
 
 SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=12b46e8269f6e86b206d8c7a1cd30bc5f322464b \
 	file://0001-add-new-config-lxc.tty.min-as-lower-bound-of-tty-all.patch"
+PE = "1"
+PKGV = "3.0.4+git0+pv+${GITPKGV}"
 
 S = "${WORKDIR}/git"
 
 EXTRA_OECONF:libc-musl = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow -Wno-error=stringop-overread' --prefix=/usr --localstatedir=/usr/var"
 EXTRA_OECONF:libc-glibc = "--disable-api-docs --enable-static --disable-selinux --with-distro=debian CFLAGS='-Wno-error=strict-prototypes -Wno-error=old-style-definition -Wno-error=stringop-overflow -Wno-error=stringop-overread' --prefix=/usr --localstatedir=/usr/var"
 
-inherit autotools pkgconfig
+inherit autotools pkgconfig gitpkgv
 
 do_install:append() {
     rm -rf ${D}/usr/share
