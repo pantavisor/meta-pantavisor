@@ -15,12 +15,14 @@ PACKAGES += "libthttp-certs"
 
 SRC_URI = "git://gitlab.com/pantacor/libthttp.git;protocol=https;branch=master"
 SRCREV = "8814b40e2a6564959eead182c17d0fc02e104099"
+PE = "1"
+PKGV = "011+git0+${GITPKGV}"
 
 FILES:${PN}-certs += " /certs/* "
 
 S = "${WORKDIR}/git"
 
-inherit cmake
+inherit cmake gitpkgv
 
 CMAKE_BINARY_DIR = "${S}"
 
