@@ -1,0 +1,32 @@
+From 6adedb174a0ec3f44cab4191fe0668069048a246 Mon Sep 17 00:00:00 2001
+From: ferlzc <fernando.luiz@pantacor.com>
+Date: Thu, 24 Apr 2025 14:59:34 -0300
+Subject: [PATCH 2/3] fix: enable ubifs and pvboot
+
+---
+ recipes-bsp/u-boot/u-boot-toradex-common.inc | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/recipes-bsp/u-boot/u-boot-toradex-common.inc b/recipes-bsp/u-boot/u-boot-toradex-common.inc
+index 708ab06..5cbd26c 100644
+--- a/recipes-bsp/u-boot/u-boot-toradex-common.inc
++++ b/recipes-bsp/u-boot/u-boot-toradex-common.inc
+@@ -26,3 +26,15 @@ MIRRORS += "git://source.denx.de/u-boot/u-boot.git git://github.com/u-boot/u-boo
+ inherit toradex-u-boot-localversion
+ 
+ UBOOT_INITIAL_ENV = "u-boot-initial-env"
++
++do_deploy:append() {
++
++    env_file="${WORKDIR}/deploy-u-boot-toradex/u-boot-initial-env"
++
++    grep -q "^bootubipart=" "$env_file" && sed -i 's|^bootubipart=.*|bootubipart=ubi|' "$env_file" || echo "bootubipart=ubi" >> "$env_file"
++    grep -q "^bootubivol=" "$env_file" && sed -i 's|^bootubivol=.*|bootubivol=pvboot|' "$env_file" || echo "bootubivol=pvboot" >> "$env_file"
++    grep -q "^bootcmd_ubifs=" "$env_file" && sed -i 's|^bootcmd_ubifs=.*|bootcmd_ubifs=run ubifs_boot|' "$env_file" || echo "bootcmd_ubifs=run ubifs_boot" >> "$env_file"
++    grep -q "^boot_targets=" "$env_file" && sed -i 's|^boot_targets=.*|boot_targets=ubifs mmc0 usb0 dhcp|' "$env_file" || echo "boot_targets=ubifs mmc0 usb0 dhcp" >> "$env_file"
++    grep -q "^bootcmd=" "$env_file" && sed -i 's|^bootcmd=.*|bootcmd=run distro_bootcmd|' "$env_file" || echo "bootcmd=run distro_bootcmd" >> "$env_file"
++
++}
+-- 
+2.34.1
+

@@ -151,6 +151,9 @@ config MACHINE_FILTER_QEMU
 config MACHINE_FILTER_VARISCITE
 	bool "Variscite"
 
+config MACHINE_FILTER_TORADEX
+	bool "Toradex"
+
 config MACHINE_FILTER_NXP
 	bool "NXP"
 
@@ -191,6 +194,9 @@ config PLATFORM_NXP
 	bool
 
 config PLATFORM_VARISCITE
+	bool
+
+config PLATFORM_TORADEX
 	bool
 
 config PLATFORM_TI
@@ -259,6 +265,12 @@ config MACHINE_IMX8QXP_MEK
 	bool "imx8qxp-mek"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
+
+config MACHINE_COLIBRI_IMX6ULL
+	bool "colibri-imx6ull"
+	depends on CODENAME_SCARTHGAP
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
+	select PLATFORM_TORADEX
 
 config MACHINE_CORAL_DEV
 	bool "Google Coral Dev"
@@ -381,6 +393,10 @@ config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
 	string
 	default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
 
+config KAS_INCLUDE_MACHINE_COLIBRI_IMX6ULL
+	string
+    default "kas/machines/colibri-imx6ull.yaml" if MACHINE_COLIBRI_IMX6ULL
+
 config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
 	string
 	default "kas/machines/imx8qxp-b0-mek.yaml" if MACHINE_IMX8QXP_B0_MEK
@@ -466,6 +482,7 @@ config KAS_INCLUDE_CODENAME
 config KAS_INCLUDE_VARISCITE
 	string
 	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
+
 
 config KAS_INCLUDE_NXP
 	string
