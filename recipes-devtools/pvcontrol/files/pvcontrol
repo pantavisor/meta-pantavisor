@@ -28,7 +28,7 @@ OUTPUT=""
 MESSAGE=""
 
 usage() {
-	echo "Usage: pvcontrol [options] <ls|groups|signal|cmd|usrmeta|devmeta|buildinfo|objects|steps|config> [arguments]"
+	echo "Usage: pvcontrol [options] <ls|groups|signal|cmd|usrmeta|devmeta|buildinfo|objects|steps|conf> [arguments]"
 	echo "Control Pantavisor from your container"
 	echo "options:"
 	echo "       -h           show help"
@@ -110,8 +110,14 @@ usage_steps() {
 
 usage_config() {
 	echo "Usage: pvcontrol config <ls>"
+	echo "Legacy configuration related operations"
+	echo "       pvcontrol config ls - lists legacy configuration"
+}
+
+usage_conf() {
+	echo "Usage: pvcontrol <configuration|conf> <ls>"
 	echo "Configuration related operations"
-	echo "       pvcontrol config ls - lists running configuration"
+	echo "       pvcontrol conf ls - lists current configuration"
 }
 
 parse_ls_args() {
@@ -340,6 +346,20 @@ parse_config_args() {
 	esac
 }
 
+parse_conf_args() {
+	case "$1" in
+	ls|list)
+		cmd='listconf'
+		;;
+	--help)
+		usage_conf; exit 0
+		;;
+	*)
+		usage_conf; exit 1
+		;;
+	esac
+}
+
 parse_args() {
 	# parse options
 	while [ $# -gt 0 ]; do
@@ -400,6 +420,9 @@ parse_args() {
 		;;
 	config)
 		parse_config_args "$2" "$3" "$4"
+		;;
+	configuration|conf)
+		parse_conf_args "$2" "$3" "$4"
 		;;
 	--help)
 		usage; exit 0
@@ -582,6 +605,9 @@ exec_cmd() {
 		listconfig)
 			response=`$CURL -X GET --unix-socket "$SOCKET" "http://localhost/config"`
 			;;
+		listconf)
+			response=`$CURL -X GET --unix-socket "$SOCKET" "http://localhost/config2"`
+			;;
 		*)
 			echo "ERROR: unknown operation"; exit 1
 			;;
@@ -611,11 +637,11 @@ show_output() {
 				;;
 			*)
 		esac
-		echo $content 1>&2
+		echo "$content" 1>&2
 		exit $code
 	fi
 	
-	echo $content
+	echo "$content"
 	exit 0
 }
 
