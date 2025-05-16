@@ -26,11 +26,9 @@ PANTAVISOR_BRANCH ??= "master"
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://pantavisor-run \
            file://rev0json \
-           file://0001-CMakeLists.txt-install-skel-only-if-PANTAVISOR_DEFAU.patch \
-           file://0002-Introduce-option-to-inject-distro-version-and-name-i.patch \
            "
 
-SRCREV = "8b7f75159bcbb8011fd5478ae58603ebe72dff9d"
+SRCREV = "504d4b5ff9528f13f68f9244db2d6419a13b56c6"
 PE = "1"
 PKGV = "019+git0+${GITPKGV}"
 
