@@ -1,4 +1,4 @@
-inherit image
+inherit image image-buildinfo
 
 # Simple initramfs image artifact generation for tiny images.
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
