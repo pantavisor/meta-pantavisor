@@ -14,7 +14,7 @@ repos:
         path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: f3640941c600d03ea53ce5b9254f0fead18f8bc0
+        commit: 8e0f8af90fefb03f08cd2228cde7a89902a6b37c
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -31,13 +31,13 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-        commit: 78626a6f1861361bbd78a411cb27b093e34b466b
+        commit: fa7bc4c1a8e1e59d57e6deeaf74f7784975ab9b4
     meta-virtualization:
-        commit: 9287a355b338361e42027ce371444111a791d64f
+        commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 67ad83dd7c2485dae0c90eac345007af6195b84d
+        commit: e92d0173a80ea7592c866618ef5293203c50544c
         layers:
             meta-filesystems:
             meta-networking:
