@@ -1,0 +1,13 @@
+diff --git a/meta/classes-recipe/update-rc.d.bbclass b/meta/classes-recipe/update-rc.d.bbclass
+index a19e704741..00e2e66d8b 100644
+--- a/meta/classes-recipe/update-rc.d.bbclass
++++ b/meta/classes-recipe/update-rc.d.bbclass
+@@ -6,7 +6,7 @@
+ 
+ UPDATERCPN ?= "${PN}"
+ 
+-DEPENDS:append:class-target = "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', ' update-rc.d initscripts', '', d)}"
++DEPENDS:append:class-target = "${@bb.utils.contains('DISTRO_FEATURES', 'sysvinit', ' update-rc.d ${VIRTUAL-RUNTIME_initscripts}', '', d)}"
+ 
+ UPDATERCD = "update-rc.d"
+ UPDATERCD:class-cross = ""

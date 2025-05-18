@@ -15,4 +15,7 @@ repos:
       fit-image-multiconfig:
         repo: meta-pantavisor
         path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+      update-rc-initscripts:
+        repo: meta-pantavisor
+        path: patches/poky/update-rc.patch
 
