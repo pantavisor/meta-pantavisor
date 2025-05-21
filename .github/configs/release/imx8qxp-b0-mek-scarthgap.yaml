@@ -58,7 +58,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: fa7bc4c1a8e1e59d57e6deeaf74f7784975ab9b4
+        commit: fa7dd6d5dacdd71bf9c5bb64e7ac63c44a8c175c
     meta-virtualization:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
