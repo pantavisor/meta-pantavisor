@@ -12,6 +12,7 @@ RDEPENDS:${PN} += "lxc-pv \
 	cryptsetup \
 	libthttp-certs \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
+    ${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvtx-bz2', 'libbz2', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
 LICENSE = "MIT"
