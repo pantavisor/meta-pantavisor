@@ -33,6 +33,8 @@ SRCREV = "513a4758cd0879a7534bdcdbe075eca58279b892"
 PE = "1"
 PKGV = "019+git0+${GITPKGV}"
 
+PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static"
+
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
 FILES:${PN} += " /var/pantavisor/storage/trails/0/.pvr/json"
@@ -40,6 +42,10 @@ FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
 FILES:${PN} += " /storage /writable /volumes /exports /pv /etc/pantavisor /lib/ "
 FILES:${PN} += " /certs"
 FILES:${PN} += " /init"
+
+# pvtx packages
+FILES:${PN}-pvtx += " ${bindir}/pvtx"
+FILES:${PN}-pvtx-static += " ${bindir}/pvtx-static"
 
 inherit cmake gitpkgv
 
@@ -58,7 +64,6 @@ EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON -DPANTAVISOR_DEFAULTS_SKIP_IN
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
 
 CMAKE_BINARY_DIR = "${S}"
-
 do_install() {
 	cmake_do_install
 	install -d ${D}/etc
