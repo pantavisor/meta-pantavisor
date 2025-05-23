@@ -12,7 +12,6 @@ RDEPENDS:${PN} += "lxc-pv \
 	cryptsetup \
 	libthttp-certs \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
-    ${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvtx-bz2', 'libbz2', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
 LICENSE = "MIT"
@@ -54,9 +53,6 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAV
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', '-DPANTAVISOR_E2FSGROW_ENABLE=ON', '-DPANTAVISOR_E2FSGROW_ENABLE=OFF', d)}"
-EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvtx', '-DPANTAVISOR_PVTX', '', d)}"
-EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvtx-bz2', '-DPANTAVISOR_PVTX_BZ2', '', d)}"
-EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvtx-static-libgcc', '-DPANTAVISOR_PVTX_STATIC_LIBGCC', '', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
 EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON -DPANTAVISOR_DEFAULTS_SKIP_INSTALL=ON"
