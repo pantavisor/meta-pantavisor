@@ -1,0 +1,43 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+  includes:
+    - kas/platforms/freescale.yaml
+
+# The machine as it is written into the `local.conf` of bitbake.
+repos:
+
+  meta-toradex-bsp-common:
+    path: layers/meta-toradex-bsp-common
+    url: "https://git.toradex.com/meta-toradex-bsp-common.git"
+    branch: scarthgap-7.x.y
+    patches:
+      tezi-markerting:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-bsp-common/0001-fix-change-marketing-splash-image.patch
+
+      pvboot-ubifs:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-bsp-common/0002-fix-enable-ubifs-and-pvboot.patch
+
+      pv-format:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-bsp-common/0003-feature-add-pv_format.patch
+
+  meta-toradex-nxp:
+    path: layers/meta-toradex-nxp
+    url: "https://git.toradex.com/meta-toradex-nxp.git"
+    branch: scarthgap-7.x.y
+    patches:
+      pv-formated-tezi:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
+
+local_conf_header:
+  platform-toradex: |
+    PV_UBOOT_AUTOFDT = "1"
