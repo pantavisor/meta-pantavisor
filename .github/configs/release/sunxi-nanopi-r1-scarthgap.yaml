@@ -34,13 +34,13 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: fa7dd6d5dacdd71bf9c5bb64e7ac63c44a8c175c
+        commit: 9b0e95db584602a13e46ed86b73930506b13e4a9
     meta-virtualization:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: e92d0173a80ea7592c866618ef5293203c50544c
+        commit: 491671faee11ea131feab5a3a451d1a01deb2ab1
         layers:
             meta-filesystems:
             meta-networking:
