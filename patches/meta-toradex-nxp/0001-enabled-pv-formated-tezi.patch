@@ -1,14 +1,30 @@
-From d4955980417760853b2335fb89ad9cc4a15187ca Mon Sep 17 00:00:00 2001
-From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+From f90d87c8f8924d9557548e1d1c80d8b65cf239c3 Mon Sep 17 00:00:00 2001
+From: kas <kas@example.com>
 Date: Fri, 23 May 2025 10:07:27 -0300
 Subject: [PATCH] enabled pv formated tezi
 
 ---
- conf/machine/include/colibri-imx6ull.inc | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ conf/machine/include/colibri-imx6.inc                    | 3 +++
+ conf/machine/include/colibri-imx6ull.inc                 | 5 +++--
+ recipes-kernel/linux/linux-toradex-6.6-2.2.x/nxp-imx.cfg | 3 +++
+ 3 files changed, 9 insertions(+), 2 deletions(-)
 
+diff --git a/conf/machine/include/colibri-imx6.inc b/conf/machine/include/colibri-imx6.inc
+index 99d9f93..b84211a 100644
+--- a/conf/machine/include/colibri-imx6.inc
++++ b/conf/machine/include/colibri-imx6.inc
+@@ -42,6 +42,9 @@ UBOOT_SUFFIX = "img"
+ 
+ MACHINE_FIRMWARE:remove = "firmware-imx-epdc"
+ 
++MACHINE_EXTRA_RRECOMMENDS:append = " kernel-module-imx-rngc"
++KERNEL_MODULE_AUTOLOAD:append   = " imx-rngc"
++
+ UBOOT_DTB_LOADADDRESS:colibri-imx6 = "0x18200000"
+ UBOOT_DTBO_LOADADDRESS:colibri-imx6 = "0x18300000"
+ UBOOT_ENTRYPOINT:colibri-imx6 = "0x14200000"
 diff --git a/conf/machine/include/colibri-imx6ull.inc b/conf/machine/include/colibri-imx6ull.inc
-index 1650118..54a978d 100644
+index 1650118..077110b 100644
 --- a/conf/machine/include/colibri-imx6ull.inc
 +++ b/conf/machine/include/colibri-imx6ull.inc
 @@ -1,5 +1,6 @@
@@ -20,6 +36,17 @@ index 1650118..54a978d 100644
  TORADEX_PRODUCT_IDS = "0036 0040 0044 0045"
  TORADEX_PRODUCT_IDS[0036] = "imx6ull-colibri-eval-v3.dtb"
  TORADEX_PRODUCT_IDS[0040] = "imx6ull-colibri-wifi-eval-v3.dtb"
+diff --git a/recipes-kernel/linux/linux-toradex-6.6-2.2.x/nxp-imx.cfg b/recipes-kernel/linux/linux-toradex-6.6-2.2.x/nxp-imx.cfg
+index 4e72552..f1d17f2 100644
+--- a/recipes-kernel/linux/linux-toradex-6.6-2.2.x/nxp-imx.cfg
++++ b/recipes-kernel/linux/linux-toradex-6.6-2.2.x/nxp-imx.cfg
+@@ -5,3 +5,6 @@
+ ##
+ # CONFIG_DRM_FSL_LDB is not set
+ # CONFIG_DRM_SAMSUNG_DSIM is not set
++#
++CONFIG_HW_RANDOM=y
++CONFIG_HW_RANDOM_IMX_RNGC=y
 -- 
 2.43.0
 
