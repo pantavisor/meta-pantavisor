@@ -47,6 +47,8 @@ local_conf_header:
     PANTAVISOR_FEATURES:append = " dm-verity"
     PANTAVISOR_FEATURES:append = " autogrow"
     INITRAMFS_IMAGE = "pantavisor-initramfs"
+  pantavisor-runc: |
+    PANTAVISOR_FEATURES:append = " runc"
   pantavisor-debug: |
     PANTAVISOR_FEATURES:append = " debug"
 env:
