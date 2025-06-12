@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: c73c0a2c4a91a99ea822bbc1855060fe328c310b
+        commit: 204836ce5d4ff0d95565aec5d2c57e6986f3ffa2
         patches:
             orange-pi-3lts:
                 path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
@@ -34,13 +34,13 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: fa7dd6d5dacdd71bf9c5bb64e7ac63c44a8c175c
+        commit: a435aee8070c81d95bc798f0866f40c8b6092a5e
     meta-virtualization:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: e92d0173a80ea7592c866618ef5293203c50544c
+        commit: 491671faee11ea131feab5a3a451d1a01deb2ab1
         layers:
             meta-filesystems:
             meta-networking:
