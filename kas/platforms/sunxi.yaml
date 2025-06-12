@@ -16,9 +16,6 @@ repos:
       wks-root-label:
         repo: meta-pantavisor
         path: patches/meta-sunxi/0001-wks-root-label.patch
-      orange-pi-3lts:
-        repo: meta-pantavisor
-        path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
 
   meta-arm:
     url: git://git.yoctoproject.org/meta-arm

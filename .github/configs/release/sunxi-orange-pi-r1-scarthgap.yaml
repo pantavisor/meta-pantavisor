@@ -3,11 +3,8 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: 204836ce5d4ff0d95565aec5d2c57e6986f3ffa2
+        commit: d5214c790e0488bcff392c9f1d3dfe5c4de21a34
         patches:
-            orange-pi-3lts:
-                path: patches/meta-sunxi/0002-orange-pi-3lts-backport.patch
-                repo: meta-pantavisor
             wks-root-label:
                 path: patches/meta-sunxi/0001-wks-root-label.patch
                 repo: meta-pantavisor
