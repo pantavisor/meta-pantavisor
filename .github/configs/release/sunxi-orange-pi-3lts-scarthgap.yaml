@@ -45,6 +45,10 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
+    meta-clang:
+        commit: eaa08939eaec9f620b14742ff3ac568553683034
+        path: layers/meta-clang
+        url: https://github.com/kraj/meta-clang.git
 local_conf_header:
     platform-sunxi: |
         PV_UBOOT_AUTOFDT = "1"
@@ -60,6 +64,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-wasmedge: |
+        PANTAVISOR_FEATURES:append = " wasmedge"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
