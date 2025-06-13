@@ -63,6 +63,10 @@ repos:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
+    meta-clang:
+        commit: eaa08939eaec9f620b14742ff3ac568553683034
+        path: layers/meta-clang
+        url: https://github.com/kraj/meta-clang.git
 local_conf_header:
     platform-freescale: |
         ACCEPT_FSL_EULA = "1"
@@ -87,6 +91,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-wasmedge: |
+        PANTAVISOR_FEATURES:append = " wasmedge"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
