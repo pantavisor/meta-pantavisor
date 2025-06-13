@@ -1,0 +1,100 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-freescale:
+        commit: a82f138b140f613a06bf9ac60101e4bb511c309f
+        path: layers/meta-freescale
+        url: https://github.com/Freescale/meta-freescale.git
+    meta-freescale-3rdparty:
+        commit: 70c83e96c7f75e73245cb77f1b0cada9ed4bbc6d
+        path: layers/meta-freescale-3rdparty
+        url: https://github.com/Freescale/meta-freescale-3rdparty.git
+    meta-freescale-distro:
+        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+        path: layers/meta-freescale-distro
+        url: https://github.com/Freescale/meta-freescale-distro.git
+    meta-toradex-bsp-common:
+        branch: scarthgap-7.x.y
+        commit: b5cd8c57997aea0a8882ec6738f658413667d933
+        patches:
+            add-pv-tezi:
+                path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
+                repo: meta-pantavisor
+        path: layers/meta-toradex-bsp-common
+        url: https://git.toradex.com/meta-toradex-bsp-common.git
+    meta-toradex-nxp:
+        branch: scarthgap-7.x.y
+        commit: 159cb3ffa88e23d3c118fdf6cc457b24274404bc
+        patches:
+            pv-formated-tezi:
+                path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
+                repo: meta-pantavisor
+        path: layers/meta-toradex-nxp
+        url: https://git.toradex.com/meta-toradex-nxp.git
+    meta-pantavisor:
+    poky:
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        commit: a435aee8070c81d95bc798f0866f40c8b6092a5e
+    meta-virtualization:
+        commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
+        path: layers/meta-virtualization
+        url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: 491671faee11ea131feab5a3a451d1a01deb2ab1
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-freescale: |
+        ACCEPT_FSL_EULA = "1"
+    platform-toradex: |
+        PV_UBOOT_AUTOFDT = "1"
+    platform-colibri-imx6ull: |
+        include conf/machine/include/colibri-imx6ull.inc
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        PVROOT_IMAGE = "yes"
+        PVROOT_IMAGE_BSP = "core-image-base"
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: colibri-imx6ull
+target:
+- pantavisor-remix
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
+defaults:
+    repos:
+        branch: scarthgap

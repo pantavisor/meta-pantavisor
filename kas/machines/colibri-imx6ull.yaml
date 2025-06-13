@@ -15,7 +15,3 @@ machine: colibri-imx6ull
 local_conf_header:
   platform-colibri-imx6ull: |
         include conf/machine/include/colibri-imx6ull.inc
-        IMAGE_CLASSES:remove:pn-pantavisor-initramfs = " image_type_pv_tezi"
-        IMAGE_FSTYPES:remove:pn-pantavisor-initramfs = " pv_teziimg"
-        IMAGE_CLASSES:remove:pn-core-image-base = " image_type_pv_tezi"
-        IMAGE_FSTYPES:remove:pn-core-image-base = " pv_teziimg"
