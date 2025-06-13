@@ -11,6 +11,7 @@ RDEPENDS:${PN} += "lxc-pv \
 	e2fsprogs-mke2fs \
 	cryptsetup \
 	libthttp-certs \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wasmedge', 'wasmedge', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "lxc-pv libthttp-certs "
