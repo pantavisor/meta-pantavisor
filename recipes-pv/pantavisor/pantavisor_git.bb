@@ -12,6 +12,7 @@ RDEPENDS:${PN} += "lxc-pv \
 	cryptsetup \
 	libthttp-certs \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wasmedge', 'wasmedge', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
 	"
