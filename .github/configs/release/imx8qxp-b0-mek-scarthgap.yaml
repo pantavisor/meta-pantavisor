@@ -58,7 +58,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: a435aee8070c81d95bc798f0866f40c8b6092a5e
+        commit: 10fba0085de5645bb0366dd309182e0532aeea82
     meta-virtualization:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
@@ -87,6 +87,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
