@@ -13,6 +13,7 @@ configs=" \
 	kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
 	kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml$configsuffix \
 	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+	kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
 "
 
 echo "Processing configs:
