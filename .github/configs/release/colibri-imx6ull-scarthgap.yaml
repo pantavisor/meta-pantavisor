@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: b5cd8c57997aea0a8882ec6738f658413667d933
+        commit: be8abe4b2586b38383239f4e2e4248735963c37e
         patches:
             add-pv-tezi:
                 path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
@@ -25,7 +25,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 159cb3ffa88e23d3c118fdf6cc457b24274404bc
+        commit: 76345871b4e5c8c8721b9b4cb68a61a834d36a18
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
@@ -46,7 +46,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: a435aee8070c81d95bc798f0866f40c8b6092a5e
+        commit: 7500a08bd1eb77421364b661afc63d4042a6aa8c
     meta-virtualization:
         commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
         path: layers/meta-virtualization
@@ -79,6 +79,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
