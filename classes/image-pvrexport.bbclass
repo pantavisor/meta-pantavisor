@@ -12,8 +12,11 @@ IMAGE_TYPES_MASKED += " ${@bb.utils.contains('PVROOT_IMAGE', 'no', 'pvrexportit'
 	${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', '', ' pvrexportit ', d)} \
 	${@bb.utils.contains('IMAGE_BASENAME', 'pantavisor-initramfs', ' pvrexportit ', '', d)} \
 "
+# remove pvrexportit from mask if no PVROOT_IMAGE_BSP is defined at all
+IMAGE_TYPES_MASKED:remove = "${@'pvrexportit' if not d.getVar('PVROOT_IMAGE_BSP', True) else ''}"
 
 inherit ${@bb.utils.contains('PVROOT_IMAGE_BSP', '${IMAGE_BASENAME}', 'image pvr-ca', '', d)}
+inherit ${@'image pvr-ca' if not d.getVar('PVROOT_IMAGE_BSP', True) else ''}
 
 IMAGE_INSTALL += "pvcontrol"
 
@@ -34,8 +37,8 @@ PSEUDO_IGNORE_PATHS .= ",${PVSTATE},${PVR_CONFIG_DIR}"
 fakeroot IMAGE_CMD:pvrexportit(){
 
     export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
-    if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz --no-same-owner
+    if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
+        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi
     cd ${PVSTATE}
     pvr init
