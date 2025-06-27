@@ -29,6 +29,8 @@ PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
 PVR_APP_ADD_EXTRA_ARGS ??= "  --volume ovl:/var:permanent"
 PVR_APP_ADD_GROUP ??= "root"
 
+PVRIMAGE_AUTO_MDEV ??= "1"
+
 do_image_pvrexportit[dirs] = " ${TOPDIR} ${PVSTATE} ${PVR_CONFIG_DIR} "
 do_image_pvrexportit[cleandirs] = " ${PVSTATE} "
 
@@ -64,7 +66,7 @@ fakeroot IMAGE_CMD:pvrexportit(){
     pvr commit
     if [ -f ${WORKDIR}/${PN}.mdev.json ]; then
         cp -f ${WORKDIR}/${PN}.mdev.json ./${PN}/mdev.json
-    else
+    elif [ "${PVRIMAGE_AUTO_MDEV}" = "1" ]; then
        cat > ${PN}/mdev.json << EOF1
 {
     "rules": [
