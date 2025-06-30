@@ -49,6 +49,8 @@ local_conf_header:
     INITRAMFS_IMAGE = "pantavisor-initramfs"
   pantavisor-runc: |
     PANTAVISOR_FEATURES:append = " runc"
+  pantavisor-tailscale: |
+    PANTAVISOR_FEATURES:append = " tailscale"
   pantavisor-debug: |
     PANTAVISOR_FEATURES:append = " debug"
 env:
