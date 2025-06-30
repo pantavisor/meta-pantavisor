@@ -7,7 +7,7 @@ changed2=`git diff HEAD .github/workflows/onpush.yaml | lsdiff | sed 's/.\///'`
 
 if [ -z "$changed" -a -z "$changed2" ]; then
 	echo "NO changes"
-	exit 0
+	exit 1
 fi
 
 echo "Changes: $changed $changed2"
