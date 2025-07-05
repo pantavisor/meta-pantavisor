@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 1091bde25e9ebaea33114edb85e4aee931d105f3
+        commit: 48452445d779b0f69bf1ead12b3850d50eb8920d
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -61,6 +61,8 @@ local_conf_header:
         INITRAMFS_IMAGE = "pantavisor-initramfs"
     pantavisor-runc: |
         PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
