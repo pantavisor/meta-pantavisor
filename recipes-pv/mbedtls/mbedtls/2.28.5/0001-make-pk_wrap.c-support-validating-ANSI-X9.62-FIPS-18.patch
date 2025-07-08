@@ -124,7 +124,7 @@ index 107e912ace..3289e60aea 100644
      ret = mbedtls_ecdsa_read_signature( (mbedtls_ecdsa_context *) ctx,
                                  hash, hash_len, sig, sig_len );
  
-+    if ( ret == (MBEDTLS_ERR_ECP_BAD_INPUT_DATA + MBEDTLS_ERR_ASN1_UNEXPECTED_TAG) ) {
++    if (ret & MBEDTLS_ERR_ECP_BAD_INPUT_DATA) {
 +	    unsigned char *asnsig = malloc ((sig_len + 12) * sizeof(unsigned char));
 +	    size_t asnsiglen = sig_len;
 +	    memcpy (asnsig, sig, sig_len);
@@ -148,8 +148,8 @@ index 107e912ace..3289e60aea 100644
              hash, hash_len, sig, sig_len,
              (mbedtls_ecdsa_restart_ctx *) rs_ctx );
  
-+    // if bad asn tag error ... we convert asn1 format and try again
-+    if ( ret == (MBEDTLS_ERR_ECP_BAD_INPUT_DATA + MBEDTLS_ERR_ASN1_UNEXPECTED_TAG)) {
++    // if bad asn error ... we convert asn1 format and try again
++    if (ret & MBEDTLS_ERR_ECP_BAD_INPUT_DATA) {
 +	    sig = realloc(sig, sig_len + 5);
 +	    ret = pk_ecdsa_sig_asn1_from_psa(sig, &sig_len, sig_len + 5);
 +
