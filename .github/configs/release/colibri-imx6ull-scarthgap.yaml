@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: 59a74e5dcaf3b655ae0c34d45616d230cdd4bc26
+        commit: 930e9eedf66f300178e9db34759953b0b47e7c01
         patches:
             add-pv-tezi:
                 path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
@@ -25,7 +25,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 3220dcea3282cc02286d4edba78c7165a131a8b7
+        commit: 5f9acd5758ba0fa1a3c27c0a96503c0bef533d99
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
@@ -46,9 +46,9 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: b8f8125f05e8ece078ba6bf01eebb2900cf2f9bf
+        commit: ae2d52758fc2fcb0ed996aa234430464ebf4b310
     meta-virtualization:
-        commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
+        commit: a5449c0c50aa07d02186f548fe6bb6c1ce8823dc
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
@@ -81,6 +81,8 @@ local_conf_header:
         INITRAMFS_IMAGE = "pantavisor-initramfs"
     pantavisor-runc: |
         PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
