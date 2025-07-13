@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 1091bde25e9ebaea33114edb85e4aee931d105f3
+        commit: 48452445d779b0f69bf1ead12b3850d50eb8920d
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -11,7 +11,7 @@ repos:
         path: layers/meta-raspberrypi
         url: https://github.com/agherzan/meta-raspberrypi
     meta-qt5:
-        commit: eb828418264a49b8d00035cb3d7b12fcea3be801
+        commit: 554fc20c326a9b205169331644f0cb471619e63c
         path: layers/meta-qt5
         url: https://github.com/meta-qt5/meta-qt5/
     meta-pantavisor:
@@ -28,9 +28,9 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: b8f8125f05e8ece078ba6bf01eebb2900cf2f9bf
+        commit: ae2d52758fc2fcb0ed996aa234430464ebf4b310
     meta-virtualization:
-        commit: 9e040ee8dd6025558ea60ac9db60c41bfeddf221
+        commit: a5449c0c50aa07d02186f548fe6bb6c1ce8823dc
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
@@ -61,6 +61,8 @@ local_conf_header:
         INITRAMFS_IMAGE = "pantavisor-initramfs"
     pantavisor-runc: |
         PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
