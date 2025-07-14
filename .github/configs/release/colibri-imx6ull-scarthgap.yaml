@@ -25,7 +25,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 5f9acd5758ba0fa1a3c27c0a96503c0bef533d99
+        commit: 798ac852ba21d2b27763da8028046d005edcae7f
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
@@ -52,7 +52,7 @@ repos:
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 727811eaf256b88fd135be99559f2cbf14c82fce
+        commit: e8fd97d86af86cdcc5a6eb3f301cbaf6a2084943
         layers:
             meta-filesystems:
             meta-networking:
