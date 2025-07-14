@@ -148,6 +148,9 @@ choice
 config MACHINE_FILTER_QEMU
 	bool "qemu"
 
+config MACHINE_FILTER_GENERIC
+	bool "generic"
+
 config MACHINE_FILTER_VARISCITE
 	bool "Variscite"
 
@@ -182,6 +185,9 @@ config MACHINE_FILTER_RADXA
 endchoice
 
 config PLATFORM_CORAL
+	bool
+
+config PLATFORM_GENERIC
 	bool
 
 config PLATFORM_QEMU
@@ -222,6 +228,11 @@ config MACHINE_QEMUARM
 	bool "qemuarm"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_QEMU
 	select PLATFORM_QEMU
+
+config MACHINE_GENERICARM64
+	bool "genericarm64"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_GENERIC
+	select PLATFORM_GENERIC
 
 config MACHINE_QEMUX86_64
 	bool "qemux86-64"
@@ -377,6 +388,10 @@ config KAS_INCLUDE_MACHINE_QEMUMIPS
 	string
 	default "kas/machines/qemumips.yaml" if MACHINE_QEMUMIPS
 
+config KAS_INCLUDE_MACHINE_GENERICARM64
+	string
+	default "kas/machines/genericarm64.yaml" if MACHINE_GENERICARM64
+
 config KAS_INCLUDE_MACHINE_RPI_ARMV8
 	string
 	default "kas/machines/raspberrypi-armv8.yaml" if MACHINE_RPI_ARMV8
@@ -508,3 +523,4 @@ config KAS_INCLUDE_MACHINE_RADXA_ROCK5A
 config KAS_INCLUDE_MACHINE_RADXA_ROCK5B
 	string
 	default "kas/machines/radxa-rock5b.yaml" if MACHINE_RADXA_ROCK5B
+

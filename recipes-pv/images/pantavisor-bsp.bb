@@ -93,27 +93,34 @@ fakeroot do_compile(){
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_NAME_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.fit
        basearts='"fit": "pantavisor.fit",'
-    else 
-       case ${KERNEL_IMAGETYPE} in
-          *.gz)
-              gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
-              ;;
-          *Image)
-              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
-              ;;
-          vmlinu*)
-              cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
-              ;;
-
-          *)
-              echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
-              exit 1
-       esac
+    else
+       if ! [ "${PREFERRED_PROVIDER_virtual/kernel}" = "linux-dummy" ]; then
+          case ${KERNEL_IMAGETYPE} in
+             *.gz)
+                 gunzip -c ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} > ${PVBSPSTATE}/bsp/kernel.img
+                 ;;
+             *Image)
+                 cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+                 ;;
+             vmlinu*)
+                 cp -f ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE} ${PVBSPSTATE}/bsp/kernel.img
+                 ;;
+             *)
+                 echo "Unknown kernel type: ${KERNEL_IMAGETYPE}"
+                 exit 1
+                 ;;
+          esac
+       fi
        cp -f ${INITRAMFS_DEPLOY_DIR_IMAGE}/${INITRAMFS_IMAGE_NAME}.cpio.gz ${PVBSPSTATE}/bsp/pantavisor
        basearts='
-    "linux": "kernel.img",
     "initrd": "pantavisor",'
 
+       if ! [ "${PREFERRED_PROVIDER_virtual/kernel}" = "linux-dummy" ]; then
+           basearts="$basearts
+    \"linux\": \"kernel.img\",
+    \"firmware\": \"firmware.squashfs\",
+    \"modules\": \"modules.squashfs\","
+       fi
        if [ -n "${PV_INITIAL_DTB}" ]; then
            cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
            basearts="$basearts
@@ -139,10 +146,8 @@ fakeroot do_compile(){
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
     "addons": [],
-    "firmware": "firmware.squashfs",
 ${basearts}
-    "initrd_config": "",
-    "modules": "modules.squashfs"
+    "initrd_config": ""
 `echo '}'`
 EOF
     cat > ${PVBSPSTATE}/bsp/src.json << EOF1
