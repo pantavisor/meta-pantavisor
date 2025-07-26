@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 48452445d779b0f69bf1ead12b3850d50eb8920d
+        commit: 1f2045321afd6ef20b457266ac3e97c8577eb1c4
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -28,7 +28,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: ae2d52758fc2fcb0ed996aa234430464ebf4b310
+        commit: 792d18b4cb2451b00280641403e6eaf37bd6e53f
     meta-virtualization:
         commit: a5449c0c50aa07d02186f548fe6bb6c1ce8823dc
         path: layers/meta-virtualization
