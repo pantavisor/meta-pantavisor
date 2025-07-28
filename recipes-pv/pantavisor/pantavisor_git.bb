@@ -5,7 +5,7 @@
 
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
-DEPENDS = "cmake libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native"
+DEPENDS = "cmake libevent libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native"
 RDEPENDS:${PN} += "lxc-pv \
 	e2fsprogs-e2fsck \
 	e2fsprogs-mke2fs \
@@ -22,14 +22,14 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "refactor/devmeta-libevent"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://pantavisor-run \
            file://rev0json \
            "
 
-SRCREV = "a4175e49a7b814719633755a4b6c966c92744a68"
+SRCREV = "65e3ba45a4907b55cbf86a7b248e9e516dfd9f78"
 PE = "1"
 PKGV = "019+git0+${GITPKGV}"
 
