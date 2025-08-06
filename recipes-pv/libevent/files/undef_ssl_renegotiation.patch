@@ -1,0 +1,21 @@
+From 9379aa4f3d4cd01b81fca315cd4bd8490ad5c853 Mon Sep 17 00:00:00 2001
+From: OpenEmbedded <oe.patch@oe>
+Date: Mon, 28 Jul 2025 14:51:24 +0000
+Subject: [PATCH] pantavisor: bump to refactor/devmeta-libevent
+
+---
+ bufferevent_mbedtls.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/bufferevent_mbedtls.c b/bufferevent_mbedtls.c
+index b0e960f..b4d0e4b 100644
+--- a/bufferevent_mbedtls.c
++++ b/bufferevent_mbedtls.c
+@@ -71,6 +71,7 @@ mbedtls_context_free(void *ssl, int flags)
+ static int
+ mbedtls_context_renegotiate(void *ssl)
+ {
++#undef MBEDTLS_SSL_RENEGOTIATION
+ #ifdef MBEDTLS_SSL_RENEGOTIATION
+ 	struct mbedtls_context *ctx = ssl;
+ 	return mbedtls_ssl_renegotiate(ctx->ssl);
