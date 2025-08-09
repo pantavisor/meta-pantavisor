@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: a82f138b140f613a06bf9ac60101e4bb511c309f
+        commit: 44c48998a585a50adebec852ff1388c33b92b3c6
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -36,7 +36,7 @@ repos:
             meta-imx-bsp:
             meta-imx-ml:
             meta-imx-sdk:
-        commit: 013670cd6a6a7363d824b33816e87a520745bca4
+        commit: a0cf309d2e2d544111e520f572db8dff335eca01
     meta-arm:
         commit: 8e0f8af90fefb03f08cd2228cde7a89902a6b37c
         layers:
@@ -58,9 +58,9 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: ae2d52758fc2fcb0ed996aa234430464ebf4b310
+        commit: 6f7e929ea6ea557f107c8ccffea69a7d73439591
     meta-virtualization:
-        commit: a5449c0c50aa07d02186f548fe6bb6c1ce8823dc
+        commit: 151273b120117468e70733020b6db864d8180c0b
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
