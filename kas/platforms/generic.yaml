@@ -6,13 +6,16 @@ header:
   # out if it is compatible with this file. The version is an integer that
   # is increased on every format change.
   version: 16
-  includes:
-    - kas/platforms/sunxi.yaml
+
+repos:
+  poky:
+    layers:
+      meta-yocto-bsp:
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: orange-pi-zero-plus2-h3
-
 local_conf_header:
-  machine-orange-pi-zero-plus2-h3:
-    MACHINE_EXTRA_RRECOMMENDS:append = " xradio "
+  platform-generic: |
+    PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
+    MACHINE_FEATURES:remove = "efi"
+    IMAGE_CLASSES:append = "image-pvrexport"
 

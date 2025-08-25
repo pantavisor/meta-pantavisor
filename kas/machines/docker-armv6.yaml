@@ -7,12 +7,11 @@ header:
   # is increased on every format change.
   version: 16
   includes:
-    - kas/platforms/sunxi.yaml
+    - kas/platforms/generic.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: orange-pi-zero-plus2-h3
-
+machine: docker-armv6
 local_conf_header:
-  machine-orange-pi-zero-plus2-h3:
-    MACHINE_EXTRA_RRECOMMENDS:append = " xradio "
+  kas-appengine: |
+    CORE_IMAGE_EXTRA_INSTALL += "pantavisor"
 
