@@ -7,7 +7,7 @@ header:
   # is increased on every format change.
   version: 16
   includes:
-    - kas/platforms/generic.yaml
+    - kas/platforms/docker.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
 machine: docker-x86_64

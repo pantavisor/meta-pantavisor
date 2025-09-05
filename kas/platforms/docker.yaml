@@ -6,12 +6,19 @@ header:
   # out if it is compatible with this file. The version is an integer that
   # is increased on every format change.
   version: 16
-  includes:
-    - kas/platforms/docker.yaml
+
+repos:
+  poky:
+    layers:
+      meta-yocto-bsp:
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: docker-armv8
 local_conf_header:
-  kas-machine-genericarm64: |
-    #    HOSTTOOLS += "docker fakeroot"
+  platform-generic: |
+    PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
+    MACHINE_FEATURES:remove = "efi"
+    IMAGE_CLASSES:append = " image-oci oci2docker"
+    IMAGE_FSTYPES = "container oci"
+    IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
+    DISTRO_FEATURES += "virtualization"
 
