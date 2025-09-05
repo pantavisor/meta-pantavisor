@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 3afc9728b1f4ba0f5be1af34883d6582966133a1
+        commit: aaf976a665daa7e520545908adef8a0e9410b57f
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -11,7 +11,7 @@ repos:
         path: layers/meta-raspberrypi
         url: https://github.com/agherzan/meta-raspberrypi
     meta-qt5:
-        commit: 554fc20c326a9b205169331644f0cb471619e63c
+        commit: e197839013fa2cfd59339508303bce91fef48928
         path: layers/meta-qt5
         url: https://github.com/meta-qt5/meta-qt5/
     meta-pantavisor:
@@ -28,9 +28,9 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: 4d2729b88c96e4d00b0d2650c1a445d12703c690
+        commit: 9ce8f26d37c2e3e0030fd1f36f5c54209c269a05
     meta-virtualization:
-        commit: 02f72c96bf9acd0bd3ae0463f482bce8feabe749
+        commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
