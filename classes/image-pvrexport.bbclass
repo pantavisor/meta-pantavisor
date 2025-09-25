@@ -31,6 +31,11 @@ PVR_APP_ADD_GROUP ??= "root"
 
 PVRIMAGE_AUTO_MDEV ??= "1"
 
+# Define a config overlay directory that the image recipe will make available
+# in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
+# This directory will be added to the pvrexport as _config/${PN}
+PV_CONFIG_OVERLAY_DIR ??= ""
+
 do_image_pvrexportit[dirs] = " ${TOPDIR} ${PVSTATE} ${PVR_CONFIG_DIR} "
 do_image_pvrexportit[cleandirs] = " ${PVSTATE} "
 
@@ -74,6 +79,10 @@ fakeroot IMAGE_CMD:pvrexportit(){
     ]
  }
 EOF1
+    fi
+    if -n "${PV_CONFIG_OVERLAY_DIR}"; then
+        mkdir -p _config
+        cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PN}
     fi
     pvr add
     pvr commit
