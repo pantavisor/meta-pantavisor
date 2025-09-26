@@ -34,6 +34,9 @@ config BUILD_BSP
 config BUILD_REMIX
 	bool "pantavisor-remix"
 
+config BUILD_STARTER
+	bool "pantavisor-starter"
+
 endchoice
 
 config KAS_LOCAL_BUILD_BSP
@@ -45,6 +48,7 @@ config KAS_TARGET_BUILD
 	string
 	default "pantavisor-bsp" if BUILD_BSP
 	default "pantavisor-remix" if BUILD_REMIX
+	default "pantavisor-starter" if BUILD_STARTER
 
 config PVBSP_FIRMWARE_PKG
 	string "BSP Firmware"
