@@ -11,14 +11,14 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=bd0a4fad56a916f12a1c3cedb3976612"
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
-PACKAGES += "libthttp-certs"
+PACKAGES =+ "libthttp-certs"
 
 SRC_URI = "git://gitlab.com/pantacor/libthttp.git;protocol=https;branch=master"
-SRCREV = "8814b40e2a6564959eead182c17d0fc02e104099"
+SRCREV = "9afaef8168d75c118896855e972a982a69cea12a"
 PE = "1"
 PKGV = "011+git0+${GITPKGV}"
 
-FILES:${PN}-certs += " /certs/* "
+FILES:${PN}-certs += "/etc/thttp/certs"
 
 S = "${WORKDIR}/git"
 
