@@ -10,6 +10,12 @@ config BUILD_TYPE_BSP_MULTI
 config BUILD_TYPE_BSP_PLAIN
 	bool "singleconfig"
 
+config BUILD_TYPE_APPENGINE
+	bool "appengine"
+
+config BUILD_TYPE_APPENGINE_CUSTOM
+	bool "appengine-custom"
+
 endchoice
 
 choice
@@ -28,11 +34,22 @@ choice
 	prompt "Select Build Target"
 	default BUILD_BSP
 
+config BUILD_APPENGINE
+        bool "pantavisor-appengine"
+        depends on BUILD_TYPE_APPENGINE
+
+config BUILD_APPENGINE_IMAGE
+        string "Custom Image for Appengine"
+        default "core-image-base"
+        depends on BUILD_TYPE_APPENGINE_CUSTOM
+
 config BUILD_BSP
 	bool "pantavisor-bsp"
+        depends on BUILD_TYPE_BSP_PLAIN || BUILD_TYPE_BSP_MULTI
 
 config BUILD_REMIX
 	bool "pantavisor-remix"
+        depends on BUILD_TYPE_BSP_PLAIN || BUILD_TYPE_BSP_MULTI
 
 config BUILD_STARTER
 	bool "pantavisor-starter"
@@ -49,6 +66,8 @@ config KAS_TARGET_BUILD
 	default "pantavisor-bsp" if BUILD_BSP
 	default "pantavisor-remix" if BUILD_REMIX
 	default "pantavisor-starter" if BUILD_STARTER
+	default "pantavisor-appengine-distro" if BUILD_APPENGINE
+	default BUILD_APPENGINE_IMAGE if BUILD_TYPE_APPENGINE_CUSTOM
 
 config PVBSP_FIRMWARE_PKG
 	string "BSP Firmware"
@@ -517,6 +536,7 @@ config KAS_INCLUDE_MACHINE_RISCV_VISIONFIVE2
 
 config KAS_INCLUDE_BUILD_TYPE
 	string
+	default "kas/appengine-base.yaml" if BUILD_TYPE_APPENGINE || BUILD_TYPE_APPENGINE_CUSTOM
 	default "kas/bsp-base.yaml" if BUILD_TYPE_BSP_PLAIN
 	default "kas/bsp-multi.yaml" if BUILD_TYPE_BSP_MULTI
 

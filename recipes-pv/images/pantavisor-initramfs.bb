@@ -14,7 +14,7 @@ PACKAGE_INSTALL = "pantavisor \
 	dropbear-pv \
 	busybox \
 	base-passwd \
-	rng-tools \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rngd', 'rng-tools', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
@@ -57,8 +57,14 @@ COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm|mips|riscv).*-linux"
 ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
-	ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
-	rm -rf ${IMAGE_ROOTFS}/usr/lib/opkg
+	install -d ${IMAGE_ROOTFS}/storage
+	install -d ${IMAGE_ROOTFS}/media
+	install -d ${IMAGE_ROOTFS}/volumes
+	install -d ${IMAGE_ROOTFS}/exports
+	install -d ${IMAGE_ROOTFS}/writable
+	install -d ${IMAGE_ROOTFS}/pv
+        #ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
+        rm -rf ${IMAGE_ROOTFS}/usr/lib/opkg
 }
 
 unset do_fetch[noexec]
