@@ -9,6 +9,9 @@ SRC_URI = "file://pvcontrol \
 
 RDEPENDS:${PN} = "curl"
 
+PACKAGES =+ "${PN}-pvtx"
+FILES:${PN}-pvtx += "${bindir}/pvtx"
+
 S = "${WORKDIR}"
 
 inherit allarch
