@@ -81,8 +81,12 @@ fakeroot do_compile(){
     [ -f bsp/modules.squashfs ] && rm -f bsp/modules.squashfs
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
 
-    mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
-    mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
+    if ! ls ${PVBSP_mods} | wc -c | grep ^0; then
+        mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
+    fi
+    if ! ls ${PVBSP_fw} | wc -c | grep ^0; then
+        mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
+    fi
     err=0
 
     basearts=

@@ -21,4 +21,7 @@ local_conf_header:
     IMAGE_FSTYPES = "container oci"
     IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
     DISTRO_FEATURES += "virtualization"
+    DISTRO_FEATURES += "vmsep"
+    #    PANTAVISOR_FEATURES += "appengine"
+    # DISTRO_FEATURES += "staticdev"
 
