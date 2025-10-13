@@ -33,7 +33,7 @@ SRCREV = "61635cbc630e2e308ce6935907d23a207471703b"
 PE = "1"
 PKGV = "020+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config"
+PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
@@ -51,6 +51,9 @@ FILES:${PN}-config += "/etc/pantavisor.config"
 FILES:${PN}-config += "/etc/pantavisor/"
 FILES:${PN}-config += "/etc/resolv.conf"
 
+FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
+FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+
 inherit cmake gitpkgv
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
@@ -63,6 +66,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPA
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPANTAVISOR_PVS_SKIP_INSTALL=OFF -DPANTAVISOR_DEFAULTS_SKIP_INSTALL=OFF', 'PANTAVISOR_PVS_SKIP_INSTALL=ON -DPANTAVISOR_DEFAULTS_SKIP_INSTALL=ON', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
+EXTRA_OECMAKE += '-DPANTAVISOR_PVTEST=ON'
 EXTRA_OECMAKE += "-DPANTAVISOR_PVTX_STATIC=ON -DPANTAVISOR_PVTX=ON -DPANTAVISOR_RUNTIME=ON"
 
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -Wno-error=implicit-function-declaration"
