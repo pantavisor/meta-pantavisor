@@ -18,10 +18,14 @@ uboot_env:mc-default = "boot"
 uboot_env_src:mc-default = "boot.txt"
 uboot_env_src_frags:mc-default += " boot.cmd.pvgeneric "
 uboot_env_suffix:mc-default ?= "scr"
+
 uboot_env_src:pvbsp = ""
 uboot_env:pvbsp = ""
+uboot_env_src_frags:pvbsp:remove = "boot.cmd.pvgeneric"
 uboot_env_suffix:pvbsp = ""
+
 uboot_env_src:pvapp = ""
+uboot_env_src_frags:pvapp:remove = "boot.cmd.pvgeneric"
 uboot_env:pvapp = ""
 uboot_env_suffix:pvapp = ""
 
@@ -32,7 +36,7 @@ UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
 
 do_prepcompile() {
 
-	if [ -z "${UBOOT_ENV}" -o -z "${UBOOT_ENV_SRC_FRAGS}" ]; then
+	if [ -z "${UBOOT_ENV}" -o -z "${UBOOT_ENV_SRC_FRAGS}" -o -z "${UBOOT_ENV_SRC}" ]; then
 		return 0
 	fi
 
