@@ -5,4 +5,5 @@ include pantavisor-appengine.inc
 
 DOCKER_IMAGE_NAME = "pantavisor-appengine"
 DOCKER_IMAGE_TAG = "1.0"
+DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
