@@ -1,11 +1,11 @@
 
-inherit core-image image-oci oci2docker
+inherit core-image image-oci oci2docker image-container
 
 DOCKER_IMAGE_NAME ?= "pantavisor-dockerimage"
 DOCKER_IMAGE_TAG ?= "latest"
 
 IMAGE_CLASSES:remove = "image-pvrexport"
-IMAGE_FSTYPES = "container oci"
+IMAGE_FSTYPES = "oci"
 IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
 #IMAGE_TYPES:remove = "pvbspit pvrexportit"
 #IMAGE_TYPES:append = "oci"
