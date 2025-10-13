@@ -2,6 +2,7 @@
 PV_DOCKER_IMAGE_ENTRYPOINT_ARGS ?= ""
 PV_DOCKER_IMAGE_ENVS ?= ""
 DOCKER_IMAGE_TAG ??= "latest"
+DOCKER_IMAGE_EXTRA_TAGS ??= ""
 OCI_IMAGE_TAG = "${DOCKER_IMAGE_TAG}"
 
 # ==============================================================================
@@ -66,6 +67,7 @@ python do_umoci_config() {
     # Get variables from the datastore
     docker_image_name = d.getVar("DOCKER_IMAGE_NAME")
     docker_image_tag = d.getVar("DOCKER_IMAGE_TAG")
+    docker_image_extra_tags = d.getVar("DOCKER_IMAGE_EXTRA_TAGS")
     image_basename = d.getVar("IMAGE_BASENAME")
     
     # Build the skopeo command
@@ -75,6 +77,9 @@ python do_umoci_config() {
         f"oci:{pn}-{oci_image_tag}-oci:{oci_image_tag}",
         f"docker-archive:{image_basename}-{oci_image_tag}-docker.tar"
     ]
+    if docker_image_extra_tags and docker_image_extra_tags.strip():
+        for tag in docker_image_extra_tags.split():
+            skopeo_cmd.insert(3, f"--additional-tag={docker_image_name}:{tag}")
     
     bb.note(f"Executing skopeo command: {' '.join(skopeo_cmd)}")
     
