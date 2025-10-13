@@ -5,6 +5,7 @@ inherit pantavisor-docker
 
 DOCKER_IMAGE_NAME = "${PN}"
 DOCKER_IMAGE_TAG = "1.0"
+DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
 CORE_IMAGE_EXTRA_INSTALL += " \
         bash \
