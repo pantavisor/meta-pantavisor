@@ -12,6 +12,7 @@ DEPENDS = "mbedtls"
 LICENSE = "BSD-3-Clause & MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=eaea438df011ea096feec284927c59e0"
 
+GITHUB_BASE_URI ?= "https://github.com/${BPN}/${BPN}/releases/"
 SRC_URI = "${GITHUB_BASE_URI}/download/release-2.2.1-alpha/libevent-2.2.1-alpha-dev.tar.gz \
 	file://undef_ssl_renegotiation.patch \
 	file://bev_finalize_cb.patch \
@@ -34,7 +35,7 @@ PACKAGECONFIG[shared] = "--enable-shared,--disable-shared,"
 PACKAGECONFIG[static] = "--enable-static,--disable-static,"
 PACKAGECONFIG[thread-support] = "--enable-thread-support,--disable-thread-support,"
 
-inherit autotools pkgconfig github-releases
+inherit autotools pkgconfig
 
 PACKAGES_DYNAMIC = "^${PN}-.*$"
 python split_libevent_libs () {
