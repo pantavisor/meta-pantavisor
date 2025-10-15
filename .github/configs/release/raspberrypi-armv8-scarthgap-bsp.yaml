@@ -1,0 +1,84 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-raspberrypi:
+        commit: aaf976a665daa7e520545908adef8a0e9410b57f
+        patches:
+            uboot-env:
+                path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
+                repo: meta-pantavisor
+        path: layers/meta-raspberrypi
+        url: https://github.com/agherzan/meta-raspberrypi
+    meta-qt5:
+        commit: e197839013fa2cfd59339508303bce91fef48928
+        path: layers/meta-qt5
+        url: https://github.com/meta-qt5/meta-qt5/
+    meta-pantavisor:
+    poky:
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        commit: fbc7beca684d81410f5ad5c146b87e4cb080c98a
+    meta-virtualization:
+        commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
+        path: layers/meta-virtualization
+        url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: e621da947048842109db1b4fd3917a02e0501aa2
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-raspberrypi: |
+        LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
+        RPI_USE_U_BOOT = "1"
+        ENABLE_UART = "1"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        PVROOT_IMAGE = "yes"
+        PVROOT_IMAGE_BSP = "core-image-base"
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: raspberrypi-armv8
+target:
+- pantavisor-bsp
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
+defaults:
+    repos:
+        branch: scarthgap
