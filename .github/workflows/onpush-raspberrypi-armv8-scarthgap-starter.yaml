@@ -1,4 +1,4 @@
-name: 'Build On Push'
+name: 'Build On Push - Raspberry pi armv8 - scarthgap'
 
 on:
   push:
