@@ -52,5 +52,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pvrexports-${{ inputs.name }}
-          path: '^(?!.*pantavisor-bsp).*pvrexport\..*$'
+          path: '*pvrexport*'
 
