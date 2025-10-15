@@ -43,9 +43,14 @@ jobs:
         with:
           name: pantavisor-starter-${{ inputs.name }}
           path: pantavisor-starter*.wic.*
-      - name: Archive production artifacts
+      - name: Archive bsp artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pantavisor-bsp-${{ inputs.name }}
+          path: 'pantavisor-bsp*pvrexport.tgz'
+      - name: Archive containers artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pvrexports-${{ inputs.name }}
-          path: '*pvrexport.*'
+          path: '^(?!.*pantavisor-bsp).*pvrexport\..*$'
 
