@@ -25,6 +25,10 @@ repos:
     url: "git://git.yoctoproject.org/meta-virtualization"
     path: layers/meta-virtualization
 
+  meta-clang:
+    url: "https://github.com/kraj/meta-clang.git"
+    path: layers/meta-clang
+
   meta-openembedded:
     url: "https://github.com/openembedded/meta-openembedded.git"
     path: layers/meta-openembedded
