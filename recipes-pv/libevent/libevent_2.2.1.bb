@@ -15,7 +15,6 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=eaea438df011ea096feec284927c59e0"
 GITHUB_BASE_URI ?= "https://github.com/${BPN}/${BPN}/releases/"
 SRC_URI = "${GITHUB_BASE_URI}/download/release-2.2.1-alpha/libevent-2.2.1-alpha-dev.tar.gz \
 	file://undef_ssl_renegotiation.patch \
-	file://bev_finalize_cb.patch \
 "
 SRC_URI[sha256sum] = "36d0726e570fc2ee61a0a27cfb6bf2799e14a28d030a7473a7a2411f7533d359"
 
