@@ -20,8 +20,6 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.META_PANTAVISOR_PAT }}
       - name: chown
         run: chown -R builder:builder $RUNNER_WORKSPACE
       - name: chowna
