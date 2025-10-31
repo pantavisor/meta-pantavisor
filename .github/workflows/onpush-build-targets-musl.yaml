@@ -1,0 +1,22 @@
+name: 'build musl scarthgap targets'
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+  sunxi-orange-pi-3lts-scarthgap:
+    uses: ./.github/workflows/sunxi-orange-pi-3lts-scarthgap.yaml
+  sunxi-orange-pi-r1-scarthgap:
+    uses: ./.github/workflows/sunxi-orange-pi-r1-scarthgap.yaml
+  sunxi-nanopi-r1-scarthgap:
+    uses: ./.github/workflows/sunxi-nanopi-r1-scarthgap.yaml
+  imx8qxp-b0-mek-scarthgap:
+    uses: ./.github/workflows/imx8qxp-b0-mek-scarthgap.yaml
+  raspberrypi-armv8-scarthgap:
+    uses: ./.github/workflows/raspberrypi-armv8-scarthgap.yaml
+  colibri-imx6ull-scarthgap:
+    uses: ./.github/workflows/colibri-imx6ull-scarthgap.yaml

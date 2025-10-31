@@ -11,7 +11,7 @@ repos:
         path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: 8e0f8af90fefb03f08cd2228cde7a89902a6b37c
+        commit: 0f1e7bf92c89759f0ab74cfa5be4ee47b092ad46
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -31,13 +31,13 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: 9ce8f26d37c2e3e0030fd1f36f5c54209c269a05
+        commit: ad597f4a54ec5b51677160d537b87b1b7e3828db
     meta-virtualization:
         commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: c29a18fa39ede952f3f6108ec007c1906e2d9a0d
+        commit: 15e18246dd0c0585cd1515a0be8ee5e2016d1329
         layers:
             meta-filesystems:
             meta-networking:

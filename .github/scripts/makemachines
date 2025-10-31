@@ -21,16 +21,11 @@ echo "Processing configs:
 $configs"
 
 rm -f .github/configs/release/*-scarthgap.yaml*
+rm -f .github/workflows/onpush-build-targets-glibc.yaml*
+rm -f .github/workflows/onpush-build-targets-musl.yaml*
 
-for cc in $configs; do
-	echo CC: $cc
-	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
-	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
-	echo "new config for machine: $m"
-#	cat .github/configs/release/$m-scarthgap.yaml
-	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
-name: 'Build On Push'
-
+cat > .github/workflows/onpush-build-targets-glibc.yaml << EOF1
+name: 'build glibc scarthgap targets'
 on:
   push:
     paths:
@@ -38,6 +33,34 @@ on:
       - '.github/configs/**'
       - '!.github/scripts/**'
       - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+EOF1
+
+cat > .github/workflows/onpush-build-targets-musl.yaml << EOF1
+name: 'build musl scarthgap targets'
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+EOF1
+
+for cc in $configs; do
+	echo CC: $cc
+	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
+	echo "new config for machine: $m"
+#	cat .github/configs/release/$m-scarthgap.yaml
+	cat > .github/workflows/$m-scarthgap.yaml << EOF1
+name: 'build $m-scarthgap'
+
+on:
+  workflow_call:
 
 jobs:
 
@@ -48,6 +71,17 @@ jobs:
       name: $m-scarthgap
     secrets: inherit
 EOF1
+
+cat >> .github/workflows/onpush-build-targets-glibc.yaml << EOF1
+  $m-scarthgap:
+    uses: ./.github/workflows/$m-scarthgap.yaml
+EOF1
+
+cat >> .github/workflows/onpush-build-targets-musl.yaml << EOF1
+  $m-scarthgap:
+    uses: ./.github/workflows/$m-scarthgap.yaml
+EOF1
+
 done
 
 git add .github/configs/release/

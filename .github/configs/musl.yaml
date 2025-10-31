@@ -1,0 +1,5 @@
+header:
+  version: 16
+local_conf_header:
+  __libc: |-
+    TCLIBC = "musl"

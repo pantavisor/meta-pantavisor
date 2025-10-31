@@ -1,12 +1,7 @@
-name: 'Build On Push'
+name: 'build imx8qxp-b0-mek-scarthgap'
 
 on:
-  push:
-    paths:
-      - '**'
-      - '.github/configs/**'
-      - '!.github/scripts/**'
-      - '!.github/workflows/updatemachines.yaml'
+  workflow_call:
 
 jobs:
 

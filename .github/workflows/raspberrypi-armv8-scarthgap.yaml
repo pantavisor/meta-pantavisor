@@ -1,12 +1,7 @@
-name: 'Build On Push'
+name: 'build raspberrypi-armv8-scarthgap'
 
 on:
-  push:
-    paths:
-      - '**'
-      - '.github/configs/**'
-      - '!.github/scripts/**'
-      - '!.github/workflows/updatemachines.yaml'
+  workflow_call:
 
 jobs:
 
