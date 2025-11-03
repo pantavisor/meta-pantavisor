@@ -29,12 +29,6 @@ do_install_scripts() {
 
     echo "Starting Install of appengine scripts"
 
-    # Create the destination directory in the rootfs
-    install -d ${IMAGE_ROOTFS}/usr/local/bin
-    install -d ${IMAGE_ROOTFS}/storage/boot
-    install -d ${IMAGE_ROOTFS}/storage/config
-    install -d ${IMAGE_ROOTFS}/etc/pantavisor/defaults
-
     # Copy the file from the Yocto work directory (${WORKDIR}) to the destination
     find ${IMAGE_ROOTFS}/ -type f
     if ! [ -f ${IMAGE_ROOTFS}/etc/pantavisor/defaults/groups.json ]; then
