@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 usage() {
 	echo ""
 	echo "Usage: $0 [options] <command> [arguments]"
@@ -8,28 +9,38 @@ usage() {
 	echo "Options:"
 	echo "  -h, --help    Display this help message"
 	echo "  -v, --verbose Print debug logs"
+	echo "  -d, --dir         Use directory as pvtest source directory (or PVTEST_DIR env)"
 	echo ""
 	echo "Commands:"
 	echo "  add <group>          Create a new test"
-	echo "  install-deps         Install dependencies"
+	echo "  install-deps         Install dependencies (and docker)"
+	echo "  install-docker       Install docker"
 	echo "  ls                   List all tests"
 	echo "  run [group[:number]] Run one to many tests"
 	echo ""
 	echo "Arguments for 'run' command:"
 	echo "  -i, --interactive Run the test interactively for debugging"
-	echo "  -l, --logs        Set a path for logs"
+	echo "  -s, --storage     Set a path for /storage"
 	echo "  -m, --manual      Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim      Use the network simulator (experimental)"
 	echo "  -o, --overwrite   Create or overwrite the test output"
+	echo ""
+	echo "Environments:"
+	echo "  NETSIM_PATH      Path to docker load for netsim container
+	echo "  TESTER_PATH      Path to docker load for tester container
+	echo "  APPENGINE_PATH   Path to docker load for tester container
+	echo "  PVTEST_DIR       Directory to pvtest sources to run
 	echo ""
 }
 
 list_tests() {
 	printf "%-15s %-10s\n" "test" "description"
 	printf "%-15s %-10s\n" "====" "==========="
-	find tests/ -name "test.json" | sort  | while read -r json_path; do
+	find $test_dir/ -name "test.json" | sort  | while read -r json_path; do
 		IFS="/" 
 		set -- $json_path
+		shifts_needed=$(($# - 5))
+		shift $shifts_needed
 		description=$(jq -r '.description' "$json_path")
 		printf "%-15s %-10s\n" $2:$4 $description
 	done
@@ -56,32 +67,50 @@ add_test() {
 		esac
 	done
 	
-	if [ ! -d "tests/$group" ]; then
-		echo "Error: 'tests/$group' directory missing"
+	if [ ! -d "$test_dir/$group" ]; then
+		echo "Error: '$test_dir/$group' directory missing"
 		exit 1
 	fi
 
 	test_number=0
-	test_dir="tests/$group/data"
-	if [ -d "$test_dir" ]; then
-		last_test_number=$(find "$test_dir" -maxdepth 1 -type d -name "[0-9]*" | sed 's#.*/##' | sort -n | tail -1)
+	test_data="$test_dir/$group/data"
+	if [ -d "$test_data" ]; then
+		last_test_number=$(find "$test_data" -maxdepth 1 -type d -name "[0-9]*" | sed 's#.*/##' | sort -n | tail -1)
 		if [ ! -z "$last_test_number" ]; then
 			test_number=$((last_test_number + 1))
 		fi
 	fi
 
-	mkdir -p "$test_dir"
-	test_dir="$test_dir/$test_number"
-	mkdir "$test_dir"
-	cp "$test_dir/../../common/templates/template.test.json" "$test_dir/test.json"
+	mkdir -p "$test_data"
 
-	mkdir "$test_dir/resources"
-	cp "$test_dir/../../common/templates/template.test" "$test_dir/resources/test"
-	chmod +x "$test_dir/resources/test"
-	cp "$test_dir/../../common/templates/template.ready" "$test_dir/resources/ready"
-	chmod +x "$test_dir/resources/ready"
+	test_data="$test_data/$test_number"
+	mkdir "$test_data"
+	cp "$test_data/../../common/templates/template.test.json" "$test_data/test.json"
 
-	echo "Info: New test created at: $test_dir"
+	mkdir "$test_data/resources"
+	cp "$test_data/../../common/templates/template.test" "$test_data/resources/test"
+	chmod +x "$test_data/resources/test"
+	cp "$test_data/../../common/templates/template.ready" "$test_data/resources/ready"
+	chmod +x "$test_data/resources/ready"
+
+	echo "Info: New test created at: $test_data"
+}
+
+install_docker() {
+
+	# install app engine docker containers
+	NETSIM_PATH=${NETSIM_PATH:-"pantavisor-appengine-netsim-docker.tar"}
+	if [ -f "$NETSIM_PATH" ]; then
+		docker load -i "$NETSIM_PATH"
+	fi
+	TESTER_PATH=${TESTER_PATH:-"pantavisor-appengine-tester-docker.tar"}
+	if [ -f "$TESTER_PATH" ]; then
+		docker load -i "$TESTER_PATH"
+	fi
+	APPENGINE_PATH=${APPENGINE_PATH:-"pantavisor-appengine-docker.tar"}
+	if [ -f "$APPENGINE_PATH" ]; then
+		docker load -i "$APPENGINE_PATH"
+	fi
 }
 
 install_deps() {
@@ -119,15 +148,7 @@ install_deps() {
 	sudo update-binfmts --install qemu-arm ~/bin/qemu-arm --offset 0 --magic "\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00" --mask "\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff" --fix-binary yes
 	sudo update-binfmts --install qemu-aarch64 ~/bin/qemu-aarch64 --offset 0 --magic "\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00" --mask "\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff" --fix-binary yes
 
-	# install app engine docker containers
-	netsim_path="docker/x64-appengine-netsim.tar"
-	if [ -f "$netsim_path" ]; then
-		docker load -i "$netsim_path"
-	fi
-	tester_path="docker/x64-appengine-tester.tar"
-	if [ -f "$tester_path" ]; then
-		docker load -i "$tester_path"
-	fi
+	install_docker
 
 	echo "Dependency installation complete"
 
@@ -199,7 +220,7 @@ exec_test() {
 	local interactive=$2
 	local manual=$3
 	local overwrite=$4
-	local logs_path=$5
+	local storage_path=$5
 	local netsim=$6
 
 	if [ ! -f "$json_path" ]; then
@@ -220,8 +241,8 @@ exec_test() {
 
 	IFS="/" 
 	set -- $json_path
-	mkdir -p "$logs_path/$2/$4/"
-	cd "$logs_path/$2/$4/"; abs_logs_path=$(pwd); cd - > /dev/null
+	mkdir -p "$storage_path/$2/$4/"
+	cd "$storage_path/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
 
 	sudo -v
 	sudo losetup -D
@@ -240,10 +261,11 @@ exec_test() {
 			-e VERBOSE="$verbose" \
 			--rm \
 			--cap-add NET_ADMIN \
-			pantavisor-netsim > /dev/null
+			pantavisor-appengine-netsim > /dev/null
 
 		setup_network &
 	fi
+	tmpd=`mktemp -d -t pantavisor-tester-storage.XXXXXXX`
  	# for multiple instsances --name would need to be a name unique per instance
 	# TEST_PATH results folder would need to be instance namespaced as well to not overwrite each other
 	# for sudo maybe unused_lo creation and assignment can go inside docker with CAPs
@@ -282,8 +304,8 @@ exec_test() {
 		--volume "/sys/fs":"/sys/fs" \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
-		-v "$abs_logs_path":/storage/logs \
-		pantavisor-tester
+		-v "$abs_storage_path":/var/pantavisor/storage \
+		pantavisor-appengine-tester
 	res=$?
 
 	if [ "$netsim" = "true" ]; then
@@ -330,7 +352,7 @@ run_test() {
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
-	local logs_path=$(mktemp -d /tmp/pv_appengine_logs.XXXXXX)
+	local storage_path=$(mktemp -d -t pv_appengine_storage.XXXXXX)
 	local netsim="false"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
@@ -353,8 +375,8 @@ run_test() {
 				manual="true"
 				shift
 				;;
-			-l|--logs)
-				logs_path="$2"
+			-s|--storage)
+				storage_path="$2"
 				shift 2
 				;;
 			-n|--netsim)
@@ -399,23 +421,23 @@ run_test() {
 		exit 1
 	fi
 
-	common_path="tests/common"
-	echo "Info: Logs can be found in $logs_path"
+	common_path="$test_dir/common"
+	echo "Info: Logs can be found in $storage_path/logs"
 	if [ -z "$group" ]; then
-		find tests/ -name "test.json" | sort | while read -r json_path; do
+		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$logs_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
 		done
 	elif [ -z "$number" ]; then
-		find "tests/$group" -name "test.json" | sort  | while read -r json_path; do
+		find "$test_dir/$group" -name "test.json" | sort  | while read -r json_path; do
 			skip_test "$json_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$logs_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
 		done
 	else
-		json_path="tests/$group/data/$number/test.json"
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$logs_path" "$netsim"
+		json_path="$test_dir/$group/data/$number/test.json"
+		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
 	fi
 }
 
@@ -426,6 +448,7 @@ NOCOLOR='\033[0m'
 
 verbose="false"
 command=
+test_dir=.
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -437,6 +460,10 @@ while [ $# -gt 0 ]; do
 		set -x
 		verbose="true"
 		shift
+		;;
+		-d|--dir)
+		test_dir="$2"
+		shift 2
 		;;
 	*)
 		break
@@ -459,6 +486,9 @@ case "$command" in
 		;;
 	install-deps)
 		install_deps
+		;;
+	install-docker)
+		install_docker
 		;;
 	ls)
 		list_tests

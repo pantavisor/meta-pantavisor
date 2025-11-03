@@ -29,7 +29,7 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PA
            file://rev0json \
            "
 
-SRCREV = "a5a32c0b9b0e28a81b3afcce3028211b9afd0a31"
+SRCREV = "2df8976bd25aee1fabb60cfdf4c888ad37a113bd"
 PE = "1"
 PKGV = "021+git0+${GITPKGV}"
 
@@ -37,7 +37,6 @@ PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
 
 FILES:${PN} += " /usr/bin/pantavisor-run"
 FILES:${PN} += " /usr/lib"
-FILES:${PN} += " /var/pantavisor/storage/trails/0/.pvr/json"
 FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
 FILES:${PN} += " /writable /volumes /exports /pv /etc/pantavisor /lib/ "
 FILES:${PN} += " /init"
@@ -74,15 +73,7 @@ OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -Wno-error=implicit-function-declara
 CMAKE_BINARY_DIR = "${S}"
 do_install() {
 	cmake_do_install
-	install -d ${D}/var/pantavisor/root
-	install -d ${D}/var/pantavisor/tmpfs
-	install -d ${D}/var/pantavisor/ovl/work
-	install -d ${D}/var/pantavisor/ovl/upper
-	install -d ${D}/usr/lib
-	if [ -f ${WORKDIR}/pantavisor-installer ]; then
-		install -m 0755 ${WORKDIR}/pantavisor-installer ${D}/lib/pv/pantavisor-installer
-	fi
-	[ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
+	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
 
