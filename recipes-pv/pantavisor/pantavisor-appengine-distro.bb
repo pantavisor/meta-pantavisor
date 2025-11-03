@@ -16,7 +16,7 @@ PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pan
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
-DEPLOY_FILES ?= "${@' '.join(['%s-*-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
+DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
 # Define files from WORKDIR (SRC_URI files) to include
 WORKDIR_FILES ?= "test.docker.sh"
@@ -41,8 +41,7 @@ do_create_tarball() {
     # Create temporary staging directory
     STAGING_DIR="${WORKDIR}/tarball_staging"
     rm -rvf "${STAGING_DIR}"
-    mkdir -p "${STAGING_DIR}/deploy"
-    mkdir -p "${STAGING_DIR}/files"
+    mkdir -p "${STAGING_DIR}/"
     
     # Add files from DEPLOY_DIR_IMAGE
     if [ -n "${DEPLOY_FILES}" ]; then
@@ -52,8 +51,8 @@ do_create_tarball() {
                 if [ -e "$file" ]; then
                     found_files="yes"
                     basename_file=$(basename "$file")
-                    echo "Adding deploy file: $file as deploy/$basename_file"
-                    cp -v "$file" "${STAGING_DIR}/deploy/"
+                    echo "Adding deploy file: $file as $basename_file"
+                    cp -v "$file" "${STAGING_DIR}/"
                 fi
             done
             if [ -z "$found_files" ]; then
@@ -66,8 +65,8 @@ do_create_tarball() {
     if [ -n "${WORKDIR_FILES}" ]; then
         for filename in ${WORKDIR_FILES}; do
             if [ -e "${WORKDIR}/$filename" ]; then
-                echo "Adding workdir file: ${WORKDIR}/$filename as files/$filename"
-                cp -v "${WORKDIR}/$filename" "${STAGING_DIR}/files/"
+                echo "Adding workdir file: ${WORKDIR}/$filename as $filename"
+                cp -v "${WORKDIR}/$filename" "${STAGING_DIR}/"
             else
                 bbwarn "Workdir file not found: ${WORKDIR}/$filename"
             fi
@@ -97,4 +96,3 @@ do_create_tarball() {
 
 addtask create_tarball after do_unpack before do_build
 do_create_tarball[dirs] += "${WORKDIR}"
-do_create_tarball[cleandirs] += "${WORKDIR}/temp"
