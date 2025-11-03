@@ -397,12 +397,6 @@ run_test() {
 		exit 1
 	fi
 
-	if [ "$overwrite" = "true" ] && [ -z "$number" ]; then
-		echo "Error: Missing number argument"
-		usage
-		exit 1
-	fi
-
 	if [ "$interactive" = true ] && [ -z "$number" ]; then
 		echo "Error: Missing number argument"
 		usage
