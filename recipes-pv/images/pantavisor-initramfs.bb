@@ -57,7 +57,6 @@ COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm|mips|riscv).*-linux"
 ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
-	install -d ${IMAGE_ROOTFS}/storage
 	install -d ${IMAGE_ROOTFS}/media
 	install -d ${IMAGE_ROOTFS}/volumes
 	install -d ${IMAGE_ROOTFS}/exports
