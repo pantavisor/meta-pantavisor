@@ -77,9 +77,34 @@ python do_umoci_config() {
         f"oci:{pn}-{oci_image_tag}-oci:{oci_image_tag}",
         f"docker-archive:{image_basename}-{oci_image_tag}-docker.tar"
     ]
+
+    # Collect all tags for symlink creation
+    all_tags = [docker_image_tag]
+
     if docker_image_extra_tags and docker_image_extra_tags.strip():
-        for tag in docker_image_extra_tags.split():
+        extra_tags_list = docker_image_extra_tags.split()
+        for tag in extra_tags_list:
             skopeo_cmd.insert(3, f"--additional-tag={docker_image_name}:{tag}")
+        all_tags.extend(extra_tags_list)
+
+    # After running skopeo_cmd, create symlinks
+    import os
+
+    # Main symlink without version
+    main_symlink = f"{image_basename}-docker.tar"
+    target_file = f"{image_basename}-{oci_image_tag}-docker.tar"
+
+    if os.path.exists(main_symlink) or os.path.islink(main_symlink):
+        os.remove(main_symlink)
+    os.symlink(target_file, main_symlink)
+
+    # Symlinks for each tag
+    for tag in all_tags:
+        tag_symlink = f"{image_basename}-{tag}-docker.tar"
+        if tag_symlink != target_file:  # Don't create symlink to itself
+            if os.path.exists(tag_symlink) or os.path.islink(tag_symlink):
+                os.remove(tag_symlink)
+            os.symlink(target_file, tag_symlink)
     
     bb.note(f"Executing skopeo command: {' '.join(skopeo_cmd)}")
     
