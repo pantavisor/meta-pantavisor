@@ -2,34 +2,55 @@
 
 set -e
 
-targetdir=$1
-
-m=`ls kas/machines/*`
 configsuffix=:.github/configs/build-base-remix.yaml
 
-configs=" \
-	kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml$configsuffix \
-	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+onpush_scarthgap_configs=" \
+    kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+    kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
 "
 
-echo "Processing configs:
+onpush_kirkstone_configs=" \
+    kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+    kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+"
 
-$configs"
+manual_scarthgap_configs=" \
+    kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+    kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+    kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+    kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml:kas/scarthgap-nxp.yaml$configsuffix \
+    kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+    kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+"
 
-rm -f .github/configs/release/*-scarthgap.yaml*
+manual_kirkstone_configs=" \
+    kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+    kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+    kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+    kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml:kas/scarthgap-nxp.yaml$configsuffix \
+    kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+    kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/kirkstone.yaml$configsuffix \
+"
 
-for cc in $configs; do
-	echo CC: $cc
-	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
-	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
-	echo "new config for machine: $m"
-#	cat .github/configs/release/$m-scarthgap.yaml
-	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
-name: 'Build On Push'
+process_release_onpush() {
+    releasename=$1
+    configs=$2
+    echo "--- Processing onpush **$releasename** machines ---"
+    
+    rm -f .github/configs/release/*-$releasename.yaml*
+
+    for cc in $configs; do
+        if [ -z "$cc" ]; then
+            continue
+        fi
+
+        echo "CC: $cc"
+        m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+        
+        KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-$releasename.yaml
+
+        cat > .github/workflows/onpush-$m-$releasename.yaml << EOF1
+name: 'On Push: $m-$releasename'
 
 on:
   push:
@@ -41,17 +62,66 @@ on:
 
 jobs:
 
-  build-$m-scarthgap:
+  build-$m-$releasename:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/$m-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: $m-scarthgap
+      configs: .github/configs/release/$m-$releasename.yaml:.github/configs/shared-vols.yaml
+      name: $m-$releasename
     secrets: inherit
 EOF1
-done
+    done
+}
+
+process_release_manual() {
+    releasename=$1
+    configs=$2
+    echo "--- Processing manual **$releasename** machines ---"
+    
+    for cc in $configs; do
+        if [ -z "$cc" ]; then
+            continue
+        fi
+
+        echo "CC: $cc"
+        m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+        
+        KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-$releasename.yaml
+
+        cat > .github/workflows/manual-$m-$releasename.yaml << EOF1
+name: 'Manual: $m-$releasename'
+
+on:
+  workflow_dispatch:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+
+  build-$m-$releasename:
+    uses: ./.github/workflows/buildkas.yaml
+    with:
+      configs: .github/configs/release/$m-$releasename.yaml:.github/configs/shared-vols.yaml
+      name: $m-$releasename
+    secrets: inherit
+EOF1
+    done
+}
+
+rm -f .github/configs/release/*.yaml*
+rm -f .github/workflows/*onpush-*.yaml*
+rm -f .github/workflows/*manual-*.yaml*
+
+process_release_onpush "scarthgap" "$onpush_scarthgap_configs"
+process_release_manual "scarthgap" "$manual_scarthgap_configs"
+
+process_release_onpush "kirkstone" "$onpush_kirkstone_configs"
+process_release_manual "kirkstone" "$manual_kirkstone_configs"
 
 git add .github/configs/release/
 
-echo DIFF:
+echo "---"
+echo "DIFF:"
 git diff HEAD .github/
-

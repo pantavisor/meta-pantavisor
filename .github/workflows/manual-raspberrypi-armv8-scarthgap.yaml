@@ -1,7 +1,7 @@
-name: 'On Push: raspberrypi-armv8-scarthgap'
+name: 'Manual: raspberrypi-armv8-scarthgap'
 
 on:
-  push:
+  workflow_dispatch:
     paths:
       - '**'
       - '.github/configs/**'

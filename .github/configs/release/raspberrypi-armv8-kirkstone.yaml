@@ -2,21 +2,18 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-sunxi:
-        commit: d5214c790e0488bcff392c9f1d3dfe5c4de21a34
+    meta-raspberrypi:
+        commit: 255500dd9f6a01a3445ac491d1abc401801e3bad
         patches:
-            wks-root-label:
-                path: patches/meta-sunxi/0001-wks-root-label.patch
+            uboot-env:
+                path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
                 repo: meta-pantavisor
-        path: layers/meta-sunxi
-        url: https://github.com/linux-sunxi/meta-sunxi
-    meta-arm:
-        commit: 0f1e7bf92c89759f0ab74cfa5be4ee47b092ad46
-        layers:
-            meta-arm:
-            meta-arm-toolchain:
-        path: layers/meta-arm
-        url: git://git.yoctoproject.org/meta-arm
+        path: layers/meta-raspberrypi
+        url: https://github.com/agherzan/meta-raspberrypi
+    meta-qt5:
+        commit: 644ebf220245bdc06e7696ccc90acc97a0dd2566
+        path: layers/meta-qt5
+        url: https://github.com/meta-qt5/meta-qt5/
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
@@ -26,18 +23,15 @@ repos:
             meta-poky:
         patches:
             fit-image-multiconfig:
-                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                path: patches/poky/0001-fit-image-multiconfig.patch
                 repo: meta-pantavisor
-            update-rc-initscripts:
-                path: patches/poky/update-rc.patch
-                repo: meta-pantavisor
-        commit: c4a4df3e720e2d8a3dd2c2a0467704a42b468205
+        commit: 04b39e5b7eb19498215d85c88a5fffb460fea1eb
     meta-virtualization:
-        commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
+        commit: 16155ae737d96f0f53721ad7270c3fe19729d496
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 15e18246dd0c0585cd1515a0be8ee5e2016d1329
+        commit: 96fbc156364fd78530d2bfbe1b8a77789f52997d
         layers:
             meta-filesystems:
             meta-networking:
@@ -46,8 +40,10 @@ repos:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-sunxi: |
-        PV_UBOOT_AUTOFDT = "1"
+    platform-raspberrypi: |
+        LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
+        RPI_USE_U_BOOT = "1"
+        ENABLE_UART = "1"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -72,7 +68,7 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: orange-pi-r1
+machine: raspberrypi-armv8
 target:
 - pantavisor-remix
 build_system: oe
@@ -82,4 +78,4 @@ env:
     PV_BOOT_OEMARGS:
 defaults:
     repos:
-        branch: scarthgap
+        branch: kirkstone

@@ -1,7 +1,7 @@
-name: 'Build On Push'
+name: 'Manual: colibri-imx6ull-scarthgap'
 
 on:
-  push:
+  workflow_dispatch:
     paths:
       - '**'
       - '.github/configs/**'

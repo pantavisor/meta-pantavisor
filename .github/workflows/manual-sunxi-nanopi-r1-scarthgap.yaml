@@ -1,7 +1,7 @@
-name: 'On Push: sunxi-nanopi-r1-scarthgap'
+name: 'Manual: sunxi-nanopi-r1-scarthgap'
 
 on:
-  push:
+  workflow_dispatch:
     paths:
       - '**'
       - '.github/configs/**'

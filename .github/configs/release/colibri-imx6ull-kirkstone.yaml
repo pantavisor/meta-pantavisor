@@ -2,21 +2,36 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-sunxi:
-        commit: d5214c790e0488bcff392c9f1d3dfe5c4de21a34
+    meta-freescale:
+        commit: 7286bef07802fc493894c5917a315d53c8fe2191
+        path: layers/meta-freescale
+        url: https://github.com/Freescale/meta-freescale.git
+    meta-freescale-3rdparty:
+        commit: 48516272d97f9415e0ee3ab54a923e4c40143e69
+        path: layers/meta-freescale-3rdparty
+        url: https://github.com/Freescale/meta-freescale-3rdparty.git
+    meta-freescale-distro:
+        commit: d5bbb487b2816dfc74984a78b67f7361ce404253
+        path: layers/meta-freescale-distro
+        url: https://github.com/Freescale/meta-freescale-distro.git
+    meta-toradex-bsp-common:
+        branch: scarthgap-7.x.y
+        commit: 08d8c39707936895d26767156654226f342c4e8a
         patches:
-            wks-root-label:
-                path: patches/meta-sunxi/0001-wks-root-label.patch
+            add-pv-tezi:
+                path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
                 repo: meta-pantavisor
-        path: layers/meta-sunxi
-        url: https://github.com/linux-sunxi/meta-sunxi
-    meta-arm:
-        commit: 0f1e7bf92c89759f0ab74cfa5be4ee47b092ad46
-        layers:
-            meta-arm:
-            meta-arm-toolchain:
-        path: layers/meta-arm
-        url: git://git.yoctoproject.org/meta-arm
+        path: layers/meta-toradex-bsp-common
+        url: https://git.toradex.com/meta-toradex-bsp-common.git
+    meta-toradex-nxp:
+        branch: scarthgap-7.x.y
+        commit: c8b1e7c44c930edd8ff889ad01ab4a5f636948d8
+        patches:
+            pv-formated-tezi:
+                path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
+                repo: meta-pantavisor
+        path: layers/meta-toradex-nxp
+        url: https://git.toradex.com/meta-toradex-nxp.git
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
@@ -26,18 +41,15 @@ repos:
             meta-poky:
         patches:
             fit-image-multiconfig:
-                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                path: patches/poky/0001-fit-image-multiconfig.patch
                 repo: meta-pantavisor
-            update-rc-initscripts:
-                path: patches/poky/update-rc.patch
-                repo: meta-pantavisor
-        commit: c4a4df3e720e2d8a3dd2c2a0467704a42b468205
+        commit: 04b39e5b7eb19498215d85c88a5fffb460fea1eb
     meta-virtualization:
-        commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
+        commit: 16155ae737d96f0f53721ad7270c3fe19729d496
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 15e18246dd0c0585cd1515a0be8ee5e2016d1329
+        commit: 96fbc156364fd78530d2bfbe1b8a77789f52997d
         layers:
             meta-filesystems:
             meta-networking:
@@ -46,8 +58,12 @@ repos:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-sunxi: |
+    platform-freescale: |
+        ACCEPT_FSL_EULA = "1"
+    platform-toradex: |
         PV_UBOOT_AUTOFDT = "1"
+    platform-colibri-imx6ull: |
+        include conf/machine/include/colibri-imx6ull.inc
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -72,7 +88,7 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: orange-pi-r1
+machine: colibri-imx6ull
 target:
 - pantavisor-remix
 build_system: oe
@@ -82,4 +98,4 @@ env:
     PV_BOOT_OEMARGS:
 defaults:
     repos:
-        branch: scarthgap
+        branch: kirkstone

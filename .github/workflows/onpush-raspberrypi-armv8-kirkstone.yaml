@@ -1,4 +1,4 @@
-name: 'On Push: raspberrypi-armv8-scarthgap'
+name: 'On Push: raspberrypi-armv8-kirkstone'
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
 
 jobs:
 
-  build-raspberrypi-armv8-scarthgap:
+  build-raspberrypi-armv8-kirkstone:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: raspberrypi-armv8-scarthgap
+      configs: .github/configs/release/raspberrypi-armv8-kirkstone.yaml:.github/configs/shared-vols.yaml
+      name: raspberrypi-armv8-kirkstone
     secrets: inherit

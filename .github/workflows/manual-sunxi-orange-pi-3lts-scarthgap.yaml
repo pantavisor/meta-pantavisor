@@ -1,7 +1,7 @@
-name: 'Build On Push'
+name: 'Manual: sunxi-orange-pi-3lts-scarthgap'
 
 on:
-  push:
+  workflow_dispatch:
     paths:
       - '**'
       - '.github/configs/**'

@@ -1,4 +1,4 @@
-name: 'Build On Push'
+name: 'On Push: sunxi-nanopi-r1-kirkstone'
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
 
 jobs:
 
-  build-imx8qxp-b0-mek-scarthgap:
+  build-sunxi-nanopi-r1-kirkstone:
     uses: ./.github/workflows/buildkas.yaml
     with:
-      configs: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: imx8qxp-b0-mek-scarthgap
+      configs: .github/configs/release/sunxi-nanopi-r1-kirkstone.yaml:.github/configs/shared-vols.yaml
+      name: sunxi-nanopi-r1-kirkstone
     secrets: inherit
