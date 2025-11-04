@@ -10,3 +10,5 @@ poky
 recipes-containers/vendors
 Kconfig.custom
 layers
+.lsp
+.clj-kondo

@@ -1,0 +1,20 @@
+{
+    "#spec": "driver-aliases@1",
+    "all": {
+        "bluetooth": [
+            "bluetooth",
+            "rfkill",
+            "uwe5622"
+        ],
+        "ethernet": [
+            "sun50i_gmac"
+        ],
+        "wifi": [
+            "uwe5622"
+        ],
+        "wireguard": [
+            "wireguard"
+        ]
+    },
+    "dtb:all": {}
+}
