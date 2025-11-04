@@ -5,7 +5,7 @@
 
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
-DEPENDS = "cmake libevent libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native"
+DEPENDS = "cmake libevent libthttp picohttpparser lxc-pv mbedtls zlib pkgconfig-native clang-native"
 RDEPENDS:${PN} += "lxc-pv \
 	e2fsprogs-e2fsck \
 	e2fsprogs-mke2fs \
@@ -59,6 +59,7 @@ EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
 EXTRA_OECMAKE += "-DPANTAVISOR_PVS_SKIP_INSTALL=ON -DPANTAVISOR_DEFAULTS_SKIP_INSTALL=ON"
 EXTRA_OECMAKE += "-DPANTAVISOR_PVTX_STATIC=ON -DPANTAVISOR_PVTX=ON -DPANTAVISOR_RUNTIME=ON"
+EXTRA_OECMAKE += "-DPANTAVISOR_CLANG_FORMAT_CHECK=ON"
 
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl"
 
