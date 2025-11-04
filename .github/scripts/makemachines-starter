@@ -1,0 +1,52 @@
+#!/bin/sh
+
+set -e
+
+targetdir=$1
+
+m=`ls kas/machines/*`
+configsuffix=:.github/configs/build-base-starter.yaml
+
+configs=" \
+	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+"
+
+echo "Processing configs:
+
+$configs"
+
+rm -f .github/configs/release/*-scarthgap-starter.yaml*
+
+for cc in $configs; do
+	echo CC: $cc
+	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
+	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap-starter.yaml
+	echo "new config for machine: $m"
+#	cat .github/configs/release/$m-scarthgap.yaml
+	cat > .github/workflows/onpush-$m-scarthgap-starter.yaml << EOF1
+name: 'Build On Push'
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/updatemachines.yaml'
+
+jobs:
+
+  build-$m-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/$m-scarthgap.yaml:.github/configs/shared-vols.yaml
+      name: $m-scarthgap
+    secrets: inherit
+EOF1
+done
+
+#git add .github/configs/release/
+
+#echo DIFF:
+#git diff HEAD .github/
+
