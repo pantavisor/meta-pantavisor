@@ -1,0 +1,18 @@
+{
+    "#spec": "driver-aliases@1",
+    "all": {
+        "bluetooth": [
+            "btbcm",
+            "hci_uart"
+        ],
+        "wifi": [
+            "brcmutil",
+            "brcmfmac"
+        ],
+        "wireguard": [
+            "wireguard"
+        ]
+    },
+    "dtb:all": {}
+}
+
