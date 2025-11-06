@@ -7,7 +7,7 @@ IMAGE_BUILDINFO_FILE = "${sysconfdir}/build"
 
 VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
-VIRTUAL-RUNTIME_pantavisor_config ??= "pantavisor-default-config"
+VIRTUAL-RUNTIME_pantavisor_config ??= "pantavisor-config"
 
 PACKAGE_INSTALL = "pantavisor \
 	${VIRTUAL-RUNTIME_pantavisor_config} \
