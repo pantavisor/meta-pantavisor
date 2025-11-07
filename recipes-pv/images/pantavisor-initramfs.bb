@@ -57,11 +57,47 @@ COMPATIBLE_HOST = "(i.86|x86_64|aarch64|arm|mips|riscv).*-linux"
 ROOTFS_POSTINSTALL_COMMAND += "do_finish_rootfs"
 
 do_finish_rootfs() {
-	install -d ${IMAGE_ROOTFS}/media
-	install -d ${IMAGE_ROOTFS}/volumes
-	install -d ${IMAGE_ROOTFS}/exports
-	install -d ${IMAGE_ROOTFS}/writable
-	install -d ${IMAGE_ROOTFS}/pv
+        install -d ${IMAGE_ROOTFS}/volumes
+        install -d ${IMAGE_ROOTFS}/exports
+        install -d ${IMAGE_ROOTFS}/writable
+        
+        # Ensure /run exists as a directory
+        install -d ${IMAGE_ROOTFS}/run
+        
+        # Remove /var/run if it exists as a directory (not a symlink)
+        if [ -d ${IMAGE_ROOTFS}/var/run ] && [ ! -L ${IMAGE_ROOTFS}/var/run ]; then
+                rm -rf ${IMAGE_ROOTFS}/var/run
+        fi
+        
+        # Create symlink from /var/run to /run
+        ln -sf ../run ${IMAGE_ROOTFS}/var/run
+
+        # Create /run/pantavisor/pv directory structure
+        install -d ${IMAGE_ROOTFS}/run/pantavisor/pv
+        
+        # Handle /pv -> /run/pantavisor/pv symlink
+        if [ -e ${IMAGE_ROOTFS}/pv ]; then
+                # /pv exists, check if it's a directory
+                if [ -d ${IMAGE_ROOTFS}/pv ] && [ ! -L ${IMAGE_ROOTFS}/pv ]; then
+                        # Move any existing content from /pv to /run/pantavisor/pv
+                        if [ "$(ls -A ${IMAGE_ROOTFS}/pv)" ]; then
+                                cp -a ${IMAGE_ROOTFS}/pv/* ${IMAGE_ROOTFS}/run/pantavisor/pv/
+                        fi
+                        rm -rf ${IMAGE_ROOTFS}/pv
+                fi
+        fi
+        
+        # Create symlink from /pv to /run/pantavisor/pv (only if it doesn't exist)
+        if [ ! -e ${IMAGE_ROOTFS}/pv ]; then
+                ln -sf run/pantavisor/pv ${IMAGE_ROOTFS}/pv
+        fi
+        if [ ! -e ${IMAGE_ROOTFS}/media ]; then
+                ln -sf run/pantavisor/media ${IMAGE_ROOTFS}/media
+        fi
+        if [ ! -e ${IMAGE_ROOTFS}/configs ]; then
+                ln -sf run/pantavisor/configs ${IMAGE_ROOTFS}/configs
+        fi
+        
         #ln -sfr ${IMAGE_ROOTFS}/usr/bin/pantavisor ${IMAGE_ROOTFS}/sbin/init
         rm -rf ${IMAGE_ROOTFS}/usr/lib/opkg
 }
