@@ -1,0 +1,13 @@
+name: "MAN: imx8qxp-b0-mek-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-imx8qxp-b0-mek-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: imx8qxp-b0-mek-scarthgap
+    secrets: inherit

@@ -1,0 +1,19 @@
+name: "PUSH: sunxi-bananapi-m2-berry-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/**'
+      - '!.github/templates/**'
+
+jobs:
+
+  build-sunxi-bananapi-m2-berry-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: sunxi-bananapi-m2-berry-scarthgap
+    secrets: inherit

@@ -1,0 +1,13 @@
+name: "MAN: sunxi-orange-pi-3lts-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-sunxi-orange-pi-3lts-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: sunxi-orange-pi-3lts-scarthgap
+    secrets: inherit

@@ -1,0 +1,13 @@
+name: "MAN: colibri-imx6ull-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-colibri-imx6ull-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: colibri-imx6ull-scarthgap
+    secrets: inherit

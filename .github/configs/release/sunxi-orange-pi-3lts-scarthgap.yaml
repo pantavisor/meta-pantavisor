@@ -11,19 +11,13 @@ repos:
         path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: 8e0f8af90fefb03f08cd2228cde7a89902a6b37c
+        commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
         layers:
             meta-arm:
             meta-arm-toolchain:
         path: layers/meta-arm
         url: git://git.yoctoproject.org/meta-arm
-    meta-pantavisor:
     poky:
-        url: https://github.com/yoctoproject/poky.git
-        path: layers/poky
-        layers:
-            meta:
-            meta-poky:
         patches:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
@@ -31,13 +25,19 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: 9ce8f26d37c2e3e0030fd1f36f5c54209c269a05
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: d71d81814adae2c51fdaf42f62c146041545c7fd
+    meta-pantavisor:
     meta-virtualization:
-        commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
+        commit: d75faad37ae3cbbfe31dffaa6432553fc5450838
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: c29a18fa39ede952f3f6108ec007c1906e2d9a0d
+        commit: b79cf94b4d53d75ddc4b4f468c1b1ad42a3fffe2
         layers:
             meta-filesystems:
             meta-networking:
@@ -73,13 +73,13 @@ local_conf_header:
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
 machine: orange-pi-3lts
+defaults:
+    repos:
+        branch: scarthgap
 target:
-- pantavisor-remix
+- pantavisor-starter
 build_system: oe
 distro: panta-distro
 env:
     PVROOT_IMAGE_BSP:
     PV_BOOT_OEMARGS:
-defaults:
-    repos:
-        branch: scarthgap

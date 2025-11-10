@@ -4,54 +4,21 @@ set -e
 
 targetdir=$1
 
-m=`ls kas/machines/*`
-configsuffix=:.github/configs/build-base-remix.yaml
+yocto_branch=$(jq -r .yocto_branch /home/ferlzc/Builds/meta-pantavisor/.github/machines.json)
+machines=$(jq -r .machines[]  /home/ferlzc/Builds/meta-pantavisor/.github/machines.json)
 
-configs=" \
-	kas/machines/sunxi-orange-pi-3lts.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/sunxi-orange-pi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/sunxi-nanopi-r1.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml$configsuffix \
-	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-	kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
-"
+echo "Processing machines:
 
-echo "Processing configs:
+$machines"
 
-$configs"
+rm -f .github/configs/release/*-$yocto_branch.yaml*
 
-rm -f .github/configs/release/*-scarthgap.yaml*
-
-for cc in $configs; do
+for cc in $machines; do
 	echo CC: $cc
 	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
-	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
+	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-$yocto_branch.yaml
 	echo "new config for machine: $m"
-#	cat .github/configs/release/$m-scarthgap.yaml
-	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
-name: 'Build On Push'
-
-on:
-  push:
-    paths:
-      - '**'
-      - '.github/configs/**'
-      - '!.github/scripts/**'
-      - '!.github/workflows/updatemachines.yaml'
-
-jobs:
-
-  build-$m-scarthgap:
-    uses: ./.github/workflows/buildkas.yaml
-    with:
-      configs: .github/configs/release/$m-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: $m-scarthgap
-    secrets: inherit
-EOF1
 done
-
-git add .github/configs/release/
 
 echo DIFF:
 git diff HEAD .github/
-

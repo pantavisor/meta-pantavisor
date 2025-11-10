@@ -2,41 +2,14 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-freescale:
-        commit: 7d83a350d8b28498321a481a2a1c51bb4afb48e9
-        path: layers/meta-freescale
-        url: https://github.com/Freescale/meta-freescale.git
-    meta-freescale-3rdparty:
-        commit: 70c83e96c7f75e73245cb77f1b0cada9ed4bbc6d
-        path: layers/meta-freescale-3rdparty
-        url: https://github.com/Freescale/meta-freescale-3rdparty.git
-    meta-freescale-distro:
-        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
-        path: layers/meta-freescale-distro
-        url: https://github.com/Freescale/meta-freescale-distro.git
-    meta-openembedded:
-        layers:
-            meta-multimedia:
-            meta-filesystems:
-            meta-networking:
-            meta-oe:
-            meta-python:
-        url: https://github.com/openembedded/meta-openembedded.git
-        path: layers/meta-openembedded
-        commit: b79cf94b4d53d75ddc4b4f468c1b1ad42a3fffe2
-    meta-imx:
-        url: https://github.com/nxp-imx/meta-imx.git
-        path: layers/meta-imx
+    meta-rockchip:
+        commit: dd96690e1d88f18e895f4faec2724578b36e107e
         patches:
-            qa-issue-fix:
-                path: patches/meta-imx/0001-firmware-nxp-wifi-Fix-QA-issue.patch
+            wks-root-label:
+                path: patches/meta-rockchip-radxa/0001-wic-Fix-root-label.patch
                 repo: meta-pantavisor
-        branch: scarthgap-6.6.52-2.2.0
-        layers:
-            meta-imx-bsp:
-            meta-imx-ml:
-            meta-imx-sdk:
-        commit: a0cf309d2e2d544111e520f572db8dff335eca01
+        path: layers/meta-rockchip-radxa
+        url: https://github.com/radxa/meta-rockchip.git
     meta-arm:
         commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
         layers:
@@ -63,18 +36,22 @@ repos:
         commit: d75faad37ae3cbbfe31dffaa6432553fc5450838
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: b79cf94b4d53d75ddc4b4f468c1b1ad42a3fffe2
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-freescale: |
-        ACCEPT_FSL_EULA = "1"
-    platform-nxp: |
+    platform-rockchip: |
         PV_UBOOT_AUTOFDT = "1"
-        PV_UBOOT_FLATFDT = "1"
-        VIRTUAL-RUNTIME_initscripts = "initscripts-pv"
-        PREFERRED_RPROVIDER_initd-functions = "initscripts-pv"
-        EXTRA_IMAGE_FEATURES = "debug-tweaks"
-        PANTAVISOR_MACHINE_FIRMWARE = ""
-        PANTAVISOR_MACHINE_KERNEL_MODULES = ""
-        PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
+        # keep rockchip prefix in dtb
+        # otherwise fit configuration doesn't fit
+        # with fdtfile varible and board won't boot
+        KERNEL_DTBVENDORED = "1"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -99,11 +76,7 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-bblayers_conf_header:
-    platform-nxp: |
-        BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
-        BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
-machine: imx8qxp-b0-mek
+machine: rock-5a
 defaults:
     repos:
         branch: scarthgap

@@ -1,0 +1,22 @@
+
+name: "TAG: raspberrypi-armv8-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/**'
+      - '!.github/templates/**'
+    tags:
+      - 0*
+      - '*-rc*'
+jobs:
+
+  build-raspberrypi-armv8-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: raspberrypi-armv8-scarthgap
+    secrets: inherit

@@ -1,0 +1,15 @@
+name: "SCH: !MACHINE-!YOCTO_BRANCH"
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "30 * * * 6"
+
+jobs:
+
+  build-!MACHINE-!YOCTO_BRANCH:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/!MACHINE-!YOCTO_BRANCH.yaml:.github/configs/shared-vols.yaml
+      machine_name: !MACHINE-!YOCTO_BRANCH
+    secrets: inherit
