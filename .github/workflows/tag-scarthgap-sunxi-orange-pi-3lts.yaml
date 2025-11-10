@@ -1,0 +1,22 @@
+
+name: "TAG: sunxi-orange-pi-3lts-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/**'
+      - '!.github/templates/**'
+    tags:
+      - 0*
+      - '*-rc*'
+jobs:
+
+  build-sunxi-orange-pi-3lts-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: sunxi-orange-pi-3lts-scarthgap
+    secrets: inherit

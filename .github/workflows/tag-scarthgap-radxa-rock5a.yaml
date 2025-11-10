@@ -1,0 +1,22 @@
+
+name: "TAG: radxa-rock5a-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '!.github/scripts/**'
+      - '!.github/workflows/**'
+      - '!.github/templates/**'
+    tags:
+      - 0*
+      - '*-rc*'
+jobs:
+
+  build-radxa-rock5a-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/radxa-rock5a-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: radxa-rock5a-scarthgap
+    secrets: inherit
