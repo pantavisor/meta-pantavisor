@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 7fbf2668d7f37c7c7949cd52bf9f9bcb2fce5fb2
+        commit: 7d83a350d8b28498321a481a2a1c51bb4afb48e9
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: c29a18fa39ede952f3f6108ec007c1906e2d9a0d
+        commit: 15e18246dd0c0585cd1515a0be8ee5e2016d1329
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -38,7 +38,7 @@ repos:
             meta-imx-sdk:
         commit: a0cf309d2e2d544111e520f572db8dff335eca01
     meta-arm:
-        commit: 8e0f8af90fefb03f08cd2228cde7a89902a6b37c
+        commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -58,7 +58,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: 9ce8f26d37c2e3e0030fd1f36f5c54209c269a05
+        commit: b33a8abe77081a2bdda0d89c61736473b2f9bb8b
     meta-virtualization:
         commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
         path: layers/meta-virtualization
