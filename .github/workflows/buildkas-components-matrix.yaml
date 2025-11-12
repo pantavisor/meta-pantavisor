@@ -20,8 +20,9 @@ jobs:
       options: --user root
 
     strategy:
+      fail-fast: false
       matrix:
-        TARGET: [busybox, dropbear, initscripts-pv, libevent, libthttp, lxc-pv, mbedtls, picothttpparser, pvr]
+        TARGET: [busybox, dropbear, initscripts-pv, libevent, libthttp, lxc-pv, mbedtls, picohttpparser, pvr]
 
     steps:
       - uses: actions/checkout@v4
