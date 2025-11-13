@@ -3,7 +3,7 @@ name: 'Build Kas - components'
 on:
   workflow_call:
     inputs:
-      name:
+      arch:
         required: true
         type: string
       configs:

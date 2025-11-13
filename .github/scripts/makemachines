@@ -14,6 +14,7 @@ configs=" \
 	kas/machines/imx8qxp-b0-mek.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml$configsuffix \
 	kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
 	kas/machines/colibri-imx6ull.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
+	kas/machines/radxa-rock5a.yaml:kas/bsp-base.yaml:kas/scarthgap.yaml$configsuffix \
 "
 
 echo "Processing configs:
@@ -26,32 +27,36 @@ for cc in $configs; do
 	echo CC: $cc
 	m=`echo $cc | sed 's/.*machines.//;s/.yaml:.*//'`
 	KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > .github/configs/release/$m-scarthgap.yaml
-	echo "new config for machine: $m"
-#	cat .github/configs/release/$m-scarthgap.yaml
-	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
-name: 'Build On Push'
-
-on:
-  push:
-    paths:
-      - '**'
-      - '.github/configs/**'
-      - '!.github/scripts/**'
-      - '!.github/workflows/updatemachines.yaml'
-
-jobs:
-
-  build-$m-scarthgap:
-    uses: ./.github/workflows/buildkas.yaml
-    with:
-      configs: .github/configs/release/$m-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: $m-scarthgap
-    secrets: inherit
-EOF1
 done
 
-git add .github/configs/release/
 
-echo DIFF:
-git diff HEAD .github/
+
+#	echo "new config for machine: $m"
+##	cat .github/configs/release/$m-scarthgap.yaml
+#	cat > .github/workflows/onpush-$m-scarthgap.yaml << EOF1
+#name: 'Build On Push'
+#
+#on:
+#  push:
+#    paths:
+#      - '**'
+#      - '.github/configs/**'
+#      - '!.github/scripts/**'
+#      - '!.github/workflows/updatemachines.yaml'
+#
+#jobs:
+#
+#  build-$m-scarthgap:
+#    uses: ./.github/workflows/buildkas.yaml
+#    with:
+#      configs: .github/configs/release/$m-scarthgap.yaml:.github/configs/shared-vols.yaml
+#      name: $m-scarthgap
+#    secrets: inherit
+#EOF1
+#done
+#
+#git add .github/configs/release/
+#
+#echo DIFF:
+#git diff HEAD .github/
 

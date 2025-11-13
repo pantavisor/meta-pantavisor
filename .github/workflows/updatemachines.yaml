@@ -1,4 +1,4 @@
-name: 'Update Machines'
+name: 'scheadule: update machines'
 
 on:
   workflow_dispatch:
