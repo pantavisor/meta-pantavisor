@@ -1,0 +1,29 @@
+name: 'manual build targets - scarthgap-musl'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-all-targets:
+    name: Build ${{ matrix.arch }}
+    uses: ./.github/workflows/buildkas-starter.yaml
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: colibri-imx6ull
+            config: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
+          - arch: imx8qxp-b0-mek
+            config: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
+          - arch: raspberrypi-armv8
+            config: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
+          - arch: sunxi-nanopi-r1
+            config: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
+          - arch: sunxi-orange-pi-3lts
+            config: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
+          - arch: sunxi-orange-pi-r1
+            config: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
+    with:
+      configs: ${{ matrix.config }}
+      arch: ${{ matrix.arch }}
