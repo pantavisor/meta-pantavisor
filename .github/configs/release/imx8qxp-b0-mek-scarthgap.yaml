@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: 15e18246dd0c0585cd1515a0be8ee5e2016d1329
+        commit: f1f248262d662315159ee96c604f97415d1dbe6a
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx

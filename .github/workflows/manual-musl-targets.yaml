@@ -1,34 +1,29 @@
-name: 'Build Targets - scarthgap - musl'
+name: 'manual build targets - scarthgap-musl'
 
 on:
   workflow_dispatch:
-    paths:
-      - '**'
-      - '.github/configs/**'
-      - '!.github/scripts/**'
-      - '!.github/workflows/updatemachines.yaml'
 
 jobs:
   build-all-targets:
-    name: Build ${{ matrix.name }}
-    uses: ./.github/workflows/buildkas.yaml
+    name: Build ${{ matrix.arch }}
+    uses: ./.github/workflows/buildkas-starter.yaml
     secrets: inherit
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: colibri-imx6ull-scarthgap
+          - arch: colibri-imx6ull
             config: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
-          - name: imx8qxp-b0-mek-scarthgap
+          - arch: imx8qxp-b0-mek
             config: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
-          - name: raspberrypi-armv8-scarthgap
+          - arch: raspberrypi-armv8
             config: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
-          - name: sunxi-nanopi-r1-scarthgap
+          - arch: sunxi-nanopi-r1
             config: .github/configs/release/sunxi-nanopi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
-          - name: sunxi-orange-pi-3lts-scarthgap
+          - arch: sunxi-orange-pi-3lts
             config: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
-          - name: sunxi-orange-pi-r1-scarthgap
+          - arch: sunxi-orange-pi-r1
             config: .github/configs/release/sunxi-orange-pi-r1-scarthgap.yaml:.github/configs/shared-vols.yaml
     with:
       configs: ${{ matrix.config }}
-      name: ${{ matrix.name }}
+      arch: ${{ matrix.arch }}

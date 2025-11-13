@@ -2,14 +2,14 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-sunxi:
-        commit: d5214c790e0488bcff392c9f1d3dfe5c4de21a34
+    meta-rockchip:
+        commit: dd96690e1d88f18e895f4faec2724578b36e107e
         patches:
             wks-root-label:
-                path: patches/meta-sunxi/0001-wks-root-label.patch
+                path: patches/meta-rockchip-radxa/0001-wic-Fix-root-label.patch
                 repo: meta-pantavisor
-        path: layers/meta-sunxi
-        url: https://github.com/linux-sunxi/meta-sunxi
+        path: layers/meta-rockchip-radxa
+        url: https://github.com/radxa/meta-rockchip.git
     meta-arm:
         commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
         layers:
@@ -46,8 +46,12 @@ repos:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-sunxi: |
+    platform-rockchip: |
         PV_UBOOT_AUTOFDT = "1"
+        # keep rockchip prefix in dtb
+        # otherwise fit configuration doesn't fit
+        # with fdtfile varible and board won't boot
+        KERNEL_DTBVENDORED = "1"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -72,7 +76,7 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: nanopi-r1
+machine: rock-5a
 target:
 - pantavisor-remix
 build_system: oe
