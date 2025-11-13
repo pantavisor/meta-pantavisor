@@ -11,7 +11,7 @@ on:
         type: string
 
 jobs:
-  build-kas:
+  build:
     runs-on: ["self-hosted"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
