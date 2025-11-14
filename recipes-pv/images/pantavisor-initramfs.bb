@@ -3,6 +3,8 @@ inherit image image-buildinfo
 # Simple initramfs image artifact generation for tiny images.
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
 
+IMAGE_BUILDINFO_FILE = "${sysconfdir}/build"
+
 VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
 VIRTUAL-RUNTIME_pantavisor_config ??= "pantavisor-default-config"
