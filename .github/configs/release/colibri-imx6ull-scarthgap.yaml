@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: df1b539e6d9144aa20e3d25e09fc1082346aa07e
+        commit: 1ca93f67373fc76a9157a90ae1c8f596333ea012
         patches:
             add-pv-tezi:
                 path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
@@ -46,7 +46,7 @@ repos:
             update-rc-initscripts:
                 path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
-        commit: b33a8abe77081a2bdda0d89c61736473b2f9bb8b
+        commit: 7e8674996b0164b07e56bc066d0fba790e627061
     meta-virtualization:
         commit: af1db2042caf8021d767dce1b26c08b59b96f3d1
         path: layers/meta-virtualization
@@ -93,7 +93,7 @@ local_conf_header:
         INHERIT += "rm_work"
 machine: colibri-imx6ull
 target:
-- pantavisor-remix
+- pantavisor-starter
 build_system: oe
 distro: panta-distro
 env:

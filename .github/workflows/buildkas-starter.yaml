@@ -1,9 +1,9 @@
-name: 'Build Kas - starter'
+name: 'Build Pantavisor Starter Image'
 
 on:
   workflow_call:
     inputs:
-      arch:
+      machine_name:
         required: true
         type: string
       configs:
@@ -34,19 +34,19 @@ jobs:
         run: chmod -R 777 $GITHUB_WORKSPACE
       - name: copy files
         run: |
-          cp build/tmp-*/deploy/images/*/pantavisor-starter*.rootfs.wic.* .
+          cp build/tmp-*/deploy/images/*/pantavisor-starter*.rootfs.wic* .
           cp build/tmp-*/deploy/images/*/*pvrexport.tgz .
       - name: Archive image artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pantavisor-starter-${{ inputs.arch }}
+          name: pantavisor-starter-${{ inputs.machine_name }}
           path: |
-            pantavisor-starter*.wic.*
+            pantavisor-starter*.wic*
 
       - name: Archive pvrexport artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pvrexports-${{ inputs.arch }}
+          name: pvrexports-${{ inputs.machine_name }}
           path: |
             *pvrexport.tgz
 

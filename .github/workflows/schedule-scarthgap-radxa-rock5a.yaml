@@ -1,0 +1,15 @@
+name: 'Schedule - radxa-rock5a-scarthgap'
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "15 */8 * * *"
+
+jobs:
+
+  build-radxa-rock5a-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/radxa-rock5a-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: radxa-rock5a-scarthgap
+    secrets: inherit
