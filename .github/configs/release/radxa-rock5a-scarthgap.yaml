@@ -2,18 +2,21 @@ header:
     version: 16
 _source_dir: .
 repos:
-    meta-raspberrypi:
-        commit: 8767e2ff80ec3b09cd70dd22cdb18e783ab20d7b
+    meta-rockchip:
+        commit: dd96690e1d88f18e895f4faec2724578b36e107e
         patches:
-            uboot-env:
-                path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
+            wks-root-label:
+                path: patches/meta-rockchip-radxa/0001-wic-Fix-root-label.patch
                 repo: meta-pantavisor
-        path: layers/meta-raspberrypi
-        url: https://github.com/agherzan/meta-raspberrypi
-    meta-qt5:
-        commit: 9ae2fe2696b10f5dc4253c4f467dc388139860bd
-        path: layers/meta-qt5
-        url: https://github.com/meta-qt5/meta-qt5/
+        path: layers/meta-rockchip-radxa
+        url: https://github.com/radxa/meta-rockchip.git
+    meta-arm:
+        commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
+        layers:
+            meta-arm:
+            meta-arm-toolchain:
+        path: layers/meta-arm
+        url: git://git.yoctoproject.org/meta-arm
     meta-pantavisor:
     poky:
         url: https://github.com/yoctoproject/poky.git
@@ -43,10 +46,12 @@ repos:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
 local_conf_header:
-    platform-raspberrypi: |
-        LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
-        RPI_USE_U_BOOT = "1"
-        ENABLE_UART = "1"
+    platform-rockchip: |
+        PV_UBOOT_AUTOFDT = "1"
+        # keep rockchip prefix in dtb
+        # otherwise fit configuration doesn't fit
+        # with fdtfile varible and board won't boot
+        KERNEL_DTBVENDORED = "1"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -71,7 +76,7 @@ local_conf_header:
         PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: raspberrypi-armv8
+machine: rock-5a
 target:
 - pantavisor-starter
 build_system: oe

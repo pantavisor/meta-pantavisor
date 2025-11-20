@@ -1,0 +1,15 @@
+name: 'Schedule - sunxi-bananapi-m2-berry-scarthgap'
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "15 */8 * * *"
+
+jobs:
+
+  build-sunxi-bananapi-m2-berry-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: sunxi-bananapi-m2-berry-scarthgap
+    secrets: inherit

@@ -9,4 +9,4 @@ local_conf_header:
     EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     INHERIT += "rm_work"
 target:
-- pantavisor-remix
+- pantavisor-starter

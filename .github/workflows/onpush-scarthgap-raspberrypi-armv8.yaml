@@ -1,4 +1,5 @@
-name: 'Build On Push'
+
+name: 'Onpush - raspberrypi-armv8-scarthgap'
 
 on:
   push:
@@ -11,8 +12,8 @@ on:
 jobs:
 
   build-raspberrypi-armv8-scarthgap:
-    uses: ./.github/workflows/buildkas.yaml
+    uses: ./.github/workflows/buildkas-starter.yaml
     with:
       configs: .github/configs/release/raspberrypi-armv8-scarthgap.yaml:.github/configs/shared-vols.yaml
-      name: raspberrypi-armv8-scarthgap
+      machine_name: raspberrypi-armv8-scarthgap
     secrets: inherit

@@ -1,0 +1,15 @@
+name: 'Schedule - imx8qxp-b0-mek-scarthgap'
+
+on:
+  workflow_dispatch:
+  schedule:
+   - cron: "15 */8 * * *"
+
+jobs:
+
+  build-imx8qxp-b0-mek-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: imx8qxp-b0-mek-scarthgap
+    secrets: inherit
