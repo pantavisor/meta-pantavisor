@@ -4,8 +4,8 @@ set -e
 
 targetdir=$1
 
-yocto_branch=$(jq -r .yocto_branch /home/ferlzc/Builds/meta-pantavisor/.github/machines.json)
-machines=$(jq -r .machines[]  /home/ferlzc/Builds/meta-pantavisor/.github/machines.json)
+yocto_branch=$(jq -r .yocto_branch .github/machines.json)
+machines=$(jq -r .machines[] .github/machines.json)
 
 echo "Processing machines:
 
