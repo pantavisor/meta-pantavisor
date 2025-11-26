@@ -25,5 +25,5 @@ mount | grep old | awk '{print $3}' | sort -r | while read -r line; do
 	umount $line || umount -l $line
 done
 
-pantavisor --cmdline "pv_control.remote=0 pv_log.server.outputs=filetree"
+pantavisor --cmdline "PV_CONTROL_REMOTE=0 PV_LOG_SERVER_OUTPUTS=filetree"
 
