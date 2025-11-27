@@ -4,9 +4,7 @@ on:
   push:
     paths:
       - '**'
-      - '.github/configs/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
 
 jobs:

@@ -12,5 +12,9 @@
   "onpush": [
     "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
     "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
+  ],
+  "ontag": [
+    "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+    "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
   ]
 }
