@@ -5,29 +5,34 @@ set -e
 create_files() {
 
     workflow_type=$1
-    
+
     YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
-    
+
     jq -c ".machines[] | select(.workflows | contains([\"$workflow_type\"]))" .github/machines.json | while read -r machine; do
         MACHINE=$(echo "$machine" | jq -r .name)
         BUILD_TARGET=$(echo "$machine" | jq -r '.build_target // "pantavisor-starter"')
         OUTPUT=$(echo "$machine" | jq -r '.output // "pantavisor-starter*.rootfs.wic*"')
-        
+
+        SDK=$(echo "$machine" | jq -r '.sdk' )
+        if [ "$SDK" != 1 ]; then
+            SDK=0
+        else
+            SDK=1
+        fi
+
         echo "new $workflow_type workflow for: $MACHINE"
-        
-        WORKFLOW=$workflow_type-$YOCTO_BRANCH-$MACHINE
         cat .github/template/$workflow_type.yaml | \
-            sed "s;!MACHINE;$MACHINE;g" | \
-            sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" | \
-            sed "s;!BUILD_TARGET;$BUILD_TARGET;g" | \
-            sed "s;!WORKFLOW;$WORKFLOW;g" | \
-            sed "s;!OUTPUT;$OUTPUT;g" > .github/workflows/$workflow_type-$YOCTO_BRANCH-$MACHINE.yaml
-    done
+        sed "s;!MACHINE;$MACHINE;g" | \
+        sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" | \
+        sed "s;!BUILD_TARGET;$BUILD_TARGET;g" | \
+        sed "s;!SDK;$SDK;g" | \
+        sed "s;!OUTPUT;$OUTPUT;g" > .github/workflows/$workflow_type-$YOCTO_BRANCH-$MACHINE.yaml
+
+        done
 }
 
 rm -f .github/workflows/tag*
 rm -f .github/workflows/manual*
-rm -f .github/workflows/schedule*
 rm -f .github/workflows/onpush*
 
 create_files manual

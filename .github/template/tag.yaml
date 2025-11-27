@@ -8,7 +8,6 @@ on:
       - '.github/configs/**'
       - '.github/workflows/!WORKFLOW.yaml'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
     tags:
       - 0*
@@ -16,10 +15,11 @@ on:
 jobs:
 
   build-!MACHINE-!YOCTO_BRANCH:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/!MACHINE-!YOCTO_BRANCH.yaml:.github/configs/shared-vols.yaml
       machine_name: !MACHINE-!YOCTO_BRANCH
       build_target: !BUILD_TARGET
       output: !OUTPUT
+      sdk: !SDK
     secrets: inherit

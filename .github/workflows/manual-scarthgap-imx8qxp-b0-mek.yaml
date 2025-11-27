@@ -12,4 +12,5 @@ jobs:
       machine_name: imx8qxp-b0-mek-scarthgap
       build_target: pantavisor-starter
       output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
     secrets: inherit

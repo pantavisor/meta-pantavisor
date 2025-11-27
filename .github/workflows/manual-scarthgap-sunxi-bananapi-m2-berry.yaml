@@ -12,4 +12,5 @@ jobs:
       machine_name: sunxi-bananapi-m2-berry-scarthgap
       build_target: pantavisor-starter
       output: pantavisor-starter*.rootfs.wic*
+      sdk: 1
     secrets: inherit

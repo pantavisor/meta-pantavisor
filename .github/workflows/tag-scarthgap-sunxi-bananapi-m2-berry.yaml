@@ -6,9 +6,8 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
-      - '.github/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml'
+      - '.github/workflows/!WORKFLOW.yaml'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
     tags:
       - 0*
@@ -16,10 +15,11 @@ on:
 jobs:
 
   build-sunxi-bananapi-m2-berry-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: sunxi-bananapi-m2-berry-scarthgap
       build_target: pantavisor-starter
       output: pantavisor-starter*.rootfs.wic*
+      sdk: 1
     secrets: inherit

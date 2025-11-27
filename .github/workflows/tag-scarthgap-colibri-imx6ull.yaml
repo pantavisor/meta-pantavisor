@@ -6,9 +6,8 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
-      - '.github/workflows/tag-scarthgap-colibri-imx6ull.yaml'
+      - '.github/workflows/!WORKFLOW.yaml'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
     tags:
       - 0*
@@ -16,10 +15,11 @@ on:
 jobs:
 
   build-colibri-imx6ull-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: colibri-imx6ull-scarthgap
       build_target: pantavisor-starter
       output:  pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz pantavisor-README.md
+      sdk: 0
     secrets: inherit

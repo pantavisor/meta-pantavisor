@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 7d83a350d8b28498321a481a2a1c51bb4afb48e9
+        commit: 902dde8c5bd29bb507ac8d37772565a6c9ab77cd
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: 8ca6492e748fafda97d1c34a2ff94e70ff37506f
+        commit: a1c9e4aa904f7699523468be51b07ea5bdf872cf
         patches:
             add-marketing-png-image:
                 path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
@@ -31,7 +31,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 342f8679e6ee0dbf321f6542fc4bf061f6764272
+        commit: e43ed4b34727f351a63232013de205b27f09180f
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-support-to-pv_tezi.patch
@@ -51,14 +51,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 9497778a4d756daa29c4fa8d45d1a242d63ab8cc
+        commit: 72983ac391008ebceb45edc7a8f0f6d5f4fe715c
     meta-pantavisor:
     meta-virtualization:
-        commit: 17ac21e7d7f6f40a87618b22278b63bcfa14dbf2
+        commit: f92518e20530edfebca45e4170e11460949a5303
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 7ed4330bcf1ecd4aa34bfbe1fd7079381b62b1e7
+        commit: 2b26d30fc7f478f5735d514f0c1bc28f6a4148b6
         layers:
             meta-filesystems:
             meta-networking:
@@ -93,8 +93,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
     __menu_config_vars: |-
-        PVROOT_IMAGE = "yes"
-        PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
 machine: colibri-imx6ull

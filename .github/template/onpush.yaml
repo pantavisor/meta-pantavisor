@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - '**'
-      - '.github/configs/**'
-      - '.github/workflows/!WORKFLOW.yaml'
+      - '.github/configs/release/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
+    tags-ignore:
+      - '**'
 
 jobs:
 
@@ -19,4 +19,5 @@ jobs:
       machine_name: !MACHINE-!YOCTO_BRANCH
       build_target: !BUILD_TARGET
       output: !OUTPUT
+      sdk: !SDK
     secrets: inherit

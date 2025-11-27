@@ -14,7 +14,8 @@
 		{
 			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "sunxi-bananapi-m2-berry",
-			"workflows": ["manual", "tag", "onpush"]
+			"workflows": ["manual", "tag", "onpush"],
+			"sdk": 1
 		},
 		{
 			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
@@ -24,7 +25,8 @@
 		{
 			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
-			"workflows": ["manual", "tag", "onpush"]
+			"workflows": ["manual", "tag", "onpush"],
+			"sdk": 1
 		},
 		{
 			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
