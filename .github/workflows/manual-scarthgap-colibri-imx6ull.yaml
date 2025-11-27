@@ -12,4 +12,5 @@ jobs:
       machine_name: colibri-imx6ull-scarthgap
       build_target: pantavisor-starter
       output:  pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz pantavisor-README.md
+      sdk: 0
     secrets: inherit

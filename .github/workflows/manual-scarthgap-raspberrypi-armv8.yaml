@@ -12,4 +12,5 @@ jobs:
       machine_name: raspberrypi-armv8-scarthgap
       build_target: pantavisor-starter
       output: pantavisor-starter*.rootfs.wic*
+      sdk: 1
     secrets: inherit

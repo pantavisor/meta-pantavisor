@@ -4,8 +4,6 @@ header:
 local_conf_header:
   __menu_config_locals: ''
   __menu_config_vars: |-
-    PVROOT_IMAGE = "yes"
-    PVROOT_IMAGE_BSP = "core-image-base"
     EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
     INHERIT += "rm_work"
 target:

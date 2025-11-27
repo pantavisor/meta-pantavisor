@@ -12,4 +12,5 @@ jobs:
       machine_name: sunxi-orange-pi-3lts-scarthgap
       build_target: pantavisor-starter
       output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
     secrets: inherit

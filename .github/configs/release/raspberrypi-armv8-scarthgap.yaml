@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: cd677051d18d4af2f043ac1ab58509ae5f594cf6
+        commit: 2c646d29912dcc873469a57b1c207e1549c5094d
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -27,14 +27,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 9497778a4d756daa29c4fa8d45d1a242d63ab8cc
+        commit: 72983ac391008ebceb45edc7a8f0f6d5f4fe715c
     meta-pantavisor:
     meta-virtualization:
-        commit: 17ac21e7d7f6f40a87618b22278b63bcfa14dbf2
+        commit: f92518e20530edfebca45e4170e11460949a5303
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 7ed4330bcf1ecd4aa34bfbe1fd7079381b62b1e7
+        commit: 2b26d30fc7f478f5735d514f0c1bc28f6a4148b6
         layers:
             meta-filesystems:
             meta-networking:
@@ -67,8 +67,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
     __menu_config_vars: |-
-        PVROOT_IMAGE = "yes"
-        PVROOT_IMAGE_BSP = "core-image-base"
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
 machine: raspberrypi-armv8

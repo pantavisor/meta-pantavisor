@@ -1,0 +1,152 @@
+name: 'Build Pantavisor Starter Image'
+
+on:
+  workflow_call:
+    inputs:
+      machine_name:
+        required: true
+        type: string
+      configs:
+        required: true
+        type: string
+      build_target:
+        required: false
+        type: string
+      output:
+        required: false
+        type: string
+      sdk:
+        required: false
+        type: number
+
+jobs:
+  build:
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup workspace
+        run: |
+         chown -R builder:builder $RUNNER_WORKSPACE
+         chown -R builder:builder /__w
+         mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+         su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+      - name: build
+        run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake ${{ inputs.build_target }}' "
+      - name: build-sdk
+        run: |
+           if [ "${{ inputs.sdk }}" = 1 ]; then
+             su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
+           fi
+      # Organize file for upload.sh
+      - name: copy files
+        run: |
+         chmod -R 777 $GITHUB_WORKSPACE
+
+         BUILD_BASE_DIR=$(echo build/tmp-*/deploy/images/*)
+
+         mkdir -p images
+         for pattern in ${{ inputs.output }}; do
+            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} images \;
+         done
+
+         mkdir -p pvexports
+         find "${BUILD_BASE_DIR}" -name "*pvrexport.tgz" -exec cp {} pvexports \; 2>/dev/null || true
+
+
+         BUILD_SDK_DIR=$(ls -d build/tmp-*/deploy/sdk/ 2>/dev/null | head -n 1)
+
+         if [ -n "$BUILD_SDK_DIR" ] && [ -d "$BUILD_SDK_DIR" ]; then
+            FILES=$(find "$BUILD_SDK_DIR" -name "panta*.sh" 2>/dev/null)
+            if [ -n "$FILES" ]; then
+               mkdir -p sdk
+               echo "$FILES" | xargs -r -I {} cp {} sdk/
+            fi
+         else
+            echo "Warning: no sdk folder found - ignoring"
+         fi
+
+      - name: Archive wic artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
+          path: |
+             images/${{ inputs.output }}
+
+      - name: Archive all pvrexport artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pvrexports-${{ inputs.machine_name }}
+          path: |
+            pvexports/*pvrexport.tgz
+          if-no-files-found: warn
+
+      - name: Archive bsp pvrexport artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pantavisor-bsp-${{ inputs.machine_name }}
+          path: |
+            pvexports/pantavisor-bsp*
+          if-no-files-found: warn
+
+      - name: Archive tezi tar artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
+          path: |
+            images/*pv_teziimg.tar.xz
+          if-no-files-found: warn
+
+      - name: Archive sdk tar artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-artifact-${{ inputs.machine_name }}
+          path: sdk/panta*.sh
+          if-no-files-found: warn
+
+      - name: Generate Release Notes
+        run: |
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
+
+          echo "* **Machine:** ${{ inputs.machine_name }}" >> notes.md
+
+          echo "* **Images:**" >> notes.md
+          for f in images/${{ inputs.output }}; do
+            if [ -e "$f" ]; then
+              FILENAME=$(basename "$f")
+              echo "  - [$FILENAME]($BASE_URL/$FILENAME)" >> notes.md
+            fi
+          done
+
+          echo "* **BSP:**" >> notes.md
+          for f in pvexports/pantavisor-bsp*; do
+            if [ -e "$f" ]; then
+              FILENAME=$(basename "$f")
+              echo "  - [$FILENAME]($BASE_URL/$FILENAME)" >> notes.md
+            fi
+          done
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+         body_path: notes.md
+         append_body: true
+         files: |
+            images/${{ inputs.output }}
+            pvexports/pantavisor-bsp*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to S3
+        run: |
+          .github/scripts/upload.sh \
+           ${{ secrets.AWS_ACCESS_KEY_ID }} \
+           ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+           ${{ secrets.AWS_S3_BUCKET }} \
+           ${{ github.ref_name }} \
+           ${{ inputs.machine_name }} \

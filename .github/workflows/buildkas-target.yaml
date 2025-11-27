@@ -15,6 +15,9 @@ on:
       output:
         required: false
         type: string
+      sdk:
+        required: false
+        type: number
 
 jobs:
   build:
@@ -26,27 +29,31 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
-      - name: chown
-        run: chown -R builder:builder $RUNNER_WORKSPACE
-      - name: chowna
-        run: chown -R builder:builder /__w
-      - name: shared
-        run: mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
-      - name: getgit
-        run: su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
-      - name: Build Kas
+      - name: setup workspace
+        run: |
+          chown -R builder:builder $RUNNER_WORKSPACE
+          chown -R builder:builder /__w
+          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+      - name: build
         run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
-      - name: chmod
-        run: chmod -R 777 $GITHUB_WORKSPACE
+      - name: build with sdk
+        run: |
+           if [ "${{ inputs.sdk }}" = 1 ]; then
+           su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
+           fi
       - name: copy files
         run: |
+          chmod -R 777 $GITHUB_WORKSPACE
           BUILD_BASE_DIR=$(echo build/tmp-*/deploy/images/*)
           for pattern in ${{ inputs.output }}; do
             find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \;
           done
           find build/tmp-*/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
 
+          find build/tmp-*/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
           ls -l .
+
 
       - name: Archive wic artifacts
         uses: actions/upload-artifact@v4
@@ -55,15 +62,7 @@ jobs:
           path: |
              ${{ inputs.output }}
 
-      - name: Archive tezi tar artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}-tezi
-          path: |
-            *pv_teziimg.tar.xz
-          if-no-files-found: warn
-
-      - name: Archive pvrexport artifacts
+      - name: Archive all pvrexport artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pvrexports-${{ inputs.machine_name }}
@@ -71,3 +70,25 @@ jobs:
             *pvrexport.tgz
           if-no-files-found: warn
 
+      - name: Archive bsp pvrexport artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pantavisor-bsp-${{ inputs.machine_name }}
+          path: |
+            pantavisor-bsp*
+          if-no-files-found: warn
+
+      - name: Archive tezi tar artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
+          path: |
+            *pv_teziimg.tar.xz
+          if-no-files-found: warn
+
+      - name: Archive sdk tar artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-artifact-${{ inputs.machine_name }}
+          path: panta*.sh
+          if-no-files-found: warn

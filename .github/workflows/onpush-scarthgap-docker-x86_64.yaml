@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - '**'
-      - '.github/configs/**'
-      - '.github/workflows/onpush-scarthgap-docker-x86_64.yaml'
+      - '.github/configs/release/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
+    tags-ignore:
+      - '**'
 
 jobs:
 
@@ -19,4 +19,5 @@ jobs:
       machine_name: docker-x86_64-scarthgap
       build_target: pantavisor-appengine-distro
       output: pantavisor-appengine-distro-*.tar.gz
+      sdk: 0
     secrets: inherit

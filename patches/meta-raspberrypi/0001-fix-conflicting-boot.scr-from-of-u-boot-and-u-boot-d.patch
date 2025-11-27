@@ -1,16 +1,15 @@
-From a896d9572938a7cb8fe4e77f21b4ef972eea2f78 Mon Sep 17 00:00:00 2001
-From: Alexander Sack <asac@pantacor.com>
-Date: Mon, 22 Apr 2024 20:21:43 +0000
-Subject: [PATCH] fix conflicting boot.scr from of u-boot and
- u-boot-default-script recipe.
+From 6a7d060dd2ba94f7dbf33e632f4d8e3837d080a6 Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Tue, 13 Jan 2026 16:36:25 -0300
+Subject: [PATCH] Do not add u-boot-default-script to DEPENDS if UBOOT_ENV is
+ set.
 
-Do not add u-boot-default-script to DEPENDS if UBOOT_ENV is set.
 ---
  recipes-bsp/u-boot/u-boot_%.bbappend | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/recipes-bsp/u-boot/u-boot_%.bbappend b/recipes-bsp/u-boot/u-boot_%.bbappend
-index e575569..bf16179 100644
+index e990879..3d50566 100644
 --- a/recipes-bsp/u-boot/u-boot_%.bbappend
 +++ b/recipes-bsp/u-boot/u-boot_%.bbappend
 @@ -7,7 +7,7 @@ SRC_URI:append:rpi = " \
@@ -20,8 +19,8 @@ index e575569..bf16179 100644
 -DEPENDS:append:rpi = " u-boot-default-script"
 +DEPENDS:append:rpi = " ${@oe.utils.conditional('UBOOT_ENV', '', 'u-boot-default-script', '', d)}"
  
- do_install:append:rpi () {
-     install -d ${D}${sysconfdir}
+ do_configure:append:raspberrypi5() {
+     # Remove any existing CONFIG_BOOTDELAY= lines
 -- 
-2.34.1
+2.43.0
 
