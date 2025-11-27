@@ -6,7 +6,6 @@ on:
       - '**'
       - '.github/configs/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
 
 jobs:

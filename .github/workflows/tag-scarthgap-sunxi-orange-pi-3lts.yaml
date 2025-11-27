@@ -7,7 +7,6 @@ on:
       - '**'
       - '.github/configs/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
     tags:
       - 0*
