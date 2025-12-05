@@ -10,6 +10,11 @@ OCI_IMAGE_TAG = "${DOCKER_IMAGE_TAG}"
 # ==============================================================================
 do_umoci_config[depends] += "skopeo-native:do_populate_sysroot"
 
+IMAGE_CMD:oci:append() {
+	image_tag="${@d.getVar("OCI_IMAGE_TAG").replace(":", "_")}"
+	ln -sf $image_name ${IMAGE_BASENAME}-$image_tag-oci
+}
+
 python do_umoci_config() {
     import shlex
     import subprocess
@@ -70,12 +75,16 @@ python do_umoci_config() {
     docker_image_extra_tags = d.getVar("DOCKER_IMAGE_EXTRA_TAGS")
     image_basename = d.getVar("IMAGE_BASENAME")
     
+    docker_tar_path = f"{image_basename}-{oci_image_tag}-docker.tar"
+    if os.path.exists(docker_tar_path):
+        os.remove(docker_tar_path)
+
     # Build the skopeo command
     skopeo_cmd = [
         "skopeo", "copy",
         f"--additional-tag={docker_image_name}:{docker_image_tag}",
-        f"oci:{pn}-{oci_image_tag}-oci:{oci_image_tag}",
-        f"docker-archive:{image_basename}-{oci_image_tag}-docker.tar"
+        f"oci:{image_name}:{oci_image_tag}",
+        f"docker-archive:{docker_tar_path}"
     ]
 
     # Collect all tags for symlink creation
