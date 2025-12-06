@@ -1,0 +1,10 @@
+_source_dir: .
+header:
+  version: 16
+local_conf_header:
+  __menu_config_locals: ''
+  __menu_config_vars: |-
+    EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+    INHERIT += "rm_work"
+target:
+- pantavisor-appengine-distro

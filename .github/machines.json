@@ -7,10 +7,12 @@
     "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
     "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
     "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
+    "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+    "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml"
   ],
   "onpush": [
     "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
+    "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+    "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml"
   ]
 }

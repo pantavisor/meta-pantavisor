@@ -1,0 +1,13 @@
+name: "MAN: docker-x86_64-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-docker-x86_64-scarthgap:
+    uses: ./.github/workflows/buildkas-starter.yaml
+    with:
+      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+    secrets: inherit
