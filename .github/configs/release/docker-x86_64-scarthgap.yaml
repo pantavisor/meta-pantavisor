@@ -1,0 +1,76 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    poky:
+        layers:
+            meta-yocto-bsp:
+            meta-poky:
+            meta:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        commit: 9497778a4d756daa29c4fa8d45d1a242d63ab8cc
+    meta-pantavisor:
+    meta-virtualization:
+        commit: 17ac21e7d7f6f40a87618b22278b63bcfa14dbf2
+        path: layers/meta-virtualization
+        url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: 89a01c3d9ad1f8fce6aeb4dd0e694cfa28d42099
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-generic: |
+        PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
+        MACHINE_FEATURES:remove = "efi"
+        IMAGE_CLASSES:append = " image-oci oci2docker"
+        IMAGE_FSTYPES = "container oci"
+        IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
+        DISTRO_FEATURES += "virtualization"
+        DISTRO_FEATURES += "vmsep"
+        #    PANTAVISOR_FEATURES += "appengine"
+        # DISTRO_FEATURES += "staticdev"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-appengine "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:remove = "autogrow"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: docker-x86_64
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-appengine-distro
+build_system: oe
+distro: panta-appengine
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
