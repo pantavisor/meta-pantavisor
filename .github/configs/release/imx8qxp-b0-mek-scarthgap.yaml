@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: b79cf94b4d53d75ddc4b4f468c1b1ad42a3fffe2
+        commit: 89a01c3d9ad1f8fce6aeb4dd0e694cfa28d42099
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -57,10 +57,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: d71d81814adae2c51fdaf42f62c146041545c7fd
+        commit: 9497778a4d756daa29c4fa8d45d1a242d63ab8cc
     meta-pantavisor:
     meta-virtualization:
-        commit: d75faad37ae3cbbfe31dffaa6432553fc5450838
+        commit: 17ac21e7d7f6f40a87618b22278b63bcfa14dbf2
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:
