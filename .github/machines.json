@@ -36,6 +36,13 @@
 			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "radxa-rock5a",
 			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml",
+			"build_target": "pantavisor-appengine-distro",
+			"output": "pantavisor-appengine-distro-*.tar.gz",
+			"name": "docker-x86_64",
+			"workflows": ["manual", "tag", "onpush"]
 		}
 	]
 }
