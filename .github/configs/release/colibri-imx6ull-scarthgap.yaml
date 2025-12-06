@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: 1ca93f67373fc76a9157a90ae1c8f596333ea012
+        commit: af704a235074867270bf23aaa16a62aaf72e5a3c
         patches:
             add-pv-tezi:
                 path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
@@ -25,7 +25,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: c8b1e7c44c930edd8ff889ad01ab4a5f636948d8
+        commit: 6cf7ef9f268b4efc2edcfde985aa5c90f576b574
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
@@ -45,14 +45,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: d71d81814adae2c51fdaf42f62c146041545c7fd
+        commit: 9497778a4d756daa29c4fa8d45d1a242d63ab8cc
     meta-pantavisor:
     meta-virtualization:
-        commit: d75faad37ae3cbbfe31dffaa6432553fc5450838
+        commit: 17ac21e7d7f6f40a87618b22278b63bcfa14dbf2
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: b79cf94b4d53d75ddc4b4f468c1b1ad42a3fffe2
+        commit: 89a01c3d9ad1f8fce6aeb4dd0e694cfa28d42099
         layers:
             meta-filesystems:
             meta-networking:
