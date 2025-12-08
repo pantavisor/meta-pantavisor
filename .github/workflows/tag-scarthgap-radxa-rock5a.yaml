@@ -14,8 +14,10 @@ on:
 jobs:
 
   build-radxa-rock5a-scarthgap:
-    uses: ./.github/workflows/buildkas-starter.yaml
+    uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/radxa-rock5a-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: radxa-rock5a-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
     secrets: inherit

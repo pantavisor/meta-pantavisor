@@ -14,8 +14,10 @@ on:
 jobs:
 
   build-colibri-imx6ull-scarthgap:
-    uses: ./.github/workflows/buildkas-starter.yaml
+    uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: colibri-imx6ull-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
     secrets: inherit

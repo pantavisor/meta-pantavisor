@@ -1,36 +1,33 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-targetdir=$1
-
-configsuffix=:.github/configs/build-base-starter.yaml
-
-
-YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
-ALL_MACHINES=$(jq -r .machines[] .github/machines.json)
-PUSH_MACHINES=$(jq -r .onpush[] .github/machines.json)
-TAG_MACHINES=$(jq -r .ontag[] .github/machines.json)
-
 create_files() {
-	base=$1
-	shift 1
-	machines=$@
-	for m in $machines; do
-		MACHINE=`echo $m | sed 's/.*machines.//;s/.yaml:.*//'`
-		echo "new $base workflow for: $MACHINE"
-		cat .github/template/$base.yaml | sed "s;!MACHINE;$MACHINE;g" \
-	| sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" > .github/workflows/$base-$YOCTO_BRANCH-$MACHINE.yaml 
-	done
-} 
+
+    workflow_type=$1
+    
+    YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
+    
+    jq -c ".machines[] | select(.workflows | contains([\"$workflow_type\"]))" .github/machines.json | while read -r machine; do
+        MACHINE=$(echo "$machine" | jq -r .name)
+        BUILD_TARGET=$(echo "$machine" | jq -r '.build_target // "pantavisor-starter"')
+        OUTPUT=$(echo "$machine" | jq -r '.output // "pantavisor-starter*.rootfs.wic*"')
+        
+        echo "new $workflow_type workflow for: $MACHINE"
+        
+        cat .github/template/$workflow_type.yaml | \
+            sed "s;!MACHINE;$MACHINE;g" | \
+            sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" | \
+            sed "s;!BUILD_TARGET;$BUILD_TARGET;g" | \
+            sed "s;!OUTPUT;$OUTPUT;g" > .github/workflows/$workflow_type-$YOCTO_BRANCH-$MACHINE.yaml
+    done
+}
 
 rm -f .github/workflows/tag*
 rm -f .github/workflows/manual*
 rm -f .github/workflows/schedule*
 rm -f .github/workflows/onpush*
 
-create_files tag $TAG_MACHINES
-create_files manual $ALL_MACHINES
-#create_files schedule $ALL_MACHINES
-
-create_files onpush $PUSH_MACHINES
+create_files manual
+create_files tag
+create_files onpush

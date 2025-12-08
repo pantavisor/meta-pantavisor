@@ -14,8 +14,10 @@ on:
 jobs:
 
   build-sunxi-bananapi-m2-berry-scarthgap:
-    uses: ./.github/workflows/buildkas-starter.yaml
+    uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: sunxi-bananapi-m2-berry-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
     secrets: inherit
