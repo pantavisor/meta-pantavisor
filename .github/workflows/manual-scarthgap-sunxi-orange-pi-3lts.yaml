@@ -6,8 +6,10 @@ on:
 jobs:
 
   build-sunxi-orange-pi-3lts-scarthgap:
-    uses: ./.github/workflows/buildkas-starter.yaml
+    uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: sunxi-orange-pi-3lts-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
     secrets: inherit
