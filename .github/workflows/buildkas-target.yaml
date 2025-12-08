@@ -1,4 +1,4 @@
-name: 'Build Pantavisor Starter Image'
+name: 'Build Target Image'
 
 on:
   workflow_call:
@@ -8,6 +8,12 @@ on:
         type: string
       configs:
         required: true
+        type: string
+      build_target:
+        required: false
+        type: string
+      output:
+        required: false
         type: string
 
 jobs:
@@ -29,19 +35,20 @@ jobs:
       - name: getgit
         run: su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
       - name: Build Kas
-        run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target pantavisor-starter "
+        run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
       - name: chmod
         run: chmod -R 777 $GITHUB_WORKSPACE
       - name: copy files
         run: |
-          cp build/tmp-*/deploy/images/*/pantavisor-starter*.rootfs.wic* .
-          cp build/tmp-*/deploy/images/*/*pvrexport.tgz .
+          cp build/tmp-*/deploy/images/*/${{ inputs.output }} .
+          find build/tmp-*/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
+
       - name: Archive image artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pantavisor-starter-${{ inputs.machine_name }}
+          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
-            pantavisor-starter*.wic*
+            ${{ inputs.output }}
 
       - name: Archive pvrexport artifacts
         uses: actions/upload-artifact@v4
@@ -49,4 +56,5 @@ jobs:
           name: pvrexports-${{ inputs.machine_name }}
           path: |
             *pvrexport.tgz
+          if-no-files-found: warn
 

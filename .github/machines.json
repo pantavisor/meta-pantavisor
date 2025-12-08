@@ -1,16 +1,47 @@
 {
-  "yocto_branch": "scarthgap",
-  "machines": [
-    "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/sunxi-orange-pi-r1.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
-  ],
-  "onpush": [
-    "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
-    "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml"
-  ]
+	"yocto_branch": "scarthgap",
+	"machines": [
+		{
+			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "sunxi-orange-pi-3lts",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/sunxi-orange-pi-r1.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "sunxi-orange-pi-r1",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "sunxi-bananapi-m2-berry",
+			"workflows": ["manual", "tag", "onpush"]
+		},
+		{
+			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "imx8qxp-b0-mek",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "raspberrypi-armv8",
+			"workflows": ["manual", "tag", "onpush"]
+		},
+		{
+			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "colibri-imx6ull",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "radxa-rock5a",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml",
+			"build_target": "pantavisor-appengine-distro",
+			"output": "pantavisor-appengine-distro-*.tar.gz",
+			"name": "docker-x86_64",
+			"workflows": ["manual", "tag"]
+		}
+	]
 }
