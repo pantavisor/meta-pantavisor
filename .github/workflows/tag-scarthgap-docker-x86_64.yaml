@@ -7,7 +7,6 @@ on:
       - '**'
       - '.github/configs/**'
       - '!.github/scripts/**'
-      - '!.github/workflows/**'
       - '!.github/templates/**'
     tags:
       - 0*
@@ -15,7 +14,7 @@ on:
 jobs:
 
   build-docker-x86_64-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: docker-x86_64-scarthgap

@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - '**'
-      - '.github/configs/**'
       - '!.github/scripts/**'
       - '!.github/templates/**'
 

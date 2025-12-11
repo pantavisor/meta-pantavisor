@@ -14,7 +14,7 @@ on:
 jobs:
 
   build-sunxi-bananapi-m2-berry-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: sunxi-bananapi-m2-berry-scarthgap

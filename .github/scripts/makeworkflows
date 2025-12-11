@@ -25,7 +25,6 @@ create_files() {
 
 rm -f .github/workflows/tag*
 rm -f .github/workflows/manual*
-rm -f .github/workflows/schedule*
 rm -f .github/workflows/onpush*
 
 create_files manual

@@ -14,7 +14,7 @@ on:
 jobs:
 
   build-imx8qxp-b0-mek-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/imx8qxp-b0-mek-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: imx8qxp-b0-mek-scarthgap

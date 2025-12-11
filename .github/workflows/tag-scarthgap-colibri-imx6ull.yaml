@@ -14,7 +14,7 @@ on:
 jobs:
 
   build-colibri-imx6ull-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: colibri-imx6ull-scarthgap

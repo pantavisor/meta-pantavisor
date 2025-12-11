@@ -14,7 +14,7 @@ on:
 jobs:
 
   build-sunxi-orange-pi-3lts-scarthgap:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: sunxi-orange-pi-3lts-scarthgap

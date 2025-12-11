@@ -14,7 +14,7 @@ on:
 jobs:
 
   build-!MACHINE-!YOCTO_BRANCH:
-    uses: ./.github/workflows/buildkas-target.yaml
+    uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: .github/configs/release/!MACHINE-!YOCTO_BRANCH.yaml:.github/configs/shared-vols.yaml
       machine_name: !MACHINE-!YOCTO_BRANCH

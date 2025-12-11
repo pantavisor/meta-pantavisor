@@ -1,4 +1,4 @@
-name: 'Build Target Image'
+name: 'Build Pantavisor Starter Image'
 
 on:
   workflow_call:
@@ -54,3 +54,12 @@ jobs:
             *pvrexport.tgz
           if-no-files-found: warn
 
+      - name: Upload to S3
+        run: |
+          .github/scripts/upload.sh \
+           ${{ secrets.AWS_ACCESS_KEY_ID }} \
+           ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+           ${{ secrets.AWS_S3_BUCKET }} \
+           ${{ github.ref_name }} \
+           ${{ inputs.machine_name }} \
+           ${{ inputs.output }} \
