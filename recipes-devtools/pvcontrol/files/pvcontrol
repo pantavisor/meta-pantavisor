@@ -19,8 +19,8 @@ fi
 CURL="$CURL_CMD ${CURL_ARGS:-$noprogress_arg -s -w "\\n%{http_code}" --connect-timeout 5 --max-time 240}"
 CURL_RAW="$CURL_CMD ${CURL_ARGS:-$noprogress_arg --connect-timeout 5 --max-time 240}"
 
-if [ -S "/var/run/pv/pv-ctrl" ]; then
-	SOCKET="/var/run/pv/pv-ctrl"
+if [ -S "/var/run/pantavisor/pv/pv-ctrl" ]; then
+	SOCKET="/var/run/pantavisor/pv/pv-ctrl"
 fi
 SOCKET=${SOCKET:-"/pantavisor/pv-ctrl"}
 
