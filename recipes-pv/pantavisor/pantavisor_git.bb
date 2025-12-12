@@ -23,13 +23,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "feature/appengine-in-tree"
+PANTAVISOR_BRANCH ??= "master"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "7d792dab5ecea30b38c791b300644ae6efd8040d"
+SRCREV = "6215246a6832edbd4694b648ae2cb21d525a32d2"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
