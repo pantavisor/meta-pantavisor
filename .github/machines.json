@@ -29,6 +29,7 @@
 		{
 			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "colibri-imx6ull",
+			"output": " pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz",
 			"workflows": ["manual", "tag"]
 		},
 		{
