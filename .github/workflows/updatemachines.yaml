@@ -1,4 +1,4 @@
-name: 'scheadule: update machines'
+name: 'schedule: update machines'
 
 on:
   workflow_dispatch:
@@ -10,7 +10,6 @@ on:
       - .github/workflows/updatemachines.yaml
     branches:
       - master
-      - feature/**
 
 jobs:
   updaterelease:
@@ -29,6 +28,8 @@ jobs:
       - run: git config --global user.email "pantavisor-meta@ci.pantavisor.io"
       - run: git config --global user.name "Pantavisor Meta Layer CI"
       - run: git checkout -b autopr/machine-update-$GITHUB_REF_NAME-next
-      - run: .github/scripts/makecommit && git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next && gh pr create --base $GITHUB_REF_NAME --fill 2>&1 | grep github.com.*pull || true
+      - name: make PR
+        if: github.ref_name == 'master'
+        run: .github/scripts/makecommit && git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next && gh pr create --base $GITHUB_REF_NAME --fill 2>&1 | grep github.com.*pull || true
         env:
           GH_TOKEN: ${{ github.token }}
