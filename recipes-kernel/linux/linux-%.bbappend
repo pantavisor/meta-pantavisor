@@ -38,6 +38,7 @@ PANTAVISOR_SRC_URI = " \
 	file://dm.cfg \
 	${TAILSCALE_KERNEL_SRC_URI} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
+    ${@bb.utils.contains('PANTAVISOR_FEATURES', 'pstore', 'file://pstore.cfg', '', d)} \
 "
 
 
@@ -48,6 +49,7 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 	${WORKDIR}/dm.cfg \
 	${TAILSCALE_KERNEL_FRAGMENT} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '${WORKDIR}/pantavisor-lz4.cfg', '', d)} \
+    ${@bb.utils.contains('PANTAVISOR_FEATURES', 'pstore', '${WORKDIR}/pstore.cfg', '', d)} \
 "
 
 SRC_URI:append = " \
