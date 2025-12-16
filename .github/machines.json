@@ -29,18 +29,12 @@
 		{
 			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "colibri-imx6ull",
+			"output": " pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz pantavisor-README.md",
 			"workflows": ["manual", "tag"]
 		},
 		{
 			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
 			"name": "radxa-rock5a",
-			"workflows": ["manual", "tag"]
-		},
-		{
-			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml",
-			"build_target": "pantavisor-appengine-distro",
-			"output": "pantavisor-appengine-distro-*.tar.gz",
-			"name": "docker-x86_64",
 			"workflows": ["manual", "tag"]
 		}
 	]
