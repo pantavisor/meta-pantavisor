@@ -1,0 +1,211 @@
+From 23e44a1a4ab00e0036d7c5b4dbbc01b11c23206a Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Tue, 16 Dec 2025 11:58:59 -0300
+Subject: [PATCH 1/3] support pvboot on tezi
+
+---
+ classes/image_type_pv_tezi.bbclass            | 113 ++++++++++++++++++
+ .../tezi-metadata/tezi-metadata_0.3.bb        |   6 +-
+ recipes-bsp/u-boot/u-boot-distro-boot.bb      |  11 +-
+ recipes-bsp/u-boot/u-boot-toradex-common.inc  |  12 ++
+ 4 files changed, 134 insertions(+), 8 deletions(-)
+ create mode 100644 classes/image_type_pv_tezi.bbclass
+
+diff --git a/classes/image_type_pv_tezi.bbclass b/classes/image_type_pv_tezi.bbclass
+new file mode 100644
+index 0000000..c233ea0
+--- /dev/null
++++ b/classes/image_type_pv_tezi.bbclass
+@@ -0,0 +1,113 @@
++inherit image_types
++
++IMAGE_TYPEDEP:pv_teziimg = "tar.xz"
++do_image_pv_teziimg[vardepsexclude] += "TEZI_ARTIFACTS"
++
++WKS_FILE_DEPENDS:append = " tezi-metadata"
++
++python tezi_pv_artifacts() {
++    import json
++    import time
++    import os
++    import glob
++
++    image_link  = d.getVar('IMAGE_LINK_NAME')
++    machine     = d.getVar('MACHINE')
++    deploy_dir  = d.getVar('DEPLOY_DIR_IMAGE')
++    workdir     = d.getVar('WORKDIR')
++    pn          = d.getVar('PN')
++    image_ver   = d.getVar('PV')
++    release_dt  = time.strftime('%Y-%m-%d')
++
++    complete_dir = os.path.join(workdir, f"deploy-{pn}-image-complete")
++    rootfs_path  = os.path.join(complete_dir, f"{image_link}.tar.xz")
++
++    uenv_path   = os.path.join(deploy_dir, "u-boot-initial-env")
++    uenv_file   = os.path.basename(uenv_path) if os.path.exists(uenv_path) else ""
++    uboot_file  = f"u-boot-nand-{machine}.imx"
++    uboot_path  = os.path.join(deploy_dir, uboot_file)
++
++    image_json = {
++        "config_format": 2,
++        "autoinstall": True,
++        "name": f"Pantavisor TEZI base installer for {machine}",
++        "description": "Pantavisor TEZI base image for Pantahub",
++        "version": image_ver,
++        "release_date": release_dt,
++        "u_boot_env": uenv_file,
++        "prepare_script": "prepare.sh",
++        "wrapup_script": "wrapup.sh",
++        "marketing": "marketing.tar",
++        "icon": "pantacor.png",
++        "supported_product_ids": ["0044", "0040", "0045", "0036"],
++        "mtddevs": [
++            {
++                "content": {
++                    "rawfile": {
++                        "filename": os.path.basename(uboot_path),
++                        "size": os.path.getsize(uboot_path) if os.path.exists(uboot_path) else 0
++                    }
++                },
++                "name": "u-boot1"
++            },
++            {
++                "ubivolumes": [],
++                "name": "ubi"
++            }
++        ]
++    }
++
++    if os.path.exists(rootfs_path):
++        image_json["mtddevs"][1]["ubivolumes"].append({
++            "content": {
++                "filesystem_type": "ubifs",
++                "uncompressed_size": os.path.getsize(rootfs_path),
++                "filename": "rootfs.tar.xz"
++            },
++            "name": "pvboot"
++        })
++
++    image_json_path = os.path.join(deploy_dir, "image.json")
++    with open(image_json_path, 'w') as f:
++        json.dump(image_json, f, indent=4)
++
++    artifacts = []
++    for fname in ["prepare.sh", "wrapup.sh", "pantacor.png", "pantavisor-README.md",
++                  "marketing.tar", uenv_file, uboot_file, "image.json"]:
++        full = os.path.join(deploy_dir, fname)
++        if os.path.exists(full):
++            artifacts.append(full)
++        elif fname.startswith("u-boot-nand"):
++            matches = glob.glob(os.path.join(deploy_dir, f"u-boot-nand*{machine}*.imx"))
++            if matches:
++                artifacts.append(matches[0])
++
++    if os.path.exists(rootfs_path):
++        artifacts.append(rootfs_path)
++
++    d.setVar("TEZI_ARTIFACTS", " ".join(artifacts))
++}
++
++do_image_pv_teziimg[prefuncs] += "tezi_pv_artifacts"
++
++IMAGE_CMD:pv_teziimg () {
++    bbnote "Creating pv-tezi image tarball (.tar.xz)..."
++
++    staging_dir="${WORKDIR}/teziimg-staging/${IMAGE_LINK_NAME}-pv-tezi"
++    mkdir -p "$staging_dir"
++
++    for f in ${TEZI_ARTIFACTS}; do
++        bbnote "Staging artifact: $f"
++        base=$(basename "$f")
++
++        if echo "$base" | grep -qE '\.rootfs\.tar\.xz$'; then
++            cp -L "$f" "$staging_dir/rootfs.tar.xz"
++        else
++            cp -L "$f" "$staging_dir/"
++        fi
++    done
++
++    tar -cJf ${IMGDEPLOYDIR}/${IMAGE_NAME}.rootfs.pv_teziimg.tar.xz \
++        -C "${WORKDIR}/teziimg-staging" ${IMAGE_LINK_NAME}-pv-tezi
++}
++
+diff --git a/recipes-bsp/tezi-metadata/tezi-metadata_0.3.bb b/recipes-bsp/tezi-metadata/tezi-metadata_0.3.bb
+index b8e29d9..fc4c51f 100644
+--- a/recipes-bsp/tezi-metadata/tezi-metadata_0.3.bb
++++ b/recipes-bsp/tezi-metadata/tezi-metadata_0.3.bb
+@@ -8,7 +8,8 @@ TEZI_EULA_FILE:ti-soc ?= "TI-TFL.txt"
+ SRC_URI = " \
+     file://prepare.sh \
+     file://wrapup.sh \
+-    file://toradexlinux.png \
++    file://pantacor.png \
++    file://pantavisor-README.md \
+     file://marketing.tar;unpack=false \
+     file://${TEZI_EULA_FILE} \
+ "
+@@ -24,8 +25,9 @@ inherit deploy nopackages
+ do_deploy () {
+     install -m 644 ${WORKDIR}/prepare.sh ${DEPLOYDIR}
+     install -m 644 ${WORKDIR}/wrapup.sh ${DEPLOYDIR}
+-    install -m 644 ${WORKDIR}/toradexlinux.png ${DEPLOYDIR}
++    install -m 644 ${WORKDIR}/pantacor.png ${DEPLOYDIR}
+     install -m 644 ${WORKDIR}/marketing.tar ${DEPLOYDIR}
++    install -m 644 ${WORKDIR}/pantavisor-README.md ${DEPLOYDIR}
+     install -m 644 ${WORKDIR}/${TEZI_EULA_FILE} ${DEPLOYDIR}
+ }
+ 
+diff --git a/recipes-bsp/u-boot/u-boot-distro-boot.bb b/recipes-bsp/u-boot/u-boot-distro-boot.bb
+index ff8c66b..7474ac4 100644
+--- a/recipes-bsp/u-boot/u-boot-distro-boot.bb
++++ b/recipes-bsp/u-boot/u-boot-distro-boot.bb
+@@ -18,8 +18,6 @@ DTB_PREFIX ??= "${@d.getVar('KERNEL_DTB_PREFIX').replace("/", "_") if d.getVar('
+ 
+ FITCONF_FDT_OVERLAYS ??= ""
+ 
+-inherit deploy
+-
+ do_compile() {
+     sed -e 's/@@KERNEL_BOOTCMD@@/${KERNEL_BOOTCMD}/' \
+         -e 's/@@KERNEL_IMAGETYPE@@/${KERNEL_IMAGETYPE}/' \
+@@ -29,12 +27,13 @@ do_compile() {
+         "${WORKDIR}/boot.cmd.in" > boot.cmd
+ }
+ 
+-do_deploy() {
+-    mkimage -T script -C none -n "Distro boot script" -d boot.cmd boot.scr
+-    install -m 0644 boot.scr ${DEPLOYDIR}/boot.scr-${MACHINE}
++do_deploy_scr() {
++    mkimage -T script -C none -n "Distro boot script" -d ${WORKDIR}/boot.cmd boot.scr
++    install -d ${DEPLOY_DIR_IMAGE}
++    install -m 0644 boot.scr ${DEPLOY_DIR_IMAGE}/boot.scr-${MACHINE}
+ }
+ 
+-addtask deploy after do_install before do_build
++addtask deploy_scr after do_install before do_build
+ 
+ PROVIDES += "u-boot-default-script"
+ 
+diff --git a/recipes-bsp/u-boot/u-boot-toradex-common.inc b/recipes-bsp/u-boot/u-boot-toradex-common.inc
+index 17995b0..60e3448 100644
+--- a/recipes-bsp/u-boot/u-boot-toradex-common.inc
++++ b/recipes-bsp/u-boot/u-boot-toradex-common.inc
+@@ -27,3 +27,15 @@ CVE_PRODUCT = "denx:u-boot"
+ inherit toradex-u-boot-localversion
+ 
+ UBOOT_INITIAL_ENV = "u-boot-initial-env"
++
++do_deploy:append() {
++
++    env_file="${WORKDIR}/deploy-u-boot-toradex/u-boot-initial-env"
++
++    grep -q "^bootubipart=" "$env_file" && sed -i 's|^bootubipart=.*|bootubipart=ubi|' "$env_file" || echo "bootubipart=ubi" >> "$env_file"
++    grep -q "^bootubivol=" "$env_file" && sed -i 's|^bootubivol=.*|bootubivol=pvboot|' "$env_file" || echo "bootubivol=pvboot" >> "$env_file"
++    grep -q "^bootcmd_ubifs=" "$env_file" && sed -i 's|^bootcmd_ubifs=.*|bootcmd_ubifs=run ubifs_boot|' "$env_file" || echo "bootcmd_ubifs=run ubifs_boot" >> "$env_file"
++    grep -q "^boot_targets=" "$env_file" && sed -i 's|^boot_targets=.*|boot_targets=ubifs mmc0 usb0 dhcp|' "$env_file" || echo "boot_targets=ubifs mmc0 usb0 dhcp" >> "$env_file"
++    grep -q "^bootcmd=" "$env_file" && sed -i 's|^bootcmd=.*|bootcmd=run distro_bootcmd|' "$env_file" || echo "bootcmd=run distro_bootcmd" >> "$env_file"
++
++}
+-- 
+2.43.0
+

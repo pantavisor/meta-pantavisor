@@ -1,0 +1,88 @@
+From a1a2c342215c89d392ea705460ab802f4e22db5b Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Tue, 16 Dec 2025 12:07:28 -0300
+Subject: [PATCH 3/3] add README.md to tezi
+
+---
+ .../tezi-metadata/files/pantavisor-README.md  | 68 +++++++++++++++++++
+ 1 file changed, 68 insertions(+)
+ create mode 100644 recipes-bsp/tezi-metadata/files/pantavisor-README.md
+
+diff --git a/recipes-bsp/tezi-metadata/files/pantavisor-README.md b/recipes-bsp/tezi-metadata/files/pantavisor-README.md
+new file mode 100644
+index 0000000..93031b7
+--- /dev/null
++++ b/recipes-bsp/tezi-metadata/files/pantavisor-README.md
+@@ -0,0 +1,68 @@
++# Colibri iMX6ULL Pantavisor Image: Installation Guide
++
++This guide explains how to install and boot the **Pantavisor Linux** image on a **Colibri iMX6ULL** module using the **Toradex Easy Installer (TEZI)**.
++
++---
++
++## ️ Prerequisites
++
++* **Colibri iMX6ULL module** with USB OTG support.
++* Host PC with a USB port.
++* **Toradex Easy Installer** downloaded and extracted.
++* **FAT32-formatted USB drive** for image transfer (often called a 'USB stick' or 'Pendrive').
++
++---
++
++## 1. Download the Toradex Easy Installer
++
++1.  Download the appropriate TEZI package for your system:
++    <https://tezi.toradex.com/artifactory/tezi-oe-prod-frankfurt/scarthgap-7.x.y/release/5/colibri-imx6ull/tezi/tezi-run/oedeploy/Colibri-iMX6ULL_ToradexEasyInstaller_7.2.0+build.5.zip>
++2.  Extract the downloaded **ZIP archive** to a folder on your PC.
++
++---
++
++## 2. Load TEZI onto the Board (Recovery Mode)
++
++Follow the official Toradex instructions to load the Easy Installer onto your module via recovery mode:
++<https://developer.toradex.com/easy-installer/toradex-easy-installer/loading-toradex-easy-installer>
++
++### Quick Steps:
++
++1.  Set the board's boot selection to **USB OTG** (usually via a recovery jumper on the SOM).
++2.  Connect the **USB OTG port** on the base board (Aster, Iris, or Evaluation Board) to your PC's USB port.
++3.  Navigate to the extracted `Colibri-iMX6ULL_ToradexEasyInstaller` folder and run the recovery script:
++    ```bash
++    ./recovery-linux.sh
++    ```
++4.  For detailed information on the process, refer to the Toradex documentation.
++
++---
++
++## 3. Flash the Pantavisor Image
++
++1.  Extract the Pantavisor image archive (e.g., `pv-tar.xz`) to the root of your USB drive.
++2.  Plug the USB drive into the base board.
++3.  **TEZI** will automatically start the flashing process to the SOM's internal flash memory. Monitor the progress using the TEZI GUI on the display.
++4.  For more information on installing OS images with TEZI, see:
++    <https://developer.toradex.com/easy-installer/toradex-easy-installer/flashing-new-image-using-tezi/#install-os-images>
++
++---
++
++## 4. Boot the Image
++
++1.  Once the image flashing is complete, simply **reboot the board**.
++2.  Access the console via a **serial connection** to follow the boot sequence and monitor the system startup.
++
++---
++
++## 5. Next Steps
++
++Explore the Pantavisor documentation for configuration samples, usage guides, and advanced examples:
++<https://docs.pantahub.com/choose-way/>
++
++---
++
++## Support & Resources
++
++* **Pantavisor on GitHub:** <https://github.com/toradex/pantavisor>
++* **Toradex Community Forum:** <https://community.toradex.com/>
+\ No newline at end of file
+-- 
+2.43.0
+

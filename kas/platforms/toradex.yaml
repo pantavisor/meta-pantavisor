@@ -17,9 +17,15 @@ repos:
     url: "https://git.toradex.com/meta-toradex-bsp-common.git"
     branch: scarthgap-7.x.y
     patches:
-      add-pv-tezi:
+      support-pvboot-on-tezi:
         repo: meta-pantavisor
-        path: patches/meta-toradex-bsp-common/0001-ajust-and-create-a-pantavisor-image-for-tezi.patch
+        path: patches/meta-toradex-bsp-common/0001-support-pvboot-on-tezi.patch
+      add-marketing-png-image:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
+      add-readme-to-tezi:
+        repo: meta-pantavisor
+        path: patches/meta-toradex-bsp-common/0003-add-README.md-to-tezi.patch
 
   meta-toradex-nxp:
     path: layers/meta-toradex-nxp
@@ -28,7 +34,7 @@ repos:
     patches:
       pv-formated-tezi:
         repo: meta-pantavisor
-        path: patches/meta-toradex-nxp/0001-enabled-pv-formated-tezi.patch
+        path: patches/meta-toradex-nxp/0001-support-to-pv_tezi.patch
 
 local_conf_header:
   platform-toradex: |

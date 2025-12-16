@@ -1,0 +1,22 @@
+{
+    "#spec": "driver-aliases@1",
+    "all": {
+        "bluetooth": [
+            "btmrvl",
+            "btmrvl_sdio",
+            "bluetooth"
+        ],
+        "wifi": [
+            "mlan",
+            "cfg80211"
+        ],
+        "wireguard": [
+            "wireguard"
+        ],
+		"rng": [
+			"imx-rng"
+		]
+    },
+    "dtb:all": {}
+}
+
