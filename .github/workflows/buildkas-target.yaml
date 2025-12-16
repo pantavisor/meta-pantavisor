@@ -40,15 +40,28 @@ jobs:
         run: chmod -R 777 $GITHUB_WORKSPACE
       - name: copy files
         run: |
-          cp build/tmp-*/deploy/images/*/${{ inputs.output }} .
+          BUILD_BASE_DIR=$(echo build/tmp-*/deploy/images/*)
+          for pattern in ${{ inputs.output }}; do
+            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \;
+          done
           find build/tmp-*/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
 
-      - name: Archive image artifacts
+          ls -l .
+
+      - name: Archive wic artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
-            ${{ inputs.output }}
+            pantavisor-starter*.rootfs.wic*
+
+      - name: Archive tezi tar artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}-tezi
+          path: |
+            *pv_teziimg.tar.xz
+          if-no-files-found: warn
 
       - name: Archive pvrexport artifacts
         uses: actions/upload-artifact@v4
