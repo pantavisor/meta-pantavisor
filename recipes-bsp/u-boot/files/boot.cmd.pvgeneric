@@ -9,7 +9,7 @@ if test -z "${devtype}"; then
 	setenv devtype mmc
 fi
 setenv envloadaddr ${loadaddr}
-i
+
 pv_mmcdev=${devnum}
 if test -z "${pv_mmcdev}"; then
 	pv_mmcdev=${mmcdev}
@@ -50,19 +50,28 @@ if test -z "${fdt_addr_r}"; then
 fi
 
 echo Trying to load oemEnv.txt
-if load ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} oemEnv.txt; then
+if test "$devtype" = ubi; then
+	if ubi read ${envloadaddr} ${bootubipart}:pvoem; then
+		echo Importing pvoem ...
+		env import ${envloadaddr} ${filesize}
+	fi
+elif load ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} oemEnv.txt; then
 	echo Importing oemEnv.txt ...
 	env import ${envloadaddr} ${filesize}
+else
+	echo part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
+	part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
 fi
 
-echo part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
-part size ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_size
-if test "${pv_config_size}" = "800"; then
+if test "$devtype" = ubi; then
+	echo "done."
+elif test "${pv_config_size}" = "800"; then
 	echo Found PV OEM Config at ${devtype} ${pv_mmcdev}:2
 	part start ${devtype} ${pv_mmcdev} ${pv_ctrl} pv_config_start
 	${devtype} read ${envloadaddr} ${pv_config_start} ${pv_config_size}
 	env import ${envloadaddr} 0x1000
 	setexpr pv_mmcdata ${pv_ctrl} + 1
+	echo "${devtype} root selected = ${pv_mmcdev}:${pv_mmcdata}"
 else
 	setexpr pv_mmcdata ${pv_bootpart} + 1
 	if part size ${devtype} ${pv_mmcdev} ${pv_mmcdata}; then
@@ -73,18 +82,32 @@ else
 	fi
 fi
 
-echo "${devtype} root selected = ${pv_mmcdev}:${pv_mmcdata}"
+if ! test "$devtype" = ubi; then
+	echo "${devtype} root selected = ${pv_mmcdev}:${pv_mmcdata}"
+fi
 
-echo Loading uboot.txt
-echo load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
-load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+if test "$devtype" = ubi; then
+	echo Loading uboot.txt from ubi
+	ubifsload ${envloadaddr} /boot/uboot.txt
+	setenv uboot_txt_size ${filesize}
+else
+	echo Loading uboot.txt
+	echo load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+	load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+fi
 
 echo Loading pantavisor uboot.txt
 setenv pv_try; env import ${envloadaddr} ${uboot_txt_size}
 
-load ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env; setenv pv_env_size ${filesize}
-echo Loading pv.env
-setenv pv_trying; env import ${envloadaddr} ${pv_env_size}
+if test "$devtype" = ubi; then
+	ubi read ${envloadaddr} pvenv; setenv pv_env_size ${filesize}
+	echo Loading pv.env from ubi
+	setenv pv_trying; env import ${envloadaddr} ${pv_env_size}
+else
+	load ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env; setenv pv_env_size ${filesize}
+	echo Loading pv.env
+	setenv pv_trying; env import ${envloadaddr} ${pv_env_size}
+fi
 
 echo
 if env exists pv_try; then
@@ -92,14 +115,18 @@ if env exists pv_try; then
 		echo Pantavisor boots checkpoint revision ${pv_rev} after failed try-boot of revision: ${pv_try}
 		setenv pv_trying
 		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env ${pv_env_size}
 		setenv boot_rev ${pv_rev}
 	else
 		echo Pantavisor boots try-boot revision: ${pv_try}
 		setenv pv_trying ${pv_try}
 		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env ${pv_env_size}
 		setenv boot_rev ${pv_trying}
+	fi
+
+	if test "$devtype" = ubi; then 
+		ubi write ${envloadaddr} pvenv ${pv_env_size}
+	else
+		save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env ${pv_env_size}
 	fi
 else
 	echo Pantavisor boots revision: ${pv_rev}
@@ -112,8 +139,17 @@ if test -z "${fdtfile}"; then
 	setenv fdtfile ${fdt_file}
 fi
 
-if test -n "${addr_fit}" && load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
-	echo Successfully loaded pantavisor.fit. booting...
+if test -n "${addr_fit}"; then
+	if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
+		setenv boottype fit
+		echo Successfully loaded pantavisor.fit. booting...
+	elif ubifsload ${addr_fit} /trails/${boot_rev}/bsp/pantavisor.fit; then
+		setenv boottype fit
+		echo Successfully loaded pantavisor.fit. booting...
+	fi
+fi
+
+if test "$boottype" = fit; then
 	iminfo ${addr_fit}
 	# first allow platforms to do their job to set name_fit_config
 	if test -z "${name_fit_config}" -a -n "${pv_plat_set_name_fit_config}"; then
@@ -151,8 +187,13 @@ if test -z "${kernel_addr_r}"; then
 	kernel_addr_r=${loadaddr}
 fi
 
-echo Pantavisor kernel load: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
-load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
+if test "$devtype" = ubi; then
+	echo Pantavisor kernel load: ubifsload ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
+	ubifsload ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
+else
+	echo Pantavisor kernel load: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
+	load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img
+fi
 
 if test -z "${ramdisk_addr_r}"; then
         setexpr fsmod ${filesize} % 512
@@ -163,8 +204,13 @@ if test -z "${ramdisk_addr_r}"; then
 	echo "cannot find place to load ramdisk in ramdisk_addr_r ... auto calculated ${ramdisk_addr_r}"
 fi
 
-echo Pantavisor initrd load: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
-load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
+if test "$devtype" = ubi; then
+	echo Pantavisor initrd load: ubifsload ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
+	ubifsload ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
+else
+	echo Pantavisor initrd load: load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
+	load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img
+fi
 
 setenv rd_size ${filesize}
 setexpr rd_offset ${ramdisk_addr_r} + ${rd_size}
@@ -184,14 +230,27 @@ echo "moving fdt to ${fdt_addr_r}"
 fdt move $fdtcontroladdr $fdt_addr_r $tsize
 
 echo "Pantavisor loading FDT at ${fdt_addr_r}"
-echo "load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb"
-if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb; then
-	echo "Successfully loaded pv-fdt.dtb"
-else
-	if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/bsp/${fdtfile}; then
-		echo "successfully loaded fdt directly"
+if test "$devtype" = ubi; then
+	echo "ubifsload ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb"
+	if ubifsload ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb; then
+		echo "Successfully loaded pv-fdt.dtb"
 	else
-		echo "failed to load fdt trying to copy fdt_addr_r for booting ..."
+		if ubifsload ${fdt_addr_r} /trails/${boot_rev}/bsp/${fdtfile}; then
+			echo "successfully loaded fdt directly"
+		else
+			echo "failed to load fdt trying to copy fdt_addr_r for booting ..."
+		fi
+	fi
+else
+	echo "load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb"
+	if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/.pv/pv-fdt.dtb; then
+		echo "Successfully loaded pv-fdt.dtb"
+	else
+		if load ${devtype} ${pv_mmcdev}:${pv_mmcdata} ${fdt_addr_r} /trails/${boot_rev}/bsp/${fdtfile}; then
+			echo "successfully loaded fdt directly"
+		else
+			echo "failed to load fdt trying to copy fdt_addr_r for booting ..."
+		fi
 	fi
 fi
 

@@ -218,3 +218,13 @@ fakeroot python do_rootfs_pvroot(){
 
     execute_pre_post_process(d, d.getVar('PVROOTFS_POSTPROCESS_COMMAND'))
 }
+
+PVROOTFS_POSTPROCESS_COMMAND += "${@'install_bootscr;' if d.getVar('DISTRO_UBOOT_DEFAULT_SCRIPT') else ''}"
+
+install_bootscr() {
+    install -d ${IMAGE_ROOTFS}/boot
+    install -m 0644 ${DEPLOY_DIR_IMAGE}/boot.scr ${IMAGE_ROOTFS}/boot/
+}
+
+rootfs_pvroot[depends] += "${@'%s:do_deploy' % d.getVar('DISTRO_UBOOT_DEFAULT_SCRIPT') if d.getVar('DISTRO_UBOOT_DEFAULT_SCRIPT') else ''}"
+
