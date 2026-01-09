@@ -5,6 +5,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/onpush-scarthgap-docker-x86_64.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'
@@ -12,8 +13,10 @@ on:
 jobs:
 
   build-docker-x86_64-scarthgap:
-    uses: ./.github/workflows/buildkas-starter.yaml
+    uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: pantavisor-appengine-distro-*.tar.gz
     secrets: inherit

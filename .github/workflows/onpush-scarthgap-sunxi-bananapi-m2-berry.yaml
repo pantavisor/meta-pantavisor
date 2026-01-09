@@ -5,6 +5,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/onpush-scarthgap-sunxi-bananapi-m2-berry.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'

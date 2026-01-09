@@ -5,6 +5,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/onpush-scarthgap-raspberrypi-armv8.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'

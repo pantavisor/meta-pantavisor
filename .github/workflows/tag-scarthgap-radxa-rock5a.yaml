@@ -6,6 +6,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/tag-scarthgap-radxa-rock5a.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'

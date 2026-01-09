@@ -6,6 +6,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'

@@ -11,5 +11,5 @@ jobs:
       configs: .github/configs/release/colibri-imx6ull-scarthgap.yaml:.github/configs/shared-vols.yaml
       machine_name: colibri-imx6ull-scarthgap
       build_target: pantavisor-starter
-      output:  pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz
+      output:  pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz pantavisor-README.md
     secrets: inherit
