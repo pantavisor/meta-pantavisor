@@ -15,10 +15,12 @@ create_files() {
         
         echo "new $workflow_type workflow for: $MACHINE"
         
+        WORKFLOW=$workflow_type-$YOCTO_BRANCH-$MACHINE
         cat .github/template/$workflow_type.yaml | \
             sed "s;!MACHINE;$MACHINE;g" | \
             sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" | \
             sed "s;!BUILD_TARGET;$BUILD_TARGET;g" | \
+            sed "s;!WORKFLOW;$WORKFLOW;g" | \
             sed "s;!OUTPUT;$OUTPUT;g" > .github/workflows/$workflow_type-$YOCTO_BRANCH-$MACHINE.yaml
     done
 }
