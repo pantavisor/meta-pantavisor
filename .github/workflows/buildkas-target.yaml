@@ -53,7 +53,7 @@ jobs:
         with:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
-            pantavisor-starter*.rootfs.wic*
+             ${{ inputs.output }}
 
       - name: Archive tezi tar artifacts
         uses: actions/upload-artifact@v4
