@@ -5,6 +5,7 @@ on:
     paths:
       - '**'
       - '.github/configs/**'
+      - '.github/workflows/!WORKFLOW.yaml'
       - '!.github/scripts/**'
       - '!.github/workflows/**'
       - '!.github/templates/**'
