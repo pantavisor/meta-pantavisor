@@ -7,8 +7,6 @@ on:
       - '.github/configs/release/**'
       - '!.github/scripts/**'
       - '!.github/templates/**'
-    tags-ignore:
-      - '**'
 
 jobs:
 
