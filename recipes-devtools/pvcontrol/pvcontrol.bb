@@ -7,7 +7,7 @@ SRC_URI = "file://pvcontrol \
            file://JSON.sh \
            "
 
-RDEPENDS:${PN} = "curl"
+RDEPENDS:${PN} = "pvcurl"
 
 PACKAGES =+ "${PN}-pvtx"
 FILES:${PN}-pvtx += "${bindir}/pvtx"

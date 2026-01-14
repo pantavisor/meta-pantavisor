@@ -16,7 +16,7 @@ PACKAGE_INSTALL = "pantavisor \
 	base-passwd \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rngd', 'rng-tools', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'curl pvcontrol', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pvcurl pvcontrol', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
