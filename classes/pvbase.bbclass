@@ -7,5 +7,6 @@ PANTAVISOR_FEATURES ??= " \
 	tailscale \
 	debug \
 	rngdaemon \
+	pvcontrol \
 "
 
