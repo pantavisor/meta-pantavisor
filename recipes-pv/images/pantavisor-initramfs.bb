@@ -9,6 +9,8 @@ VIRTUAL-RUNTIME_dev_manager ?= "busybox-mdev"
 VIRTUAL-RUNTIME_init_manager = "pantavisor"
 VIRTUAL-RUNTIME_pantavisor_config ??= "pantavisor-config"
 
+TOOLCHAIN_TARGET_TASK += "libevent-staticdev libevent-mbedtls-staticdev libthttp-staticdev picohttpparser-staticdev zlib-staticdev"
+
 PACKAGE_INSTALL = "pantavisor \
 	${VIRTUAL-RUNTIME_pantavisor_config} \
 	dropbear-pv \
@@ -17,6 +19,7 @@ PACKAGE_INSTALL = "pantavisor \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rngd', 'rng-tools', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pvcurl pvcontrol', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'mtools', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"

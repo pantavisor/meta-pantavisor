@@ -1,0 +1,23 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+  includes:
+    - kas/platforms/raspberrypi.yaml
+
+# The machine as it is written into the `local.conf` of bitbake.
+machine: raspberrypi
+
+local_conf_header:
+  multi: |
+    BBMULTICONFIG = "rpi-kernel rpi-kernel7 rpi-kernel7l rpi-kernel8 rpi-kernel_2712"
+  rpi-tryboot-system: |
+    PANTAVISOR_FEATURES:append = " rpi-tryboot"
+  rpi-16k-compat: |
+    # RPi 5 kernel (kernel_2712) uses 16K page size. Align all ELF segments
+    # to 16K so the same initramfs binaries work on both 4K and 16K kernels.
+    TARGET_LDFLAGS:append = " -Wl,-z,max-page-size=16384"
