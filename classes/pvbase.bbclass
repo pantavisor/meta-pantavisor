@@ -10,5 +10,6 @@ PANTAVISOR_FEATURES ??= " \
 	pvcontrol \
 "
 # PANTAVISOR_FEATURES += "lxc-next"
+# PANTAVISOR_FEATURES += "console-logging"
 
 

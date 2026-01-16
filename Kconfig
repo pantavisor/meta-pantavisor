@@ -277,6 +277,11 @@ config MACHINE_QEMUMIPS
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_QEMU
 	select PLATFORM_QEMU
 
+config MACHINE_RPI
+	bool "raspberrypi-generic"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RPI
+	select PLATFORM_RPI
+
 config MACHINE_RPI_ARMV8
 	bool "raspberrypi-armv8"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RPI
@@ -443,6 +448,10 @@ config KAS_INCLUDE_MACHINE_DOCKERARMV6
 config KAS_INCLUDE_MACHINE_DOCKERX86_64
 	string
 	default "kas/machines/docker-x86_64.yaml" if MACHINE_DOCKERX86_64
+
+config KAS_INCLUDE_MACHINE_RPI
+	string
+	default "kas/machines/rpi.yaml" if MACHINE_RPI
 
 config KAS_INCLUDE_MACHINE_RPI_ARMV8
 	string
