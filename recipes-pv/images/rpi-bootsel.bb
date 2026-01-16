@@ -10,7 +10,7 @@ IMAGE_FSTYPES = "vfat"
 IMAGE_ROOTFS_SIZE = "16384"
 IMAGE_OVERHEAD_FACTOR = "1.0"
 IMAGE_ROOTFS_EXTRA_SPACE = "0"
-EXTRA_IMAGECMD:vfat = "-F 32 -S 512 -n BOOTSEL"
+EXTRA_IMAGECMD:vfat = "-F 16 -S 512 -n BOOTSEL"
 
 IMAGE_INSTALL = ""
 PACKAGE_INSTALL = ""
@@ -22,6 +22,9 @@ do_rootfs[depends] += "rpi-bootfiles:do_deploy"
 do_rootfs() {
     rm -rf ${IMAGE_ROOTFS}
     mkdir -p ${IMAGE_ROOTFS}
+
+    # Empty config.txt required for valid boot source
+    touch ${IMAGE_ROOTFS}/config.txt
 
     # autoboot.txt for tryboot A/B
     cat > ${IMAGE_ROOTFS}/autoboot.txt << 'EOF'

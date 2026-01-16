@@ -50,38 +50,46 @@ do_rootfs() {
         [ -d "$machdir" ] || continue
 
         # Firmware (bootcode.bin, start*.elf, fixup*.dat) - exclude stamp files
-        if [ -d "$machdir/${BOOTFILES_DIR_NAME}" ]; then
-            for f in "$machdir/${BOOTFILES_DIR_NAME}"/*; do
+        # Check multiconfig deploy dir first, then fall back to default deploy dir
+        for fwdir in "$machdir/${BOOTFILES_DIR_NAME}" "${DEPLOY_DIR}/images/$machine/${BOOTFILES_DIR_NAME}"; do
+            [ -d "$fwdir" ] || continue
+            for f in "$fwdir"/*; do
                 [ -e "$f" ] || continue
                 case "$(basename $f)" in
                     *.stamp) continue ;;
                 esac
-                cp -rf "$f" ${IMAGE_ROOTFS}/
+                # Only copy if not already present
+                [ -e "${IMAGE_ROOTFS}/$(basename $f)" ] || cp -rf "$f" ${IMAGE_ROOTFS}/
             done
-        fi
-
-        # DTBs - only copy short symlinks, skip versioned files with timestamps
-        for f in "$machdir"/*.dtb; do
-            [ -e "$f" ] || continue
-            case "$(basename $f)" in
-                *-20[0-9][0-9]*.dtb) continue ;;
-            esac
-            install -m 0644 "$f" ${IMAGE_ROOTFS}/
         done
 
-        # Overlays - check both multiconfig and default deploy dirs
-        for overlaydir in "$machdir/overlays" "${DEPLOY_DIR}/images/$machine/overlays"; do
+        # DTBs - only copy base DTB names, skip versioned and machine-suffixed files
+        for f in "$machdir"/*.dtb; do
+            [ -e "$f" ] || continue
+            bn="$(basename $f)"
+            case "$bn" in
+                *-20[0-9][0-9]*.dtb) continue ;;  # skip timestamp versions
+                *-raspberrypi*.dtb) continue ;;   # skip machine-suffixed duplicates
+            esac
+            # Only install if not already present
+            [ -e "${IMAGE_ROOTFS}/$bn" ] || install -m 0644 "$f" ${IMAGE_ROOTFS}/
+        done
+
+        # Overlays - check overlays/ subdirectory and also dtbo files directly in deploy dir
+        for overlaydir in "$machdir/overlays" "${DEPLOY_DIR}/images/$machine/overlays" "$machdir" "${DEPLOY_DIR}/images/$machine"; do
             [ -d "$overlaydir" ] || continue
-            mkdir -p ${IMAGE_ROOTFS}/overlays
             for f in "$overlaydir"/*.dtbo; do
                 [ -e "$f" ] || continue
-                case "$(basename $f)" in
-                    *-20[0-9][0-9]*.dtbo) continue ;;
+                bn="$(basename $f)"
+                case "$bn" in
+                    *-20[0-9][0-9]*.dtbo) continue ;;  # skip timestamp versions
+                    *-raspberrypi*.dtbo) continue ;;   # skip machine-suffixed duplicates
                 esac
                 # Only install if not already present
-                [ -e "${IMAGE_ROOTFS}/overlays/$(basename $f)" ] || install -m 0644 "$f" ${IMAGE_ROOTFS}/overlays/
+                mkdir -p ${IMAGE_ROOTFS}/overlays
+                [ -e "${IMAGE_ROOTFS}/overlays/$bn" ] || install -m 0644 "$f" ${IMAGE_ROOTFS}/overlays/
             done
-            # README if present
+            # README if present in overlays subdir
             [ -e "$overlaydir/README" ] && [ ! -e "${IMAGE_ROOTFS}/overlays/README" ] && install -m 0644 "$overlaydir/README" ${IMAGE_ROOTFS}/overlays/
         done
     done
@@ -89,30 +97,26 @@ do_rootfs() {
     # Kernels - rename to RPi bootloader expected names
     # Check multiconfig deploy dirs first, then fall back to default
 
-    # Pi 0/1: kernel.img
+    # Pi 0/1: kernel.img (zImage for direct boot)
     mc_dir="${MC_DEPLOY_BASE}-raspberrypi/deploy/images/raspberrypi"
-    if [ -e "$mc_dir/uImage" ]; then
-        install -m 0644 "$mc_dir/uImage" ${IMAGE_ROOTFS}/kernel.img
-    elif [ -e "${DEPLOY_DIR}/images/raspberrypi/uImage" ]; then
-        install -m 0644 "${DEPLOY_DIR}/images/raspberrypi/uImage" ${IMAGE_ROOTFS}/kernel.img
+    if [ -e "$mc_dir/zImage" ]; then
+        install -m 0644 "$mc_dir/zImage" ${IMAGE_ROOTFS}/kernel.img
+    elif [ -e "${DEPLOY_DIR}/images/raspberrypi/zImage" ]; then
+        install -m 0644 "${DEPLOY_DIR}/images/raspberrypi/zImage" ${IMAGE_ROOTFS}/kernel.img
     fi
 
-    # Pi 2/3 32-bit: kernel7.img
+    # Pi 2/3 32-bit: kernel7.img (zImage for direct boot)
     mc_dir="${MC_DEPLOY_BASE}-raspberrypi2/deploy/images/raspberrypi2"
-    if [ -e "$mc_dir/uImage" ]; then
-        install -m 0644 "$mc_dir/uImage" ${IMAGE_ROOTFS}/kernel7.img
-    elif [ -e "${DEPLOY_DIR}/images/raspberrypi2/uImage" ]; then
-        install -m 0644 "${DEPLOY_DIR}/images/raspberrypi2/uImage" ${IMAGE_ROOTFS}/kernel7.img
+    if [ -e "$mc_dir/zImage" ]; then
+        install -m 0644 "$mc_dir/zImage" ${IMAGE_ROOTFS}/kernel7.img
+    elif [ -e "${DEPLOY_DIR}/images/raspberrypi2/zImage" ]; then
+        install -m 0644 "${DEPLOY_DIR}/images/raspberrypi2/zImage" ${IMAGE_ROOTFS}/kernel7.img
     fi
 
-    # Pi 4 32-bit: kernel7l.img
+    # Pi 4 32-bit: kernel7l.img (zImage for direct boot)
     mc_dir="${MC_DEPLOY_BASE}-raspberrypi-armv7/deploy/images/raspberrypi-armv7"
-    if [ -e "$mc_dir/uImage" ]; then
-        install -m 0644 "$mc_dir/uImage" ${IMAGE_ROOTFS}/kernel7l.img
-    elif [ -e "$mc_dir/zImage" ]; then
+    if [ -e "$mc_dir/zImage" ]; then
         install -m 0644 "$mc_dir/zImage" ${IMAGE_ROOTFS}/kernel7l.img
-    elif [ -e "${DEPLOY_DIR}/images/raspberrypi-armv7/uImage" ]; then
-        install -m 0644 "${DEPLOY_DIR}/images/raspberrypi-armv7/uImage" ${IMAGE_ROOTFS}/kernel7l.img
     elif [ -e "${DEPLOY_DIR}/images/raspberrypi-armv7/zImage" ]; then
         install -m 0644 "${DEPLOY_DIR}/images/raspberrypi-armv7/zImage" ${IMAGE_ROOTFS}/kernel7l.img
     fi
@@ -186,8 +190,13 @@ kernel=kernel_2712.img
 kernel=kernel_2712.img
 
 [all]
-# Enable UART for debugging (optional)
-# enable_uart=1
+# Enable UART for debugging
+enable_uart=1
+EOF
+
+    # cmdline.txt for kernel command line
+    cat > ${IMAGE_ROOTFS}/cmdline.txt << 'EOF'
+console=serial0,115200
 EOF
 }
 
