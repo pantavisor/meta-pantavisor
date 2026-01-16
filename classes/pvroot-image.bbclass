@@ -51,10 +51,19 @@ FAKEROOT_CMD = "pseudo"
 PANTA_MULTICONFIG ?= ""
 PANTA_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
 
+# Raspberry Pi tryboot A/B partition layout
+WKS_FILE:rpi = "${@'rpi-tryboot-ab.wks' if bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', True, False, d) else ''}"
+
 python __anonymous () {
     pn = d.getVar("PN")
 
     mc = d.getVar("PANTA_MULTICONFIG")
+
+    # Add rpi-tryboot dependencies (image recipes, not packages, so use direct task deps)
+    if bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', True, False, d):
+        d.appendVarFlag('do_image_wic', 'depends', ' rpi-bootsel:do_image_complete rpi-boot-image:do_image_complete')
+        # Skip license deploy - helper images are MIT licensed and don't add licensed content
+        d.setVarFlag('do_populate_lic_deploy', 'noexec', '1')
 
     d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":pantavisor-bsp" if mc != "" else "pantavisor-bsp" ) +':do_compile')
     if d.getVar("PVROOT_IMAGE") == "yes":
@@ -70,7 +79,10 @@ python __anonymous () {
     d.delVarFlag("do_unpack", "noexec")
 }
 
+# Ignore paths where pvr tool creates temp files to avoid pseudo inode tracking issues
 PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home,${WORKDIR}/tmp"
+# Also ignore .pv metadata directories created by pvr inside rootfs
+PSEUDO_IGNORE_PATHS .= ",${IMAGE_ROOTFS}/trails/0/.pv,${IMAGE_ROOTFS}/trails/0/.pvr"
 
 def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 

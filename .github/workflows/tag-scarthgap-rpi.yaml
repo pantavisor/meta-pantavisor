@@ -1,0 +1,25 @@
+
+name: "TAG: rpi-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '.github/workflows/!WORKFLOW.yaml'
+      - '!.github/scripts/**'
+      - '!.github/templates/**'
+    tags:
+      - 0*
+      - '*-rc*'
+jobs:
+
+  build-rpi-scarthgap:
+    uses: ./.github/workflows/buildkas-upload.yaml
+    with:
+      configs: .github/configs/release/rpi-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: rpi-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
+    secrets: inherit
