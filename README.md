@@ -12,6 +12,21 @@ For now visit:
 
 To find information and get support on how to use it.
 
+## Pantavisor Features
+
+The following features can be enabled via `Kconfig` (using `kas-container menu`) or by appending to `PANTAVISOR_FEATURES` in your configuration.
+
+### runc
+Adds `runc` (OCI container runtime) support to Pantavisor.
+- **Kconfig**: `FEATURE_RUNC` (Default: `y`)
+- **PANTAVISOR_FEATURES**: `runc`
+
+### wasmedge
+Adds `wasmedge` (WebAssembly runtime) support to Pantavisor.
+- **Kconfig**: `FEATURE_WASMEDGE` (Default: `n`)
+- **PANTAVISOR_FEATURES**: `wasmedge`
+- **Constraints**: Currently disabled for `armv7ve` machines.
+
 | Board | Build(Scarthgap) | Flash | Tested |
 | :--- | :--- | :--- | :--- |
 | **sunxi-orange-pi-3lts** | [![Schedule - sunxi-orange-pi-3lts-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-scarthgap-sunxi-orange-pi-3lts.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-scarthgap-sunxi-orange-pi-3lts.yaml) | | |

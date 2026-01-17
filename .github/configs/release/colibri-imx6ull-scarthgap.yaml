@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: a1c9e4aa904f7699523468be51b07ea5bdf872cf
+        commit: 42eaac7a4f62e18abd571b231699358c6ba89b22
         patches:
             add-marketing-png-image:
                 path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
@@ -31,7 +31,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: e43ed4b34727f351a63232013de205b27f09180f
+        commit: f104cc1105e4d56b8d6953e381aefdf424419889
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-support-to-pv_tezi.patch
@@ -58,7 +58,7 @@ repos:
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2b26d30fc7f478f5735d514f0c1bc28f6a4148b6
+        commit: 2df869df1c3fa74103098bba65c06e55d0d3664a
         layers:
             meta-filesystems:
             meta-networking:
@@ -66,6 +66,10 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
+    meta-clang:
+        commit: 5c602337ea1a80fb7217eeda04e396cf90587dca
+        path: layers/meta-clang
+        url: https://github.com/kraj/meta-clang.git
 local_conf_header:
     platform-freescale: |
         ACCEPT_FSL_EULA = "1"
@@ -85,8 +89,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
-    pantavisor-runc: |
-        PANTAVISOR_FEATURES:append = " runc"
     pantavisor-tailscale: |
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
