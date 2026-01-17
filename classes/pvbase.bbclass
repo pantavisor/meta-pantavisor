@@ -9,4 +9,6 @@ PANTAVISOR_FEATURES ??= " \
 	rngdaemon \
 	pvcontrol \
 "
+# PANTAVISOR_FEATURES += "lxc-next"
+
 
