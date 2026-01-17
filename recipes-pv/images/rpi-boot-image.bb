@@ -160,7 +160,7 @@ kernel=kernel.img
 kernel=kernel.img
 
 [pi02]
-kernel=kernel.img
+kernel=kernel8.img
 
 [pi1]
 kernel=kernel.img
@@ -196,7 +196,7 @@ EOF
 
     # cmdline.txt for kernel command line
     cat > ${IMAGE_ROOTFS}/cmdline.txt << 'EOF'
-console=serial0,115200
+console=serial0,115200 PV_BOOTLOADER_TYPE=rpiab
 EOF
 }
 

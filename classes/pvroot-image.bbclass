@@ -51,9 +51,6 @@ FAKEROOT_CMD = "pseudo"
 PANTA_MULTICONFIG ?= ""
 PANTA_DEPLOY_DIR_IMAGE ?= "${DEPLOY_DIR_IMAGE}"
 
-# Raspberry Pi tryboot A/B partition layout
-WKS_FILE:rpi = "${@'rpi-tryboot-ab.wks' if bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', True, False, d) else ''}"
-
 python __anonymous () {
     pn = d.getVar("PN")
 
@@ -64,6 +61,8 @@ python __anonymous () {
         d.appendVarFlag('do_image_wic', 'depends', ' rpi-bootsel:do_image_complete rpi-boot-image:do_image_complete')
         # Skip license deploy - helper images are MIT licensed and don't add licensed content
         d.setVarFlag('do_populate_lic_deploy', 'noexec', '1')
+        # Set WKS_FILE for rpi machines when tryboot is enabled
+        d.setVar('WKS_FILE:rpi', 'rpi-tryboot-ab.wks')
 
     d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":pantavisor-bsp" if mc != "" else "pantavisor-bsp" ) +':do_compile')
     if d.getVar("PVROOT_IMAGE") == "yes":

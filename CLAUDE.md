@@ -107,6 +107,28 @@ Each multiconfig uses a separate TMPDIR (`tmp-${DISTRO_CODENAME}-rpi-kernel-${MA
 - `modules_<version>.squashfs` - Per-kernel-version modules (e.g., `modules_6.1.77-v8+.squashfs`)
 - `firmware.squashfs` - Shared firmware
 
+**Current partition layout** (wic/rpi-tryboot-ab.wks):
+```
+Partition 1 (bootsel):  FAT32 - autoboot.txt, bootcode.bin (A/B selector)
+Partition 2 (boot_a):   FAT32 - kernels, DTBs, config.txt, initramfs (rawcopy of rpi-boot-image.vfat)
+Partition 3 (boot_b):   FAT32 - same as boot_a (for A/B switching)
+Partition 4 (root):     ext4  - rootfs with /trails/0 pvr state
+```
+
+**Future: Signed boot.img support**
+
+The RPi bootloader supports booting from a `boot.img` file placed inside a FAT partition. This enables boot image signing:
+
+```
+Partition 2 (boot_a):   FAT32 containing boot.img (+ boot.img.sig)
+Partition 3 (boot_b):   FAT32 containing boot.img (+ boot.img.sig)
+```
+
+Where `boot.img` is the FAT image (current rpi-boot-image.vfat) with kernels, config.txt, initramfs, etc. Implementation would require:
+1. Create wrapper FAT partition recipe containing boot.img
+2. Update WKS to use wrapper partitions instead of rawcopy
+3. Add signature generation and verification support
+
 ### Supported Yocto Releases
 
 - kirkstone (LTS)
