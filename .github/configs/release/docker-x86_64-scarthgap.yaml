@@ -31,6 +31,10 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
+    meta-clang:
+        commit: 5c602337ea1a80fb7217eeda04e396cf90587dca
+        path: layers/meta-clang
+        url: https://github.com/kraj/meta-clang.git
 local_conf_header:
     platform-generic: |
         PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
@@ -53,10 +57,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " dm-crypt"
         PANTAVISOR_FEATURES:append = " dm-verity"
         PANTAVISOR_FEATURES:remove = "autogrow"
-    pantavisor-runc: |
-        PANTAVISOR_FEATURES:append = " runc"
-    pantavisor-tailscale: |
-        PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
     __menu_config_locals: ''
