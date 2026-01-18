@@ -2,12 +2,12 @@ SUMMARY = "Example Raw Unix Service Provider Container"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit image-pvrexport
+inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-unix-server"
 
 RDEPENDS:${PN} += "socat"
-IMAGE_INSTALL += "socat"
+IMAGE_INSTALL += "socat busybox"
 
 SRC_URI += "file://pv-unix-server.sh \
             file://${PN}.services.json"
@@ -19,4 +19,4 @@ do_install:append() {
 
 FILES:${PN} += "${bindir}/pv-unix-server"
 
-PVR_APP_ADD_EXTRA_ARGS += "--entrypoint /usr/bin/pv-unix-server"
+PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-unix-server"

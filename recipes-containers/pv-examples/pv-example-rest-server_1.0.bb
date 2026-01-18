@@ -2,7 +2,7 @@ SUMMARY = "Example REST Service Provider Container"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit image-pvrexport
+inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-rest-server"
 
@@ -21,4 +21,4 @@ do_install:append() {
 FILES:${PN} += "${bindir}/pv-rest-server"
 
 # OCI/LXC entrypoint
-PVR_APP_ADD_EXTRA_ARGS += "--entrypoint /usr/bin/pv-rest-server --args /run/nm/api.sock"
+PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-rest-server --config=Cmd=/run/nm/api.sock"

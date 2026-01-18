@@ -2,11 +2,11 @@ SUMMARY = "Example D-Bus Service Provider Container"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit image-pvrexport
+inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-dbus-server"
 
-RDEPENDS:${PN} += "dbus python3-core python3-pydbus python3-io"
+RDEPENDS:${PN} += "dbus"
 IMAGE_INSTALL += "dbus python3-core python3-pydbus python3-io"
 
 SRC_URI += "file://pv-dbus-server.py \
@@ -19,4 +19,4 @@ do_install:append() {
 
 FILES:${PN} += "${bindir}/pv-dbus-server"
 
-PVR_APP_ADD_EXTRA_ARGS += "--entrypoint /usr/bin/pv-dbus-server"
+PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-dbus-server"

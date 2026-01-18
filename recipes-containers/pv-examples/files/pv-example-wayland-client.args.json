@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "wayland",
+            "target": "/run/wayland-0"
+        }
+    ]
+}

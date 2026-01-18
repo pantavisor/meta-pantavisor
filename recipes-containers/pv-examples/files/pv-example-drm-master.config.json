@@ -1,1 +1,0 @@
-{"#spec": "service-manifest-run@1", "services": {"required": [{"name": "primary-gpu", "role": "master"}]}}

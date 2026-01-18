@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "drm-render",
+            "role": "render"
+        }
+    ]
+}
