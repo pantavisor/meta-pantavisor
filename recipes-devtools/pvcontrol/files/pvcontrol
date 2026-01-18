@@ -11,6 +11,19 @@ signal=''
 
 CURL_CMD=${CURL_CMD:-curl}
 
+if ! command -v $CURL_CMD >/dev/null 2>&1; then
+	CURL_CMD="pvcurl"
+fi
+
+if ! command -v $CURL_CMD >/dev/null 2>&1; then
+	echo "Error: Neither 'curl' nor 'pvcurl' found in PATH." >&2
+	exit 1
+fi
+
+if [ "$CURL_CMD" = "pvcurl" ]; then
+	echo "INFO: Experimental pvcurl backend. Some features might not work..." >&2
+fi
+
 # only use --no-progress-meter if curl supports it
 noprogress_arg=
 if $CURL_CMD --help all | grep -q no-progress-meter; then
