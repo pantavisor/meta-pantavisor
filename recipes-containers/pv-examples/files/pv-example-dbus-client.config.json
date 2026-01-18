@@ -1,0 +1,1 @@
+{"#spec": "service-manifest-run@1", "services": {"required": [{"name": "system-bus", "interface": "org.pantavisor.Example"}]}}

@@ -80,6 +80,11 @@ fakeroot IMAGE_CMD:pvrexportit(){
  }
 EOF1
     fi
+    if [ -f ${WORKDIR}/${PN}.services.json ]; then
+        cp -f ${WORKDIR}/${PN}.services.json ./${PN}/services.json
+    elif [ -f ${WORKDIR}/services.json ]; then
+        cp -f ${WORKDIR}/services.json ./${PN}/services.json
+    fi
     if -n "${PV_CONFIG_OVERLAY_DIR}"; then
         mkdir -p _config
         cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PN}
