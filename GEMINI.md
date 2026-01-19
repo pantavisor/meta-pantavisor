@@ -23,6 +23,313 @@ When making changes to Kconfig or features:
 2. Update `kas/bsp-base.yaml` if necessary.
 3. Run `.github/scripts/makemachines` to regenerate release configurations.
 
+## Appengine Workflow
+
+### Build and Load
+1. Build the Appengine image:
+   ```bash
+   bitbake pantavisor-appengine
+   ```
+2. Build specific recipes or containers:
+   - **Standard build**:
+     ```bash
+     ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml --target <recipename>
+     ```
+   - **Upstream development (with workspace)**:
+     ```bash
+     ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml --target <recipename>
+     ```
+3. Load the resulting Docker tarball:
+   ```bash
+   docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+   ```
+
+### Run and Test
+
+#### Quick Start (Auto Mode)
+Start with default entrypoint (pv-appengine starts automatically):
+```bash
+docker run --name pva-test -d --privileged \
+  -v /path/to/pvrexports:/usr/lib/pantavisor/pvtx.d \
+  -v storage-test:/var/pantavisor/storage \
+  pantavisor-appengine:1.0
+```
+
+#### Interactive Mode (Manual Control)
+For debugging, use `sleep infinity` to keep container alive and control startup manually:
+```bash
+docker run --name pva-test -d --privileged \
+  -v /path/to/pvrexports:/usr/lib/pantavisor/pvtx.d \
+  -v storage-test:/var/pantavisor/storage \
+  --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+# Then start pv-appengine manually
+docker exec pva-test sh -c 'pv-appengine &'
+```
+
+#### Verify Pantavisor is Stable
+**Important**: Always verify pantavisor has fully started before testing:
+```bash
+# Wait for READY status in logs
+docker exec pva-test grep "status is now READY" /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+
+# Expected output:
+# [pantavisor] ... [state]: (pv_state_set_status:538) state revision '0' status is now READY
+```
+
+#### Check Container Status
+```bash
+docker exec pva-test lxc-ls -f
+```
+
+### Testing pv-ctrl API
+
+Always use timeouts when testing APIs to catch hangs:
+```bash
+# Good - with timeout
+docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph
+
+# Test other endpoints
+docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
+```
+
+### Testing pv-xconnect Service Mesh
+
+#### Understanding the xconnect-graph API
+
+The xconnect-graph endpoint returns the current service mesh topology as JSON:
+```bash
+# Query the graph (always use timeout)
+docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph
+```
+
+**Expected response** (example with unix client/server):
+```json
+[{
+  "type": "unix",
+  "name": "raw",
+  "consumer": "pv-example-unix-client",
+  "role": "client",
+  "socket": "/run/example/raw.sock",
+  "interface": "/run/pv/services/raw.sock",
+  "consumer_pid": 1234,
+  "provider_pid": 5678
+}]
+```
+
+**Fields:**
+- `type`: Connection type (unix, rest, drm, wayland)
+- `name`: Service name from services.json/args.json
+- `consumer`: Container requesting the service
+- `role`: "client" or "server"
+- `socket`: Provider's socket path (inside provider namespace)
+- `interface`: Consumer's target socket path (where to inject proxy)
+- `consumer_pid`: PID of the consumer container's init process
+- `provider_pid`: PID of the provider container's init process
+
+#### Running pv-xconnect Manually
+
+Use `stdbuf` to see unbuffered output:
+```bash
+docker exec pva-test stdbuf -oL timeout 5 /usr/bin/pv-xconnect 2>&1
+```
+
+**Expected output when working correctly:**
+```
+pv-xconnect starting...
+Connected to pv-ctrl
+Reconciling graph with 1 links
+Adding link: pv-example-unix-client (pid=1234, unix) -> /run/example/raw.sock (inject to: /run/pv/services/raw.sock)
+pvx-unix: Injecting socket /run/pv/services/raw.sock into pid 1234
+```
+
+**Note:** The PID will be the actual init PID of the consumer container.
+
+#### Verifying Socket Injection
+
+After pv-xconnect runs, check if the socket was injected into the consumer container:
+```bash
+# Get consumer container's PID
+docker exec pva-test lxc-info -n pv-example-unix-client -p
+
+# Check for injected socket (replace PID)
+docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
+```
+
+The injected socket should appear at the path specified in the consumer's `args.json` (rendered into `run.json`).
+
+#### Complete xconnect Test Workflow
+
+1. **Start with fresh state:**
+   ```bash
+   docker rm -f pva-test
+   docker volume rm storage-test
+   ```
+
+2. **Run appengine with test containers:**
+   ```bash
+   docker run --name pva-test -d --privileged \
+     -v /path/to/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+     -v storage-test:/var/pantavisor/storage \
+     --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+   ```
+
+3. **Start pv-appengine and wait for READY:**
+   ```bash
+   docker exec pva-test sh -c 'pv-appengine &'
+   sleep 5
+   docker exec pva-test grep "status is now READY" /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+   ```
+
+4. **Verify containers are running:**
+   ```bash
+   docker exec pva-test lxc-ls -f
+   ```
+
+5. **Test the xconnect-graph API:**
+   ```bash
+   docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+   ```
+
+6. **Run pv-xconnect and observe:**
+   ```bash
+   docker exec pva-test stdbuf -oL timeout 10 /usr/bin/pv-xconnect 2>&1
+   ```
+
+7. **Verify API still works after pv-xconnect (DoS regression test):**
+   ```bash
+   docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
+   ```
+
+### xconnect Test Container Setup
+
+The pv-examples containers demonstrate xconnect service mesh patterns.
+
+#### Provider Container (e.g., pv-example-unix-server)
+
+Creates a `services.json` declaring exported services:
+```json
+{
+  "services": [
+    {
+      "type": "unix",
+      "name": "raw",
+      "socket": "/run/example/raw.sock"
+    }
+  ]
+}
+```
+
+#### Consumer Container (e.g., pv-example-unix-client)
+
+Creates an `args.json` with service requirements that get rendered into `run.json`:
+```json
+{
+  "services": [
+    {
+      "type": "unix",
+      "name": "raw",
+      "provider": "pv-example-unix-server",
+      "socket": "/run/pv/services/raw.sock"
+    }
+  ]
+}
+```
+
+The `socket` field in args.json specifies where pv-xconnect should inject the proxied socket inside the consumer's namespace.
+
+**Note:** pvr transforms args.json into run.json with "target" as the field name (instead of "socket"). The parser accepts both "interface" and "target" as aliases.
+
+#### How xconnect Accesses Container Namespaces
+
+pv-xconnect uses `/proc/{pid}/root/` paths to access container filesystems:
+
+- **Provider socket**: Accessed via `/proc/{provider_pid}/root{socket_path}`
+- **Consumer socket**: Injected using `setns()` into the consumer's mount namespace
+
+This allows the xconnect proxy to bridge containers without requiring shared mounts.
+
+#### Building Test Containers
+
+```bash
+# Build the example containers with workspace (for upstream pantavisor changes)
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+  --target pv-example-unix-server --target pv-example-unix-client
+```
+
+The pvrexport outputs will be in:
+- `build/tmp-scarthgap/deploy/pvrexports/pv-example-unix-server/`
+- `build/tmp-scarthgap/deploy/pvrexports/pv-example-unix-client/`
+
+### Inspection and Debugging
+
+#### Check LXC Containers
+```bash
+docker exec pva-test lxc-ls -f
+```
+
+#### Enter a Container
+```bash
+docker exec -it pva-test pventer -c <container_name>
+```
+
+#### Check Inside Container's Namespace
+```bash
+# Get container PID
+docker exec pva-test lxc-info -n <container_name> -p
+
+# Check files in container's rootfs (replace PID)
+docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
+```
+
+#### Log Locations
+- **Pantavisor**: `/run/pantavisor/pv/logs/0/pantavisor/pantavisor.log`
+- **Container Console**: `/run/pantavisor/pv/logs/0/<container_name>/lxc/console.log`
+- **LXC Log**: `/run/pantavisor/pv/logs/0/<container_name>/lxc/lxc.log`
+
+### Cleanup Between Tests
+
+Use fresh storage volumes to avoid stale state:
+```bash
+docker rm -f pva-test
+docker volume rm storage-test
+# Then start fresh
+```
+
+### Common Issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| API calls hang/timeout | Missing Host header in client | Ensure HTTP requests include `Host: localhost` header |
+| Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume |
+| "Socket not found" in client | pv-xconnect not injecting socket | Check pv-xconnect output with `stdbuf -oL` |
+| No output from pv-xconnect | stdout buffering | Use `stdbuf -oL` prefix |
+| `interface: null` in xconnect-graph | Parser not finding target field | Ensure parser accepts "target" as alias for "interface" |
+| `consumer_pid: 0` | PID not being parsed | Ensure main.c parses consumer_pid from JSON |
+| "Could not connect to provider socket" | Wrong namespace path | Use `/proc/{pid}/root/` to access container filesystem |
+| "Broken pipe" errors | Proxy closing too early | Ensure half-close handling in unix.c proxy |
+
+## Upstream Pantavisor Changes
+
+Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect:
+
+### ctrl/ctrl.c - Host Header DoS Fix
+- Fixed vulnerability where NULL/empty Host header caused server hang
+- Now allows localhost, empty, or NULL host for Unix socket connections
+
+### xconnect/main.c - JSON Parsing
+- Added parsing of `consumer_pid`, `provider_pid`, `interface` fields
+- Uses `interface` as consumer socket path for injection target
+
+### parser/parser_system1.c - Target Alias
+- Parser now accepts "target" as alias for "interface"
+- Needed because pvr renders args.json "socket" field as "target" in run.json
+
+### xconnect/plugins/unix.c - Namespace and Proxy Fixes
+- Provider socket access via `/proc/{pid}/root/` path
+- Proper half-close session tracking for bidirectional communication
+- Fixes "broken pipe" errors when provider sends response
+
 ## Architecture
 
 For the design of the service mesh and `pv-xconnect`, please refer to the documentation in the `pantavisor` source repository:
