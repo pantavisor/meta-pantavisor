@@ -5,18 +5,22 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-wayland-client"
+PVRIMAGE_AUTO_MDEV = "0"
 
 RDEPENDS:${PN} += "wayland-utils"
-IMAGE_INSTALL += "wayland-utils"
+IMAGE_INSTALL += "wayland-utils busybox"
+
+do_fetch[noexec] = "0"
+do_unpack[noexec] = "0"
 
 SRC_URI += "file://pv-wayland-client.sh \
             file://${PN}.args.json"
 
-do_install:append() {
-    install -d ${D}${bindir}
-    install -m 0755 ${WORKDIR}/pv-wayland-client.sh ${D}${bindir}/pv-wayland-client
+install_scripts() {
+    install -d ${IMAGE_ROOTFS}${bindir}
+    install -m 0755 ${WORKDIR}/pv-wayland-client.sh ${IMAGE_ROOTFS}${bindir}/pv-wayland-client
 }
 
-FILES:${PN} += "${bindir}/pv-wayland-client"
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-wayland-client"

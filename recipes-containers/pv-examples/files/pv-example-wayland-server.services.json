@@ -1,1 +1,1 @@
-[{"name": "wayland-0", "type": "wayland", "socket": "/run/pv/services/wayland-0"}]
+[{"name": "wayland-0", "type": "wayland", "socket": "/run/wayland-0"}]

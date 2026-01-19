@@ -1,15 +1,25 @@
 #!/bin/sh
 
-export WAYLAND_DISPLAY="wayland-0"
-export XDG_RUNTIME_DIR="/run/pv/services"
+# Socket is injected at /run/wayland-0 by pv-xconnect
+export WAYLAND_DISPLAY="/run/wayland-0"
 
-while true; do
-    echo "--- Querying Wayland service via $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY ---"
-    if [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
-        wayland-info
-    else
-        echo "Socket not found!"
+MAX_RETRIES=30
+RETRY=0
+
+echo "Waiting for Wayland socket at $WAYLAND_DISPLAY..."
+
+while [ $RETRY -lt $MAX_RETRIES ]; do
+    if [ -S "$WAYLAND_DISPLAY" ]; then
+        echo "SUCCESS: Found Wayland socket"
+        ls -la "$WAYLAND_DISPLAY"
+        echo ""
+        echo "--- Querying Wayland compositor ---"
+        wayland-info 2>&1 || echo "wayland-info failed (may need fd passing support)"
+        sleep infinity
     fi
-    echo -e "\n"
-    sleep 5
+    RETRY=$((RETRY + 1))
+    sleep 1
 done
+
+echo "FAILED: Wayland socket not found after $MAX_RETRIES seconds"
+exit 1
