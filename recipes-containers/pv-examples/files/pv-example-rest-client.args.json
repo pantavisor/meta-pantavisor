@@ -2,7 +2,7 @@
     "PV_SERVICES_REQUIRED": [
         {
             "name": "network-manager",
-            "target": "/run/nm/api.sock"
+            "target": "/run/pv/services/network-manager.sock"
         }
     ]
 }

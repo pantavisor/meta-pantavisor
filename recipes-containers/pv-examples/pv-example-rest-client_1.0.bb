@@ -5,19 +5,23 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-rest-client"
+PVRIMAGE_AUTO_MDEV = "0"
 
 RDEPENDS:${PN} += "curl"
+
+IMAGE_INSTALL += "curl busybox"
+
+do_fetch[noexec] = "0"
+do_unpack[noexec] = "0"
 
 SRC_URI += "file://pv-rest-client.sh \
             file://${PN}.args.json"
 
-IMAGE_INSTALL += "curl"
-
-do_install:append() {
-    install -d ${D}${bindir}
-    install -m 0755 ${WORKDIR}/pv-rest-client.sh ${D}${bindir}/pv-rest-client
+install_scripts() {
+    install -d ${IMAGE_ROOTFS}${bindir}
+    install -m 0755 ${WORKDIR}/pv-rest-client.sh ${IMAGE_ROOTFS}${bindir}/pv-rest-client
 }
 
-FILES:${PN} += "${bindir}/pv-rest-client"
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-rest-client"

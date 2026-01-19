@@ -5,6 +5,10 @@ import socket
 import os
 
 class SimpleHandler(BaseHTTPRequestHandler):
+    def address_string(self):
+        # Unix sockets don't have a traditional address
+        return "unix-client"
+
     def do_GET(self):
         if self.path == '/info':
             self.send_response(200)
