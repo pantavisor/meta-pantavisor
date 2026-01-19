@@ -2,7 +2,7 @@
     "PV_SERVICES_REQUIRED": [
         {
             "name": "drm-master",
-            "role": "master"
+            "target": "/dev/dri/card0"
         }
     ]
 }

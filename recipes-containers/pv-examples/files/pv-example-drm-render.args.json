@@ -2,7 +2,7 @@
     "PV_SERVICES_REQUIRED": [
         {
             "name": "drm-render",
-            "role": "render"
+            "target": "/dev/dri/renderD128"
         }
     ]
 }

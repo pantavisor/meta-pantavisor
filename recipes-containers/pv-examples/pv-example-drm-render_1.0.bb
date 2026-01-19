@@ -5,23 +5,21 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-drm-render"
+PVRIMAGE_AUTO_MDEV = "0"
 
-DEPENDS += "libdrm"
-RDEPENDS:${PN} += "libdrm"
-IMAGE_INSTALL += "libdrm"
+IMAGE_INSTALL += "busybox"
 
-SRC_URI += "file://pv-drm-render.c \
+do_fetch[noexec] = "0"
+do_unpack[noexec] = "0"
+
+SRC_URI += "file://pv-drm-render.sh \
             file://${PN}.args.json"
 
-do_compile() {
-    ${CC} ${CFLAGS} ${LDFLAGS} ${WORKDIR}/pv-drm-render.c -o pv-drm-render -ldrm -I${STAGING_INCDIR}/libdrm
+install_scripts() {
+    install -d ${IMAGE_ROOTFS}${bindir}
+    install -m 0755 ${WORKDIR}/pv-drm-render.sh ${IMAGE_ROOTFS}${bindir}/pv-drm-render
 }
 
-do_install:append() {
-    install -d ${D}${bindir}
-    install -m 0755 pv-drm-render ${D}${bindir}/
-}
-
-FILES:${PN} += "${bindir}/pv-drm-render"
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-drm-render"
