@@ -242,18 +242,21 @@ docker exec pva-test ls -la /proc/<PID>/root/
 
 ### API Testing
 
+Pantavisor includes `pvcurl`, a lightweight wrapper around `nc` for communicating with the `pv-ctrl` socket.
+
 ```bash
 # xconnect graph
-docker exec pva-test curl -s --max-time 3 \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+
+# Daemon management
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons | jq .
+docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons/pv-xconnect
 
 # Container status
-docker exec pva-test curl -s --max-time 3 \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers | jq .
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers | jq .
 
 # Build info
-docker exec pva-test curl -s --max-time 3 \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo | jq .
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo | jq .
 ```
 
 ### Process Inspection

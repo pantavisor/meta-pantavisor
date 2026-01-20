@@ -6,17 +6,21 @@ inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-unix-server"
 
-RDEPENDS:${PN} += "socat"
+PVRIMAGE_AUTO_MDEV = "0"
+
 IMAGE_INSTALL += "socat busybox"
+
+do_fetch[noexec] = "0"
+do_unpack[noexec] = "0"
 
 SRC_URI += "file://pv-unix-server.sh \
             file://${PN}.services.json"
 
-do_install:append() {
-    install -d ${D}${bindir}
-    install -m 0755 ${WORKDIR}/pv-unix-server.sh ${D}${bindir}/pv-unix-server
+install_scripts() {
+    install -d ${IMAGE_ROOTFS}${bindir}
+    install -m 0755 ${WORKDIR}/pv-unix-server.sh ${IMAGE_ROOTFS}${bindir}/pv-unix-server
 }
 
-FILES:${PN} += "${bindir}/pv-unix-server"
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-unix-server"

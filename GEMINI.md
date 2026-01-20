@@ -84,14 +84,23 @@ docker exec pva-test lxc-ls -f
 
 ### Testing pv-ctrl API
 
-Always use timeouts when testing APIs to catch hangs:
+Always use timeouts when testing APIs to catch hangs. Pantavisor now includes `pvcurl` (a lightweight curl wrapper using `nc`) which is preferred over standard `curl`:
 ```bash
-# Good - with timeout
-docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph
+# List all daemons
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons
 
-# Test other endpoints
-docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
+# Stop a daemon (e.g. pv-xconnect)
+docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons/pv-xconnect
+
+# Start a daemon
+docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons/pv-xconnect
 ```
+
+**New Endpoint: /daemons**
+- `GET /daemons`: Returns a JSON list of managed daemons, their PIDs and respawn status.
+- `PUT /daemons/{name}`: Performs actions on a daemon. 
+  - `{"action": "stop"}`: Disables respawn and kills the daemon.
+  - `{"action": "start"}`: Enables respawn and starts the daemon if not running.
 
 ### Testing pv-xconnect Service Mesh
 
