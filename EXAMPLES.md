@@ -160,19 +160,28 @@ Demonstrates HTTP-over-UDS with identity header injection (`X-PV-Client`, `X-PV-
 
 ## D-Bus Example
 
-Demonstrates policy-aware D-Bus proxying with interface filtering.
+Demonstrates policy-aware D-Bus proxying with interface filtering and name ownership.
 
 ### Containers
 
-- **Provider**: `pv-example-dbus-server` - Exposes D-Bus service
-- **Consumer**: `pv-example-dbus-client` - Accesses specific D-Bus interfaces
+- **Provider**: `pv-example-dbus-server`
+  - Runs a local `dbus-daemon` and a Python service.
+  - Publishes the `org.pantavisor.Example` bus name.
+  - Includes a policy file in `/etc/dbus-1/system.d/` to grant permissions.
+- **Consumer**: `pv-example-dbus-client`
+  - Calls `GetInfo` on the `org.pantavisor.Example` service using `dbus-send`.
+  - Expects the proxied bus socket to be injected at `/run/dbus/system_bus_socket`.
 
 ### Configuration
 
 **Provider services.json:**
 ```json
 [
-  {"name": "system-bus", "type": "dbus", "socket": "/run/dbus/system_bus_socket"}
+  {
+    "name": "system-bus",
+    "type": "dbus",
+    "socket": "/run/dbus/system_bus_socket"
+  }
 ]
 ```
 
@@ -182,17 +191,41 @@ Demonstrates policy-aware D-Bus proxying with interface filtering.
   "PV_SERVICES_REQUIRED": [
     {
       "name": "system-bus",
-      "interface": "org.example.Service"
+      "type": "dbus",
+      "interface": "org.pantavisor.Example",
+      "target": "/run/dbus/system_bus_socket"
     }
   ]
 }
 ```
 
-### Build
+- **`interface`**: Defines the D-Bus name or interface the consumer is allowed to access.
+- **`target`**: The path inside the consumer namespace where `pv-xconnect` will inject the proxied D-Bus socket.
+
+### Build and Test
 
 ```bash
+# Build D-Bus containers
 ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-dbus-server --target pv-example-dbus-client
+
+# Copy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-dbus-*.pvrexport.tgz pvtx.d/
+```
+
+### Verify
+
+After containers start and `pv-xconnect` reconciles the graph:
+```bash
+# Observe client logs for successful D-Bus replies
+docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-dbus-client/lxc/console.log
+```
+
+Expected output:
+```
+--- Requesting info from D-Bus service org.pantavisor.Example ---
+method return time=... sender=:1.0 -> destination=:1.1 serial=... reply_serial=2
+   string "{"service": "dbus-example", "status": "active"}"
 ```
 
 ---
