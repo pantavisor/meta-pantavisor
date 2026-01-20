@@ -6,7 +6,13 @@ inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-dbus-client"
 
+PVRIMAGE_AUTO_MDEV = "0"
+
+
+
 RDEPENDS:${PN} += "dbus"
+
+
 IMAGE_INSTALL += "dbus busybox"
 
 do_fetch[noexec] = "0"

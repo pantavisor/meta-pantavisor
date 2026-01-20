@@ -37,6 +37,8 @@ This overlays `kas/with-workspace.yaml` which:
 - Allows direct edits to pantavisor source code
 - Rebuilds pantavisor from workspace on each build
 
+**Note on pvr**: When using a custom `pvr` binary from the workspace, auto-updates are disabled by setting `PVR_DISABLE_SELF_UPGRADE=1` in the environment. This is handled automatically by the `container-pvrexport.bbclass`.
+
 ## Pantavisor Development
 
 ### Initial Setup

@@ -45,6 +45,7 @@ fakeroot IMAGE_CMD:pvrexportit(){
     which pvr
     pvr --version
     export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+    export PVR_DISABLE_SELF_UPGRADE=1
     if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
         tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz --no-same-owner
     fi

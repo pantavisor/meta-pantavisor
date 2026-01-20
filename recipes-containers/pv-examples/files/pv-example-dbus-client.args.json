@@ -2,7 +2,9 @@
     "PV_SERVICES_REQUIRED": [
         {
             "name": "system-bus",
-            "interface": "org.pantavisor.Example"
+            "type": "dbus",
+            "interface": "org.pantavisor.Example",
+            "target": "/run/dbus/system_bus_socket"
         }
     ]
 }

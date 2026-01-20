@@ -23,6 +23,8 @@ When making changes to Kconfig or features:
 2. Update `kas/bsp-base.yaml` if necessary.
 3. Run `.github/scripts/makemachines` to regenerate release configurations.
 
+**pvr workspace**: If you are using a custom `pvr` in the workspace, ensure `PVR_DISABLE_SELF_UPGRADE=1` is set to prevent auto-updates from overwriting it.
+
 ## Appengine Workflow
 
 ### Build and Load
