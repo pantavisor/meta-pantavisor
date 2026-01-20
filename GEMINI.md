@@ -167,9 +167,36 @@ docker exec pva-test lxc-info -n pv-example-unix-client -p
 docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
 ```
 
-The injected socket should appear at the path specified in the consumer's `args.json` (rendered into `run.json`).
+### D-Bus Example Containers
 
-#### Complete xconnect Test Workflow
+The `pv-example-dbus-*` containers demonstrate cross-container D-Bus communication.
+
+- **`pv-example-dbus-server`**:
+  - Runs a `dbus-daemon` and a Python service (`pv-dbus-server.py`).
+  - Publishes the `org.pantavisor.Example` name.
+  - Includes a policy file in `/etc/dbus-1/system.d/` to allow name ownership and message reception.
+- **`pv-example-dbus-client`**:
+  - Periodically calls `GetInfo` on `org.pantavisor.Example` using `dbus-send`.
+  - Expects the D-Bus socket to be injected at `/run/dbus/system_bus_socket`.
+
+#### Running the D-Bus Test
+
+1. **Build and Load**:
+   ```bash
+   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+     --target pv-example-dbus-server --target pv-example-dbus-client
+   ```
+2. **Start Appengine** (see Quick Start above).
+3. **Reconcile with pv-xconnect**:
+   ```bash
+   docker exec pva-test /usr/bin/pv-xconnect
+   ```
+4. **Observe Logs**:
+   ```bash
+   docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-dbus-client/lxc/console.log
+   ```
+
+### Complete xconnect Test Workflow
 
 1. **Start with fresh state:**
    ```bash
