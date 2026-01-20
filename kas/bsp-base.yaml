@@ -34,6 +34,10 @@ repos:
       meta-oe:
       meta-python:
 
+  meta-clang:
+    url: "https://github.com/kraj/meta-clang.git"
+    path: layers/meta-clang
+
 local_conf_header:
   rm_work: |
     INHERIT += "rm_work"
@@ -47,8 +51,6 @@ local_conf_header:
     PANTAVISOR_FEATURES:append = " dm-verity"
     PANTAVISOR_FEATURES:append = " autogrow"
     INITRAMFS_IMAGE = "pantavisor-initramfs"
-  pantavisor-runc: |
-    PANTAVISOR_FEATURES:append = " runc"
   pantavisor-tailscale: |
     PANTAVISOR_FEATURES:append = " tailscale"
   pantavisor-debug: |
@@ -56,4 +58,3 @@ local_conf_header:
 env:
   PVROOT_IMAGE_BSP: null
   PV_BOOT_OEMARGS: null
-

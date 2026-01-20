@@ -159,6 +159,32 @@ config KAS_LOCAL_PV_TAILSCALE
 	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
 endmenu
 
+menu "Features"
+config FEATURE_RUNC
+	bool "runc support"
+	default y
+
+config KAS_LOCAL_FEATURE_RUNC
+	string
+	default "PANTAVISOR_FEATURES:append = \" runc\"" if FEATURE_RUNC
+
+config FEATURE_WASMEDGE
+	bool "wasmedge support"
+	default n
+
+config KAS_LOCAL_FEATURE_WASMEDGE
+	string
+	default "PANTAVISOR_FEATURES:append = \" wasmedge\"\nPANTAVISOR_FEATURES:remove:armv7ve = \" wasmedge\"" if FEATURE_WASMEDGE
+
+config FEATURE_XCONNECT
+	bool "pv-xconnect support"
+	default n
+
+config KAS_LOCAL_FEATURE_XCONNECT
+	string
+	default "PANTAVISOR_FEATURES:append = \" xconnect\"" if FEATURE_XCONNECT
+endmenu
+
 config MACHINE_FILTER_ALL
 	bool "Show All Machines"
 	default y
