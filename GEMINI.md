@@ -169,32 +169,35 @@ docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
 
 ### D-Bus Example Containers
 
-The `pv-example-dbus-*` containers demonstrate cross-container D-Bus communication.
+The `pv-example-dbus-*` containers demonstrate cross-container D-Bus communication with Role-based identities.
 
 - **`pv-example-dbus-server`**:
   - Runs a `dbus-daemon` and a Python service (`pv-dbus-server.py`).
   - Publishes the `org.pantavisor.Example` name.
-  - Includes a policy file in `/etc/dbus-1/system.d/` to allow name ownership and message reception.
+  - Policy file allows `root` role to own the service and `nobody` role to send messages.
 - **`pv-example-dbus-client`**:
-  - Periodically calls `GetInfo` on `org.pantavisor.Example` using `dbus-send`.
-  - Expects the D-Bus socket to be injected at `/run/dbus/system_bus_socket`.
+  - Assigns the **`root`** role in `args.json`.
+  - Maps to the provider's `root` user (UID 0) via `pv-xconnect`.
+- **`pv-example-dbus-client-nobody`**:
+  - Assigns the **`nobody`** role in `args.json`.
+  - Maps to the provider's `nobody` user (UID 65534).
 
 #### Running the D-Bus Test
 
 1. **Build and Load**:
    ```bash
    ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
-     --target pv-example-dbus-server --target pv-example-dbus-client
+     --target pv-example-dbus-server --target pv-example-dbus-client --target pv-example-dbus-client-nobody
    ```
 2. **Start Appengine** (see Quick Start above).
 3. **Reconcile with pv-xconnect**:
    ```bash
    docker exec pva-test /usr/bin/pv-xconnect
    ```
-4. **Observe Logs**:
-   ```bash
-   docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-dbus-client/lxc/console.log
-   ```
+4. **Observe Results**:
+   - `pv-example-dbus-client` will successfully call the service as `root`.
+   - `pv-example-dbus-client-nobody` will successfully call the service as `nobody`.
+   - The provider logs will show separate connections for each role.
 
 ### Complete xconnect Test Workflow
 
