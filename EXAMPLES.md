@@ -173,17 +173,19 @@ Demonstrates policy-aware D-Bus proxying with interface filtering and name owner
 **Provider D-Bus Policy (`org.pantavisor.Example.conf`):**
 ```xml
 <busconfig>
-  <!-- Allow containers with the 'any' role to send messages to our service -->
-  <policy user="any@pantavisor">
+  <!-- Allow containers with the 'root' role (mapped to provider's 'root' user) -->
+  <policy user="root">
+    <allow own="org.pantavisor.Example"/>
     <allow send_destination="org.pantavisor.Example"/>
   </policy>
 
-  <!-- Allow root inside the provider container to own the service -->
-  <policy user="root">
-    <allow own="org.pantavisor.Example"/>
+  <!-- Allow containers with any role that maps to a valid user to SEND messages -->
+  <policy context="default">
+    <allow send_destination="org.pantavisor.Example"/>
   </policy>
 </busconfig>
 ```
+This demonstrates how `pv-xconnect` bridges identities across namespaces by mapping roles defined in the service mesh graph to actual UIDs inside the provider container.
 
 **Provider services.json:**
 ```json
