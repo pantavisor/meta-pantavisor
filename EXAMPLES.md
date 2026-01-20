@@ -168,11 +168,22 @@ Demonstrates policy-aware D-Bus proxying with interface filtering and name owner
   - Runs a local `dbus-daemon` and a Python service.
   - Publishes the `org.pantavisor.Example` bus name.
   - Includes a policy file in `/etc/dbus-1/system.d/` to grant permissions.
-- **Consumer**: `pv-example-dbus-client`
-  - Calls `GetInfo` on the `org.pantavisor.Example` service using `dbus-send`.
-  - Expects the proxied bus socket to be injected at `/run/dbus/system_bus_socket`.
-
 ### Configuration
+
+**Provider D-Bus Policy (`org.pantavisor.Example.conf`):**
+```xml
+<busconfig>
+  <!-- Allow containers with the 'any' role to send messages to our service -->
+  <policy user="any@pantavisor">
+    <allow send_destination="org.pantavisor.Example"/>
+  </policy>
+
+  <!-- Allow root inside the provider container to own the service -->
+  <policy user="root">
+    <allow own="org.pantavisor.Example"/>
+  </policy>
+</busconfig>
+```
 
 **Provider services.json:**
 ```json
