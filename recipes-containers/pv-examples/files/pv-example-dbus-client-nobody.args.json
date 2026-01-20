@@ -3,7 +3,7 @@
         {
             "name": "system-bus",
             "type": "dbus",
-            "role": "root",
+            "role": "nobody",
             "interface": "org.pantavisor.Example",
             "target": "/run/dbus/system_bus_socket"
         }

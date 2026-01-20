@@ -376,3 +376,30 @@ Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) 
 For the design of the service mesh and `pv-xconnect`, please refer to the documentation in the `pantavisor` source repository:
 - `GEMINI.md`: High-level vision.
 - `xconnect/XCONNECT.md`: Detailed `pv-xconnect` implementation notes.
+
+## Checkpoint (2026-01-20)
+
+### Achieved so far
+1. **D-Bus Plugin with Role-to-UID Mapping:**
+    * Rewrote the dbus plugin to implement Identity Masquerading.
+    * The proxy now reads /proc/{pid}/root/etc/passwd of the provider to map the Pantavisor Role (e.g., "root", "nobody", "ubuntu") to an actual UID.
+    * It intercepts the D-Bus SASL AUTH EXTERNAL command and injects the resolved UID so the provider's dbus-daemon can enforce standard XML policies.
+2. **Pantavisor Metadata:**
+    * Added the target field to the pv_platform_service struct and updated the xconnect-graph API.
+    * This allows us to specify where to inject the socket (e.g., /run/dbus/system_bus_socket) independently of the D-Bus interface name.
+3. **Examples:**
+    * Created pv-example-dbus-client-nobody to test non-root roles.
+    * Updated the D-Bus server policy to explicitly handle root and nobody identities.
+4. **Documentation:**
+    * Updated XCONNECT.md (Pantavisor) with the new Role-to-UID specs and default "any" roles.
+    * Updated GEMINI.md and EXAMPLES.md (meta-pantavisor) with the new D-Bus testing patterns.
+5. **Pushed Branches:**
+    * Pantavisor: feature/wasm-engine (includes D-Bus plugin, target field, /daemons API).
+    * meta-pantavisor: feature/wasmedge-engine (includes new examples, doc updates, and pvr auto-update fix).
+
+### Current Blockers
+- **None.** The Segfault in `pv-xconnect` has been fixed by correcting the JSON iteration logic in `reconcile_graph` and removing the redundant `LEV_OPT_REUSEABLE` flag in `dbus.c`.
+
+### Next Steps
+1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
+2. **Upstream PRs:** Prepare branches for merging into main project repositories.
