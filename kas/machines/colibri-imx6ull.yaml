@@ -15,3 +15,6 @@ machine: colibri-imx6ull
 local_conf_header:
   platform-colibri-imx6ull: |
         include conf/machine/include/colibri-imx6ull.inc
+        IMAGE_FSTYPES += "ubifs"
+        MKUBIFS_ARGS = "-F -m 2048 -e 126976 -c 4000"
+

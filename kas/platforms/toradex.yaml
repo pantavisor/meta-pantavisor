@@ -39,3 +39,4 @@ repos:
 local_conf_header:
   platform-toradex: |
     PV_UBOOT_AUTOFDT = "1"
+    DISTRO_UBOOT_DEFAULT_SCRIPT = "u-boot-distro-boot"
