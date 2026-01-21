@@ -1,0 +1,70 @@
+From 5de7ea9f580dcb5dbde153e49f3a1ad8ce1c3472 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Mon, 14 Oct 2024 12:33:16 +0000
+Subject: [PATCH] libpvr/util.go: switch to use cmd line tools for rm and rm -r
+
+---
+ libpvr/util.go | 37 ++++++++++++++++++++++++++++++-------
+ 1 file changed, 30 insertions(+), 7 deletions(-)
+
+diff --git a/libpvr/util.go b/libpvr/util.go
+index 121fee3e..9c249a3a 100644
+--- a/libpvr/util.go
++++ b/libpvr/util.go
+@@ -135,23 +135,46 @@ func RemoveAll(path string) error {
+ 		return err
+ 	}
+ 
+-	err := os.RemoveAll(path)
++	rm, err := exec.LookPath(RM_CMD)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err))
++		return err
+ 	}
+-	return err
++	args := []string{rm, "-rf", path}
++	mkdirCmd := exec.Command(args[0], args[1:]...)
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	mkdirCmd.Stdout = &out
++	mkdirCmd.Stderr = &stderr
++	err = mkdirCmd.Run()
++	if err != nil {
++		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
++		return err
++	}
++	return nil
+ }
+ 
+-// Remove remove a path, a file
++// RemoveAll remove a path, could be a file or a folder
+ func Remove(path string) error {
++
+ 	if _, err := os.Lstat(path); err != nil {
+ 		return err
+ 	}
+-	err := os.Remove(path)
++	rm, err := exec.LookPath(RM_CMD)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err))
++		return err
+ 	}
+-	return err
++	args := []string{rm, "-f", path}
++	mkdirCmd := exec.Command(args[0], args[1:]...)
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	mkdirCmd.Stdout = &out
++	mkdirCmd.Stderr = &stderr
++	err = mkdirCmd.Run()
++	if err != nil {
++		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
++		return err
++	}
++	return nil
+ }
+ 
+ func Copy(dst, src string) error {
+-- 
+2.34.1
+
