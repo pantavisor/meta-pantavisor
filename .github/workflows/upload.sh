@@ -68,13 +68,13 @@ for FILE in "${FILES_SDK[@]}"; do
 done
 
 RELEASE_TYPE=""
-if [[ "$TAG" == 0* ]]; then
-    RELEASE_TYPE="stable"
-
-elif [[ "$TAG" == *-rc* ]]; then
+if [[ "$TAG" == *"-rc"* ]]; then
     RELEASE_TYPE="release-candidate"
+
+elif [[ "$TAG" =~ ^[0-9] ]]; then
+    RELEASE_TYPE="stable"
 else
-    echo "WARN: the type '$RELEASE_TYPE' is not a valid value." >&2
+    echo "WARN: the type for tag '$TAG' could not be determined." >&2
     RELEASE_TYPE="unknown"
 fi
 
@@ -99,20 +99,25 @@ if [ -e sdk/$DEPLOY_SDK ]; then
       '. + {sdk: {url: $url, sha256: $sha}}')
 fi
 
+TIMESTAMP=$(date --iso-8601=minutes)
+
 jq --arg type "$RELEASE_TYPE" \
    --arg rname "$TAG" \
+   --arg time "$TIMESTAMP" \
    --argjson new_device "$NEW_DEVICE" \
 '
     .[$type] //= {} |
-    .[$type][$rname] //= [] |
+    .[$type][$rname] //= {"devices": [], "timestamp": ""} |
+    
+    .[$type][$rname].timestamp = $time |
 
-    (.[$type][$rname] | map(.name) | index($new_device.name)) as $device_idx |
+    (.[$type][$rname].devices | map(.name) | index($new_device.name)) as $device_idx |
 
     if $device_idx == null then
-        .[$type][$rname] += [$new_device]
+        .[$type][$rname].devices += [$new_device]
     else
-        .[$type][$rname][$device_idx] = $new_device
+        .[$type][$rname].devices[$device_idx] = $new_device
     end
-   ' "$RELEASE_FILE" > temp.json && mv temp.json "$RELEASE_FILE"
+' "$RELEASE_FILE" > temp.json && mv temp.json "$RELEASE_FILE"
 
 aws s3 cp $RELEASE_FILE s3://$AWS_S3_BUCKET/$RELEASE_FILE
