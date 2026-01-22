@@ -29,6 +29,3 @@ for i in "${!config_array[@]}"; do
 done
 
 echo "All machine configs generated successfully!"
-
-echo DIFF:
-git diff HEAD .github/
