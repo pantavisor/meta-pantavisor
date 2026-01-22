@@ -11,6 +11,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	jq \
 	pantavisor-pvtest \
 	procps \
+	pvr \
 "
 
 PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" MANUAL="false" OVERWRITE="false" VERBOSE="false" NETSIM="false"'
