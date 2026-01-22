@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: a1c9e4aa904f7699523468be51b07ea5bdf872cf
+        commit: ffd8c84e0797148fc49cc88598c21f70b4a371ff
         patches:
             add-marketing-png-image:
                 path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
@@ -31,7 +31,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: e43ed4b34727f351a63232013de205b27f09180f
+        commit: d423ed184761d594a95b4459cf78e1de15924b8d
         patches:
             pv-formated-tezi:
                 path: patches/meta-toradex-nxp/0001-support-to-pv_tezi.patch
@@ -58,7 +58,7 @@ repos:
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2b26d30fc7f478f5735d514f0c1bc28f6a4148b6
+        commit: 2759d8870ea387b76c902070bed8a6649ff47b56
         layers:
             meta-filesystems:
             meta-networking:
