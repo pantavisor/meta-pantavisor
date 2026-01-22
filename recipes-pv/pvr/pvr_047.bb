@@ -2,7 +2,7 @@ DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program.
 SECTION = "pantavisor"
 HOMEPAGE = "https://golang.org/"
 
-inherit go-mod deploy native
+inherit go-mod deploy
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -21,6 +21,7 @@ GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
 
 GOBUILDFLAGS += "-mod=vendor"
+GO_LINKSHARED = ""
 GO_LINKMODE:class-nativesdk = ""
 GO_LINKMODE:class-native = ""
 

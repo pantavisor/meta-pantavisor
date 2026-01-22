@@ -372,6 +372,7 @@ run_test() {
 				shift
 				;;
 			-m|--manual)
+				interactive="true"
 				manual="true"
 				shift
 				;;
@@ -399,12 +400,6 @@ run_test() {
 
 	if [ "$interactive" = true ] && [ -z "$number" ]; then
 		echo "Error: Missing number argument"
-		usage
-		exit 1
-	fi
-
-	if [ "$manual" = true ] && [ "$interactive" = "false" ]; then
-		echo "Error: Cannot use manual without interactive"
 		usage
 		exit 1
 	fi
