@@ -4,13 +4,15 @@
         "bluetooth": [
             "bluetooth",
             "rfkill",
-            "uwe5622"
+            "uwe5622",
+			"sprdbt_tty"
         ],
         "ethernet": [
             "sun50i_gmac"
         ],
         "wifi": [
-            "uwe5622"
+            "uwe5622",
+			"sprdwl_ng"
         ],
         "wireguard": [
             "wireguard"
