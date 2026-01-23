@@ -1,0 +1,10 @@
+header:
+    version: 16
+
+repos:
+    workspace:
+        path: build/workspace
+
+local_conf_header:
+    test-features: |
+        PANTAVISOR_FEATURES:append = " wasmedge xconnect"

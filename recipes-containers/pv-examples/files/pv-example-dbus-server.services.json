@@ -1,0 +1,1 @@
+[{"name": "system-bus", "type": "dbus", "socket": "/run/dbus/system_bus_socket"}]
