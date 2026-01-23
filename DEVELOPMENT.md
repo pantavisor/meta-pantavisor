@@ -257,8 +257,31 @@ docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' --unix-socket /run
 # Container status
 docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers | jq .
 
+# Container lifecycle control (requires restart_policy: "container")
+docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/<container_name>
+docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/<container_name>
+docker exec pva-test pvcurl -X PUT --data '{"action":"restart"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/<container_name>
+
 # Build info
 docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo | jq .
+```
+
+### pvcontrol CLI
+
+The `pvcontrol` tool provides a convenient CLI for common operations:
+
+```bash
+# Container lifecycle
+docker exec pva-test pvcontrol container ls                       # List containers
+docker exec pva-test pvcontrol container stop <container_name>    # Stop container
+docker exec pva-test pvcontrol container start <container_name>   # Start container
+docker exec pva-test pvcontrol container restart <container_name> # Restart container
+
+# Other operations
+docker exec pva-test pvcontrol ls           # List containers (legacy)
+docker exec pva-test pvcontrol groups ls    # List container groups
+docker exec pva-test pvcontrol buildinfo    # Show build info
+docker exec pva-test pvcontrol conf ls      # Show configuration
 ```
 
 ### Process Inspection
