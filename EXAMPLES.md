@@ -387,6 +387,172 @@ Demonstrates Wayland compositor access with DRM dependency.
 
 ---
 
+## Network/IPAM Example
+
+Demonstrates IP-based container networking using pantavisor's IPAM (IP Address Management) subsystem. Unlike xconnect service mesh patterns that use Unix sockets, this pattern assigns containers real IP addresses on a bridge network.
+
+### Architecture
+
+IPAM networking requires:
+1. **Device configuration** (`device.json`) - Defines network pools with bridge, subnet, gateway
+2. **Container configuration** (`run.json`) - References the pool by name
+
+### Containers
+
+- **Device Config**: `pv-example-device-ipam` - Defines the `internal` network pool
+- **Server**: `pv-example-net-server` - Listens on TCP port 8080
+- **Client**: `pv-example-net-client` - Connects to server via hostname
+
+### device.json Configuration
+
+```json
+{
+    "groups": [
+        {
+            "name": "root",
+            "status_goal": "STARTED",
+            "restart_policy": "container"
+        }
+    ],
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "pvbr0",
+                "subnet": "10.0.5.0/24",
+                "gateway": "10.0.5.1",
+                "nat": true
+            }
+        }
+    }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `type` | Network type (`bridge` for L2 bridge) |
+| `bridge` | Bridge interface name created on host |
+| `subnet` | IP range for container allocation |
+| `gateway` | Gateway IP (assigned to bridge interface) |
+| `nat` | Enable NAT for outbound connectivity |
+
+### Container run.json Network Configuration
+
+Containers reference the pool in their `run.json`:
+
+```json
+{
+    "network": {
+        "pool": "internal",
+        "hostname": "net-server"
+    }
+}
+```
+
+IPAM assigns:
+- Unique IP from the pool's subnet (e.g., `10.0.5.2`)
+- DNS resolution for container hostnames (via `/etc/hosts` or dnsmasq)
+- Default route via gateway
+
+### Recipe Configuration
+
+For network configuration, create a `run.json` overlay file that gets merged after `pvr app add`:
+
+**Server run.json (`pv-example-net-server.run.json`):**
+```json
+{
+    "network": {
+        "pool": "internal",
+        "hostname": "net-server"
+    }
+}
+```
+
+**Client run.json (`pv-example-net-client.run.json`):**
+```json
+{
+    "network": {
+        "pool": "internal",
+        "hostname": "net-client"
+    }
+}
+```
+
+The `container-pvrexport.bbclass` merges these overlays into the generated `run.json` using jq.
+
+**Recipe SRC_URI:**
+```bitbake
+SRC_URI += "file://pv-net-server.py \
+            file://${PN}.run.json"
+```
+
+### Build
+
+```bash
+# Build device config and network containers
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-ipam \
+    --target pv-example-net-server \
+    --target pv-example-net-client
+```
+
+### Test Setup
+
+```bash
+# Copy pvrexports (device config MUST be included)
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-*.pvrexport.tgz pvtx.d/
+
+# Start appengine
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+docker exec pva-test sh -c 'pv-appengine &'
+```
+
+### Verify
+
+```bash
+# Check bridge interface created
+docker exec pva-test ip addr show pvbr0
+
+# Check container IPs
+docker exec pva-test lxc-info -n pv-example-net-server
+docker exec pva-test lxc-info -n pv-example-net-client
+
+# Test connectivity from client to server
+docker exec pva-test pventer -c pv-example-net-client -- ping -c 1 net-server
+
+# Check server logs
+docker exec pva-test cat /run/pantavisor/pv/logs/0/pv-example-net-server/lxc/console.log
+```
+
+### IPAM vs xconnect
+
+| Feature | IPAM Network | xconnect Service Mesh |
+|---------|--------------|----------------------|
+| Communication | TCP/IP sockets | Unix domain sockets |
+| Addressing | IP addresses | Socket file paths |
+| Discovery | Hostname/DNS | Service names |
+| Use Case | Standard networking | Container-to-container services |
+| Configuration | device.json pool + run.json | services.json + args.json |
+
+Use IPAM for containers that need:
+- Standard TCP/IP networking (HTTP servers, databases)
+- Multiple ports per service
+- Compatibility with existing network tools
+
+Use xconnect for:
+- Secure container-to-container IPC
+- Identity injection (X-PV-Client headers)
+- Device node sharing (DRM, Wayland)
+
+---
+
 ## Debugging Tips
 
 ### Check Container Status
