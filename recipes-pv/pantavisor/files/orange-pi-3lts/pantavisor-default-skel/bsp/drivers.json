@@ -1,18 +1,41 @@
 {
     "#spec": "driver-aliases@1",
     "all": {
+        "audio": [
+            "sun8i-codec",
+            "sun8i-hdmi",
+            "sun4i-i2s"
+        ],
         "bluetooth": [
             "bluetooth",
             "rfkill",
             "uwe5622",
-			"sprdbt_tty"
+            "sprdbt_tty",
+            "hci_uart"
+        ],
+        "crypto": [
+            "sun8i-ce"
+        ],
+        "display": [
+            "sun4i-drm",
+            "sun8i-mixer",
+            "sun8i-hdmi"
         ],
         "ethernet": [
             "sun50i_gmac"
         ],
+        "gpu": [
+            "panfrost"
+        ],
+        "thermal": [
+            "sun8i-thermal"
+        ],
+        "vpu": [
+            "cedrus"
+        ],
         "wifi": [
             "uwe5622",
-			"sprdwl_ng"
+            "sprdwl_ng"
         ],
         "wireguard": [
             "wireguard"
