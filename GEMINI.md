@@ -100,9 +100,51 @@ docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' --unix-socket /ru
 
 **New Endpoint: /daemons**
 - `GET /daemons`: Returns a JSON list of managed daemons, their PIDs and respawn status.
-- `PUT /daemons/{name}`: Performs actions on a daemon. 
+- `PUT /daemons/{name}`: Performs actions on a daemon.
   - `{"action": "stop"}`: Disables respawn and kills the daemon.
   - `{"action": "start"}`: Enables respawn and starts the daemon if not running.
+
+**New Endpoint: /containers (Control)**
+- `GET /containers`: Returns a JSON list of containers with their status.
+- `PUT /containers/{name}`: Performs lifecycle actions on a container.
+  - `{"action": "stop"}`: Stops the container and disables auto-recovery.
+  - `{"action": "start"}`: Starts a stopped container.
+  - `{"action": "restart"}`: Restarts the container (stop + start).
+
+**Note:** Only containers with `restart_policy: "container"` can be controlled. Containers with `restart_policy: "system"` are protected and cannot be stopped/started via API.
+
+**Container Control via pvcurl:**
+```bash
+# List containers with status
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
+
+# Stop a container
+docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' \
+    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
+
+# Start a container
+docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' \
+    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
+
+# Restart a container
+docker exec pva-test pvcurl -X PUT --data '{"action":"restart"}' \
+    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
+```
+
+**Container Control via pvcontrol CLI:**
+```bash
+# List containers
+docker exec pva-test pvcontrol container ls
+
+# Stop a container
+docker exec pva-test pvcontrol container stop pv-example-recovery
+
+# Start a container
+docker exec pva-test pvcontrol container start pv-example-recovery
+
+# Restart a container
+docker exec pva-test pvcontrol container restart pv-example-recovery
+```
 
 ### Testing pv-xconnect Service Mesh
 
@@ -377,29 +419,31 @@ For the design of the service mesh and `pv-xconnect`, please refer to the docume
 - `GEMINI.md`: High-level vision.
 - `xconnect/XCONNECT.md`: Detailed `pv-xconnect` implementation notes.
 
-## Checkpoint (2026-01-20)
+## Checkpoint (2026-01-22)
 
 ### Achieved so far
-1. **D-Bus Plugin with Role-to-UID Mapping:**
-    * Rewrote the dbus plugin to implement Identity Masquerading.
-    * The proxy now reads /proc/{pid}/root/etc/passwd of the provider to map the Pantavisor Role (e.g., "root", "nobody", "ubuntu") to an actual UID.
-    * It intercepts the D-Bus SASL AUTH EXTERNAL command and injects the resolved UID so the provider's dbus-daemon can enforce standard XML policies.
-2. **Pantavisor Metadata:**
-    * Added the target field to the pv_platform_service struct and updated the xconnect-graph API.
-    * This allows us to specify where to inject the socket (e.g., /run/dbus/system_bus_socket) independently of the D-Bus interface name.
-3. **Examples:**
-    * Created pv-example-dbus-client-nobody to test non-root roles.
-    * Updated the D-Bus server policy to explicitly handle root and nobody identities.
-4. **Documentation:**
-    * Updated XCONNECT.md (Pantavisor) with the new Role-to-UID specs and default "any" roles.
-    * Updated GEMINI.md and EXAMPLES.md (meta-pantavisor) with the new D-Bus testing patterns.
-5. **Pushed Branches:**
-    * Pantavisor: feature/wasm-engine (includes D-Bus plugin, target field, /daemons API).
-    * meta-pantavisor: feature/wasmedge-engine (includes new examples, doc updates, and pvr auto-update fix).
+1. **Auto-Recovery Feature:**
+    * **Status:** Core logic verified and functional.
+    * **Parsing:** Pantavisor correctly parses `PV_AUTO_RECOVERY` from `run.json` (max_retries, retry_delay, backoff_factor, reset_window).
+    * **State Engine:** Exponential backoff and recovery state transitions verified using `pv-example-random`.
+    * **Examples:** Created `pv-example-random` which uses `$RANDOM` for jittered crashes. Fixed Yocto recipes to correctly install scripts via `ROOTFS_POSTPROCESS_COMMAND`.
+2. **pv-xconnect / DRM Service Mesh:**
+    * **Device Injection:** Implemented `pvx_helper_inject_devnode` in `pv-xconnect` using `mknod` to inject device nodes into consumer mount namespaces.
+    * **API Robustness:** Fixed a bug in Pantavisor's cgroup parsing that caused `xconnect-graph` to return "Internal Error" in Appengine mode (now correctly identifies `_pv_` privileged callers).
+    * **Restart Policies:** Updated example DRM containers to use `container` restart policy, preventing system-wide reboots on local device timeouts.
+3. **Build Infrastructure:**
+    * **libthttp Integration:** Linked `libthttp` to the workspace via `libthttp_git.bbappend` to enable local iterative development of JSMN utilities.
+    * **JSMN Utilities:** Exported `jsmnutil_traverse_token` from `libthttp` to allow `pv-xconnect` to accurately calculate object sizes during graph reconciliation.
+4. **Container Control API:**
+    * **REST API:** Added `PUT /containers/{name}` endpoint with start/stop/restart actions.
+    * **pvcontrol CLI:** Added `pvcontrol container <ls|start|stop|restart>` commands.
+    * **Safety:** Only containers with `restart_policy: "container"` can be controlled; system containers are protected.
+    * **Auto-recovery Integration:** Explicit stop via API disables auto-recovery to prevent immediate restart loops.
 
 ### Current Blockers
-- **None.** The Segfault in `pv-xconnect` has been fixed by correcting the JSON iteration logic in `reconcile_graph` and removing the redundant `LEV_OPT_REUSEABLE` flag in `dbus.c`.
+- **Build Issue:** `pv-xconnect` currently failing to link against `libthttp` due to `jsmnutil_traverse_token` visibility/linking issues despite header exports.
 
 ### Next Steps
-1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
-2. **Upstream PRs:** Prepare branches for merging into main project repositories.
+1. **Fix Linking:** Resolve the `jsmnutil_traverse_token` undefined reference in `pv-xconnect`.
+2. **Verify DRM:** Once build is fixed, confirm `/dev/dri/card0` injection into `pv-example-drm-master`.
+3. **Upstream PRs:** Finalize commits in `pantavisor` and `libthttp` workspaces.
