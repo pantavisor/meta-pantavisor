@@ -342,6 +342,7 @@ docker volume rm storage-test
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | API calls hang/timeout | Missing Host header in client | Ensure HTTP requests include `Host: localhost` header |
+| `curl` not found | Standard curl missing in appengine | Use **`pvcurl`** (lightweight wrapper) instead |
 | Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume |
 | "Socket not found" in client | pv-xconnect not injecting socket | Check pv-xconnect output with `stdbuf -oL` |
 | No output from pv-xconnect | stdout buffering | Use `stdbuf -oL` prefix |
@@ -349,27 +350,25 @@ docker volume rm storage-test
 | `consumer_pid: 0` | PID not being parsed | Ensure main.c parses consumer_pid from JSON |
 | "Could not connect to provider socket" | Wrong namespace path | Use `/proc/{pid}/root/` to access container filesystem |
 | "Broken pipe" errors | Proxy closing too early | Ensure half-close handling in unix.c proxy |
+| IPAM "IP already in use" on restart | Lease not released on crash | Fixed in `state.c`: added `pv_ipam_release` to auto-recovery |
 
 ## Upstream Pantavisor Changes
 
-Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect:
+Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect and lifecycle:
+
+### state.c - Auto-Recovery and IPAM Fixes
+- Added fallback for legacy `restart_policy: container` so it triggers automatic restart even without `auto_recovery` JSON.
+- **CRITICAL**: Ensured IPAM network leases are released before a platform is set to `INSTALLED` during a restart. This prevents collisions when a container restarts after a crash.
+- Cleaned up formatting and newlines.
 
 ### ctrl/ctrl.c - Host Header DoS Fix
 - Fixed vulnerability where NULL/empty Host header caused server hang
 - Now allows localhost, empty, or NULL host for Unix socket connections
 
-### xconnect/main.c - JSON Parsing
-- Added parsing of `consumer_pid`, `provider_pid`, `interface` fields
-- Uses `interface` as consumer socket path for injection target
-
-### parser/parser_system1.c - Target Alias
-- Parser now accepts "target" as alias for "interface"
-- Needed because pvr renders args.json "socket" field as "target" in run.json
-
-### xconnect/plugins/unix.c - Namespace and Proxy Fixes
-- Provider socket access via `/proc/{pid}/root/` path
-- Proper half-close session tracking for bidirectional communication
-- Fixes "broken pipe" errors when provider sends response
+### Development Guidelines (Gemini Memory)
+- **Formatting**: Always run `clang-format -i` on modified `.c` and `.h` files before committing.
+- **Style**: Avoid unnecessary newlines that don't serve to structure functional blocks of code.
+- **Tooling**: In Appengine, prefer `pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl ...` for API tests.
 
 ## Architecture
 
