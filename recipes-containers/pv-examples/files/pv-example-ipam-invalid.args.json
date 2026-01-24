@@ -1,0 +1,7 @@
+{
+    "network": {
+        "pool": "internal",
+        "static_ip": "192.168.99.100"
+    },
+    "PV_RESTART_POLICY": "container"
+}

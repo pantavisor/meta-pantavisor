@@ -387,6 +387,215 @@ Demonstrates Wayland compositor access with DRM dependency.
 
 ---
 
+## IPAM Validation Examples
+
+Demonstrates IPAM (IP Address Management) validation and rollback behavior.
+
+### Containers
+
+- **Valid**: `pv-example-ipam-valid` - Uses valid static IP within subnet (should start)
+- **Invalid**: `pv-example-ipam-invalid` - Uses static IP outside subnet (should fail, trigger rollback)
+- **Collision**: `pv-example-ipam-collision` - Uses same IP as valid container (should fail when both deployed)
+
+### Prerequisites: IP Pool Configuration
+
+IPAM requires an IP pool defined in `device.json`. Create a `device.json` in your pvtx.d directory:
+
+**pvtx.d/device.json:**
+```json
+{
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "br0",
+                "subnet": "10.0.3.0/24",
+                "gateway": "10.0.3.1",
+                "nat": true
+            }
+        }
+    },
+    "groups": [
+        {
+            "name": "root",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "name": "platform",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "name": "app",
+            "restart_policy": "container",
+            "status_goal": "STARTED",
+            "timeout": 30
+        }
+    ]
+}
+```
+
+### Container Configuration
+
+**pv-example-ipam-valid (args.json):**
+```json
+{
+    "network": {
+        "pool": "internal",
+        "static_ip": "10.0.3.50"
+    }
+}
+```
+
+**pv-example-ipam-invalid (args.json):**
+```json
+{
+    "network": {
+        "pool": "internal",
+        "static_ip": "192.168.99.100"
+    }
+}
+```
+
+The invalid container uses an IP address (192.168.99.100) that is outside the pool's subnet (10.0.3.0/24). This should be detected and rejected.
+
+**pv-example-ipam-collision (args.json):**
+```json
+{
+    "network": {
+        "pool": "internal",
+        "static_ip": "10.0.3.50"
+    }
+}
+```
+
+Same IP as `pv-example-ipam-valid`, used to test IP collision detection.
+
+### Build and Test
+
+```bash
+# Build IPAM test containers
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-valid
+
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-invalid
+
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-collision
+
+# Copy to pvtx.d
+mkdir -p pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-*.pvrexport.tgz pvtx.d/
+```
+
+### Test Scenarios
+
+#### Test 1: Valid Static IP (Should Succeed)
+
+```bash
+# Copy only the valid container
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
+
+# Setup device.json with IP pool (see Prerequisites above)
+
+# Start appengine
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
+
+# Check container started successfully
+docker exec pva-test lxc-ls -f
+# Expected: pv-example-ipam-valid with RUNNING status
+```
+
+#### Test 2: Invalid Static IP - Outside Subnet (Should Fail)
+
+```bash
+# Copy only the invalid container
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-invalid.pvrexport.tgz pvtx.d/
+
+# Reset and start
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
+
+# Check logs for IPAM validation error
+docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log | grep -i "ipam\|subnet\|refusing"
+# Expected: "failed to reserve static IP ... refusing to start"
+# Expected: "triggering rollback if in try-boot"
+
+# Container should NOT be running
+docker exec pva-test lxc-ls -f
+```
+
+#### Test 3: IP Collision (Second Container Should Fail)
+
+```bash
+# Copy both valid and collision containers
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-collision.pvrexport.tgz pvtx.d/
+
+# Reset and start
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
+
+# Check logs for collision error
+docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log | grep -i "already in use\|refusing"
+# Expected: First container starts, second fails with "already in use"
+
+# Only the first container should be running
+docker exec pva-test lxc-ls -f
+```
+
+### Expected Behavior
+
+| Scenario | Expected Result | Log Message |
+|----------|----------------|-------------|
+| Valid static IP | Container starts | `platform 'pv-example-ipam-valid' using static IP 10.0.3.50` |
+| IP outside subnet | Container fails, rollback triggered | `failed to reserve static IP ... (already in use or outside subnet), refusing to start` |
+| IP collision | Second container fails | `failed to reserve static IP ... (already in use or outside subnet), refusing to start` |
+
+### Rollback Verification
+
+In a real device with try-boot enabled, IPAM failures during system startup will trigger automatic rollback:
+
+1. Update is installed with `pv_try` set to new revision
+2. Device reboots into new revision
+3. Container with invalid network config fails to start
+4. `pv_platform_start()` returns -1, triggering state machine error
+5. Pantavisor reboots before committing (`pv_done` unchanged)
+6. Bootloader sees `pv_try` still set, returns to previous `pv_done` revision
+
+This ensures network misconfigurations in updates are automatically rolled back.
+
+---
+
 ## Debugging Tips
 
 ### Check Container Status
