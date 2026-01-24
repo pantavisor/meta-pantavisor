@@ -1,0 +1,5 @@
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "192.168.99.100",
+    "PV_RESTART_POLICY": "container"
+}

@@ -100,51 +100,9 @@ docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' --unix-socket /ru
 
 **New Endpoint: /daemons**
 - `GET /daemons`: Returns a JSON list of managed daemons, their PIDs and respawn status.
-- `PUT /daemons/{name}`: Performs actions on a daemon.
+- `PUT /daemons/{name}`: Performs actions on a daemon. 
   - `{"action": "stop"}`: Disables respawn and kills the daemon.
   - `{"action": "start"}`: Enables respawn and starts the daemon if not running.
-
-**New Endpoint: /containers (Control)**
-- `GET /containers`: Returns a JSON list of containers with their status.
-- `PUT /containers/{name}`: Performs lifecycle actions on a container.
-  - `{"action": "stop"}`: Stops the container and disables auto-recovery.
-  - `{"action": "start"}`: Starts a stopped container.
-  - `{"action": "restart"}`: Restarts the container (stop + start).
-
-**Note:** Only containers with `restart_policy: "container"` can be controlled. Containers with `restart_policy: "system"` are protected and cannot be stopped/started via API.
-
-**Container Control via pvcurl:**
-```bash
-# List containers with status
-docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
-
-# Stop a container
-docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
-
-# Start a container
-docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
-
-# Restart a container
-docker exec pva-test pvcurl -X PUT --data '{"action":"restart"}' \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers/pv-example-recovery
-```
-
-**Container Control via pvcontrol CLI:**
-```bash
-# List containers
-docker exec pva-test pvcontrol container ls
-
-# Stop a container
-docker exec pva-test pvcontrol container stop pv-example-recovery
-
-# Start a container
-docker exec pva-test pvcontrol container start pv-example-recovery
-
-# Restart a container
-docker exec pva-test pvcontrol container restart pv-example-recovery
-```
 
 ### Testing pv-xconnect Service Mesh
 
@@ -384,6 +342,7 @@ docker volume rm storage-test
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | API calls hang/timeout | Missing Host header in client | Ensure HTTP requests include `Host: localhost` header |
+| `curl` not found | Standard curl missing in appengine | Use **`pvcurl`** (lightweight wrapper) instead |
 | Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume |
 | "Socket not found" in client | pv-xconnect not injecting socket | Check pv-xconnect output with `stdbuf -oL` |
 | No output from pv-xconnect | stdout buffering | Use `stdbuf -oL` prefix |
@@ -391,27 +350,25 @@ docker volume rm storage-test
 | `consumer_pid: 0` | PID not being parsed | Ensure main.c parses consumer_pid from JSON |
 | "Could not connect to provider socket" | Wrong namespace path | Use `/proc/{pid}/root/` to access container filesystem |
 | "Broken pipe" errors | Proxy closing too early | Ensure half-close handling in unix.c proxy |
+| IPAM "IP already in use" on restart | Lease not released on crash | Fixed in `state.c`: added `pv_ipam_release` to auto-recovery |
 
 ## Upstream Pantavisor Changes
 
-Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect:
+Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect and lifecycle:
+
+### state.c - Auto-Recovery and IPAM Fixes
+- Added fallback for legacy `restart_policy: container` so it triggers automatic restart even without `auto_recovery` JSON.
+- **CRITICAL**: Ensured IPAM network leases are released before a platform is set to `INSTALLED` during a restart. This prevents collisions when a container restarts after a crash.
+- Cleaned up formatting and newlines.
 
 ### ctrl/ctrl.c - Host Header DoS Fix
 - Fixed vulnerability where NULL/empty Host header caused server hang
 - Now allows localhost, empty, or NULL host for Unix socket connections
 
-### xconnect/main.c - JSON Parsing
-- Added parsing of `consumer_pid`, `provider_pid`, `interface` fields
-- Uses `interface` as consumer socket path for injection target
-
-### parser/parser_system1.c - Target Alias
-- Parser now accepts "target" as alias for "interface"
-- Needed because pvr renders args.json "socket" field as "target" in run.json
-
-### xconnect/plugins/unix.c - Namespace and Proxy Fixes
-- Provider socket access via `/proc/{pid}/root/` path
-- Proper half-close session tracking for bidirectional communication
-- Fixes "broken pipe" errors when provider sends response
+### Development Guidelines (Gemini Memory)
+- **Formatting**: Always run `clang-format -i` on modified `.c` and `.h` files before committing.
+- **Style**: Avoid unnecessary newlines that don't serve to structure functional blocks of code.
+- **Tooling**: In Appengine, prefer `pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl ...` for API tests.
 
 ## Architecture
 
@@ -419,31 +376,91 @@ For the design of the service mesh and `pv-xconnect`, please refer to the docume
 - `GEMINI.md`: High-level vision.
 - `xconnect/XCONNECT.md`: Detailed `pv-xconnect` implementation notes.
 
-## Checkpoint (2026-01-22)
+## Checkpoint (2026-01-20)
 
 ### Achieved so far
-1. **Auto-Recovery Feature:**
-    * **Status:** Core logic verified and functional.
-    * **Parsing:** Pantavisor correctly parses `PV_AUTO_RECOVERY` from `run.json` (max_retries, retry_delay, backoff_factor, reset_window).
-    * **State Engine:** Exponential backoff and recovery state transitions verified using `pv-example-random`.
-    * **Examples:** Created `pv-example-random` which uses `$RANDOM` for jittered crashes. Fixed Yocto recipes to correctly install scripts via `ROOTFS_POSTPROCESS_COMMAND`.
-2. **pv-xconnect / DRM Service Mesh:**
-    * **Device Injection:** Implemented `pvx_helper_inject_devnode` in `pv-xconnect` using `mknod` to inject device nodes into consumer mount namespaces.
-    * **API Robustness:** Fixed a bug in Pantavisor's cgroup parsing that caused `xconnect-graph` to return "Internal Error" in Appengine mode (now correctly identifies `_pv_` privileged callers).
-    * **Restart Policies:** Updated example DRM containers to use `container` restart policy, preventing system-wide reboots on local device timeouts.
-3. **Build Infrastructure:**
-    * **libthttp Integration:** Linked `libthttp` to the workspace via `libthttp_git.bbappend` to enable local iterative development of JSMN utilities.
-    * **JSMN Utilities:** Exported `jsmnutil_traverse_token` from `libthttp` to allow `pv-xconnect` to accurately calculate object sizes during graph reconciliation.
-4. **Container Control API:**
-    * **REST API:** Added `PUT /containers/{name}` endpoint with start/stop/restart actions.
-    * **pvcontrol CLI:** Added `pvcontrol container <ls|start|stop|restart>` commands.
-    * **Safety:** Only containers with `restart_policy: "container"` can be controlled; system containers are protected.
-    * **Auto-recovery Integration:** Explicit stop via API disables auto-recovery to prevent immediate restart loops.
+1. **D-Bus Plugin with Role-to-UID Mapping:**
+    * Rewrote the dbus plugin to implement Identity Masquerading.
+    * The proxy now reads /proc/{pid}/root/etc/passwd of the provider to map the Pantavisor Role (e.g., "root", "nobody", "ubuntu") to an actual UID.
+    * It intercepts the D-Bus SASL AUTH EXTERNAL command and injects the resolved UID so the provider's dbus-daemon can enforce standard XML policies.
+2. **Pantavisor Metadata:**
+    * Added the target field to the pv_platform_service struct and updated the xconnect-graph API.
+    * This allows us to specify where to inject the socket (e.g., /run/dbus/system_bus_socket) independently of the D-Bus interface name.
+3. **Examples:**
+    * Created pv-example-dbus-client-nobody to test non-root roles.
+    * Updated the D-Bus server policy to explicitly handle root and nobody identities.
+4. **Documentation:**
+    * Updated XCONNECT.md (Pantavisor) with the new Role-to-UID specs and default "any" roles.
+    * Updated GEMINI.md and EXAMPLES.md (meta-pantavisor) with the new D-Bus testing patterns.
+5. **Pushed Branches:**
+    * Pantavisor: feature/wasm-engine (includes D-Bus plugin, target field, /daemons API).
+    * meta-pantavisor: feature/wasmedge-engine (includes new examples, doc updates, and pvr auto-update fix).
 
 ### Current Blockers
-- **Build Issue:** `pv-xconnect` currently failing to link against `libthttp` due to `jsmnutil_traverse_token` visibility/linking issues despite header exports.
+- **None.** The Segfault in `pv-xconnect` has been fixed by correcting the JSON iteration logic in `reconcile_graph` and removing the redundant `LEV_OPT_REUSEABLE` flag in `dbus.c`.
 
 ### Next Steps
-1. **Fix Linking:** Resolve the `jsmnutil_traverse_token` undefined reference in `pv-xconnect`.
-2. **Verify DRM:** Once build is fixed, confirm `/dev/dri/card0` injection into `pv-example-drm-master`.
-3. **Upstream PRs:** Finalize commits in `pantavisor` and `libthttp` workspaces.
+1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
+2. **Upstream PRs:** Prepare branches for merging into main project repositories.
+
+## Device Configuration (device.json) for Appengine
+
+### Why Standalone device.json Container?
+
+- **Embedded Pantavisor**: device.json is packaged in the BSP via `pantavisor-bsp.bb` (signs `device.json` with BSP artifacts)
+- **Appengine**: No BSP directory, so standalone device.json pvrexport is essential for IPAM and group configuration
+
+### Creating device.json pvrexport
+
+The `pv-example-device-config` recipe creates a signed pvrexport containing device.json:
+
+```bash
+# Build
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-config
+
+# Deploy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
+```
+
+### Key Implementation Details
+
+1. **Signing non-container files**: Use `pvr sig add --raw <name> --include "device.json"`
+2. **File naming**: MUST be `device.json` in pvr repo (not `device.json.example`)
+3. **Signing keys**: Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it)
+
+### pvrexport Structure
+
+```json
+{
+  "#spec": "pantavisor-service-system@1",
+  "_sigs/device-config.json": {
+    "#spec": "pvs@2",
+    "protected": "eyJhbGci...(base64: includes device.json)...",
+    "signature": "..."
+  },
+  "device.json": {
+    "network": { "pools": { "internal": { "subnet": "10.0.3.0/24", ... } } },
+    "groups": [ { "name": "root", "restart_policy": "system", ... } ]
+  }
+}
+```
+
+### IPAM Testing
+
+With device-config deployed, test containers can use network pools:
+
+```json
+// Container args.json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50"
+}
+```
+
+IPAM validates:
+- Pool exists in device.json
+- Static IP is within pool subnet
+- No IP collisions
+
+See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for full recipe and testing scenarios.

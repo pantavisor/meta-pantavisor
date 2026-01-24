@@ -387,121 +387,269 @@ Demonstrates Wayland compositor access with DRM dependency.
 
 ---
 
-## Network/IPAM Example
+## Device Configuration (device.json) Container
 
-Demonstrates IP-based container networking using pantavisor's IPAM (IP Address Management) subsystem. Unlike xconnect service mesh patterns that use Unix sockets, this pattern assigns containers real IP addresses on a bridge network.
+Device configuration (IPAM network pools, container groups) is delivered via a signed pvrexport.
 
-### Architecture
+### Why a Standalone device.json Container?
 
-IPAM networking requires:
-1. **Device configuration** (`device.json`) - Defines network pools with bridge, subnet, gateway
-2. **Container configuration** (`run.json`) - References the pool by name
+- **Embedded Pantavisor**: device.json is typically packaged within the BSP (see `recipes-pv/images/pantavisor-bsp.bb` which signs `device.json` alongside BSP artifacts)
+- **Appengine**: There is no BSP directory, so a standalone device.json pvrexport (`pv-example-device-config`) is essential for IPAM and group configuration
 
-### Containers
+The standalone device.json container works for all Pantavisor types and is the recommended approach for appengine testing.
 
-- **Device Config**: `pv-example-device-ipam` - Defines the `internal` network pool
-- **Server**: `pv-example-net-server` - Listens on TCP port 8080
-- **Client**: `pv-example-net-client` - Connects to server via hostname
+### Creating the device.json Source File
 
-### device.json Configuration
+Create `recipes-containers/pv-examples/files/device.json.ipam-example`:
 
 ```json
 {
-    "groups": [
-        {
-            "name": "root",
-            "status_goal": "STARTED",
-            "restart_policy": "container"
-        }
-    ],
     "network": {
         "pools": {
             "internal": {
                 "type": "bridge",
-                "bridge": "pvbr0",
-                "subnet": "10.0.5.0/24",
-                "gateway": "10.0.5.1",
+                "bridge": "br0",
+                "subnet": "10.0.3.0/24",
+                "gateway": "10.0.3.1",
                 "nat": true
             }
         }
-    }
+    },
+    "groups": [
+        {
+            "name": "root",
+            "description": "Network connectivity containers",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "name": "platform",
+            "description": "Middleware and utility containers",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "name": "app",
+            "description": "Application level containers",
+            "restart_policy": "container",
+            "status_goal": "STARTED",
+            "timeout": 30
+        }
+    ]
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `type` | Network type (`bridge` for L2 bridge) |
-| `bridge` | Bridge interface name created on host |
-| `subnet` | IP range for container allocation |
-| `gateway` | Gateway IP (assigned to bridge interface) |
-| `nat` | Enable NAT for outbound connectivity |
+### Recipe Structure
 
-### Container run.json Network Configuration
+Create `recipes-containers/pv-examples/pv-example-device-config_1.0.bb`:
 
-Containers reference the pool in their `run.json`:
-
-```json
-{
-    "network": {
-        "pool": "internal",
-        "hostname": "net-server"
-    }
-}
-```
-
-IPAM assigns:
-- Unique IP from the pool's subnet (e.g., `10.0.5.2`)
-- DNS resolution for container hostnames (via `/etc/hosts` or dnsmasq)
-- Default route via gateway
-
-### Recipe Configuration
-
-For network configuration, create a `run.json` overlay file that gets merged after `pvr app add`:
-
-**Server run.json (`pv-example-net-server.run.json`):**
-```json
-{
-    "network": {
-        "pool": "internal",
-        "hostname": "net-server"
-    }
-}
-```
-
-**Client run.json (`pv-example-net-client.run.json`):**
-```json
-{
-    "network": {
-        "pool": "internal",
-        "hostname": "net-client"
-    }
-}
-```
-
-The `container-pvrexport.bbclass` merges these overlays into the generated `run.json` using jq.
-
-**Recipe SRC_URI:**
 ```bitbake
-SRC_URI += "file://pv-net-server.py \
-            file://${PN}.run.json"
+SUMMARY = "Device configuration with IPAM network pools"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
+
+DEPENDS = "pvr-native jq-native"
+
+inherit deploy pvr-ca
+
+# Include pv-developer-ca directly (pvr-ca inheritance doesn't apply SRC_URI)
+PVS_URI = "https://gitlab.com/pantacor/pv-developer-ca/-/archive/2340d747c4acd0a1a702b3d7d5acc014b51daaa7/pv-developer-ca-master.tar.gz;striplevel=1"
+PVS_URI_SHA256 = "9f4c55dad2c121a4ca2ae39e2767eb4a214822ee34041a65692766ae438f96d8"
+
+SRC_URI = "file://device.json.ipam-example \
+           ${PVS_URI};name=pv-developer-ca;subdir=pv-developer-ca_generic \
+          "
+SRC_URI[pv-developer-ca.sha256sum] = "${PVS_URI_SHA256}"
+
+PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
+PVR_HOME_DIR = "${WORKDIR}/home"
+
+do_compile[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
+
+do_compile() {
+    export PVR_DISABLE_SELF_UPGRADE=true
+    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+    export HOME="${PVR_HOME_DIR}"
+
+    # Extract and set up signing keys
+    mkdir -p ${PVR_CONFIG_DIR}
+    if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
+        tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
+    fi
+    if [ -f "${PVR_CONFIG_DIR}/key.default.pem" ]; then
+        export PVR_SIG_KEY="${PVR_CONFIG_DIR}/key.default.pem"
+    fi
+    if [ -f "${PVR_CONFIG_DIR}/x5c.default.pem" ]; then
+        export PVR_X5C_PATH="${PVR_CONFIG_DIR}/x5c.default.pem"
+    fi
+
+    cd ${B}/pvrrepo
+    pvr init
+
+    # Add device.json (MUST be named device.json in the repo)
+    cp -f ${WORKDIR}/device.json.ipam-example device.json
+
+    pvr add
+    pvr commit
+
+    # Sign using --raw for non-container files
+    pvr sig add -n --raw device-config --include "device.json"
+    pvr add
+    pvr commit
+    pvr sig up
+    pvr commit
+}
+
+do_deploy[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
+
+do_deploy() {
+    export PVR_DISABLE_SELF_UPGRADE=true
+    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
+    export HOME="${PVR_HOME_DIR}"
+
+    cd ${B}/pvrrepo
+    pvr export ${DEPLOYDIR}/${PN}.pvrexport.tgz
+}
+
+addtask deploy after do_compile
 ```
 
-### Build
+### Key Points
+
+| Requirement | Details |
+|-------------|---------|
+| File naming | MUST be `device.json` in pvr repo (not `device.json.example`) |
+| Signing command | `pvr sig add --raw <name> --include "device.json"` for non-container files |
+| Signing keys | Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it) |
+
+### Resulting pvrexport Structure
+
+```json
+{
+  "#spec": "pantavisor-service-system@1",
+  "_sigs/device-config.json": {
+    "#spec": "pvs@2",
+    "protected": "eyJhbGci...(base64 header)...",
+    "signature": "kh2UZSaQ..."
+  },
+  "device.json": {
+    "network": { "pools": { ... } },
+    "groups": [ ... ]
+  }
+}
+```
+
+### Build and Deploy
 
 ```bash
-# Build device config and network containers
+# Build
 ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
-    --target pv-example-device-ipam \
-    --target pv-example-net-server \
-    --target pv-example-net-client
+    --target pv-example-device-config
+
+# Deploy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
 ```
 
-### Test Setup
+### Inspect pvrexport
 
 ```bash
-# Copy pvrexports (device config MUST be included)
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-*.pvrexport.tgz pvtx.d/
+# Extract and verify structure
+mkdir -p /tmp/inspect
+tar -xzf pv-example-device-config.pvrexport.tgz -C /tmp/inspect
+cat /tmp/inspect/json | jq .
+
+# Decode signature protected header
+cat /tmp/inspect/json | jq -r '."_sigs/device-config.json".protected' | base64 -d | jq .
+```
+
+---
+
+## IPAM Validation Examples
+
+Demonstrates IPAM (IP Address Management) validation and rollback behavior.
+
+### Containers
+
+- **Valid**: `pv-example-ipam-valid` - Uses valid static IP within subnet (should start)
+- **Invalid**: `pv-example-ipam-invalid` - Uses static IP outside subnet (should fail, trigger rollback)
+- **Collision**: `pv-example-ipam-collision` - Uses same IP as valid container (should fail when both deployed)
+
+### Prerequisites: device.json with IP Pool
+
+IPAM requires an IP pool defined in `device.json`. For appengine testing, deploy the device-config container:
+
+```bash
+# Build and deploy device-config (see Device Configuration section above)
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-config
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
+```
+
+This provides the `internal` pool with subnet `10.0.3.0/24`.
+
+### Container Configuration
+
+**pv-example-ipam-valid (args.json):**
+```json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50",
+    "PV_RESTART_POLICY": "container"
+}
+```
+
+**pv-example-ipam-invalid (args.json):**
+```json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "192.168.99.100",
+    "PV_RESTART_POLICY": "container"
+}
+```
+
+The invalid container uses an IP address (192.168.99.100) that is outside the pool's subnet (10.0.3.0/24). This should be detected and rejected.
+
+**pv-example-ipam-collision (args.json):**
+```json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50",
+    "PV_RESTART_POLICY": "container"
+}
+```
+
+Same IP as `pv-example-ipam-valid`, used to test IP collision detection.
+
+### Build and Test
+
+```bash
+# Build IPAM test containers
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-valid
+
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-invalid
+
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    --target pv-example-ipam-collision
+
+# Copy to pvtx.d
+mkdir -p pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-*.pvrexport.tgz pvtx.d/
+```
+
+### Test Scenarios
+
+#### Test 1: Valid Static IP (Should Succeed)
+
+```bash
+# Copy only the valid container
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
+
+# Setup device.json with IP pool (see Prerequisites above)
 
 # Start appengine
 docker rm -f pva-test 2>/dev/null
@@ -512,44 +660,87 @@ docker run --name pva-test -d --privileged \
     --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
 
 docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
+
+# Check container started successfully
+docker exec pva-test lxc-ls -f
+# Expected: pv-example-ipam-valid with RUNNING status
 ```
 
-### Verify
+#### Test 2: Invalid Static IP - Outside Subnet (Should Fail)
 
 ```bash
-# Check bridge interface created
-docker exec pva-test ip addr show pvbr0
+# Copy only the invalid container
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-invalid.pvrexport.tgz pvtx.d/
 
-# Check container IPs
-docker exec pva-test lxc-info -n pv-example-net-server
-docker exec pva-test lxc-info -n pv-example-net-client
+# Reset and start
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
 
-# Test connectivity from client to server
-docker exec pva-test pventer -c pv-example-net-client -- ping -c 1 net-server
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
 
-# Check server logs
-docker exec pva-test cat /run/pantavisor/pv/logs/0/pv-example-net-server/lxc/console.log
+# Check logs for IPAM validation error
+docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log | grep -i "ipam\|subnet\|refusing"
+# Expected: "failed to reserve static IP ... refusing to start"
+# Expected: "triggering rollback if in try-boot"
+
+# Container should NOT be running
+docker exec pva-test lxc-ls -f
 ```
 
-### IPAM vs xconnect
+#### Test 3: IP Collision (Second Container Should Fail)
 
-| Feature | IPAM Network | xconnect Service Mesh |
-|---------|--------------|----------------------|
-| Communication | TCP/IP sockets | Unix domain sockets |
-| Addressing | IP addresses | Socket file paths |
-| Discovery | Hostname/DNS | Service names |
-| Use Case | Standard networking | Container-to-container services |
-| Configuration | device.json pool + run.json | services.json + args.json |
+```bash
+# Copy both valid and collision containers
+rm pvtx.d/pv-example-ipam-*.pvrexport.tgz 2>/dev/null
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-collision.pvrexport.tgz pvtx.d/
 
-Use IPAM for containers that need:
-- Standard TCP/IP networking (HTTP servers, databases)
-- Multiple ports per service
-- Compatibility with existing network tools
+# Reset and start
+docker rm -f pva-test 2>/dev/null
+docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
 
-Use xconnect for:
-- Secure container-to-container IPC
-- Identity injection (X-PV-Client headers)
-- Device node sharing (DRM, Wayland)
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 15
+
+# Check logs for collision error
+docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log | grep -i "already in use\|refusing"
+# Expected: First container starts, second fails with "already in use"
+
+# Only the first container should be running
+docker exec pva-test lxc-ls -f
+```
+
+### Expected Behavior
+
+| Scenario | Expected Result | Log Message |
+|----------|----------------|-------------|
+| Valid static IP | Container starts | `platform 'pv-example-ipam-valid' using static IP 10.0.3.50` |
+| IP outside subnet | Container fails, rollback triggered | `failed to reserve static IP ... (already in use or outside subnet), refusing to start` |
+| IP collision | Second container fails | `failed to reserve static IP ... (already in use or outside subnet), refusing to start` |
+
+### Rollback Verification
+
+In a real device with try-boot enabled, IPAM failures during system startup will trigger automatic rollback:
+
+1. Update is installed with `pv_try` set to new revision
+2. Device reboots into new revision
+3. Container with invalid network config fails to start
+4. `pv_platform_start()` returns -1, triggering state machine error
+5. Pantavisor reboots before committing (`pv_done` unchanged)
+6. Bootloader sees `pv_try` still set, returns to previous `pv_done` revision
+
+This ensures network misconfigurations in updates are automatically rolled back.
 
 ---
 

@@ -1,0 +1,36 @@
+{
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "br0",
+                "subnet": "10.0.3.0/24",
+                "gateway": "10.0.3.1",
+                "nat": true
+            }
+        }
+    },
+    "groups": [
+        {
+            "description": "Container or containers that are in charge of setting network connectivity up for the board",
+            "name": "root",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "description": "Middleware and utility containers",
+            "name": "platform",
+            "restart_policy": "system",
+            "status_goal": "STARTED",
+            "timeout": 30
+        },
+        {
+            "description": "Application level containers",
+            "name": "app",
+            "restart_policy": "container",
+            "status_goal": "STARTED",
+            "timeout": 30
+        }
+    ]
+}
