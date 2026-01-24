@@ -1,7 +1,5 @@
 {
-    "network": {
-        "pool": "internal",
-        "static_ip": "10.0.3.50"
-    },
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50",
     "PV_RESTART_POLICY": "container"
 }

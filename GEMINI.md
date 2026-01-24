@@ -403,3 +403,65 @@ For the design of the service mesh and `pv-xconnect`, please refer to the docume
 ### Next Steps
 1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
 2. **Upstream PRs:** Prepare branches for merging into main project repositories.
+
+## Device Configuration (device.json) for Appengine
+
+### Why Standalone device.json Container?
+
+- **Embedded Pantavisor**: device.json is packaged in the BSP via `pantavisor-bsp.bb` (signs `device.json` with BSP artifacts)
+- **Appengine**: No BSP directory, so standalone device.json pvrexport is essential for IPAM and group configuration
+
+### Creating device.json pvrexport
+
+The `pv-example-device-config` recipe creates a signed pvrexport containing device.json:
+
+```bash
+# Build
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-config
+
+# Deploy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
+```
+
+### Key Implementation Details
+
+1. **Signing non-container files**: Use `pvr sig add --raw <name> --include "device.json"`
+2. **File naming**: MUST be `device.json` in pvr repo (not `device.json.example`)
+3. **Signing keys**: Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it)
+
+### pvrexport Structure
+
+```json
+{
+  "#spec": "pantavisor-service-system@1",
+  "_sigs/device-config.json": {
+    "#spec": "pvs@2",
+    "protected": "eyJhbGci...(base64: includes device.json)...",
+    "signature": "..."
+  },
+  "device.json": {
+    "network": { "pools": { "internal": { "subnet": "10.0.3.0/24", ... } } },
+    "groups": [ { "name": "root", "restart_policy": "system", ... } ]
+  }
+}
+```
+
+### IPAM Testing
+
+With device-config deployed, test containers can use network pools:
+
+```json
+// Container args.json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50"
+}
+```
+
+IPAM validates:
+- Pool exists in device.json
+- Static IP is within pool subnet
+- No IP collisions
+
+See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for full recipe and testing scenarios.
