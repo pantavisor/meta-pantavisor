@@ -1,0 +1,7 @@
+[
+  {
+    "name": "network-manager",
+    "type": "rest",
+    "socket": "/run/nm/api.sock"
+  }
+]
