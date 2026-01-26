@@ -13,3 +13,7 @@ Kconfig.custom
 layers
 .lsp
 .clj-kondo
+
+.gemini/
+gha-creds-*.json
+temp.json
