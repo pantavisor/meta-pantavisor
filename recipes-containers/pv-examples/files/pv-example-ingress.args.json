@@ -1,0 +1,14 @@
+{
+  "PV_SERVICES_REQUIRED": [
+    {
+      "name": "raw-unix",
+      "type": "tcp",
+      "target": "0.0.0.0:2222"
+    },
+    {
+      "name": "network-manager",
+      "type": "http",
+      "target": "0.0.0.0:80/api"
+    }
+  ]
+}
