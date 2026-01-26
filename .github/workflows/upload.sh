@@ -92,14 +92,14 @@ NEW_DEVICE=$(jq -n \
    pvrexports: { url: $url2, sha256: $PVEXPORTS_CSUM },
    bsp: {url: $url3, sha256: $BSP_CSUM} }')
 
-if [ -e sdk/$DEPLOY_SDK ]; then
+if [ -n "$SDK_FILE" ]; then
     NEW_DEVICE=$(echo "$NEW_DEVICE" | jq \
       --arg url "$AWS_S3_URL/$TAG/$MACHINE_NAME/$SDK_FILE" \
       --arg sha "$SDK_CSUM" \
       '. + {sdk: {url: $url, sha256: $sha}}')
 fi
 
-TIMESTAMP=$(date --iso-8601=minutes)
+TIMESTAMP=$(date -u --iso-8601=minutes)
 
 jq --arg type "$RELEASE_TYPE" \
    --arg rname "$TAG" \
@@ -109,13 +109,13 @@ jq --arg type "$RELEASE_TYPE" \
     .[$type] //= {} |
     .[$type][$rname] //= [] |
     
-    (.[$type][$rname].devices | map(.name) | index($new_device.name)) as $device_idx |
+    (.[$type][$rname] | map(.name) | index($new_device.name)) as $device_idx |
 
     if $device_idx == null then
-        .[$type][$rname].devices += [$new_device]
+        .[$type][$rname] += [$new_device]
     else
-        .[$type][$rname].devices[$device_idx] = $new_device
-    end
+        .[$type][$rname][$device_idx] = $new_device
+    end |
 
 	.[$type][$rname] |= (map(select(.timestamp == null)) + [{timestamp: $time}])
 
