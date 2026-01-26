@@ -28,6 +28,7 @@ All CI behavior is controlled via `machines.json`.
 | yocto_branch | The Yocto release version (e.g., `scarthgap`). |
 | config | A colon-separated string of Kas files to inherit. |
 | workflows | Triggers to generate: `manual`, `onpush`, or `tag`. |
+| build_target | Optional: The specific BitBake target to build. |
 | sdk | Set to `1` to enable Yocto SDK toolchain generation. |
 | output | Glob pattern for the specific image artifacts to collect. |
 
@@ -48,7 +49,11 @@ To add support for a new hardware target:
 3. Commit the changes in `machines.json`, .`github/configs/release/`, and `.github/workflows/`.
 
 ### 2. Updating Layer Revisions (The "Bumping" Process)
-To update the underlying Yocto layers (meta-pantavisor, poky, etc.) to their latest branch commits:
+**Automated:**
+The `updatemachines.yaml` workflow runs automatically on a schedule (every 8 hours) to check for updates. If new commits are found in the upstream layers, it executes the scripts below and opens a Pull Request with the changes.
+
+**Manual:**
+To manually update the underlying Yocto layers (meta-pantavisor, poky, etc.) to their latest branch commits:
 
 1. Run the machine generator to refresh the SHAs:
    ```bash

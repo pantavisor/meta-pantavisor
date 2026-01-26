@@ -107,10 +107,8 @@ jq --arg type "$RELEASE_TYPE" \
    --argjson new_device "$NEW_DEVICE" \
 '
     .[$type] //= {} |
-    .[$type][$rname] //= {"devices": [], "timestamp": ""} |
+    .[$type][$rname] //= [] |
     
-    .[$type][$rname].timestamp = $time |
-
     (.[$type][$rname].devices | map(.name) | index($new_device.name)) as $device_idx |
 
     if $device_idx == null then
@@ -118,6 +116,9 @@ jq --arg type "$RELEASE_TYPE" \
     else
         .[$type][$rname].devices[$device_idx] = $new_device
     end
+
+	.[$type][$rname] |= (map(select(.timestamp == null)) + [{timestamp: $time}])
+
 ' "$RELEASE_FILE" > temp.json && mv temp.json "$RELEASE_FILE"
 
 aws s3 cp $RELEASE_FILE s3://$AWS_S3_BUCKET/$RELEASE_FILE
