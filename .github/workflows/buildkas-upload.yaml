@@ -112,21 +112,21 @@ jobs:
         run: |
           BASE_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
 
-          echo "* **Machine:** ${{ inputs.machine_name }}" >> notes.md
+          echo "### Machine: ${{ inputs.machine_name }}" >> notes.md
+          echo "| Artifact | Type | Download |" >> notes.md
+          echo "| :--- | :--- | :--- |" >> notes.md
 
-          echo "* **Images:**" >> notes.md
           for f in images/${{ inputs.output }}; do
             if [ -e "$f" ]; then
               FILENAME=$(basename "$f")
-              echo "  - [$FILENAME]($BASE_URL/$FILENAME)" >> notes.md
+              echo "| $FILENAME | Image | [Download]($BASE_URL/$FILENAME) |" >> notes.md
             fi
           done
 
-          echo "* **BSP:**" >> notes.md
           for f in pvexports/pantavisor-bsp*; do
             if [ -e "$f" ]; then
               FILENAME=$(basename "$f")
-              echo "  - [$FILENAME]($BASE_URL/$FILENAME)" >> notes.md
+              echo "| $FILENAME | BSP | [Download]($BASE_URL/$FILENAME) |" >> notes.md
             fi
           done
 
