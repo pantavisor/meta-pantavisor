@@ -1,0 +1,39 @@
+From 07d200f92eae1d48d089e486fdd8a7f778b7ac6a Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Wed, 21 Jan 2026 23:51:42 +0000
+Subject: [PATCH] templates: add support for auto_recovery field in run.json
+
+---
+ .../pantacor/pvr/templates/builtin-lxc-docker.go | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/pvr-046/templates/builtin-lxc-docker.go b/pvr-046/templates/builtin-lxc-docker.go
+index 9da8fa2..3e1622d 100644
+--- a/pvr-046/templates/builtin-lxc-docker.go
++++ b/pvr-046/templates/builtin-lxc-docker.go
+@@ -241,13 +241,15 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ 	                "required": {{- if .Source.args.PV_DRIVERS_REQUIRED }} {{ sprig_toJson .Source.args.PV_DRIVERS_REQUIRED -}}{{- else }}[]{{- end }},
+ 	                "optional": {{- if .Source.args.PV_DRIVERS_OPTIONAL }} {{ sprig_toJson .Source.args.PV_DRIVERS_OPTIONAL -}}{{- else }}[]{{- end }}
+ 	        },
+-	        "services": {
+-	                "manual": {{- if .Source.args.PV_SERVICES_MANUAL }} {{ sprig_toJson .Source.args.PV_SERVICES_MANUAL -}}{{- else }}[]{{- end }},
+-	                "required": {{- if .Source.args.PV_SERVICES_REQUIRED }} {{ sprig_toJson .Source.args.PV_SERVICES_REQUIRED -}}{{- else }}[]{{- end }},
+-	                "optional": {{- if .Source.args.PV_SERVICES_OPTIONAL }} {{ sprig_toJson .Source.args.PV_SERVICES_OPTIONAL -}}{{- else }}[]{{- end }}
+-	        },
+-	
+-	{{- if .EffectiveGroup }}
++	                        "services": {
++	                                "manual": {{- if .Source.args.PV_SERVICES_MANUAL }} {{ sprig_toJson .Source.args.PV_SERVICES_MANUAL -}}{{- else }}[]{{- end }},
++	                                "required": {{- if .Source.args.PV_SERVICES_REQUIRED }} {{ sprig_toJson .Source.args.PV_SERVICES_REQUIRED -}}{{- else }}[]{{- end }},
++	                                "optional": {{- if .Source.args.PV_SERVICES_OPTIONAL }} {{ sprig_toJson .Source.args.PV_SERVICES_OPTIONAL -}}{{- else }}[]{{- end }}
++	                        },
++	        	{{- if .Source.args.PV_AUTO_RECOVERY }}
++	        	"auto_recovery": {{- sprig_toPrettyJson .Source.args.PV_AUTO_RECOVERY | pvr_jsonIndent 0 1 "\t" -}}{{- "," -}}
++	        	{{- end }}
++	        	{{- if .EffectiveGroup }}
+ 	"group": "{{- .EffectiveGroup }}",
+ 	{{- end }}
+ 	{{- if .Source.args.PV_RUNLEVEL }}
+-- 
+2.34.1
+
