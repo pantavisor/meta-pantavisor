@@ -35,11 +35,7 @@ local_conf_header:
     platform-generic: |
         PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
         MACHINE_FEATURES:remove = "efi"
-        IMAGE_CLASSES:append = " image-oci oci2docker"
-        IMAGE_FSTYPES = "container oci"
-        IMAGE_FSTYPES:remove = "pvbspit pvrexportit"
-        DISTRO_FEATURES += "virtualization"
-        DISTRO_FEATURES += "vmsep"
+        DISTRO_FEATURES:append = " virtualization vmsep opengl wayland"
         #    PANTAVISOR_FEATURES += "appengine"
         # DISTRO_FEATURES += "staticdev"
     rm_work: |

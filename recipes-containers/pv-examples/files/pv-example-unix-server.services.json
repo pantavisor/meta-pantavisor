@@ -1,0 +1,1 @@
+[{"name": "raw-unix", "type": "unix", "socket": "/run/example/raw.sock"}]

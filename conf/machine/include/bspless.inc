@@ -11,9 +11,9 @@ PREFERRED_PROVIDER_virtual/kernel ??= "linux-dummy"
 EXTRA_IMAGEDEPENDS += ""
 
 # Example: Disable graphical interface
-DISTRO_FEATURES:remove = "x11 wayland"
+# DISTRO_FEATURES:remove = "x11 wayland"
 
 # Example: Keep it minimal
-DISTRO_FEATURES:remove = "opengl alsa"
+# DISTRO_FEATURES:remove = "opengl alsa"
 
 PACKAGE_EXCLUDE_KERNEL = "1"
