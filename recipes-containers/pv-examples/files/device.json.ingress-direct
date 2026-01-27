@@ -1,0 +1,34 @@
+{
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "br0",
+                "subnet": "10.0.3.0/24",
+                "gateway": "10.0.3.1",
+                "nat": true
+            }
+        }
+    },
+    "ingress": [
+        {
+            "name": "raw-tcp-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:2222",
+            "provider": "pv-example-unix-server",
+            "service": "raw-unix"
+        },
+        {
+            "name": "rest-http-ingress",
+            "type": "http",
+            "external": "0.0.0.0:80/api",
+            "provider": "pv-example-rest-server",
+            "service": "network-manager"
+        }
+    ],
+    "groups": [
+        { "name": "root", "restart_policy": "system", "status_goal": "STARTED" },
+        { "name": "platform", "restart_policy": "system", "status_goal": "STARTED" },
+        { "name": "app", "restart_policy": "container", "status_goal": "STARTED" }
+    ]
+}
