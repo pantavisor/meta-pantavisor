@@ -342,6 +342,7 @@ docker volume rm storage-test
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | API calls hang/timeout | Missing Host header in client | Ensure HTTP requests include `Host: localhost` header |
+| `curl` not found | Standard curl missing in appengine | Use **`pvcurl`** (lightweight wrapper) instead |
 | Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume |
 | "Socket not found" in client | pv-xconnect not injecting socket | Check pv-xconnect output with `stdbuf -oL` |
 | No output from pv-xconnect | stdout buffering | Use `stdbuf -oL` prefix |
@@ -349,27 +350,25 @@ docker volume rm storage-test
 | `consumer_pid: 0` | PID not being parsed | Ensure main.c parses consumer_pid from JSON |
 | "Could not connect to provider socket" | Wrong namespace path | Use `/proc/{pid}/root/` to access container filesystem |
 | "Broken pipe" errors | Proxy closing too early | Ensure half-close handling in unix.c proxy |
+| IPAM "IP already in use" on restart | Lease not released on crash | Fixed in `state.c`: added `pv_ipam_release` to auto-recovery |
 
 ## Upstream Pantavisor Changes
 
-Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect:
+Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect and lifecycle:
+
+### state.c - Auto-Recovery and IPAM Fixes
+- Added fallback for legacy `restart_policy: container` so it triggers automatic restart even without `auto_recovery` JSON.
+- **CRITICAL**: Ensured IPAM network leases are released before a platform is set to `INSTALLED` during a restart. This prevents collisions when a container restarts after a crash.
+- Cleaned up formatting and newlines.
 
 ### ctrl/ctrl.c - Host Header DoS Fix
 - Fixed vulnerability where NULL/empty Host header caused server hang
 - Now allows localhost, empty, or NULL host for Unix socket connections
 
-### xconnect/main.c - JSON Parsing
-- Added parsing of `consumer_pid`, `provider_pid`, `interface` fields
-- Uses `interface` as consumer socket path for injection target
-
-### parser/parser_system1.c - Target Alias
-- Parser now accepts "target" as alias for "interface"
-- Needed because pvr renders args.json "socket" field as "target" in run.json
-
-### xconnect/plugins/unix.c - Namespace and Proxy Fixes
-- Provider socket access via `/proc/{pid}/root/` path
-- Proper half-close session tracking for bidirectional communication
-- Fixes "broken pipe" errors when provider sends response
+### Development Guidelines (Gemini Memory)
+- **Formatting**: Always run `clang-format -i` on modified `.c` and `.h` files before committing.
+- **Style**: Avoid unnecessary newlines that don't serve to structure functional blocks of code.
+- **Tooling**: In Appengine, prefer `pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl ...` for API tests.
 
 ## Architecture
 
@@ -403,3 +402,65 @@ For the design of the service mesh and `pv-xconnect`, please refer to the docume
 ### Next Steps
 1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
 2. **Upstream PRs:** Prepare branches for merging into main project repositories.
+
+## Device Configuration (device.json) for Appengine
+
+### Why Standalone device.json Container?
+
+- **Embedded Pantavisor**: device.json is packaged in the BSP via `pantavisor-bsp.bb` (signs `device.json` with BSP artifacts)
+- **Appengine**: No BSP directory, so standalone device.json pvrexport is essential for IPAM and group configuration
+
+### Creating device.json pvrexport
+
+The `pv-example-device-config` recipe creates a signed pvrexport containing device.json:
+
+```bash
+# Build
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-config
+
+# Deploy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
+```
+
+### Key Implementation Details
+
+1. **Signing non-container files**: Use `pvr sig add --raw <name> --include "device.json"`
+2. **File naming**: MUST be `device.json` in pvr repo (not `device.json.example`)
+3. **Signing keys**: Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it)
+
+### pvrexport Structure
+
+```json
+{
+  "#spec": "pantavisor-service-system@1",
+  "_sigs/device-config.json": {
+    "#spec": "pvs@2",
+    "protected": "eyJhbGci...(base64: includes device.json)...",
+    "signature": "..."
+  },
+  "device.json": {
+    "network": { "pools": { "internal": { "subnet": "10.0.3.0/24", ... } } },
+    "groups": [ { "name": "root", "restart_policy": "system", ... } ]
+  }
+}
+```
+
+### IPAM Testing
+
+With device-config deployed, test containers can use network pools:
+
+```json
+// Container args.json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50"
+}
+```
+
+IPAM validates:
+- Pool exists in device.json
+- Static IP is within pool subnet
+- No IP collisions
+
+See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for full recipe and testing scenarios.
