@@ -12,6 +12,7 @@ S = "${WORKDIR}"
 SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
+        file://0001-templates-add-services-field-to-run.json.patch \
 "
 
 SRC_URI[pvr.sha256sum] = "09cf239fb9d8a8794b874d7a84fa8e112ebfc24ae1457523bafdd6bb11cec9d3"

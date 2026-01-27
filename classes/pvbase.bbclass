@@ -8,6 +8,7 @@ PANTAVISOR_FEATURES ??= " \
 	debug \
 	rngdaemon \
 	pvcontrol \
+	xconnect \
 "
 # PANTAVISOR_FEATURES += "lxc-next"
 # PANTAVISOR_FEATURES += "console-logging"

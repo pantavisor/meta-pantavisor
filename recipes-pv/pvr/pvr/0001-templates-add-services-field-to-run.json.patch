@@ -1,0 +1,39 @@
+From c62ee822913d827fd3655101d1e9c54abc5604a1 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Sun, 18 Jan 2026 21:57:51 +0000
+Subject: [PATCH] templates: add services field to run.json
+
+---
+ .../pantacor/pvr/templates/builtin-lxc-docker.go | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
+
+diff --git a/pvr-046/templates/builtin-lxc-docker.go b/pvr-046/templates/builtin-lxc-docker.go
+index 20c2b94..9da8fa2 100644
+--- a/pvr-046/templates/builtin-lxc-docker.go
++++ b/pvr-046/templates/builtin-lxc-docker.go
+@@ -236,11 +236,17 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ 	{{- if .Source.args.PV_CONDITIONS }}
+ 	"conditions": {{- sprig_toPrettyJson .Source.args.PV_CONDITIONS | pvr_jsonIndent 0 1 "\t" -}}{{- "," -}}
+ 	{{- end }}
+-	"drivers": {
+-		"manual": {{- if .Source.args.PV_DRIVERS_MANUAL }} {{ sprig_toJson .Source.args.PV_DRIVERS_MANUAL -}}{{- else }}[]{{- end }},
+-		"required": {{- if .Source.args.PV_DRIVERS_REQUIRED }} {{ sprig_toJson .Source.args.PV_DRIVERS_REQUIRED -}}{{- else }}[]{{- end }},
+-		"optional": {{- if .Source.args.PV_DRIVERS_OPTIONAL }} {{ sprig_toJson .Source.args.PV_DRIVERS_OPTIONAL -}}{{- else }}[]{{- end }}
+-	},
++	        "drivers": {
++	                "manual": {{- if .Source.args.PV_DRIVERS_MANUAL }} {{ sprig_toJson .Source.args.PV_DRIVERS_MANUAL -}}{{- else }}[]{{- end }},
++	                "required": {{- if .Source.args.PV_DRIVERS_REQUIRED }} {{ sprig_toJson .Source.args.PV_DRIVERS_REQUIRED -}}{{- else }}[]{{- end }},
++	                "optional": {{- if .Source.args.PV_DRIVERS_OPTIONAL }} {{ sprig_toJson .Source.args.PV_DRIVERS_OPTIONAL -}}{{- else }}[]{{- end }}
++	        },
++	        "services": {
++	                "manual": {{- if .Source.args.PV_SERVICES_MANUAL }} {{ sprig_toJson .Source.args.PV_SERVICES_MANUAL -}}{{- else }}[]{{- end }},
++	                "required": {{- if .Source.args.PV_SERVICES_REQUIRED }} {{ sprig_toJson .Source.args.PV_SERVICES_REQUIRED -}}{{- else }}[]{{- end }},
++	                "optional": {{- if .Source.args.PV_SERVICES_OPTIONAL }} {{ sprig_toJson .Source.args.PV_SERVICES_OPTIONAL -}}{{- else }}[]{{- end }}
++	        },
++	
+ 	{{- if .EffectiveGroup }}
+ 	"group": "{{- .EffectiveGroup }}",
+ 	{{- end }}
+-- 
+2.34.1
+
