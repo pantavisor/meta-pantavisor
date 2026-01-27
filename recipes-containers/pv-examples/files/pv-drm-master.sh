@@ -3,7 +3,7 @@
 echo "DRM Master Container starting..."
 
 DEVICE="/dev/dri/card0"
-MAX_RETRIES=30
+MAX_RETRIES=300
 RETRY=0
 
 while [ $RETRY -lt $MAX_RETRIES ]; do

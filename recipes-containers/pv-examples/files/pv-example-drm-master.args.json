@@ -4,5 +4,6 @@
             "name": "drm-master",
             "target": "/dev/dri/card0"
         }
-    ]
+    ],
+    "PV_RESTART_POLICY": "container"
 }
