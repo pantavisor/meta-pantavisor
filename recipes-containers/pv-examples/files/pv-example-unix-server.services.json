@@ -1,1 +1,6 @@
-[{"name": "raw-unix", "type": "unix", "socket": "/run/example/raw.sock"}]
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "raw-unix", "type": "unix", "socket": "/run/example/raw.sock"}
+  ]
+}
