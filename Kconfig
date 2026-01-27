@@ -159,6 +159,15 @@ config KAS_LOCAL_PV_TAILSCALE
 	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
 endmenu
 
+menu "Features"
+config FEATURE_XCONNECT
+	bool "pv-xconnect support"
+	default n
+
+config KAS_LOCAL_FEATURE_XCONNECT
+	string
+	default "PANTAVISOR_FEATURES:append = \" xconnect\"" if FEATURE_XCONNECT
+endmenu
 config MACHINE_FILTER_ALL
 	bool "Show All Machines"
 	default y
