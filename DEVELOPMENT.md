@@ -48,9 +48,16 @@ First build initializes the workspace:
 ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 ```
 
-The pantavisor source is now at:
+The workspace sources are at:
 ```
-build/workspace/sources/pantavisor/
+build/workspace/sources/pantavisor/   # Pantavisor runtime
+build/workspace/sources/lxc-pv/       # LXC with pantavisor patches
+```
+
+The workspace appends (bbappend files that redirect recipes to use workspace sources):
+```
+build/workspace/appends/pantavisor_git.bbappend
+build/workspace/appends/lxc-pv_git.bbappend
 ```
 
 ### Development Cycle
@@ -122,10 +129,15 @@ Example containers are in `recipes-containers/pv-examples/`. Each container need
 
 2. **services.json** (for providers):
    ```json
-   [
-     {"name": "my-service", "type": "unix", "socket": "/run/my-service.sock"}
-   ]
+   {
+     "#spec": "service-manifest-xconnect@1",
+     "services": [
+       {"name": "my-service", "type": "unix", "socket": "/run/my-service.sock"}
+     ]
+   }
    ```
+
+   > **Note**: The `#spec` versioning format is required. The parser supports both the new object format and legacy array format for backwards compatibility.
 
 3. **args.json** (for consumers):
    ```json
@@ -233,14 +245,20 @@ docker run --name pva-test -d --privileged \
 ### Pantavisor Logs
 
 ```bash
-docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+# Appengine log path
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
+
+# Tail logs in real-time
+docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
 ```
 
 ### Container Logs
 
 ```bash
-docker exec pva-test cat /run/pantavisor/pv/logs/0/<container_name>/lxc/console.log
+docker exec pva-test cat /var/pantavisor/storage/logs/0/<container_name>/lxc/console.log
 ```
+
+> **Note**: In appengine, logs are at `/var/pantavisor/storage/logs/0/` rather than `/run/pantavisor/pv/logs/0/`.
 
 ### Enter Container Namespace
 
@@ -652,10 +670,76 @@ To complete IPAM networking, `pv_setup_lxc_container()` needs to:
    c->set_config_item(c, "lxc.net.0.flags", "up");
    ```
 
+## Adding Workspace Packages
+
+When you need to use a local source for a package not already in the workspace (e.g., lxc-pv), create a bbappend file:
+
+```bash
+# Create bbappend for lxc-pv
+cat > build/workspace/appends/lxc-pv_git.bbappend << 'EOF'
+inherit externalsrc
+EXTERNALSRC = "${TOPDIR}/workspace/sources/lxc-pv"
+EXTERNALSRC_BUILD = "${WORKDIR}/build"
+EOF
+```
+
+Then clone the source:
+```bash
+cd build/workspace/sources
+git clone https://github.com/pantavisor/lxc.git lxc-pv
+cd lxc-pv
+git checkout <branch>
+```
+
+## Troubleshooting Build Issues
+
+### Stale Build Artifacts
+
+If you see errors about missing files or stale OCI images:
+```bash
+# Clean specific recipe state
+./kas-container shell .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    -c "bitbake -c cleansstate <recipe-name>"
+
+# Example: clean pantavisor-appengine-netsim
+./kas-container shell ... -c "bitbake -c cleansstate pantavisor-appengine-netsim"
+```
+
+### Source Already Configured
+
+If workspace source has stale configure artifacts:
+```bash
+cd build/workspace/sources/<package>
+git clean -fdx
+```
+
+### Docker Image Not Updated
+
+After rebuilding, always reload the docker image:
+```bash
+docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+```
+
+## Branch Structure
+
+The pantavisor xconnect features are developed in stacked branches:
+
+| Branch | Features | Status |
+|--------|----------|--------|
+| `feature/xconnect` | Base service mesh (unix, dbus, drm plugins) | PR open |
+| `feature/xconnect-landing` | + daemon logging, appengine fixes | PR open |
+| `feature/ingress` | + IPAM, auto-recovery, ingress TCP/HTTP | PR open |
+
+When testing, ensure you're on the correct branch for the features you need:
+- **xconnect-landing**: Tests 1-4 in TESTPLANS.md (unix, dbus, drm, daemon API)
+- **ingress**: IPAM tests, auto-recovery, ingress tests (in that branch's TESTPLANS.md)
+
 ## Tips
 
 - Always use `--max-time` with curl to avoid hangs
-- Use `stdbuf -oL` when running commands that need unbuffered output
-- Fresh storage volumes prevent stale state issues
+- Use `pvcurl` instead of `curl` for the pv-ctrl socket (it handles the unix socket correctly)
+- Fresh storage volumes prevent stale state issues: `docker volume rm storage-test`
 - Interactive mode (`sleep infinity`) gives more control for debugging
 - Check both pantavisor.log and container console.log when debugging
+- Rebuild AND reload docker image after source changes
+- Use `pvr inspect <pvrexport.tgz>` to verify container configuration
