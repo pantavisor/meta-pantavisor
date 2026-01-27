@@ -1,1 +1,6 @@
-[{"name": "wayland-0", "type": "wayland", "socket": "/run/wayland-0"}]
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "wayland-0", "type": "wayland", "socket": "/run/wayland-0"}
+  ]
+}
