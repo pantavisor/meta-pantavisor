@@ -12,4 +12,5 @@ IMAGE_INSTALL += "libdrm busybox"
 do_fetch[noexec] = "0"
 do_unpack[noexec] = "0"
 
-SRC_URI += "file://${PN}.services.json"
+SRC_URI += "file://${PN}.services.json \
+            file://${PN}.args.json"

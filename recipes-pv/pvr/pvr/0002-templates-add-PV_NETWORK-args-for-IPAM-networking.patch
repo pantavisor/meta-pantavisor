@@ -1,0 +1,43 @@
+From 649f342b0702292db1ff2e076337df884314a427 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Fri, 23 Jan 2026 12:19:50 +0000
+Subject: [PATCH] feat(templates): add PV_NETWORK_* args for IPAM pool
+ networking
+
+Add template args for container network configuration:
+- PV_NETWORK_POOL: Pool name to allocate IP from
+- PV_NETWORK_HOSTNAME: Container hostname (defaults to container name)
+- PV_NETWORK_IP: Optional static IP override
+- PV_NETWORK_MAC: Optional static MAC override
+
+These args generate the "network" section in run.json which is
+processed by pantavisor's IPAM subsystem.
+---
+ .../pantacor/pvr/templates/builtin-lxc-docker.go     | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/gitlab.com/pantacor/pvr/templates/builtin-lxc-docker.go b/src/gitlab.com/pantacor/pvr/templates/builtin-lxc-docker.go
+index 3e1622d..966170e 100644
+--- a/src/gitlab.com/pantacor/pvr/templates/builtin-lxc-docker.go
++++ b/src/gitlab.com/pantacor/pvr/templates/builtin-lxc-docker.go
+@@ -267,6 +267,18 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ 	{{- if .Source.args.PV_REMOUNT }}
+ 	"remount": {{ .Source.args.PV_REMOUNT | sprig_toPrettyJson | sprig_indent 8 | trim }},
+ 	{{- end }}
++	{{- if .Source.args.PV_NETWORK_POOL }}
++	"network": {
++		"pool": "{{- .Source.args.PV_NETWORK_POOL -}}",
++		"hostname": "{{- .Source.args.PV_NETWORK_HOSTNAME | pvr_ifNull .Source.name -}}"
++		{{- if .Source.args.PV_NETWORK_IP -}}
++		,"ip": "{{- .Source.args.PV_NETWORK_IP -}}"
++		{{- end -}}
++		{{- if .Source.args.PV_NETWORK_MAC -}}
++		,"mac": "{{- .Source.args.PV_NETWORK_MAC -}}"
++		{{- end }}
++	},
++	{{- end }}
+ 	"storage":{
+ 		{{- range $key, $value := pvr_mergePersistentMaps .Docker.Volumes $persistence -}}
+ 		{{- $realkey := $key }}
+--
+2.34.1
