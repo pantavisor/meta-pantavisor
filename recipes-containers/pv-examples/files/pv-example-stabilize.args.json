@@ -1,0 +1,11 @@
+{
+    "PV_AUTO_RECOVERY": {
+        "policy": "on-failure",
+        "max_retries": 5,
+        "retry_delay": 2,
+        "backoff_factor": 1.5,
+        "reset_window": 300
+    },
+    "PV_RESTART_POLICY": "container",
+    "PV_VOLUME_MOUNTS": "dir:/var/lib:permanent"
+}

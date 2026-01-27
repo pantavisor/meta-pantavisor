@@ -788,3 +788,31 @@ docker exec pva-test ls -la /proc/<PID>/root/run/
 docker rm -f pva-test
 docker volume rm storage-test
 ```
+
+---
+
+## Ingress Examples
+
+Demonstrates routing external traffic (TCP or HTTP) from the host network into container-provided services. Pantavisor supports three primary patterns, each represented by a specific device configuration.
+
+### Pattern 1: Direct Integrated Ingress
+
+Managed centrally in `device.json`. This is the preferred method for simple port forwarding and path routing.
+
+**Fabric Configuration**: `pv-example-device-config-direct`
+**Listen Ports**: 2222 (TCP), 80/api (HTTP)
+
+### Pattern 2a: Host-Network Proxy
+
+Uses a dedicated container (e.g., Nginx) that binds directly to host ports.
+
+**Fabric Configuration**: `pv-example-device-config-proxy`
+**Nginx Container**: `pv-example-nginx-ingress` (with `PV_HOST_NETWORK: true`)
+
+### Pattern 2b: Isolated Hybrid Proxy
+
+The proxy container runs in an isolated network namespace (via IPAM), and host ports are mapped to it via `device.json`.
+
+**Fabric Configuration**: `pv-example-device-config-hybrid`
+**Nginx Container**: `pv-example-nginx-ingress` (in `internal` pool)
+**Listen Ports**: 80 (TCP), 443 (TCP)
