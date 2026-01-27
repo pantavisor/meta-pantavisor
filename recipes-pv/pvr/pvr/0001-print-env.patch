@@ -1,0 +1,600 @@
+From 95f137ebbaa39c2c4f80f2514d40f1342c2300b6 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Tue, 15 Oct 2024 08:19:43 +0000
+Subject: [PATCH] print env
+
+---
+ cmd/version.go      |   5 +-
+ libpvr/applib.go    |  24 +----
+ libpvr/dockerlib.go |  59 ++++++++----
+ libpvr/util.go      | 225 ++++++++++++++++++++++++--------------------
+ 4 files changed, 170 insertions(+), 143 deletions(-)
+
+diff --git a/cmd/version.go b/cmd/version.go
+index adf6784e..9236b10d 100644
+--- a/cmd/version.go
++++ b/cmd/version.go
+@@ -19,7 +19,6 @@ package cmd
+ import (
+ 	"fmt"
+ 	"runtime"
+-	"strings"
+ 
+ 	"github.com/urfave/cli"
+ )
+@@ -30,8 +29,8 @@ func CommandVersion() cli.Command {
+ 		Usage:       "pvr version",
+ 		Description: "Get pvr version",
+ 		Action: func(c *cli.Context) error {
+-			fmt.Println(c.App.Version)
+-			fmt.Printf("  go version: %s\n", strings.ReplaceAll(runtime.Version(), "go", ""))
++			fmt.Println("asdasd " + c.App.Version)
++			fmt.Printf("  go 11a version: %s\n", runtime.Version())
+ 
+ 			return nil
+ 		},
+diff --git a/libpvr/applib.go b/libpvr/applib.go
+index 70b63922..7938dc13 100644
+--- a/libpvr/applib.go
++++ b/libpvr/applib.go
+@@ -17,7 +17,6 @@
+ package libpvr
+ 
+ import (
+-	"bytes"
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
+@@ -620,11 +619,11 @@ func (p *Pvr) RemoveApplication(appname string) error {
+ 
+ 		sigPath := filepath.Join(p.Dir, sigKey)
+ 		if _, err := os.Stat(sigPath); err == nil {
+-			os.Remove(sigPath)
++			Remove(sigPath)
+ 		}
+ 
+ 		for _, part := range deletedParts {
+-			os.Remove(filepath.Join(p.Dir, part))
++			Remove(filepath.Join(p.Dir, part))
+ 		}
+ 	}
+ 
+@@ -693,29 +692,14 @@ func (p *Pvr) MakeSquash(rootfsPath string, app *AppData) error {
+ 	args := []string{makeSquashfsPath, rootfsPath, tempSquashFile}
+ 	args = append(args, comp...)
+ 
+-	fmt.Println("Generating squashfs file: " + strings.Join(args, " "))
+-	makeSquashfs := exec.Command(args[0], args[1:]...)
+-	var outb, errb bytes.Buffer
+-
+-	if IsDebugEnabled {
+-		makeSquashfs.Stdout = &outb
+-		makeSquashfs.Stderr = &errb
+-	}
+-
+-	err = makeSquashfs.Run()
++	fmt.Println("Generating 1 squashfs file: " + strings.Join(args, " "))
++	err = ExecCommand(args[0], args[1:]...)
+ 	if err != nil {
+ 		fmt.Println("Cannot generate squashfs " + err.Error())
+ 		return err
+ 	}
+ 
+ 	fmt.Println("Generating squashfs digest")
+-	if IsDebugEnabled && len(outb.Bytes()) > 0 {
+-		fmt.Println(outb.String())
+-	}
+-	if IsDebugEnabled && len(errb.Bytes()) > 0 {
+-		fmt.Println(errb.String())
+-	}
+-
+ 	return RenameFile(tempSquashFile, squashFile)
+ }
+ 
+diff --git a/libpvr/dockerlib.go b/libpvr/dockerlib.go
+index c0cf8309..99b165a0 100644
+--- a/libpvr/dockerlib.go
++++ b/libpvr/dockerlib.go
+@@ -48,10 +48,6 @@ import (
+ )
+ 
+ const (
+-	MKDIR_CMD                      = "mkdir"
+-	RM_CMD                         = "rm"
+-	TAR_CMD                        = "tar"
+-	TOUCH_CMD                      = "touch"
+ 	MAKE_SQUASHFS_CMD              = "mksquashfs"
+ 	SQUASH_FILE                    = "root.squashfs"
+ 	SQUASH_OVL_FILE                = "root.ovl.squashfs"
+@@ -587,9 +583,14 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 		return fmt.Errorf("couldn't create cache folder %v", err)
+ 	}
+ 
+-	fmt.Println("Generating squashfs...")
++	fmt.Println("Generating 2 squashfs...")
+ 
+-	tempdir, err := os.MkdirTemp(os.TempDir(), "download-layer-")
++	tempdir, err := ExecCommandOut("mktemp", "-d", "-t", "download-layer-XXXXXXXX")
++	if err != nil {
++		return err
++	}
++
++	err = ExecCommand("chmod", "0777", tempdir)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -623,7 +624,11 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 			}
+ 			buf := bufio.NewReader(imageReader)
+ 			//filename := filepath.Join(tempdir, "layers") + ".tar.gz"
+-			file, err := os.Create(filename)
++			err = ExecCommand(TOUCH_CMD, filename)
++			if err != nil {
++				return err
++			}
++			file, err := os.OpenFile(filename, os.O_WRONLY | os.O_TRUNC, 0000)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -677,7 +682,11 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 
+ 			buf := bufio.NewReader(layerReader)
+ 
+-			file, err := os.Create(filename)
++			err = ExecCommand(TOUCH_CMD, filename)
++			if err != nil {
++				return err
++			}
++			file, err := os.OpenFile(filename, os.O_WRONLY | os.O_TRUNC, 0000)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -736,17 +745,29 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 	fmt.Println("Adding essential structural dirs to operate RO containers")
+ 	for _, file := range structureDirs {
+ 		dirToMake := filepath.Join(extractPath, file)
+-		os.MkdirAll(dirToMake, 0755)
++		err = ExecCommand("mkdir", "-p", dirToMake)
++		if err != nil {
++			return err
++		}
+ 	}
+ 
+ 	// if we are using a different name, we generate an overlay
+ 	if app.SquashFile == SQUASH_OVL_FILE {
+-		basePath, err := os.MkdirTemp("", "base-layer-*")
++		basePath, err := ExecCommandOut("mktemp", "-d", "-t", "base-layer-XXXXXXXX")
+ 		if err != nil {
+ 			return err
+ 		}
+ 		defer RemoveAll(basePath)
+-		ovlPath, err := os.MkdirTemp("", "ovl-*")
++		err = ExecCommand("chmod", "0777", basePath)
++		if err != nil {
++			return err
++		}
++		ovlPath, err := ExecCommandOut("mktemp", "-d", "-t", "ovl-XXXXXXXX")
++		if err != nil {
++			return err
++		}
++		defer RemoveAll(ovlPath)
++		err = ExecCommand("chmod", "0777", ovlPath)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -754,16 +775,12 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 		if appManifest.Base != "" {
+ 			from = path.Join(p.Dir, appManifest.Base, SQUASH_FILE)
+ 		}
+-		cmd := exec.Command("unsquashfs", "-f", "-d", basePath, from)
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err = cmd.Run()
++		err = ExecCommand("unsquashfs", "-f", "-d", basePath, from)
+ 		if err != nil {
+ 			return err
+ 		}
+ 		treeDiff := MkTreeDiff(basePath, extractPath)
+ 		treeDiff.MkOvl(ovlPath)
+-		defer RemoveAll(ovlPath)
+ 		extractPath = ovlPath
+ 	} else if app.SquashFile != SQUASH_FILE {
+ 		return errors.New("Unsupported SquashFile: " + app.SquashFile + ". Supported: " + SQUASH_FILE + ", " + SQUASH_OVL_FILE)
+@@ -774,7 +791,15 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 	if err != nil {
+ 		return err
+ 	}
+-	return os.WriteFile(digestFile, []byte(digest), 0644)
++	ExecCommand(TOUCH_CMD, digestFile)
++	currentDigest, err = os.OpenFile(digestFile, os.O_WRONLY | os.O_TRUNC, 0000)
++	if err != nil {
++		return err
++	}
++	defer currentDigest.Close()
++
++	_, err = currentDigest.Write([]byte(digest))
++	return err
+ }
+ 
+ // ProcessWhiteouts : FInd Whiteouts from a layer and process it in a given extract path
+diff --git a/libpvr/util.go b/libpvr/util.go
+index 9c249a3a..94409063 100644
+--- a/libpvr/util.go
++++ b/libpvr/util.go
+@@ -49,6 +49,15 @@ import (
+ 	"github.com/go-resty/resty"
+ )
+ 
++const (
++	CP_CMD                         = "cp"
++	LN_CMD                         = "ln"
++	MKDIR_CMD                      = "mkdir"
++	RM_CMD                         = "rm"
++	TAR_CMD                        = "tar"
++	TOUCH_CMD                      = "touch"
++)
++
+ type ApiError struct {
+ 	Cod   int    `json:"cod"`
+ 	Error string `json:"error"`
+@@ -74,20 +83,79 @@ func PrintDebugln(a ...interface{}) (n int, err error) {
+ 	return 0, nil
+ }
+ 
++func ExecCommand(name string, arg ...string) error {
++	if IsDebugEnabled {
++		args := []string {name}
++		args = append(args, arg...)
++		fmt.Println("Running Command: " + strings.Join(args, " "))
++	}
++	cmd := exec.Command(name, arg...)
++	for _,v := range os.Environ() {
++		if strings.HasPrefix(v, "SOURCE_DATE_EPOCH") {
++			continue
++		}
++		cmd.Env = append(cmd.Env, v)
++	}
++	if IsDebugEnabled {
++		fmt.Printf("  Env: %v \n", cmd.Env)
++		fmt.Printf("  Environ: %v \n", os.Environ())
++	}
++
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	cmd.Stdout = &out
++	cmd.Stderr = &stderr
++	err := cmd.Run()
++	if err != nil || IsDebugEnabled {
++		fmt.Fprintln(os.Stdout, "OUT: " + stderr.String())
++		fmt.Fprintln(os.Stderr, "ERROR: " + fmt.Sprint(err) +": " + stderr.String())
++	}
++	return err
++}
++
++func ExecCommandOut(name string, arg ...string) (string, error) {
++	if IsDebugEnabled {
++		args := []string {name}
++		args = append(args, arg...)
++		fmt.Println("Running Command: " + strings.Join(args, " "))
++	}
++	cmd := exec.Command(name, arg...)
++	for _,v := range os.Environ() {
++		if ! strings.HasPrefix(v, "SOURCE_DATE_EPOCH=") {
++			continue
++		}
++		cmd.Env = append(cmd.Env, v)
++	}
++	if IsDebugEnabled {
++		fmt.Printf("  Env: %v \n", cmd.Env)
++		fmt.Printf("  Environ: %v \n", os.Environ())
++	}
++
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	cmd.Stdout = &out
++	cmd.Stderr = &stderr
++	err := cmd.Run()
++	if err != nil || IsDebugEnabled {
++		fmt.Fprintln(os.Stdout, "OUT: " + out.String())
++		fmt.Fprintln(os.Stderr, "ERROR: " + fmt.Sprint(err) +": " + stderr.String())
++	}
++	return strings.TrimSpace(out.String()), err
++}
++
+ func Create(path string) error {
+ 	touch, err := exec.LookPath(TOUCH_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+ 	args := []string{touch, path}
+-	touchCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	touchCmd.Stdout = &out
+-	touchCmd.Stderr = &stderr
+-	err = touchCmd.Run()
++	err = ExecCommand(args[0], args[1:]...)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
++		return err
++	}
++	err = ExecCommand("chmod", "0666", path)
++	if err != nil {
++		return err
+ 	}
+ 	return nil
+ }
+@@ -97,17 +165,9 @@ func MkdirAll(path string, perm os.FileMode) error {
+ 	if err != nil {
+ 		return err
+ 	}
+-	args := []string{mkdir, "-m", perm.String(), "-p", path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-	}
+-	return nil
++	permString := fmt.Sprintf("0%o", perm)
++	args := []string{mkdir, "-m", permString, "-p", path}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Mkdir(path string, perm os.FileMode) error {
+@@ -116,16 +176,7 @@ func Mkdir(path string, perm os.FileMode) error {
+ 		return err
+ 	}
+ 	args := []string{mkdir, "-m", perm.String(), path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-	}
+-	return nil
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ // RemoveAll remove a path, could be a file or a folder
+@@ -140,17 +191,7 @@ func RemoveAll(path string) error {
+ 		return err
+ 	}
+ 	args := []string{rm, "-rf", path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-		return err
+-	}
+-	return nil
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ // RemoveAll remove a path, could be a file or a folder
+@@ -164,46 +205,29 @@ func Remove(path string) error {
+ 		return err
+ 	}
+ 	args := []string{rm, "-f", path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-		return err
+-	}
+-	return nil
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Copy(dst, src string) error {
+-	in, err := os.Open(src)
+-	if err != nil {
+-		return err
+-	}
+-	defer in.Close()
+-	out, err := os.Create(dst)
+-	if err != nil {
++	if _, err := os.Lstat(src); err != nil {
+ 		return err
+ 	}
+-	defer out.Close()
+-	_, err = io.Copy(out, in)
+-	cerr := out.Close()
++	cp, err := exec.LookPath(CP_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+-	return cerr
++	args := []string{cp, "-f", src, dst}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Hardlink(dst, src string) error {
+-	os.Remove(dst)
+-	err := os.Link(src, dst)
++	Remove(dst)
++	ln, err := exec.LookPath(LN_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+-	err = os.Chmod(dst, 0444)
+-	return err
++	args := []string{ln, src, dst}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func RenameFile(src string, dst string) (err error) {
+@@ -211,7 +235,7 @@ func RenameFile(src string, dst string) (err error) {
+ 	if err != nil {
+ 		return fmt.Errorf("failed to copy source file %s to %s: %s", src, dst, err)
+ 	}
+-	err = os.Remove(src)
++	err = Remove(src)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to cleanup source file %s: %s", src, err)
+ 	}
+@@ -321,7 +345,7 @@ func ReadOrCreateFile(filePath string) (*[]byte, error) {
+ 	if os.IsNotExist(err) {
+ 		_, err := os.Lstat(filepath.Dir(filePath))
+ 		if os.IsNotExist(err) {
+-			err = os.MkdirAll(filePath, 0700)
++			err = MkdirAll(filePath, 0700)
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -344,9 +368,14 @@ func ReadOrCreateFile(filePath string) (*[]byte, error) {
+ 
+ func WriteTxtFile(filePath string, content string) error {
+ 
+-	data := []byte(content)
+-
+-	return os.WriteFile(filePath, data, 0644)
++	Create(filePath)
++	f, err := os.OpenFile(filePath, os.O_WRONLY | os.O_TRUNC, 0666)
++	if err != nil {
++		return err
++	}
++	defer f.Close()
++	_, err = f.WriteString(content)
++	return err
+ }
+ 
+ // GetPlatform get string with the full platform name
+@@ -401,12 +430,12 @@ func CreateFolder(path string) error {
+ 	if os.IsNotExist(err) {
+ 		_, err := os.Stat(filepath.Dir(path))
+ 		if os.IsNotExist(err) {
+-			err = os.MkdirAll(filepath.Dir(path), 0700)
++			err = MkdirAll(filepath.Dir(path), 0777)
+ 			if err != nil {
+ 				return err
+ 			}
+ 		}
+-		err = os.MkdirAll(path, 0700)
++		err = MkdirAll(path, 0777)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -612,7 +641,7 @@ func SetTempFilesInterrupHandler(tempdir string) {
+ 			os.Exit(1)
+ 		}
+ 		if fileExist {
+-			err := os.RemoveAll(tempdir)
++			err := RemoveAll(tempdir)
+ 			if err != nil {
+ 				log.Fatal(err.Error())
+ 				os.Exit(1)
+@@ -729,7 +758,7 @@ func RemoveDirContents(dir string) error {
+ 		return err
+ 	}
+ 	for _, name := range names {
+-		err = os.RemoveAll(filepath.Join(dir, name))
++		err = RemoveAll(filepath.Join(dir, name))
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1081,21 +1110,7 @@ func Untar(dst string, src string, options []string) error {
+ 	}
+ 
+ 	args = append(args, options...)
+-	PrintDebugln(args)
+-	untar := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	untar.Stdout = &out
+-	untar.Stderr = &stderr
+-	err = untar.Run()
+-	if IsDebugEnabled {
+-		fmt.Println("untar output: " + out.String())
+-	}
+-
+-	if err != nil {
+-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+-	}
+-	return err
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ // GetFileContentType : Get File Content Type of a file
+@@ -1116,11 +1131,22 @@ func GetFileContentType(src string) (string, error) {
+ }
+ 
+ func DownloadFile(uri *url.URL) (string, error) {
+-	tempfile, err := os.CreateTemp(os.TempDir(), "download-rootfs-")
++	temppath, err := ExecCommandOut("mktemp", "-t", "download-rootfs-XXXXXXXX")
++	if err != nil {
++		return "", err
++	}
++	defer RemoveAll(temppath)
++
++	err = ExecCommand("chmod", "0666", temppath)
+ 	if err != nil {
+ 		return "", err
+ 	}
+-	defer tempfile.Close()
++
++	tempfile, err := os.OpenFile(temppath, os.O_TRUNC | os.O_WRONLY, 0666)
++	if err != nil {
++		return "", err
++	}
++	
+ 	resp, err := http.Get(uri.String())
+ 	if err != nil {
+ 		return "", err
+@@ -1268,34 +1294,27 @@ func (tree *TreeDiff) MkOvl(ovlDir string) {
+ 	for _, v := range tree.OnlyInA {
+ 		vDir := path.Dir(v)
+ 		vBase := path.Base(v)
+-		os.MkdirAll(path.Join(ovlDir, vDir), 0755)
++		MkdirAll(path.Join(ovlDir, vDir), 0755)
+ 		// Remove the file from the overlay using
+ 		// A whiteout is created as a character device with 0/0 device number.
+ 		// When a whiteout is found in the upper level of a merged directory, any matching name in the lower level is ignored, and the whiteout itself is also hidden.
+ 		// https://docs.kernel.org/filesystems/overlayfs.html#whiteouts-and-opaque-directories
+-		cmd := exec.Command("mknod", path.Join(ovlDir, vDir, vBase), "c", "0", "0")
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err := cmd.Run()
++
++		err := ExecCommand("mknod", path.Join(ovlDir, vDir, vBase), "c", "0", "0")
+ 		if err != nil {
+ 			tree.Errors = append(tree.Errors, err)
+-			fmt.Println("ERROR: mknod failed with: " + err.Error())
+ 		}
+ 	}
+ 	for _, v := range append(tree.OnlyInB, tree.Differ...) {
+ 		vDir := path.Dir(v)
+ 		vBase := path.Base(v)
+ 		ovlTarget := path.Join(ovlDir, vDir)
+-		os.MkdirAll(ovlTarget, 0755)
++		MkdirAll(ovlTarget, 0755)
+ 		src := path.Join(tree.B, vDir, vBase)
+ 		dest := path.Join(ovlDir, vDir, vBase)
+-		cmd := exec.Command("cp", "-a", "-v", src, dest)
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err := cmd.Run()
++		err := ExecCommand("cp", "-a", "-v", src, dest)
+ 		if err != nil {
+ 			tree.Errors = append(tree.Errors, err)
+-			fmt.Println("ERROR: cp failed with: " + err.Error())
+ 		}
+ 	}
+ }
+-- 
+2.34.1
+
