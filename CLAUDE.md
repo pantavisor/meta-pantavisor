@@ -16,6 +16,7 @@ This layer provides:
 |----------|-------------|
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow - building, testing, iterating on pantavisor and containers |
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
+| [TESTPLANS.md](TESTPLANS.md) | Executable test plans for appengine validation (IPAM, xconnect, DRM) |
 | [GEMINI.md](GEMINI.md) | Branch-specific implementation notes and upstream changes |
 
 ## Quick Reference
@@ -51,6 +52,11 @@ docker exec pva-test sh -c 'pv-appengine &'
 # Check status
 docker exec pva-test lxc-ls -f
 ```
+
+**Important**: When testing new containers or changes to pvtx.d:
+- Delete the storage volume to retrigger pvtx.d processing: `docker volume rm storage-test`
+- Alternatively, remove the `.pvtx-done` marker: `docker exec pva-test rm /var/pantavisor/storage/.pvtx-done`
+- The pvtx.d scripts only run once per storage volume (when `.pvtx-done` doesn't exist)
 
 ### Key Paths
 
@@ -144,6 +150,20 @@ See `build/workspace/sources/pantavisor/xconnect/XCONNECT.md` for protocol speci
 1. Edit `build/workspace/sources/pantavisor/xconnect/`
 2. Rebuild with `:kas/with-workspace.yaml`
 3. Load new docker image and test with appengine
+
+### Create a device.json configuration container
+
+Device configuration (IPAM network pools, container groups) must be deployed via a signed pvrexport.
+
+- **Embedded Pantavisor**: device.json is typically packaged in the BSP (see `recipes-pv/images/pantavisor-bsp.bb`)
+- **Appengine**: No BSP, so standalone device.json pvrexport is essential (`pv-example-device-config`)
+
+**Key points**:
+- Use `pvr sig add --raw <name> --include "device.json"` for signing non-container files
+- File MUST be named `device.json` in pvr repo
+- Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it)
+
+See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for full recipe and pvrexport structure.
 
 ### Debug container issues
 
