@@ -1,0 +1,7 @@
+{
+  "Entrypoint": "/bin/sh",
+  "Cmd": [
+    "-c",
+    "sleep infinity"
+  ]
+}
