@@ -13,6 +13,7 @@ RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6
 	e2fsprogs-mke2fs \
 	cryptsetup \
 	libthttp-certs \
+	netcat-openbsd \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
@@ -25,13 +26,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/xconnect-landing"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "a25a29681cbc60c6b719b93d956e8430a5b994e9"
+SRCREV = "a5a2d83c56a0bbf27fdb986a03cb5e14078dcb1e"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
@@ -79,6 +80,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPAN
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', '-DPANTAVISOR_E2FSGROW_ENABLE=ON', '-DPANTAVISOR_E2FSGROW_ENABLE=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', '-DPANTAVISOR_RUNC_ENABLE=ON', '-DPANTAVISOR_RUNC_ENABLE=OFF', d)}"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect', '-DPANTAVISOR_XCONNECT=ON', '-DPANTAVISOR_XCONNECT=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPANTAVISOR_APPENGINE=ON', '-DPANTAVISOR_APPENGINE=OFF', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
@@ -93,4 +95,3 @@ do_install() {
 	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
-
