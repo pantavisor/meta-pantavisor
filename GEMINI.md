@@ -1,18 +1,28 @@
-# feature/wasmedge-engine
+# feature/ingress
 
-This branch adds support for the WasmEdge WebAssembly runtime as an engine for Pantavisor.
+This branch adds global ingress support for routing external traffic to IPAM-networked containers.
+
+## Branch Structure
+
+The feature branches are stacked and should be merged in order (matching pantavisor repo):
+
+```
+master → feature/xconnect → feature/auto-recovery → feature/ipam-networking → feature/ingress
+```
+
+| Branch | Commits | Key Features |
+|--------|---------|--------------|
+| feature/xconnect | 2 | xconnect examples, container-pvrexport class, development docs |
+| feature/auto-recovery | 2 | Recovery examples, IPAM test containers, TESTPLANS.md |
+| feature/ipam-networking | 1 | IPAM networking examples, pvcontrol enhancements |
+| feature/ingress | 1 | Nginx ingress example, device.json patterns (direct/proxy/hybrid) |
 
 ## Yocto Implementation Details
 
-- **Recipe**: `recipes-wasm/wasmedge/wasmedge_git.bb`
-  - Version: 0.14.1
-  - Dependencies: `clang`, `libxml2`, `ncurses`, `spdlog`.
-- **Kconfig integration**: 
-  - `FEATURE_WASMEDGE`: Boolean to toggle the feature.
+- **Kconfig integration**:
   - `FEATURE_XCONNECT`: Boolean to toggle `pv-xconnect` service.
-- **Architecture Constraints**:
-  - Automatically removed for `armv7ve` machines due to build failures in `wasmedge`.
 - **KAS configuration**:
+  - `kas/with-workspace.yaml`: Local pantavisor development
   - `kas/bsp-base.yaml` and `kas/appengine-base.yaml` add `meta-clang` repository.
   - LLVM preferred providers are set to `clang` in `conf/distro/panta-distro.inc`.
 
@@ -375,6 +385,55 @@ Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) 
 For the design of the service mesh and `pv-xconnect`, please refer to the documentation in the `pantavisor` source repository:
 - `GEMINI.md`: High-level vision.
 - `xconnect/XCONNECT.md`: Detailed `pv-xconnect` implementation notes.
+
+## Ingress Patterns (This Branch)
+
+### Global Ingress Configuration
+
+Device.json ingress configuration routes external traffic to containers:
+
+```json
+{
+    "ingress": [
+        {
+            "name": "nginx-http-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:80",
+            "provider": "example-nginx-ingress",
+            "service": "nginx-http"
+        }
+    ]
+}
+```
+
+### Pattern Comparison
+
+| Pattern | device.json | Provider Network | Example Recipe |
+|---------|-------------|------------------|----------------|
+| Direct | `device.json.ingress-direct` | Host network | `pv-example-device-config-direct` |
+| Host Proxy | `device.json.ingress-proxy` | IPAM + host proxy | `pv-example-device-config-proxy` |
+| Hybrid (2b) | `device.json.ingress-hybrid` | Both IPAM + global ingress | `pv-example-device-config-hybrid` |
+
+### services.json for TCP Providers
+
+TCP services use `port` field (not `socket`) for IPAM backends:
+
+```json
+[
+  { "name": "nginx-http", "type": "tcp", "port": 80 },
+  { "name": "nginx-https", "type": "tcp", "port": 443 }
+]
+```
+
+### Test Plans
+
+See [TESTPLANS.md](TESTPLANS.md) for:
+- **Test 10**: Direct Ingress - provider on host network
+- **Test 11**: Hybrid Proxy Ingress - provider in IPAM network with global ingress routing
+
+Both tests verify end-to-end HTTP connectivity through the ingress proxy.
+
+---
 
 ## Checkpoint (2026-01-20)
 

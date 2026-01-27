@@ -1,0 +1,4 @@
+[
+  { "name": "nginx-http", "type": "tcp", "port": 80 },
+  { "name": "nginx-https", "type": "tcp", "port": 443 }
+]
