@@ -26,13 +26,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/xconnect-landing"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH}" \
            file://rev0json \
            "
 
-SRCREV = "52710d368880a624ece9ba67840d96ceb5bd8836"
+SRCREV = "55786767988739465140e62a4d43824de7726444"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
@@ -79,4 +79,3 @@ do_install() {
 	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
-
