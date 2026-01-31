@@ -28,11 +28,11 @@ S = "${WORKDIR}/git"
 
 PANTAVISOR_BRANCH ??= "feature/xconnect-landing"
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH}" \
+SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "55786767988739465140e62a4d43824de7726444"
+SRCREV = "ae00fdf3d3532c728fbea9d80a78846e664d6e5e"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
