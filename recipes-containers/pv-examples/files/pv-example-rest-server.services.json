@@ -1,7 +1,10 @@
-[
-  {
-    "name": "network-manager",
-    "type": "rest",
-    "socket": "/run/nm/api.sock"
-  }
-]
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "network-manager",
+      "type": "rest",
+      "socket": "/run/nm/api.sock"
+    }
+  ]
+}

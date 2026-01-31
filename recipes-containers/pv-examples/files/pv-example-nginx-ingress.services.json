@@ -1,4 +1,7 @@
-[
-  { "name": "nginx-http", "type": "tcp", "port": 80 },
-  { "name": "nginx-https", "type": "tcp", "port": 443 }
-]
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    { "name": "nginx-http", "type": "tcp", "port": 80 },
+    { "name": "nginx-https", "type": "tcp", "port": 443 }
+  ]
+}
