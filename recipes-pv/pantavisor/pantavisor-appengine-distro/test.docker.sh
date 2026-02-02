@@ -242,6 +242,7 @@ exec_test() {
 	IFS="/" 
 	set -- $json_path
 	mkdir -p "$storage_path/$2/$4/"
+	echo "Info: Logs for $2:$4 can be found in $storage_path/$2/$4/logs"
 	cd "$storage_path/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
 
 	sudo -v
@@ -283,7 +284,6 @@ exec_test() {
 		--env-file <(echo "$env" | tr ' ' '\n') \
 		$docker_it_opt \
 		--rm \
-		--cgroupns host \
 		--cap-add MKNOD \
 		--cap-add NET_ADMIN \
 		--cap-add SYS_ADMIN \
@@ -301,7 +301,7 @@ exec_test() {
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
 		-p 8222:8222 \
-		--volume "/sys/fs":"/sys/fs" \
+		--mount type=tmpfs,target="/sys/fs/cgroup" \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
@@ -411,7 +411,6 @@ run_test() {
 	fi
 
 	common_path="$test_dir/common"
-	echo "Info: Logs can be found in $storage_path/logs"
 	if [ -z "$group" ]; then
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path"

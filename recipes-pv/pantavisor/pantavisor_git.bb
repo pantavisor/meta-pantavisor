@@ -31,13 +31,13 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PA
            file://rev0json \
            "
 
-SRCREV = "52710d368880a624ece9ba67840d96ceb5bd8836"
+SRCREV = "ed1030161564cd54cf89e544d2dd6abd96241f7a"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
 PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
 
-FILES:${PN} += " /usr/bin/pantavisor-run"
+FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
 FILES:${PN} += " /usr/share/pantavisor/skel/etc/pantavisor/defaults/groups.json"
 FILES:${PN} += " /writable /volumes /exports /pv /etc/pantavisor /lib/ "
@@ -54,6 +54,7 @@ FILES:${PN}-config += "/etc/resolv.conf"
 
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+RDEPENDS:${PN}-pvtest += "bash"
 
 inherit cmake gitpkgv
 
