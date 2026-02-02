@@ -1,0 +1,8 @@
+header:
+  version: 14
+
+repos:
+  workspace:
+    path: build/workspace
+    layers:
+      .:
