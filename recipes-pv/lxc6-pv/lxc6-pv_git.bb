@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=4b6551da9cb7d5b3017d1c0a3e31469b"
 
 DEPENDS = "libcap pkgconfig-native"
 
-SRC_URI = "git://gitlab.com/pantacor/lxc;protocol=https;branch=stable-6.0-BASE-f9ff9ea2a"
+SRC_URI = "git://github.com/pantavisor/lxc;protocol=https;branch=stable-6.0-BASE-f9ff9ea2a"
 SRCREV = "c2017d421b28fb169ce62ba216b6df2fb07d10cb"
 
 PE = "1"
