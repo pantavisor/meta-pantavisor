@@ -7,9 +7,16 @@ This document provides executable test plans for validating pv-examples containe
 ### Build Appengine Image
 
 ```bash
+# Standard build (uses upstream repos)
 ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+
+# Build with local workspace (uses local branches of pantavisor, lxc, etc.)
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 ```
+
+**Note**: Use `kas/with-workspace.yaml` when testing local changes in `build/workspace/sources/` (e.g., pantavisor, lxc-pv). This overlay adds the workspace layer and enables xconnect features.
 
 ### Common Setup
 
