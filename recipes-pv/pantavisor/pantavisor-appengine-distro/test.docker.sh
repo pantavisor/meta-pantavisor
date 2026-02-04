@@ -301,7 +301,6 @@ exec_test() {
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
 		-p 8222:8222 \
-		--mount type=tmpfs,target="/sys/fs/cgroup" \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
