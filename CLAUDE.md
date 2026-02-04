@@ -108,9 +108,16 @@ See [EXAMPLES.md](EXAMPLES.md) for detailed testing instructions.
 
 ## Pantavisor Source Development
 
-When using `kas/with-workspace.yaml`, pantavisor source is available at:
+When using `kas/with-workspace.yaml`, workspace sources are available at:
 ```
-build/workspace/sources/pantavisor/
+build/workspace/sources/pantavisor/   # Pantavisor runtime
+build/workspace/sources/lxc-pv/       # LXC with pantavisor patches (if added)
+```
+
+Workspace bbappend files redirect recipes to use local sources:
+```
+build/workspace/appends/pantavisor_git.bbappend
+build/workspace/appends/lxc-pv_git.bbappend   # Create manually if needed
 ```
 
 Key pantavisor components:
@@ -132,8 +139,18 @@ pv-xconnect mediates container-to-container communication:
 - **Wayland**: Compositor access for isolated UI rendering
 
 Configuration:
-- **Provider**: `services.json` declares exported services
+- **Provider**: `services.json` declares exported services (uses `#spec: service-manifest-xconnect@1` format)
 - **Consumer**: `args.json` with `PV_SERVICES_REQUIRED`/`PV_SERVICES_OPTIONAL`
+
+Example services.json:
+```json
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "my-service", "type": "unix", "socket": "/run/my.sock"}
+  ]
+}
+```
 
 See `build/workspace/sources/pantavisor/xconnect/XCONNECT.md` for protocol specification.
 
@@ -168,18 +185,20 @@ See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for ful
 ### Debug container issues
 
 ```bash
-# Check pantavisor logs
-docker exec pva-test cat /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+# Check pantavisor logs (appengine path)
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
 
 # Check container logs
-docker exec pva-test cat /run/pantavisor/pv/logs/0/<container>/lxc/console.log
+docker exec pva-test cat /var/pantavisor/storage/logs/0/<container>/lxc/console.log
 
 # Enter container namespace
 docker exec -it pva-test pventer -c <container>
 
-# Query xconnect graph
-docker exec pva-test curl -s --max-time 3 \
-    --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+# Query xconnect graph (use pvcurl, not curl)
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+
+# Query daemon status
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons | jq .
 ```
 
 ## External Resources
