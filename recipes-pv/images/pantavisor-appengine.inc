@@ -9,18 +9,16 @@ DOCKER_IMAGE_TAG = "1.0"
 VIRTUAL-RUNTIME_pantavisor_config ?= "pantavisor-config"
 
 CORE_IMAGE_EXTRA_INSTALL += " \
-	coreutils \
-	pantavisor \
-	bash \
-	dnsmasq \
-	hostapd \
-	iw \
-	util-linux \
-	pantavisor-pvtx \
-	pvcontrol \
-	${VIRTUAL-RUNTIME_pantavisor_config} \
+        coreutils \
+        pantavisor \
+        bash \
+        dnsmasq \
+        hostapd \
+        iw \
+        util-linux \
+        pantavisor-pvtx \
+        ${VIRTUAL-RUNTIME_pantavisor_config} \
 "
-
 
 SRC_URI += " \
 "
@@ -32,8 +30,8 @@ do_install_scripts() {
     # Copy the file from the Yocto work directory (${WORKDIR}) to the destination
     find ${IMAGE_ROOTFS}/ -type f
     if ! [ -f ${IMAGE_ROOTFS}/etc/pantavisor/defaults/groups.json ]; then
-	echo "ERROR NO GROUPS"
-	exit 2
+        echo "ERROR NO GROUPS"
+        exit 2
     fi
 
 }
@@ -41,4 +39,3 @@ do_install_scripts() {
 OCI_IMAGE_ENTRYPOINT_ARGS = "/usr/bin/pv-appengine"
 
 ROOTFS_POSTPROCESS_COMMAND += "do_install_scripts"
-

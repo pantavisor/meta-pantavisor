@@ -1,5 +1,5 @@
 DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program."
-SECTION = "pantavisor"
+SECTION = "pantacor"
 HOMEPAGE = "https://golang.org/"
 
 inherit go-mod deploy

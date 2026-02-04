@@ -1,0 +1,20 @@
+{
+    "groups": [
+        {
+            "name": "root",
+            "status_goal": "STARTED",
+            "restart_policy": "container"
+        }
+    ],
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "pvbr0",
+                "subnet": "10.0.5.0/24",
+                "gateway": "10.0.5.1",
+                "nat": true
+            }
+        }
+    }
+}

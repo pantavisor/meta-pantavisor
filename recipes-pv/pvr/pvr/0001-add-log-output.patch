@@ -1,0 +1,24 @@
+From 8acef4e3e4efda03f7f48f7cb0d74498c1665f24 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Tue, 15 Oct 2024 07:57:02 +0000
+Subject: [PATCH] add log output
+
+---
+ libpvr/applib.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libpvr/applib.go b/libpvr/applib.go
+index b9d91d18..70b63922 100644
+--- a/libpvr/applib.go
++++ b/libpvr/applib.go
+@@ -704,6 +704,7 @@ func (p *Pvr) MakeSquash(rootfsPath string, app *AppData) error {
+ 
+ 	err = makeSquashfs.Run()
+ 	if err != nil {
++		fmt.Println("Cannot generate squashfs " + err.Error())
+ 		return err
+ 	}
+ 
+-- 
+2.34.1
+

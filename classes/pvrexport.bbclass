@@ -112,6 +112,22 @@ do_compile(){
 		rm -f ${PVCONT_NAME}/src.json.new
 		pvr app install ${PVCONT_NAME}
 	fi
+	if [ -f ${WORKDIR}/${BPN}.services.json ]; then
+		cp -f ${WORKDIR}/${BPN}.services.json ${PVCONT_NAME}/services.json
+		pvr app install ${PVCONT_NAME}
+	elif [ -f ${WORKDIR}/services.json ]; then
+		cp -f ${WORKDIR}/services.json ${PVCONT_NAME}/services.json
+		pvr app install ${PVCONT_NAME}
+	fi
+	if [ -f ${WORKDIR}/${BPN}.network.json ]; then
+		cat ${PVCONT_NAME}/run.json | jq --slurpfile network ${WORKDIR}/${BPN}.network.json \
+		    '. * { "network" : $network[0] }' > ${PVCONT_NAME}/run.json.new
+		mv -f ${PVCONT_NAME}/run.json.new ${PVCONT_NAME}/run.json
+	elif [ -f ${WORKDIR}/network.json ]; then
+		cat ${PVCONT_NAME}/run.json | jq --slurpfile network ${WORKDIR}/network.json \
+		    '. * { "network" : $network[0] }' > ${PVCONT_NAME}/run.json.new
+		mv -f ${PVCONT_NAME}/run.json.new ${PVCONT_NAME}/run.json
+	fi
 	if [ -f "${WORKDIR}/pvs/key.default.pem" ]; then
 		export PVR_SIG_KEY="${WORKDIR}/pvs/key.default.pem"
 	fi

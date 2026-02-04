@@ -1,0 +1,798 @@
+From 106d0b87554e67ea44c5d62cd21ecfdca89b601a Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Mon, 14 Oct 2024 12:33:16 +0000
+Subject: [PATCH] libpvr/: switch to use cmd line tools rather than os.XXXX
+ primitives
+
+This helps better work with pseudo and fakeroot and alike...
+---
+ cmd/version.go      |   3 +-
+ libpvr/applib.go    |  25 +----
+ libpvr/dockerlib.go |  49 ++++++----
+ libpvr/repolib.go   |  66 +++++++------
+ libpvr/util.go      | 222 ++++++++++++++++++++++++++------------------
+ 5 files changed, 208 insertions(+), 157 deletions(-)
+
+diff --git a/cmd/version.go b/cmd/version.go
+index adf6784e..2ddf91c5 100644
+--- a/cmd/version.go
++++ b/cmd/version.go
+@@ -19,7 +19,6 @@ package cmd
+ import (
+ 	"fmt"
+ 	"runtime"
+-	"strings"
+ 
+ 	"github.com/urfave/cli"
+ )
+@@ -31,7 +30,7 @@ func CommandVersion() cli.Command {
+ 		Description: "Get pvr version",
+ 		Action: func(c *cli.Context) error {
+ 			fmt.Println(c.App.Version)
+-			fmt.Printf("  go version: %s\n", strings.ReplaceAll(runtime.Version(), "go", ""))
++			fmt.Printf("  go version: %s\n", runtime.Version())
+ 
+ 			return nil
+ 		},
+diff --git a/libpvr/applib.go b/libpvr/applib.go
+index b9d91d18..7938dc13 100644
+--- a/libpvr/applib.go
++++ b/libpvr/applib.go
+@@ -17,7 +17,6 @@
+ package libpvr
+ 
+ import (
+-	"bytes"
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
+@@ -620,11 +619,11 @@ func (p *Pvr) RemoveApplication(appname string) error {
+ 
+ 		sigPath := filepath.Join(p.Dir, sigKey)
+ 		if _, err := os.Stat(sigPath); err == nil {
+-			os.Remove(sigPath)
++			Remove(sigPath)
+ 		}
+ 
+ 		for _, part := range deletedParts {
+-			os.Remove(filepath.Join(p.Dir, part))
++			Remove(filepath.Join(p.Dir, part))
+ 		}
+ 	}
+ 
+@@ -693,28 +692,14 @@ func (p *Pvr) MakeSquash(rootfsPath string, app *AppData) error {
+ 	args := []string{makeSquashfsPath, rootfsPath, tempSquashFile}
+ 	args = append(args, comp...)
+ 
+-	fmt.Println("Generating squashfs file: " + strings.Join(args, " "))
+-	makeSquashfs := exec.Command(args[0], args[1:]...)
+-	var outb, errb bytes.Buffer
+-
+-	if IsDebugEnabled {
+-		makeSquashfs.Stdout = &outb
+-		makeSquashfs.Stderr = &errb
+-	}
+-
+-	err = makeSquashfs.Run()
++	fmt.Println("Generating 1 squashfs file: " + strings.Join(args, " "))
++	err = ExecCommand(args[0], args[1:]...)
+ 	if err != nil {
++		fmt.Println("Cannot generate squashfs " + err.Error())
+ 		return err
+ 	}
+ 
+ 	fmt.Println("Generating squashfs digest")
+-	if IsDebugEnabled && len(outb.Bytes()) > 0 {
+-		fmt.Println(outb.String())
+-	}
+-	if IsDebugEnabled && len(errb.Bytes()) > 0 {
+-		fmt.Println(errb.String())
+-	}
+-
+ 	return RenameFile(tempSquashFile, squashFile)
+ }
+ 
+diff --git a/libpvr/dockerlib.go b/libpvr/dockerlib.go
+index c0cf8309..a84c0825 100644
+--- a/libpvr/dockerlib.go
++++ b/libpvr/dockerlib.go
+@@ -48,10 +48,6 @@ import (
+ )
+ 
+ const (
+-	MKDIR_CMD                      = "mkdir"
+-	RM_CMD                         = "rm"
+-	TAR_CMD                        = "tar"
+-	TOUCH_CMD                      = "touch"
+ 	MAKE_SQUASHFS_CMD              = "mksquashfs"
+ 	SQUASH_FILE                    = "root.squashfs"
+ 	SQUASH_OVL_FILE                = "root.ovl.squashfs"
+@@ -587,9 +583,9 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 		return fmt.Errorf("couldn't create cache folder %v", err)
+ 	}
+ 
+-	fmt.Println("Generating squashfs...")
++	fmt.Println("Generating 2 squashfs...")
+ 
+-	tempdir, err := os.MkdirTemp(os.TempDir(), "download-layer-")
++	tempdir, err := ExecCommandOut(MKTEMP_CMD, "-d", "-t", "download-layer-XXXXXXXX")
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -623,7 +619,11 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 			}
+ 			buf := bufio.NewReader(imageReader)
+ 			//filename := filepath.Join(tempdir, "layers") + ".tar.gz"
+-			file, err := os.Create(filename)
++			err = Create(filename, 0644)
++			if err != nil {
++				return err
++			}
++			file, err := os.OpenFile(filename, os.O_WRONLY | os.O_TRUNC, 0644)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -677,7 +677,11 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 
+ 			buf := bufio.NewReader(layerReader)
+ 
+-			file, err := os.Create(filename)
++			err = Create(filename, 0644)
++			if err != nil {
++				return err
++			}
++			file, err := os.OpenFile(filename, os.O_WRONLY | os.O_TRUNC, 0644)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -736,34 +740,37 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 	fmt.Println("Adding essential structural dirs to operate RO containers")
+ 	for _, file := range structureDirs {
+ 		dirToMake := filepath.Join(extractPath, file)
+-		os.MkdirAll(dirToMake, 0755)
++		err = ExecCommand(MKDIR_CMD, "-p", dirToMake)
++		if err != nil {
++			_, err2 := os.Stat(dirToMake)
++			if err2 != nil {
++				return err
++			}
++		}
+ 	}
+ 
+ 	// if we are using a different name, we generate an overlay
+ 	if app.SquashFile == SQUASH_OVL_FILE {
+-		basePath, err := os.MkdirTemp("", "base-layer-*")
++		basePath, err := ExecCommandOut(MKTEMP_CMD, "-d", "-t", "base-layer-XXXXXXXX")
+ 		if err != nil {
+ 			return err
+ 		}
+ 		defer RemoveAll(basePath)
+-		ovlPath, err := os.MkdirTemp("", "ovl-*")
++		ovlPath, err := ExecCommandOut(MKTEMP_CMD, "-d", "-t", "ovl-XXXXXXXX")
+ 		if err != nil {
+ 			return err
+ 		}
++		defer RemoveAll(ovlPath)
+ 		from := path.Join(p.Dir, app.Appname, SQUASH_FILE)
+ 		if appManifest.Base != "" {
+ 			from = path.Join(p.Dir, appManifest.Base, SQUASH_FILE)
+ 		}
+-		cmd := exec.Command("unsquashfs", "-f", "-d", basePath, from)
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err = cmd.Run()
++		err = ExecCommand("unsquashfs", "-f", "-d", basePath, from)
+ 		if err != nil {
+ 			return err
+ 		}
+ 		treeDiff := MkTreeDiff(basePath, extractPath)
+ 		treeDiff.MkOvl(ovlPath)
+-		defer RemoveAll(ovlPath)
+ 		extractPath = ovlPath
+ 	} else if app.SquashFile != SQUASH_FILE {
+ 		return errors.New("Unsupported SquashFile: " + app.SquashFile + ". Supported: " + SQUASH_FILE + ", " + SQUASH_OVL_FILE)
+@@ -774,7 +781,15 @@ func (p *Pvr) GenerateApplicationSquashFS(app *AppData, appManifest *Source) err
+ 	if err != nil {
+ 		return err
+ 	}
+-	return os.WriteFile(digestFile, []byte(digest), 0644)
++	Create(digestFile, 0644)
++	currentDigest, err = os.OpenFile(digestFile, os.O_WRONLY | os.O_TRUNC, 0644)
++	if err != nil {
++		return err
++	}
++	defer currentDigest.Close()
++
++	_, err = currentDigest.Write([]byte(digest))
++	return err
+ }
+ 
+ // ProcessWhiteouts : FInd Whiteouts from a layer and process it in a given extract path
+diff --git a/libpvr/repolib.go b/libpvr/repolib.go
+index 20172fed..56c4569d 100644
+--- a/libpvr/repolib.go
++++ b/libpvr/repolib.go
+@@ -286,7 +286,7 @@ func (p *Pvr) AddFile(globs []string, forceObject bool) error {
+ 		return err
+ 	}
+ 
+-	err = os.WriteFile(filepath.Join(p.Pvrdir, "new.XXX"), jsonData, 0644)
++	err = WriteTxtFile(filepath.Join(p.Pvrdir, "new.XXX"), string(jsonData))
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -508,7 +508,7 @@ func (p *Pvr) InitCustom(customInitJson string, objectsDir string) error {
+ 		return errors.New("pvr init: .pvr directory/file found (" + p.Pvrdir + "). Cannot initialize an existing repository.")
+ 	}
+ 
+-	err = os.MkdirAll(p.Pvrdir, 0755)
++	err = MkdirAll(p.Pvrdir, 0755)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -546,12 +546,16 @@ func (p *Pvr) InitCustom(customInitJson string, objectsDir string) error {
+ 		}
+ 	}
+ 
+-	err = os.MkdirAll(p.Objdir, 0755)
++	err = MkdirAll(p.Objdir, 0755)
+ 	if err != nil && !os.IsExist(err) {
+ 		return err
+ 	}
+ 
+-	jsonFile, err := os.OpenFile(filepath.Join(p.Pvrdir, "json"), os.O_CREATE|os.O_WRONLY, 0644)
++	err = Create(filepath.Join(p.Pvrdir, "json"), 0644)
++	if err != nil {
++		return err
++	}
++	jsonFile, err := os.OpenFile(filepath.Join(p.Pvrdir, "json"), os.O_TRUNC | os.O_WRONLY, 0644)
+ 
+ 	if err != nil {
+ 		return err
+@@ -724,7 +728,12 @@ func (p *Pvr) prepCommitCheckpoint() error {
+ 		goto exit
+ 	}
+ 
+-	fd, err = os.OpenFile(fNewPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
++	err = Create(fNewPath, 0644)
++	if err != nil {
++		goto exit
++	}
++	
++	fd, err = os.OpenFile(fNewPath, os.O_WRONLY| os.O_TRUNC, 0644)
+ 	if err != nil {
+ 		goto exit
+ 	}
+@@ -751,7 +760,7 @@ func (p *Pvr) prepCommitCheckpoint() error {
+ 	}
+ 
+ exit:
+-	os.Remove(fNewPath)
++	Remove(fNewPath)
+ 	return err
+ }
+ 
+@@ -842,7 +851,7 @@ func (p *Pvr) Commit(msg string, isCheckpoint bool) (err error) {
+ 		fmt.Fprintln(os.Stderr, "Removing "+v)
+ 	}
+ 
+-	os.WriteFile(filepath.Join(p.Pvrdir, "commitmsg.new"), []byte(msg), 0644)
++	WriteTxtFile(filepath.Join(p.Pvrdir, "commitmsg.new"), msg)
+ 	err = RenameFile(filepath.Join(p.Pvrdir, "commitmsg.new"), filepath.Join(p.Pvrdir, "commitmsg"))
+ 	if err != nil {
+ 		return err
+@@ -863,7 +872,7 @@ func (p *Pvr) Commit(msg string, isCheckpoint bool) (err error) {
+ 		return err
+ 	}
+ 
+-	err = os.WriteFile(filepath.Join(p.Pvrdir, "json.new"), newJson, 0644)
++	err = WriteTxtFile(filepath.Join(p.Pvrdir, "json.new"), string(newJson))
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -875,7 +884,7 @@ func (p *Pvr) Commit(msg string, isCheckpoint bool) (err error) {
+ 	}
+ 
+ 	// ignore error here as new might not exist
+-	os.Remove(filepath.Join(p.Pvrdir, "new"))
++	Remove(filepath.Join(p.Pvrdir, "new"))
+ 
+ 	return err
+ }
+@@ -884,7 +893,7 @@ func (p *Pvr) PutLocal(repoPath string) error {
+ 
+ 	_, err := os.Stat(repoPath)
+ 	if err != os.ErrNotExist {
+-		err = os.MkdirAll(repoPath, 0755)
++		err = MkdirAll(repoPath, 0755)
+ 	}
+ 	if err != nil {
+ 		return err
+@@ -901,7 +910,7 @@ func (p *Pvr) PutLocal(repoPath string) error {
+ 	if err == nil && !info.IsDir() {
+ 		return errors.New("PVR repo directory in inusable state (objects is not a directory)")
+ 	} else if err != nil {
+-		err = os.MkdirAll(objectsPath, 0755)
++		err = MkdirAll(objectsPath, 0755)
+ 	}
+ 	if err != nil && !os.IsExist(err) {
+ 		return err
+@@ -1677,7 +1686,7 @@ func (p *Pvr) SaveConfig() error {
+ 	if err != nil {
+ 		return err
+ 	}
+-	err = os.WriteFile(configNew, byteJson, 0644)
++	err = WriteTxtFile(configNew, string(byteJson))
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -2139,7 +2148,7 @@ func (p *Pvr) GetRepoLocal(getPath string, merge bool, showFilenames bool, state
+ 	if updatePristineJson {
+ 		p.PristineJson = jsonMerged
+ 		p.PristineJsonMap = jsonMergedMap
+-		err = os.WriteFile(filepath.Join(p.Pvrdir, "json.new"), jsonMerged, 0644)
++		err = WriteTxtFile(filepath.Join(p.Pvrdir, "json.new"), string(jsonMerged))
+ 		if err != nil {
+ 			return objectsCount, err
+ 		}
+@@ -2470,7 +2479,7 @@ func (p *Pvr) GetRepoRemote(url *url.URL, merge bool, showFilenames bool, state
+ 	if updatePristineJson {
+ 		p.PristineJson = jsonMerged
+ 		p.PristineJsonMap = jsonMergedMap
+-		err = os.WriteFile(filepath.Join(p.Pvrdir, "json.new"), jsonMerged, 0644)
++		err = WriteTxtFile(filepath.Join(p.Pvrdir, "json.new"), string(jsonMerged))
+ 		if err != nil {
+ 			return objectsCount, err
+ 		}
+@@ -2644,7 +2653,7 @@ func (p *Pvr) resetInternal(hardlink bool, canonicalJson bool, state *PvrMap) (e
+ 			if err != nil {
+ 				return err
+ 			}
+-			err = os.WriteFile(targetP+".new", data, 0644)
++			err = WriteTxtFile(targetP+".new", string(data))
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -2735,11 +2744,14 @@ func (p *Pvr) Export(parts []string, dst string) error {
+ 	if dst == "-" {
+ 		file = os.Stdout
+ 	} else {
+-		file, err = os.Create(dst)
++		err = Create(dst, 0644)
++		if err != nil {
++			return err
++		}
++		file, err = os.OpenFile(dst, os.O_TRUNC | os.O_WRONLY, 0644) 
+ 		if err != nil {
+ 			return err
+ 		}
+-		defer file.Close()
+ 	}
+ 
+ 	var fileWriter io.WriteCloser
+@@ -2938,10 +2950,10 @@ func (p *Pvr) DeployPvLinks() error {
+ 
+ 	if fitFile != "" {
+ 		fitLink := path.Join(p.Dir, ".pv", "pantavisor.fit")
+-		os.MkdirAll(path.Join(p.Dir, ".pv"), 0755)
+-		os.Remove(fitLink)
++		MkdirAll(path.Join(p.Dir, ".pv"), 0755)
++		Remove(fitLink)
+ 
+-		err = os.Link(path.Join(p.Dir, "bsp", fitFile), fitLink)
++		err = ExecCommand(LN_CMD, path.Join(p.Dir, "bsp", fitFile), fitLink)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -2952,24 +2964,24 @@ func (p *Pvr) DeployPvLinks() error {
+ 		if dtbFile != "" {
+ 			dtbLink = path.Join(p.Dir, ".pv", "pv-fdt.dtb")
+ 		}
+-		os.MkdirAll(path.Join(p.Dir, ".pv"), 0755)
+-		os.Remove(kernelLink)
+-		os.Remove(initrdLink)
++		MkdirAll(path.Join(p.Dir, ".pv"), 0755)
++		Remove(kernelLink)
++		Remove(initrdLink)
+ 		if dtbLink != "" {
+-			os.Remove(dtbLink)
++			Remove(dtbLink)
+ 		}
+ 
+-		err = os.Link(path.Join(p.Dir, "bsp", kernelFile), kernelLink)
++		err = ExecCommand(LN_CMD, path.Join(p.Dir, "bsp", kernelFile), kernelLink)
+ 		if err != nil {
+ 			return err
+ 		}
+-		err = os.Link(path.Join(p.Dir, "bsp", initrdFile), initrdLink)
++		err = ExecCommand(LN_CMD,path.Join(p.Dir, "bsp", initrdFile), initrdLink)
+ 		if err != nil {
+ 			return err
+ 		}
+ 
+ 		if dtbFile != "" {
+-			err = os.Link(path.Join(p.Dir, "bsp", dtbFile), dtbLink)
++			err = ExecCommand(LN_CMD, path.Join(p.Dir, "bsp", dtbFile), dtbLink)
+ 			if err != nil {
+ 				return err
+ 			}
+diff --git a/libpvr/util.go b/libpvr/util.go
+index 121fee3e..6034d933 100644
+--- a/libpvr/util.go
++++ b/libpvr/util.go
+@@ -49,6 +49,18 @@ import (
+ 	"github.com/go-resty/resty"
+ )
+ 
++const (
++	CHMOD_CMD                      = "chmod"
++	CP_CMD                         = "cp"
++	LN_CMD                         = "ln"
++	MKDIR_CMD                      = "mkdir"
++	MKNOD_CMD                      = "mknod"
++	MKTEMP_CMD                     = "mktemp"
++	RM_CMD                         = "rm"
++	TAR_CMD                        = "tar"
++	TOUCH_CMD                      = "touch"
++)
++
+ type ApiError struct {
+ 	Cod   int    `json:"cod"`
+ 	Error string `json:"error"`
+@@ -74,22 +86,78 @@ func PrintDebugln(a ...interface{}) (n int, err error) {
+ 	return 0, nil
+ }
+ 
+-func Create(path string) error {
++func ExecCommand(name string, arg ...string) error {
++	if IsDebugEnabled {
++		args := []string {name}
++		args = append(args, arg...)
++		fmt.Println("Running Command: " + strings.Join(args, " "))
++	}
++	cmd := exec.Command(name, arg...)
++	for _,v := range os.Environ() {
++		if strings.HasPrefix(v, "SOURCE_DATE_EPOCH") {
++			continue
++		}
++		cmd.Env = append(cmd.Env, v)
++	}
++	if IsDebugEnabled {
++		fmt.Printf("  Env: %v \n", cmd.Env)
++		fmt.Printf("  Environ: %v \n", os.Environ())
++	}
++
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	cmd.Stdout = &out
++	cmd.Stderr = &stderr
++	err := cmd.Run()
++	if err != nil || IsDebugEnabled {
++		fmt.Fprintln(os.Stdout, "OUT: " + stderr.String())
++		fmt.Fprintln(os.Stderr, "ERROR: " + fmt.Sprint(err) +": " + stderr.String())
++	}
++	return err
++}
++
++func ExecCommandOut(name string, arg ...string) (string, error) {
++	if IsDebugEnabled {
++		args := []string {name}
++		args = append(args, arg...)
++		fmt.Println("Running Command: " + strings.Join(args, " "))
++	}
++	cmd := exec.Command(name, arg...)
++	for _,v := range os.Environ() {
++		if ! strings.HasPrefix(v, "SOURCE_DATE_EPOCH=") {
++			continue
++		}
++		cmd.Env = append(cmd.Env, v)
++	}
++	if IsDebugEnabled {
++		fmt.Printf("  Env: %v \n", cmd.Env)
++		fmt.Printf("  Environ: %v \n", os.Environ())
++	}
++
++	var out bytes.Buffer
++	var stderr bytes.Buffer
++	cmd.Stdout = &out
++	cmd.Stderr = &stderr
++	err := cmd.Run()
++	if err != nil || IsDebugEnabled {
++		fmt.Fprintln(os.Stdout, "OUT: " + out.String())
++		fmt.Fprintln(os.Stderr, "ERROR: " + fmt.Sprint(err) +": " + stderr.String())
++	}
++	return strings.TrimSpace(out.String()), err
++}
++
++func Create(path string, perm os.FileMode) error {
+ 	touch, err := exec.LookPath(TOUCH_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+-	args := []string{touch, path}
+-	touchCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	touchCmd.Stdout = &out
+-	touchCmd.Stderr = &stderr
+-	err = touchCmd.Run()
++	args := []string{touch, "-a", path}
++	err = ExecCommand(args[0], args[1:]...)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
++		return err
+ 	}
+-	return nil
++	permString := fmt.Sprintf("0%o", perm)
++	return ExecCommand(CHMOD_CMD, permString, path)
+ }
+ 
+ func MkdirAll(path string, perm os.FileMode) error {
+@@ -97,17 +165,9 @@ func MkdirAll(path string, perm os.FileMode) error {
+ 	if err != nil {
+ 		return err
+ 	}
+-	args := []string{mkdir, "-m", perm.String(), "-p", path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-	}
+-	return nil
++	permString := fmt.Sprintf("0%o", perm)
++	args := []string{mkdir, "-m", permString, "-p", path}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Mkdir(path string, perm os.FileMode) error {
+@@ -116,16 +176,7 @@ func Mkdir(path string, perm os.FileMode) error {
+ 		return err
+ 	}
+ 	args := []string{mkdir, "-m", perm.String(), path}
+-	mkdirCmd := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	mkdirCmd.Stdout = &out
+-	mkdirCmd.Stderr = &stderr
+-	err = mkdirCmd.Run()
+-	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err)+": "+stderr.String())
+-	}
+-	return nil
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ // RemoveAll remove a path, could be a file or a folder
+@@ -135,52 +186,48 @@ func RemoveAll(path string) error {
+ 		return err
+ 	}
+ 
+-	err := os.RemoveAll(path)
++	rm, err := exec.LookPath(RM_CMD)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err))
++		return err
+ 	}
+-	return err
++	args := []string{rm, "-rf", path}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+-// Remove remove a path, a file
++// RemoveAll remove a path, could be a file or a folder
+ func Remove(path string) error {
++
+ 	if _, err := os.Lstat(path); err != nil {
+ 		return err
+ 	}
+-	err := os.Remove(path)
++	rm, err := exec.LookPath(RM_CMD)
+ 	if err != nil {
+-		fmt.Fprintln(os.Stderr, fmt.Sprint(err))
++		return err
+ 	}
+-	return err
++	args := []string{rm, "-f", path}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Copy(dst, src string) error {
+-	in, err := os.Open(src)
+-	if err != nil {
++	if _, err := os.Lstat(src); err != nil {
+ 		return err
+ 	}
+-	defer in.Close()
+-	out, err := os.Create(dst)
++	cp, err := exec.LookPath(CP_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+-	defer out.Close()
+-	_, err = io.Copy(out, in)
+-	cerr := out.Close()
+-	if err != nil {
+-		return err
+-	}
+-	return cerr
++	args := []string{cp, "-f", src, dst}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func Hardlink(dst, src string) error {
+-	os.Remove(dst)
+-	err := os.Link(src, dst)
++	Remove(dst)
++	ln, err := exec.LookPath(LN_CMD)
+ 	if err != nil {
+ 		return err
+ 	}
+-	err = os.Chmod(dst, 0444)
+-	return err
++	args := []string{ln, src, dst}
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ func RenameFile(src string, dst string) (err error) {
+@@ -188,7 +235,7 @@ func RenameFile(src string, dst string) (err error) {
+ 	if err != nil {
+ 		return fmt.Errorf("failed to copy source file %s to %s: %s", src, dst, err)
+ 	}
+-	err = os.Remove(src)
++	err = Remove(src)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to cleanup source file %s: %s", src, err)
+ 	}
+@@ -298,7 +345,7 @@ func ReadOrCreateFile(filePath string) (*[]byte, error) {
+ 	if os.IsNotExist(err) {
+ 		_, err := os.Lstat(filepath.Dir(filePath))
+ 		if os.IsNotExist(err) {
+-			err = os.MkdirAll(filePath, 0700)
++			err = MkdirAll(filePath, 0700)
+ 			if err != nil {
+ 				return nil, err
+ 			}
+@@ -321,9 +368,17 @@ func ReadOrCreateFile(filePath string) (*[]byte, error) {
+ 
+ func WriteTxtFile(filePath string, content string) error {
+ 
+-	data := []byte(content)
+-
+-	return os.WriteFile(filePath, data, 0644)
++	err := Create(filePath, 0644)
++	if err != nil {
++		return err
++	}
++	f, err := os.OpenFile(filePath, os.O_WRONLY | os.O_TRUNC, 0666)
++	if err != nil {
++		return err
++	}
++	defer f.Close()
++	_, err = f.WriteString(content)
++	return err
+ }
+ 
+ // GetPlatform get string with the full platform name
+@@ -378,12 +433,12 @@ func CreateFolder(path string) error {
+ 	if os.IsNotExist(err) {
+ 		_, err := os.Stat(filepath.Dir(path))
+ 		if os.IsNotExist(err) {
+-			err = os.MkdirAll(filepath.Dir(path), 0700)
++			err = MkdirAll(filepath.Dir(path), 0777)
+ 			if err != nil {
+ 				return err
+ 			}
+ 		}
+-		err = os.MkdirAll(path, 0700)
++		err = MkdirAll(path, 0777)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -589,7 +644,7 @@ func SetTempFilesInterrupHandler(tempdir string) {
+ 			os.Exit(1)
+ 		}
+ 		if fileExist {
+-			err := os.RemoveAll(tempdir)
++			err := RemoveAll(tempdir)
+ 			if err != nil {
+ 				log.Fatal(err.Error())
+ 				os.Exit(1)
+@@ -706,7 +761,7 @@ func RemoveDirContents(dir string) error {
+ 		return err
+ 	}
+ 	for _, name := range names {
+-		err = os.RemoveAll(filepath.Join(dir, name))
++		err = RemoveAll(filepath.Join(dir, name))
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -1058,21 +1113,7 @@ func Untar(dst string, src string, options []string) error {
+ 	}
+ 
+ 	args = append(args, options...)
+-	PrintDebugln(args)
+-	untar := exec.Command(args[0], args[1:]...)
+-	var out bytes.Buffer
+-	var stderr bytes.Buffer
+-	untar.Stdout = &out
+-	untar.Stderr = &stderr
+-	err = untar.Run()
+-	if IsDebugEnabled {
+-		fmt.Println("untar output: " + out.String())
+-	}
+-
+-	if err != nil {
+-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+-	}
+-	return err
++	return ExecCommand(args[0], args[1:]...)
+ }
+ 
+ // GetFileContentType : Get File Content Type of a file
+@@ -1093,11 +1134,17 @@ func GetFileContentType(src string) (string, error) {
+ }
+ 
+ func DownloadFile(uri *url.URL) (string, error) {
+-	tempfile, err := os.CreateTemp(os.TempDir(), "download-rootfs-")
++	temppath, err := ExecCommandOut(MKTEMP_CMD, "-t", "download-rootfs-XXXXXXXX")
+ 	if err != nil {
+ 		return "", err
+ 	}
+-	defer tempfile.Close()
++	defer RemoveAll(temppath)
++
++	tempfile, err := os.OpenFile(temppath, os.O_TRUNC | os.O_WRONLY, 0666)
++	if err != nil {
++		return "", err
++	}
++
+ 	resp, err := http.Get(uri.String())
+ 	if err != nil {
+ 		return "", err
+@@ -1245,34 +1292,27 @@ func (tree *TreeDiff) MkOvl(ovlDir string) {
+ 	for _, v := range tree.OnlyInA {
+ 		vDir := path.Dir(v)
+ 		vBase := path.Base(v)
+-		os.MkdirAll(path.Join(ovlDir, vDir), 0755)
++		MkdirAll(path.Join(ovlDir, vDir), 0755)
+ 		// Remove the file from the overlay using
+ 		// A whiteout is created as a character device with 0/0 device number.
+ 		// When a whiteout is found in the upper level of a merged directory, any matching name in the lower level is ignored, and the whiteout itself is also hidden.
+ 		// https://docs.kernel.org/filesystems/overlayfs.html#whiteouts-and-opaque-directories
+-		cmd := exec.Command("mknod", path.Join(ovlDir, vDir, vBase), "c", "0", "0")
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err := cmd.Run()
++
++		err := ExecCommand(MKNOD_CMD, path.Join(ovlDir, vDir, vBase), "c", "0", "0")
+ 		if err != nil {
+ 			tree.Errors = append(tree.Errors, err)
+-			fmt.Println("ERROR: mknod failed with: " + err.Error())
+ 		}
+ 	}
+ 	for _, v := range append(tree.OnlyInB, tree.Differ...) {
+ 		vDir := path.Dir(v)
+ 		vBase := path.Base(v)
+ 		ovlTarget := path.Join(ovlDir, vDir)
+-		os.MkdirAll(ovlTarget, 0755)
++		MkdirAll(ovlTarget, 0755)
+ 		src := path.Join(tree.B, vDir, vBase)
+ 		dest := path.Join(ovlDir, vDir, vBase)
+-		cmd := exec.Command("cp", "-a", "-v", src, dest)
+-		cmd.Stdout = os.Stdout
+-		cmd.Stderr = os.Stderr
+-		err := cmd.Run()
++		err := ExecCommand(CP_CMD, "-a", "-v", src, dest)
+ 		if err != nil {
+ 			tree.Errors = append(tree.Errors, err)
+-			fmt.Println("ERROR: cp failed with: " + err.Error())
+ 		}
+ 	}
+ }
+-- 
+2.34.1
+

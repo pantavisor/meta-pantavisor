@@ -1,0 +1,525 @@
+# feature/ingress
+
+This branch adds global ingress support for routing external traffic to IPAM-networked containers.
+
+## Branch Structure
+
+The feature branches are stacked and should be merged in order (matching pantavisor repo):
+
+```
+master → feature/xconnect → feature/auto-recovery → feature/ipam-networking → feature/ingress
+```
+
+| Branch | Commits | Key Features |
+|--------|---------|--------------|
+| feature/xconnect | 2 | xconnect examples, container-pvrexport class, development docs |
+| feature/auto-recovery | 2 | Recovery examples, IPAM test containers, TESTPLANS.md |
+| feature/ipam-networking | 1 | IPAM networking examples, pvcontrol enhancements |
+| feature/ingress | 1 | Nginx ingress example, device.json patterns (direct/proxy/hybrid) |
+
+## Yocto Implementation Details
+
+- **Kconfig integration**:
+  - `FEATURE_XCONNECT`: Boolean to toggle `pv-xconnect` service.
+- **KAS configuration**:
+  - `kas/with-workspace.yaml`: Local pantavisor development
+  - `kas/bsp-base.yaml` and `kas/appengine-base.yaml` add `meta-clang` repository.
+  - LLVM preferred providers are set to `clang` in `conf/distro/panta-distro.inc`.
+
+## Working with this branch
+
+When making changes to Kconfig or features:
+1. Update `Kconfig`.
+2. Update `kas/bsp-base.yaml` if necessary.
+3. Run `.github/scripts/makemachines` to regenerate release configurations.
+
+**pvr workspace**: If you are using a custom `pvr` in the workspace, ensure `PVR_DISABLE_SELF_UPGRADE=1` is set to prevent auto-updates from overwriting it.
+
+## Appengine Workflow
+
+### Build and Load
+1. Build the Appengine image:
+   ```bash
+   bitbake pantavisor-appengine
+   ```
+2. Build specific recipes or containers:
+   - **Standard build**:
+     ```bash
+     ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml --target <recipename>
+     ```
+   - **Upstream development (with workspace)**:
+     ```bash
+     ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml --target <recipename>
+     ```
+3. Load the resulting Docker tarball:
+   ```bash
+   docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+   ```
+
+### Run and Test
+
+#### Quick Start (Auto Mode)
+Start with default entrypoint (pv-appengine starts automatically):
+```bash
+docker run --name pva-test -d --privileged \
+  -v /path/to/pvrexports:/usr/lib/pantavisor/pvtx.d \
+  -v storage-test:/var/pantavisor/storage \
+  pantavisor-appengine:1.0
+```
+
+#### Interactive Mode (Manual Control)
+For debugging, use `sleep infinity` to keep container alive and control startup manually:
+```bash
+docker run --name pva-test -d --privileged \
+  -v /path/to/pvrexports:/usr/lib/pantavisor/pvtx.d \
+  -v storage-test:/var/pantavisor/storage \
+  --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+
+# Then start pv-appengine manually
+docker exec pva-test sh -c 'pv-appengine &'
+```
+
+#### Verify Pantavisor is Stable
+**Important**: Always verify pantavisor has fully started before testing:
+```bash
+# Wait for READY status in logs
+docker exec pva-test grep "status is now READY" /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+
+# Expected output:
+# [pantavisor] ... [state]: (pv_state_set_status:538) state revision '0' status is now READY
+```
+
+#### Check Container Status
+```bash
+docker exec pva-test lxc-ls -f
+```
+
+### Testing pv-ctrl API
+
+Always use timeouts when testing APIs to catch hangs. Pantavisor now includes `pvcurl` (a lightweight curl wrapper using `nc`) which is preferred over standard `curl`:
+```bash
+# List all daemons
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons
+
+# Stop a daemon (e.g. pv-xconnect)
+docker exec pva-test pvcurl -X PUT --data '{"action":"stop"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons/pv-xconnect
+
+# Start a daemon
+docker exec pva-test pvcurl -X PUT --data '{"action":"start"}' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/daemons/pv-xconnect
+```
+
+**New Endpoint: /daemons**
+- `GET /daemons`: Returns a JSON list of managed daemons, their PIDs and respawn status.
+- `PUT /daemons/{name}`: Performs actions on a daemon. 
+  - `{"action": "stop"}`: Disables respawn and kills the daemon.
+  - `{"action": "start"}`: Enables respawn and starts the daemon if not running.
+
+### Testing pv-xconnect Service Mesh
+
+#### Understanding the xconnect-graph API
+
+The xconnect-graph endpoint returns the current service mesh topology as JSON:
+```bash
+# Query the graph (always use timeout)
+docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph
+```
+
+**Expected response** (example with unix client/server):
+```json
+[{
+  "type": "unix",
+  "name": "raw",
+  "consumer": "pv-example-unix-client",
+  "role": "client",
+  "socket": "/run/example/raw.sock",
+  "interface": "/run/pv/services/raw.sock",
+  "consumer_pid": 1234,
+  "provider_pid": 5678
+}]
+```
+
+**Fields:**
+- `type`: Connection type (unix, rest, drm, wayland)
+- `name`: Service name from services.json/args.json
+- `consumer`: Container requesting the service
+- `role`: "client" or "server"
+- `socket`: Provider's socket path (inside provider namespace)
+- `interface`: Consumer's target socket path (where to inject proxy)
+- `consumer_pid`: PID of the consumer container's init process
+- `provider_pid`: PID of the provider container's init process
+
+#### Running pv-xconnect Manually
+
+Use `stdbuf` to see unbuffered output:
+```bash
+docker exec pva-test stdbuf -oL timeout 5 /usr/bin/pv-xconnect 2>&1
+```
+
+**Expected output when working correctly:**
+```
+pv-xconnect starting...
+Connected to pv-ctrl
+Reconciling graph with 1 links
+Adding link: pv-example-unix-client (pid=1234, unix) -> /run/example/raw.sock (inject to: /run/pv/services/raw.sock)
+pvx-unix: Injecting socket /run/pv/services/raw.sock into pid 1234
+```
+
+**Note:** The PID will be the actual init PID of the consumer container.
+
+#### Verifying Socket Injection
+
+After pv-xconnect runs, check if the socket was injected into the consumer container:
+```bash
+# Get consumer container's PID
+docker exec pva-test lxc-info -n pv-example-unix-client -p
+
+# Check for injected socket (replace PID)
+docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
+```
+
+### D-Bus Example Containers
+
+The `pv-example-dbus-*` containers demonstrate cross-container D-Bus communication with Role-based identities.
+
+- **`pv-example-dbus-server`**:
+  - Runs a `dbus-daemon` and a Python service (`pv-dbus-server.py`).
+  - Publishes the `org.pantavisor.Example` name.
+  - Policy file allows `root` role to own the service and `nobody` role to send messages.
+- **`pv-example-dbus-client`**:
+  - Assigns the **`root`** role in `args.json`.
+  - Maps to the provider's `root` user (UID 0) via `pv-xconnect`.
+- **`pv-example-dbus-client-nobody`**:
+  - Assigns the **`nobody`** role in `args.json`.
+  - Maps to the provider's `nobody` user (UID 65534).
+
+#### Running the D-Bus Test
+
+1. **Build and Load**:
+   ```bash
+   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+     --target pv-example-dbus-server --target pv-example-dbus-client --target pv-example-dbus-client-nobody
+   ```
+2. **Start Appengine** (see Quick Start above).
+3. **Reconcile with pv-xconnect**:
+   ```bash
+   docker exec pva-test /usr/bin/pv-xconnect
+   ```
+4. **Observe Results**:
+   - `pv-example-dbus-client` will successfully call the service as `root`.
+   - `pv-example-dbus-client-nobody` will successfully call the service as `nobody`.
+   - The provider logs will show separate connections for each role.
+
+### Complete xconnect Test Workflow
+
+1. **Start with fresh state:**
+   ```bash
+   docker rm -f pva-test
+   docker volume rm storage-test
+   ```
+
+2. **Run appengine with test containers:**
+   ```bash
+   docker run --name pva-test -d --privileged \
+     -v /path/to/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+     -v storage-test:/var/pantavisor/storage \
+     --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
+   ```
+
+3. **Start pv-appengine and wait for READY:**
+   ```bash
+   docker exec pva-test sh -c 'pv-appengine &'
+   sleep 5
+   docker exec pva-test grep "status is now READY" /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+   ```
+
+4. **Verify containers are running:**
+   ```bash
+   docker exec pva-test lxc-ls -f
+   ```
+
+5. **Test the xconnect-graph API:**
+   ```bash
+   docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
+   ```
+
+6. **Run pv-xconnect and observe:**
+   ```bash
+   docker exec pva-test stdbuf -oL timeout 10 /usr/bin/pv-xconnect 2>&1
+   ```
+
+7. **Verify API still works after pv-xconnect (DoS regression test):**
+   ```bash
+   docker exec pva-test curl -s --max-time 3 --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/containers
+   ```
+
+### xconnect Test Container Setup
+
+The pv-examples containers demonstrate xconnect service mesh patterns.
+
+#### Provider Container (e.g., pv-example-unix-server)
+
+Creates a `services.json` declaring exported services:
+```json
+{
+  "services": [
+    {
+      "type": "unix",
+      "name": "raw",
+      "socket": "/run/example/raw.sock"
+    }
+  ]
+}
+```
+
+#### Consumer Container (e.g., pv-example-unix-client)
+
+Creates an `args.json` with service requirements that get rendered into `run.json`:
+```json
+{
+  "services": [
+    {
+      "type": "unix",
+      "name": "raw",
+      "provider": "pv-example-unix-server",
+      "socket": "/run/pv/services/raw.sock"
+    }
+  ]
+}
+```
+
+The `socket` field in args.json specifies where pv-xconnect should inject the proxied socket inside the consumer's namespace.
+
+**Note:** pvr transforms args.json into run.json with "target" as the field name (instead of "socket"). The parser accepts both "interface" and "target" as aliases.
+
+#### How xconnect Accesses Container Namespaces
+
+pv-xconnect uses `/proc/{pid}/root/` paths to access container filesystems:
+
+- **Provider socket**: Accessed via `/proc/{provider_pid}/root{socket_path}`
+- **Consumer socket**: Injected using `setns()` into the consumer's mount namespace
+
+This allows the xconnect proxy to bridge containers without requiring shared mounts.
+
+#### Building Test Containers
+
+```bash
+# Build the example containers with workspace (for upstream pantavisor changes)
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+  --target pv-example-unix-server --target pv-example-unix-client
+```
+
+The pvrexport outputs will be in:
+- `build/tmp-scarthgap/deploy/pvrexports/pv-example-unix-server/`
+- `build/tmp-scarthgap/deploy/pvrexports/pv-example-unix-client/`
+
+### Inspection and Debugging
+
+#### Check LXC Containers
+```bash
+docker exec pva-test lxc-ls -f
+```
+
+#### Enter a Container
+```bash
+docker exec -it pva-test pventer -c <container_name>
+```
+
+#### Check Inside Container's Namespace
+```bash
+# Get container PID
+docker exec pva-test lxc-info -n <container_name> -p
+
+# Check files in container's rootfs (replace PID)
+docker exec pva-test ls -la /proc/<PID>/root/run/pv/services/
+```
+
+#### Log Locations
+- **Pantavisor**: `/run/pantavisor/pv/logs/0/pantavisor/pantavisor.log`
+- **Container Console**: `/run/pantavisor/pv/logs/0/<container_name>/lxc/console.log`
+- **LXC Log**: `/run/pantavisor/pv/logs/0/<container_name>/lxc/lxc.log`
+
+### Cleanup Between Tests
+
+Use fresh storage volumes to avoid stale state:
+```bash
+docker rm -f pva-test
+docker volume rm storage-test
+# Then start fresh
+```
+
+### Common Issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| API calls hang/timeout | Missing Host header in client | Ensure HTTP requests include `Host: localhost` header |
+| `curl` not found | Standard curl missing in appengine | Use **`pvcurl`** (lightweight wrapper) instead |
+| Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume |
+| "Socket not found" in client | pv-xconnect not injecting socket | Check pv-xconnect output with `stdbuf -oL` |
+| No output from pv-xconnect | stdout buffering | Use `stdbuf -oL` prefix |
+| `interface: null` in xconnect-graph | Parser not finding target field | Ensure parser accepts "target" as alias for "interface" |
+| `consumer_pid: 0` | PID not being parsed | Ensure main.c parses consumer_pid from JSON |
+| "Could not connect to provider socket" | Wrong namespace path | Use `/proc/{pid}/root/` to access container filesystem |
+| "Broken pipe" errors | Proxy closing too early | Ensure half-close handling in unix.c proxy |
+| IPAM "IP already in use" on restart | Lease not released on crash | Fixed in `state.c`: added `pv_ipam_release` to auto-recovery |
+
+## Upstream Pantavisor Changes
+
+Key changes made in pantavisor workspace (`build/workspace/sources/pantavisor`) for xconnect and lifecycle:
+
+### state.c - Auto-Recovery and IPAM Fixes
+- Added fallback for legacy `restart_policy: container` so it triggers automatic restart even without `auto_recovery` JSON.
+- **CRITICAL**: Ensured IPAM network leases are released before a platform is set to `INSTALLED` during a restart. This prevents collisions when a container restarts after a crash.
+- Cleaned up formatting and newlines.
+
+### ctrl/ctrl.c - Host Header DoS Fix
+- Fixed vulnerability where NULL/empty Host header caused server hang
+- Now allows localhost, empty, or NULL host for Unix socket connections
+
+### Development Guidelines (Gemini Memory)
+- **Formatting**: Always run `clang-format -i` on modified `.c` and `.h` files before committing.
+- **Style**: Avoid unnecessary newlines that don't serve to structure functional blocks of code.
+- **Tooling**: In Appengine, prefer `pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl ...` for API tests.
+
+## Architecture
+
+For the design of the service mesh and `pv-xconnect`, please refer to the documentation in the `pantavisor` source repository:
+- `GEMINI.md`: High-level vision.
+- `xconnect/XCONNECT.md`: Detailed `pv-xconnect` implementation notes.
+
+## Ingress Patterns (This Branch)
+
+### Global Ingress Configuration
+
+Device.json ingress configuration routes external traffic to containers:
+
+```json
+{
+    "ingress": [
+        {
+            "name": "nginx-http-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:80",
+            "provider": "example-nginx-ingress",
+            "service": "nginx-http"
+        }
+    ]
+}
+```
+
+### Pattern Comparison
+
+| Pattern | device.json | Provider Network | Example Recipe |
+|---------|-------------|------------------|----------------|
+| Direct | `device.json.ingress-direct` | Host network | `pv-example-device-config-direct` |
+| Host Proxy | `device.json.ingress-proxy` | IPAM + host proxy | `pv-example-device-config-proxy` |
+| Hybrid (2b) | `device.json.ingress-hybrid` | Both IPAM + global ingress | `pv-example-device-config-hybrid` |
+
+### services.json for TCP Providers
+
+TCP services use `port` field (not `socket`) for IPAM backends:
+
+```json
+[
+  { "name": "nginx-http", "type": "tcp", "port": 80 },
+  { "name": "nginx-https", "type": "tcp", "port": 443 }
+]
+```
+
+### Test Plans
+
+See [TESTPLANS.md](TESTPLANS.md) for:
+- **Test 10**: Direct Ingress - provider on host network
+- **Test 11**: Hybrid Proxy Ingress - provider in IPAM network with global ingress routing
+
+Both tests verify end-to-end HTTP connectivity through the ingress proxy.
+
+---
+
+## Checkpoint (2026-01-20)
+
+### Achieved so far
+1. **D-Bus Plugin with Role-to-UID Mapping:**
+    * Rewrote the dbus plugin to implement Identity Masquerading.
+    * The proxy now reads /proc/{pid}/root/etc/passwd of the provider to map the Pantavisor Role (e.g., "root", "nobody", "ubuntu") to an actual UID.
+    * It intercepts the D-Bus SASL AUTH EXTERNAL command and injects the resolved UID so the provider's dbus-daemon can enforce standard XML policies.
+2. **Pantavisor Metadata:**
+    * Added the target field to the pv_platform_service struct and updated the xconnect-graph API.
+    * This allows us to specify where to inject the socket (e.g., /run/dbus/system_bus_socket) independently of the D-Bus interface name.
+3. **Examples:**
+    * Created pv-example-dbus-client-nobody to test non-root roles.
+    * Updated the D-Bus server policy to explicitly handle root and nobody identities.
+4. **Documentation:**
+    * Updated XCONNECT.md (Pantavisor) with the new Role-to-UID specs and default "any" roles.
+    * Updated GEMINI.md and EXAMPLES.md (meta-pantavisor) with the new D-Bus testing patterns.
+5. **Pushed Branches:**
+    * Pantavisor: feature/wasm-engine (includes D-Bus plugin, target field, /daemons API).
+    * meta-pantavisor: feature/wasmedge-engine (includes new examples, doc updates, and pvr auto-update fix).
+
+### Current Blockers
+- **None.** The Segfault in `pv-xconnect` has been fixed by correcting the JSON iteration logic in `reconcile_graph` and removing the redundant `LEV_OPT_REUSEABLE` flag in `dbus.c`.
+
+### Next Steps
+1. **Commit changes:** Finalize and commit the changes in `pantavisor` workspace and `meta-pantavisor` repository.
+2. **Upstream PRs:** Prepare branches for merging into main project repositories.
+
+## Device Configuration (device.json) for Appengine
+
+### Why Standalone device.json Container?
+
+- **Embedded Pantavisor**: device.json is packaged in the BSP via `pantavisor-bsp.bb` (signs `device.json` with BSP artifacts)
+- **Appengine**: No BSP directory, so standalone device.json pvrexport is essential for IPAM and group configuration
+
+### Creating device.json pvrexport
+
+The `pv-example-device-config` recipe creates a signed pvrexport containing device.json:
+
+```bash
+# Build
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pv-example-device-config
+
+# Deploy to pvtx.d
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config.pvrexport.tgz pvtx.d/
+```
+
+### Key Implementation Details
+
+1. **Signing non-container files**: Use `pvr sig add --raw <name> --include "device.json"`
+2. **File naming**: MUST be `device.json` in pvr repo (not `device.json.example`)
+3. **Signing keys**: Include pv-developer-ca directly in SRC_URI (pvr-ca class doesn't propagate it)
+
+### pvrexport Structure
+
+```json
+{
+  "#spec": "pantavisor-service-system@1",
+  "_sigs/device-config.json": {
+    "#spec": "pvs@2",
+    "protected": "eyJhbGci...(base64: includes device.json)...",
+    "signature": "..."
+  },
+  "device.json": {
+    "network": { "pools": { "internal": { "subnet": "10.0.3.0/24", ... } } },
+    "groups": [ { "name": "root", "restart_policy": "system", ... } ]
+  }
+}
+```
+
+### IPAM Testing
+
+With device-config deployed, test containers can use network pools:
+
+```json
+// Container args.json
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_NETWORK_IP": "10.0.3.50"
+}
+```
+
+IPAM validates:
+- Pool exists in device.json
+- Static IP is within pool subnet
+- No IP collisions
+
+See [EXAMPLES.md](EXAMPLES.md#device-configuration-devicejson-container) for full recipe and testing scenarios.

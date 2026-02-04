@@ -67,6 +67,7 @@ do_create_tarball() {
             if [ -e "${WORKDIR}/$filename" ]; then
                 echo "Adding workdir file: ${WORKDIR}/$filename as $filename"
                 cp -v "${WORKDIR}/$filename" "${STAGING_DIR}/"
+                cp -v "${WORKDIR}/$filename" "${DEPLOY_DIR_IMAGE}/"
             else
                 bbwarn "Workdir file not found: ${WORKDIR}/$filename"
             fi
