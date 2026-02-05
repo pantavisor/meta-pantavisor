@@ -284,6 +284,7 @@ exec_test() {
 		--env-file <(echo "$env" | tr ' ' '\n') \
 		$docker_it_opt \
 		--rm \
+		--cgroupns host \
 		--cap-add MKNOD \
 		--cap-add NET_ADMIN \
 		--cap-add SYS_ADMIN \
@@ -297,11 +298,11 @@ exec_test() {
 		--device-cgroup-rule 'a 252:0 rmw' \
 		--security-opt apparmor=unconfined \
 		--security-opt seccomp=unconfined \
+		--volume "/sys/fs":"/sys/fs" \
 		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
 		-p 8222:8222 \
-		--mount type=tmpfs,target="/sys/fs/cgroup" \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
