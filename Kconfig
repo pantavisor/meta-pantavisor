@@ -311,10 +311,16 @@ config MACHINE_IMX8QXP_MEK
 	select PLATFORM_NXP
 
 config MACHINE_COLIBRI_IMX6ULL
-	bool "colibri-imx6ull"
-	depends on CODENAME_SCARTHGAP
-	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
-	select PLATFORM_TORADEX
+        bool "colibri-imx6ull"
+        depends on CODENAME_SCARTHGAP
+        depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
+        select PLATFORM_TORADEX
+
+config MACHINE_VERDIN_IMX8MM
+        bool "verdin-imx8mm"
+        depends on CODENAME_SCARTHGAP
+        depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
+        select PLATFORM_TORADEX
 
 config MACHINE_CORAL_DEV
 	bool "Google Coral Dev"
@@ -457,6 +463,10 @@ config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
 config KAS_INCLUDE_MACHINE_COLIBRI_IMX6ULL
 	string
     default "kas/machines/colibri-imx6ull.yaml" if MACHINE_COLIBRI_IMX6ULL
+
+config KAS_INCLUDE_MACHINE_VERDIN_IMX8MM
+	string
+    default "kas/machines/verdin-imx8mm.yaml" if MACHINE_VERDIN_IMX8MM
 
 config KAS_INCLUDE_MACHINE_IMX8QXP_B0_MEK
 	string
