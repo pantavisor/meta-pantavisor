@@ -20,7 +20,7 @@ repos:
       support-pvboot-on-tezi:
         repo: meta-pantavisor
         path: patches/meta-toradex-bsp-common/0001-support-pvboot-on-tezi.patch
-      add-marketing-png-image:
+      marketing-tezi:
         repo: meta-pantavisor
         path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
       add-readme-to-tezi:
@@ -31,10 +31,6 @@ repos:
     path: layers/meta-toradex-nxp
     url: "https://git.toradex.com/meta-toradex-nxp.git"
     branch: scarthgap-7.x.y
-    patches:
-      pv-formated-tezi:
-        repo: meta-pantavisor
-        path: patches/meta-toradex-nxp/0001-support-to-pv_tezi.patch
 
 local_conf_header:
   platform-toradex: |

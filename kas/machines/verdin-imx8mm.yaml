@@ -1,0 +1,55 @@
+# KAS configuration for Pantavisor WiFi build on Verdin iMX8MM
+# This configures WiFi device tree and drivers for WiFi variants
+
+header:
+  version: 14
+  includes:
+    - kas/platforms/toradex.yaml
+
+# Machine configuration for Verdin iMX8MM
+machine: verdin-imx8mm
+
+# Override UBOOT_DTB_NAME to use WiFi device tree
+# This ensures the correct WiFi-enabled device tree is selected
+local_conf_header:
+ platform-verdin-imx8mm: |
+  UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
+
+  # Alternative device trees based on carrier board
+  # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"    # Development board
+  # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-ivy.dtb"     # Ivy board
+  # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-mallow.dtb"  # Mallow board
+  # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-yavia.dtb"   # Yavia board
+
+  # WiFi variant configuration
+  TORADEX_VARIANT = "wifi"
+
+  # Enable WiFi features
+  MACHINE_FEATURES:append = " wifi"
+
+  # Ensure WiFi firmware is included
+  MACHINE_FIRMWARE:append = " linux-firmware-sd8997"
+
+  # WiFi kernel modules to autoload
+  KERNEL_MODULE_AUTOLOAD:append = " cfg80211 mwifiex_sdio"
+
+  # Exclude problematic firmware package that causes license manifest issues
+  PACKAGE_EXCLUDE:append = " firmware-nxp-wifi-bcm4359-pcie"
+
+  # Disable SPDX generation to avoid license manifest issues with linux-firmware
+  INHERIT:remove = "create-spdx"
+
+  # Additional WiFi-specific settings
+  PV_INITIAL_DTB = "imx8mm-verdin-wifi-dev.dtb"
+  
+  # Disable auto FDT selection to use PV_INITIAL_DTB
+  # This prevents the first DTB from KERNEL_DEVICETREE from being selected
+  PV_UBOOT_AUTOFDT = ""
+
+  IMAGE_CLASSES:remove = " image_type_tezi"
+  IMAGE_FSTYPES:remove  = "teziimg"
+
+
+env:
+  TORADEX_VARIANT: wifi
+  MACHINE_FEATURES: wifi
