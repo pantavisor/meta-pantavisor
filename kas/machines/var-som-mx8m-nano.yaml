@@ -1,0 +1,6 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/variscite-imx.yaml
+
+machine: imx8mn-var-som
