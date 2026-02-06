@@ -1,0 +1,13 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/nxp.yaml
+
+repos:
+  meta-variscite-bsp-common:
+    url: "https://github.com/varigit/meta-variscite-bsp-common.git"
+    path: layers/meta-variscite-bsp-common
+
+  meta-variscite-bsp-imx:
+    url: "https://github.com/varigit/meta-variscite-bsp-imx.git"
+    path: layers/meta-variscite-bsp-imx
