@@ -290,15 +290,15 @@ config MACHINE_RPI_ARMV7
 
 config MACHINE_IMX8MN_VAR_SOM
 	bool "imx8mn-var-som"
-	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
 	select PLATFORM_VARISCITE
 
 config MACHINE_IMX8MM_VAR_DART
 	bool "imx8mm-var-dart"
-	depends on CODENAME_KIRKSTONE
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
 	select PLATFORM_VARISCITE
+
+
 
 config MACHINE_IMX8QXP_B0_MEK
 	bool "imx8qxp-b0-mek"
@@ -454,6 +454,8 @@ config KAS_INCLUDE_MACHINE_IMX8MM_VAR_DART
 	string
 	default "kas/machines/imx8mm-var-dart.yaml" if MACHINE_IMX8MM_VAR_DART
 
+
+
 config KAS_INCLUDE_MACHINE_COLIBRI_IMX6ULL
 	string
     default "kas/machines/colibri-imx6ull.yaml" if MACHINE_COLIBRI_IMX6ULL
@@ -548,6 +550,7 @@ config KAS_INCLUDE_CODENAME
 config KAS_INCLUDE_VARISCITE
 	string
 	default "kas/kirkstone-var.yaml" if CODENAME_KIRKSTONE && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
+	default "kas/scarthgap-var.yaml" if CODENAME_SCARTHGAP && (MACHINE_IMX8MN_VAR_SOM || MACHINE_IMX8MM_VAR_DART)
 
 
 config KAS_INCLUDE_NXP
