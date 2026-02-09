@@ -31,7 +31,7 @@ SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PA
            file://rev0json \
            "
 
-SRCREV = "ede3af719307a63434299be25e1b0c0aecfe4e53"
+SRCREV = "91785eb4b41a565737e0463135921c17a6fce2d5"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 

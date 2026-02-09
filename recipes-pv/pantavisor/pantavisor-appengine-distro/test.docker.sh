@@ -26,10 +26,10 @@ usage() {
 	echo "  -o, --overwrite   Create or overwrite the test output"
 	echo ""
 	echo "Environments:"
-	echo "  NETSIM_PATH      Path to docker load for netsim container
-	echo "  TESTER_PATH      Path to docker load for tester container
-	echo "  APPENGINE_PATH   Path to docker load for tester container
-	echo "  PVTEST_DIR       Directory to pvtest sources to run
+	echo "  NETSIM_PATH      Path to docker load for netsim container"
+	echo "  TESTER_PATH      Path to docker load for tester container"
+	echo "  APPENGINE_PATH   Path to docker load for tester container"
+	echo "  PVTEST_DIR       Directory to pvtest sources to run"
 	echo ""
 }
 
