@@ -7,6 +7,7 @@ DEPENDS:append = " \
 	pvr-native \
 	squashfs-tools-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'kmod-native', '', d)} \
 "
 
 INITRAMFS_IMAGE ?= "pantavisor-initramfs"
@@ -38,11 +39,15 @@ VIRTUAL-RUNTIME_pantavisor_skel ??= "pantavisor-default-skel"
 
 PVROOT_IMAGE_BSP ?= "empty-image"
 
+# RPi tryboot multiconfig deploy base
+RPI_MC_DEPLOY_BASE = "${TOPDIR}/tmp-${DISTRO_CODENAME}-rpi-kernel"
+
 compile_depends = ' \
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
 	${PVROOT_IMAGE_BSP}:do_image_complete \
 	${VIRTUAL-RUNTIME_pantavisor_skel}:do_deploy \
 	virtual/kernel:do_deploy \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'rpi-boot-image:do_image_complete', '', d)} \
 	'
 do_compile[depends] += "${compile_depends}"
 
@@ -50,6 +55,16 @@ compile_mcdepends = '\
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d)} \
 	'
 do_compile[mcdepends] += '${compile_mcdepends}'
+
+# Add mcdepends for rpi-tryboot kernel modules
+RPI_TRYBOOT_MCDEPENDS = "\
+    ${@'rpi-kernel' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel7' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel7:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel7l' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel7l:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel8' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel8:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel_2712' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel_2712:linux-raspberrypi:do_deploy' or ''} \
+"
+do_compile[mcdepends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', d.getVar('RPI_TRYBOOT_MCDEPENDS'), '', d)}"
 
 fakeroot do_compile(){
 
@@ -81,8 +96,15 @@ fakeroot do_compile(){
     [ -f bsp/modules.squashfs ] && rm -f bsp/modules.squashfs
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
 
-    if ! ls ${PVBSP_mods} | wc -c | grep ^0; then
-        mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
+    # Check if rpi-tryboot is enabled (used to skip generic modules.squashfs)
+    rpi_tryboot="${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'yes', 'no', d)}"
+
+    # Only create generic modules.squashfs if NOT using rpi-tryboot
+    # (rpi-tryboot creates per-kernel-version modules squashfs files instead)
+    if [ "$rpi_tryboot" != "yes" ]; then
+        if ! ls ${PVBSP_mods} | wc -c | grep ^0; then
+            mksquashfs ${PVBSP_mods} ${PVBSPSTATE}/bsp/modules.squashfs ${PVR_FORMAT_OPTS}
+        fi
     fi
     if ! ls ${PVBSP_fw} | wc -c | grep ^0; then
         mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
@@ -93,7 +115,68 @@ fakeroot do_compile(){
     if test -n "${PVBSP_UBOOT_LOGO_BMP}" && test -e "${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP}"; then
        cp -fL ${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP} ${PVBSPSTATE}/bsp/uboot-logo.bmp
     fi
-    if echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
+
+    if [ "$rpi_tryboot" = "yes" ]; then
+       # RPi tryboot A/B mode: use boot partition image instead of kernel/dtb
+       echo "Building RPi tryboot BSP..."
+
+       # Gzip the boot partition image
+       if [ -e "${DEPLOY_DIR_IMAGE}/rpi-boot-image-${MACHINE}.vfat" ]; then
+           gzip -c ${DEPLOY_DIR_IMAGE}/rpi-boot-image-${MACHINE}.vfat > ${PVBSPSTATE}/bsp/pantavisor-rpi.img.gz
+       else
+           bbfatal "rpi-boot-image-${MACHINE}.vfat not found in ${DEPLOY_DIR_IMAGE}"
+       fi
+
+       # Collect modules from each kernel multiconfig
+       modules_arts=""
+       mc_base="${RPI_MC_DEPLOY_BASE}"
+
+       # Map multiconfig names to machines
+       for mc_machine in raspberrypi:rpi-kernel raspberrypi2:rpi-kernel7 raspberrypi-armv7:rpi-kernel7l raspberrypi-armv8:rpi-kernel8 raspberrypi5:rpi-kernel_2712; do
+           machine="${mc_machine%%:*}"
+           mcname="${mc_machine##*:}"
+           mc_deploy="${mc_base}-${machine}/deploy/images/${machine}"
+
+           # Check if this multiconfig was built (deploy dir exists)
+           [ -d "$mc_deploy" ] || continue
+
+           # Find modules tarball - kernel deploys modules-${MACHINE}.tgz
+           modules_tar=""
+           for mtar in "$mc_deploy"/modules-*.tgz "$mc_deploy"/modules-${machine}.tgz; do
+               [ -e "$mtar" ] && modules_tar="$mtar" && break
+           done
+
+           if [ -n "$modules_tar" ] && [ -e "$modules_tar" ]; then
+               # Extract keeping lib/modules/<version> structure for depmod
+               mod_tmp="${WORKDIR}/pvbsp-mods-${machine}"
+               mkdir -p "$mod_tmp"
+               tar -C "$mod_tmp" -xf "$modules_tar" || true
+
+               # Find the kernel version from the modules directory
+               for kver_dir in "$mod_tmp"/lib/modules/*; do
+                   [ -d "$kver_dir" ] || continue
+                   kver="$(basename $kver_dir)"
+                   mod_squash="modules_${kver}.squashfs"
+
+                   # Run depmod to generate modules.dep (kernel deploy tarball doesn't include it)
+                   depmod -a -b "$mod_tmp" "$kver" || true
+
+                   # Create squashfs for this kernel's modules
+                   # Squash contents of version dir so mount point doesn't double the version path
+                   mksquashfs "$kver_dir" "${PVBSPSTATE}/bsp/${mod_squash}" ${PVR_FORMAT_OPTS}
+
+                   # Add to run.json artifacts
+                   modules_arts="$modules_arts
+    \"modules_${kver}\": \"${mod_squash}\","
+               done
+               rm -rf "$mod_tmp"
+           fi
+       done
+
+       basearts="\"firmware\": \"firmware.squashfs\",${modules_arts}
+    \"rpiab\": \"pantavisor-rpi.img.gz\","
+
+    elif echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_NAME_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.fit
        basearts='"fit": "pantavisor.fit",

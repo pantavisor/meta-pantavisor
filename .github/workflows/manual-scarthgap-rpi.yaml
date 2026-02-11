@@ -1,0 +1,16 @@
+name: "MAN: rpi-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-rpi-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/rpi-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: rpi-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
+    secrets: inherit
