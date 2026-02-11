@@ -192,10 +192,12 @@ kernel=kernel_2712.img
 [all]
 # Enable UART for debugging
 enable_uart=1
+# Enable hardware watchdog for shutdown safety
+dtparam=watchdog=on
 EOF
 
     # cmdline.txt for kernel command line
-    local cmdline="console=serial0,115200 PV_BOOTLOADER_TYPE=rpiab"
+    local cmdline="console=serial0,115200 panic=5 PV_BOOTLOADER_TYPE=rpiab"
     if ${@bb.utils.contains('PANTAVISOR_FEATURES', 'console-logging', 'true', 'false', d)}; then
         cmdline="$cmdline PV_LOG_SERVER_OUTPUTS=stdout,filetree ignore_loglevel printk.devkmsg=on"
     fi

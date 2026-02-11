@@ -8,7 +8,7 @@
 #   3 (boot_b)  - FAT32 - same as boot_a (for A/B switching)
 #   4 (root)    - ext4  - rootfs with /trails/0 pvr state
 
-part bootsel --source rawcopy --sourceparams="file=rpi-bootsel.vfat" --ondisk mmcblk0 --fstype=vfat --active --align 4096 --fixed-size 16M
+part bootsel --source rawcopy --sourceparams="file=rpi-bootsel.vfat" --ondisk mmcblk0 --fstype=vfat --active --align 4096 --fixed-size 32M
 part boot_a  --source rawcopy --sourceparams="file=rpi-boot-image-${MACHINE}.vfat" --ondisk mmcblk0 --fstype=vfat --align 4096 --fixed-size 128M
 part boot_b  --source rawcopy --sourceparams="file=rpi-boot-image-${MACHINE}.vfat" --ondisk mmcblk0 --fstype=vfat --align 4096 --fixed-size 128M
 part /       --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root --align 4096
