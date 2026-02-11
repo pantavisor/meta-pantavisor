@@ -197,7 +197,7 @@ dtparam=watchdog=on
 EOF
 
     # cmdline.txt for kernel command line
-    local cmdline="console=serial0,115200 panic=5 PV_BOOTLOADER_TYPE=rpiab"
+    local cmdline="console=serial0,115200 panic=5 PV_BOOTLOADER_TYPE=rpiab PV_SYSTEM_DRIVERS_AUTO=hotplug"
     if ${@bb.utils.contains('PANTAVISOR_FEATURES', 'console-logging', 'true', 'false', d)}; then
         cmdline="$cmdline PV_LOG_SERVER_OUTPUTS=stdout,filetree ignore_loglevel printk.devkmsg=on"
     fi
