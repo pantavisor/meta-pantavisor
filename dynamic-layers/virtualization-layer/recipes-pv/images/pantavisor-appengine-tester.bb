@@ -8,6 +8,7 @@ DOCKER_IMAGE_TAG = "1.0"
 DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
 CORE_IMAGE_EXTRA_INSTALL += " \
+	curl \
 	jq \
 	pantavisor-pvtest \
 	procps \
