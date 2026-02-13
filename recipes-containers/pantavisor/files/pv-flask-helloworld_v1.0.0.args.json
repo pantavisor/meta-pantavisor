@@ -1,0 +1,18 @@
+{
+    "PV_VOLUME_IMPORTS": [
+        "::PV_DBUS_PROVIDER:::/run/dbus:/run/dbus:rw"
+    ],
+    "args": [
+        "--network=host",
+        "--pids-limit=100",
+        "--memory=256m",
+        "--cpu-shares=512",
+        "--restart=unless-stopped"
+    ],
+    "env": [
+        "FLASK_ENV=production",
+        "FLASK_HOST=0.0.0.0",
+        "FLASK_PORT=8080",
+        "FLASK_DEBUG=false"
+    ]
+}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantavisor Flask Hello World</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <h1>Pantavisor</h1>
+                    <span class="subtitle">Container Platform</span>
+                </div>
+            </div>
+            <div class="tech-stack">
+                <span class="badge">Yocto</span>
+                <span class="badge">Flask</span>
+                <span class="badge">OCI</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="hero-section">
+                <h2 class="hero-title">Hello World!</h2>
+                <p class="hero-subtitle">
+                    Running on Pantavisor container platform with Yocto/OpenEmbedded
+                </p>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🐧</div>
+                        <h3>Embedded Linux</h3>
+                        <p>Built with Yocto Project for optimized embedded systems</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🐍</div>
+                        <h3>Python Flask</h3>
+                        <p>Lightweight web framework for rapid development</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <h3>OCI Container</h3>
+                        <p>Standard container runtime with full OCI compliance</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>OTA Updates</h3>
+                        <p>Seamless over-the-air updates via Pantahub</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <h3>System Status</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Application:</span>
+                        <span class="status-value">Flask Hello World</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Version:</span>
+                        <span class="status-value">1.0.0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Platform:</span>
+                        <span class="status-value">Pantavisor + Yocto</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Container:</span>
+                        <span class="status-value">OCI Compliant</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-section">
+                <h3>API Endpoints</h3>
+                <div class="endpoint-list">
+                    <div class="endpoint">
+                        <code class="method">GET</code>
+                        <code class="path">/</code>
+                        <span class="description">This page</span>
+                    </div>
+                    <div class="endpoint">
+                        <code class="method">GET</code>
+                        <code class="path">/health</code>
+                        <span class="description">Health check</span>
+                    </div>
+                    <div class="endpoint">
+                        <code class="method">GET</code>
+                        <code class="path">/info</code>
+                        <span class="description">Application info</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 Pantavisor Team</p>
+                <div class="footer-links">
+                    <a href="https://pantavisor.io" target="_blank">Pantavisor.io</a>
+                    <a href="https://yoctoproject.org" target="_blank">Yocto Project</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate feature cards on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.feature-card').forEach(card => {
+                observer.observe(card);
+            });
+
+            // Add click animation to endpoints
+            document.querySelectorAll('.endpoint').forEach(endpoint => {
+                endpoint.addEventListener('click', function() {
+                    const path = this.querySelector('.path').textContent;
+                    if (path === '/') {
+                        return; // Already on main page
+                    }
+                    
+                    // Copy to clipboard or navigate
+                    navigator.clipboard.writeText(window.location.origin + path);
+                    
+                    // Visual feedback
+                    this.style.backgroundColor = '#e8f5e8';
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 500);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

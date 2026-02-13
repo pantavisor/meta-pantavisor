@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+"""
+Pantavisor Flask Hello World Application
+
+Copyright (C) 2025 Pantavisor Team
+License: MIT
+
+A modern, styled Flask web application demonstrating containerization
+with Yocto/OpenEmbedded and Pantavisor integration.
+"""
+
+import os
+from flask import Flask, render_template, send_from_directory
+
+app = Flask(__name__, 
+           template_folder='/usr/share/flask-helloworld/templates',
+           static_folder='/usr/share/flask-helloworld/static')
+
+@app.route('/')
+def index():
+    """Main route serving the styled hello world page."""
+    return render_template('index.html')
+
+@app.route('/health')
+def health():
+    """Health check endpoint for container monitoring."""
+    return {'status': 'healthy', 'service': 'flask-helloworld'}
+
+@app.route('/info')
+def info():
+    """Information endpoint with build details."""
+    return {
+        'application': 'Pantavisor Flask Hello World',
+        'version': '1.0.0',
+        'framework': 'Flask',
+        'platform': 'Yocto/OpenEmbedded + Pantavisor',
+        'container_runtime': 'OCI'
+    }
+
+if __name__ == '__main__':
+    # Get configuration from environment or use defaults
+    host = os.getenv('FLASK_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_PORT', 8080))
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    
+    print(f"Starting Flask Hello World on {host}:{port}")
+    print(f"Debug mode: {debug}")
+    
+    app.run(host=host, port=port, debug=debug)
