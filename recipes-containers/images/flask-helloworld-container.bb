@@ -51,23 +51,3 @@ IMAGE_CONTAINER_NO_DUMMY = "1"
 
 # Add container metadata
 DESCRIPTION = "Container running Python Flask Hello World application with modern styling"
-
-# Automatically generate PVR archive after Docker image
-do_generate_pvr_archive[depends] += "docker-to-pvr-converter-native:do_populate_sysroot"
-do_generate_pvr_archive[dirs] += "${WORKDIR}"
-do_generate_pvr_archive() {
-    echo "Generating PVR archive from Docker image..."
-    
-    # Run converter to create PVR format archive
-    ${WORKDIR}/converter/convert-docker-to-pvr.sh \
-        "${DEPLOY_DIR_IMAGE}/flask-helloworld-container-1.0-docker.tar" \
-        "${DEPLOY_DIR_IMAGE}" \
-        "flask-helloworld"
-    
-    # Create symlink for easier access
-    if [ -f "${DEPLOY_DIR_IMAGE}/flask-helloworld-1.0.0.tar.gz" ]; then
-        ln -sf "flask-helloworld-1.0.0.tar.gz" "${DEPLOY_DIR_IMAGE}/flask-helloworld.pvr.tar.gz"
-    fi
-}
-
-addtask generate_pvr_archive after do_image_complete before do_build
