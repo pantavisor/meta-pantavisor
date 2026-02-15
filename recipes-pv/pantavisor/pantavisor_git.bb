@@ -36,7 +36,7 @@ SRCREV = "ae00fdf3d3532c728fbea9d80a78846e664d6e5e"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
+PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pv-devicepass"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -57,6 +57,14 @@ FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
 RDEPENDS:${PN}-pvtest += "bash"
 
+# pv-devicepass package
+FILES:${PN}-pv-devicepass += "${bindir}/pv-devicepass"
+FILES:${PN}-pv-devicepass += "${bindir}/keccak256sum"
+FILES:${PN}-pv-devicepass += "${bindir}/ethsign"
+FILES:${PN}-pv-devicepass += "${bindir}/devicepass-cli"
+FILES:${PN}-pv-devicepass += "${libdir}/devicepass/"
+RDEPENDS:${PN}-pv-devicepass += "mbedtls"
+
 inherit cmake gitpkgv
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
@@ -66,6 +74,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPA
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', '-DPANTAVISOR_E2FSGROW_ENABLE=ON', '-DPANTAVISOR_E2FSGROW_ENABLE=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', '-DPANTAVISOR_RUNC_ENABLE=ON', '-DPANTAVISOR_RUNC_ENABLE=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect', '-DPANTAVISOR_XCONNECT=ON', '-DPANTAVISOR_XCONNECT=OFF', d)}"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'devicepass', '-DPANTAVISOR_DEVICEPASS=ON', '-DPANTAVISOR_DEVICEPASS=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPANTAVISOR_APPENGINE=ON', '-DPANTAVISOR_APPENGINE=OFF', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'

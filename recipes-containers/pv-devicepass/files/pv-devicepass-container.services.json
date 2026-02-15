@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "pv-devicepass-api",
+      "type": "rest",
+      "socket": "/run/pv-devicepass/api.sock"
+    }
+  ]
+}

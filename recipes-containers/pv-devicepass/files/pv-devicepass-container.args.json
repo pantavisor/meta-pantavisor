@@ -1,0 +1,10 @@
+{
+  "PV_RESTART_POLICY": "system",
+  "PV_SERVICES_OPTIONAL": [
+    {
+      "name": "tunnel-mock",
+      "type": "unix",
+      "target": "/run/pv/services/tunnel.sock"
+    }
+  ]
+}

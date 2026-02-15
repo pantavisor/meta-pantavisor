@@ -3,6 +3,7 @@
 DISTRO_FEATURES += "pantavisor-appengine"
 PANTAVISOR_FEATURES += "appengine"
 PANTAVISOR_FEATURES += "xconnect"
+PANTAVISOR_FEATURES += "devicepass"
 PANTAVISOR_FEATURES:remove = "autogrow"
 
 PREFERRED_VERSION_mbedtls = "2.28.%"
