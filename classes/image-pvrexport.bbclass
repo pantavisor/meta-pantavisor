@@ -41,6 +41,19 @@ do_image_pvrexportit[cleandirs] = " ${PVSTATE} "
 
 PSEUDO_IGNORE_PATHS .= ",${PVSTATE},${PVR_CONFIG_DIR}"
 
+
+# Definiere den Pfad zur JSON-Datei
+LOCAL_ARGS_JSON = "${TOPDIR}/conf/${PN}.args.json"
+LOCAL_CONFIG_JSON = "${TOPDIR}/conf/${PN}.config.json"
+
+# Füge die Datei zu den Task-Abhängigkeiten hinzu
+# Dadurch wird der Hash des do_configure-Tasks beeinflusst, wenn sich die Datei ändert
+# Und damit in der Regel ein Rebuild des Rezepts ausgelöst
+BB_HASHDEPS += " \
+    ${LOCAL_ARGS_JSON} \
+    ${LOCAL_CONFIG_JSON} \
+"
+
 fakeroot IMAGE_CMD:pvrexportit(){
 
     export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
@@ -49,12 +62,16 @@ fakeroot IMAGE_CMD:pvrexportit(){
     fi
     cd ${PVSTATE}
     pvr init
-    if [ -f ${WORKDIR}/${PN}.args.json ]; then
+    if [ -f ${LOCAL_ARGS_JSON} ]; then
+        args="--arg-json ${LOCAL_ARGS_JSON} "
+    elif [ -f ${WORKDIR}/${PN}.args.json ]; then
         args="--arg-json ${WORKDIR}/${PN}.args.json "
     elif [ -f ${WORKDIR}/args.json ]; then
         args="--arg-json ${WORKDIR}/args.json "
     fi
-    if [ -f ${WORKDIR}/${PN}.config.json ]; then
+    if [ -f ${LOCAL_CONFIG_JSON} ]; then
+        args="$args --config-json ${LOCAL_CONFIG_JSON} "
+    elif [ -f ${WORKDIR}/${PN}.config.json ]; then
         args="$args --config-json ${WORKDIR}/${PN}.config.json "
     elif [ -f ${WORKDIR}/config.json ]; then
         args="$args --config-json ${WORKDIR}/config.json "
