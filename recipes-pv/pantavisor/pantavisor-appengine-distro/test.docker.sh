@@ -183,10 +183,10 @@ setup_network0() {
 
 setup_network() {
 	sleep 1
-	sudo modprobe -r mac80211_hwsim
+	sudo -n modprobe -r mac80211_hwsim
 
 	local before_phy=$(iw dev | grep -oP '(?<=phy#)\d+')
-	sudo modprobe mac80211_hwsim radios=3
+	sudo -n modprobe mac80211_hwsim radios=3
 	local after_phy=$(iw dev | grep -oP '(?<=phy#)\d+')
 	local new_phys=$(comm -13 <(echo "$before_phy" | sort) <(echo "$after_phy" | sort))
 
@@ -198,7 +198,7 @@ setup_network() {
 	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-netsim)
 
 	local ap_phy=$(echo "$new_phys" | sed -n '1p')
-	sudo iw phy "phy$ap_phy" set netns "$pid"
+	sudo -n iw phy "phy$ap_phy" set netns "$pid"
 
 	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-tester" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
@@ -208,11 +208,11 @@ setup_network() {
 	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-tester)
 
 	local cl_phy=$(echo "$new_phys" | sed -n '2p')
-	sudo iw phy "phy$cl_phy" set netns "$pid"
+	sudo -n iw phy "phy$cl_phy" set netns "$pid"
 }
 
 teardown_network() {
-	sudo modprobe -r mac80211_hwsim
+	sudo -n modprobe -r mac80211_hwsim
 }
 
 exec_test() {
@@ -220,7 +220,7 @@ exec_test() {
 	local interactive=$2
 	local manual=$3
 	local overwrite=$4
-	local storage_path=$5
+	local work_path=$5
 	local netsim=$6
 
 	if [ ! -f "$json_path" ]; then
@@ -241,12 +241,10 @@ exec_test() {
 
 	IFS="/" 
 	set -- $json_path
-	mkdir -p "$storage_path/$2/$4/"
-	echo "Info: Logs for $2:$4 can be found in $storage_path/$2/$4/logs"
-	cd "$storage_path/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
+	mkdir -p "$work_path/storage/$2/$4/"
+	cd "$work_path/storage/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
 
-	sudo -v
-	sudo losetup -D
+	sudo -n losetup -D
 	unused_lo=$(losetup -f)
 
 	start=$(date +%s)
@@ -266,7 +264,6 @@ exec_test() {
 
 		setup_network &
 	fi
-	tmpd=`mktemp -d -t pantavisor-tester-storage.XXXXXXX`
  	# for multiple instsances --name would need to be a name unique per instance
 	# TEST_PATH results folder would need to be instance namespaced as well to not overwrite each other
 	# for sudo maybe unused_lo creation and assignment can go inside docker with CAPs
@@ -309,6 +306,8 @@ exec_test() {
 		pantavisor-appengine-tester
 	res=$?
 
+	sudo -n chmod -R a+rx "$work_path/storage/$2/$4/logs"
+
 	if [ "$netsim" = "true" ]; then
 		docker stop "pantavisor-netsim" > /dev/null 2>&1
 		docker wait "pantavisor-netsim" > /dev/null 2>&1
@@ -334,6 +333,7 @@ exec_test() {
 
 skip_test () {
 	local json_path="$1"
+	local work_path=$2
 
 	IFS="/" 
 	set -- $json_path
@@ -353,7 +353,7 @@ run_test() {
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
-	local storage_path=$(mktemp -d -t pv_appengine_storage.XXXXXX)
+	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
@@ -377,8 +377,8 @@ run_test() {
 				manual="true"
 				shift
 				;;
-			-s|--storage)
-				storage_path="$2"
+			-w|--work)
+				work_path="$2"
 				shift 2
 				;;
 			-n|--netsim)
@@ -411,22 +411,39 @@ run_test() {
 		exit 1
 	fi
 
+	echo "Info: test logs can be found at $work_path/test.docker.log"
+	exec > >(tee -a "$work_path/test.docker.log") 2>&1
+
 	common_path="$test_dir/common"
 	if [ -z "$group" ]; then
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
-			skip_test "$json_path"
+			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
 		done
 	elif [ -z "$number" ]; then
 		find "$test_dir/$group" -name "test.json" | sort  | while read -r json_path; do
-			skip_test "$json_path"
+			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
 		done
 	else
 		json_path="$test_dir/$group/data/$number/test.json"
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$storage_path" "$netsim"
+		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
+	fi
+
+	if [ "$verbose" = "true" ]; then
+		set +x
+		echo "======================================================="
+		echo "======================= SUMMARY ======================="
+		echo "======================================================="
+		echo "Info: workspace=$work_path"
+		echo "Info: logs=$work_path/test.docker.log"
+		echo "Info: Pantavisor storage=$work_path/storage"
+		echo ""
+		grep "^Info: 'pvtests-" "$work_path/test.docker.log"
+		echo "======================================================="
+		set -h
 	fi
 }
 
