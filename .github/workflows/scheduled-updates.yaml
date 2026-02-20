@@ -1,0 +1,34 @@
+name: "Scheduled Recipe Updates"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  push:      # <--- Add this temporarily
+    branches: [ ci/components-check ]
+  schedule:
+    - cron: "0 */8 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Update Script
+        run: .github/scripts/check-updates.sh
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.META_PANTAVISOR_UPDATE_COMPONENTS_PAT }}
+          commit-message: "recipes-pv: automated srcrev update"
+          title: "Automated Upstream Component Updates"
+          body: |
+            This is a scheduled automated update to sync internal components with their latest upstream commits.
+
+            Verified components in `recipes-pv/` have been updated to their latest `master`/`main` SHAs.
+          branch: "auto-update/components"
+          delete-branch: true
