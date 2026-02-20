@@ -32,6 +32,10 @@ repos:
     path: layers/meta-variscite-sdk
     url: "https://github.com/varigit/meta-variscite-sdk.git"
 
+  meta-variscite-common:
+    path: layers/meta-variscite-bsp-common
+    url: "https://github.com/varigit/meta-variscite-sdk.git"
+
 local_conf_header:
   platform-variscite:
     PV_UBOOT_AUTOFDT = "1"

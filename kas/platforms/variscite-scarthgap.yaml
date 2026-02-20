@@ -1,0 +1,49 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/freescale.yaml
+    - kas/platforms/nxp.yaml
+
+repos:
+  meta-variscite-bsp-common:
+    url: "https://github.com/varigit/meta-variscite-bsp-common.git"
+    path: layers/meta-variscite-bsp-common
+    branch: scarthgap_6.6.52-2.2.0_var01
+
+  meta-variscite-bsp-imx:
+    url: "https://github.com/varigit/meta-variscite-bsp-imx.git"
+    path: layers/meta-variscite-bsp-imx
+    branch: scarthgap_6.6.52-2.2.0_var01
+
+  meta-variscite-hab:
+    path: layers/meta-variscite-hab
+    url: "https://github.com/varigit/meta-variscite-hab.git"
+    branch: scarthgap_6.6.52-2.2.0_var01
+
+  meta-variscite-sdk:
+    path: layers/meta-variscite-sdk
+    url: "https://github.com/varigit/meta-variscite-sdk.git"
+    branch: scarthgap_6.6.52-2.2.0_var01
+
+  meta-variscite-sdk-common:
+    path: layers/meta-variscite-sdk-common
+    url: "https://github.com/varigit/meta-variscite-sdk-common.git"
+    branch: scarthgap_6.6.52-2.2.0_var01
+
+  meta-imx:
+    branch: scarthgap-6.6.52-2.2.0
+    layers:
+      meta-imx-bsp:
+
+local_conf_header:
+  platform-variscite: |
+    PV_UBOOT_AUTOFDT = "1"
+    CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-variscite-devel packagegroup-security-tpm2"
+    PREFERRED_PROVIDER_virtual/kernel = "linux-variscite"
+
+bblayers_conf_header:
+  variscite-mask: |
+    BBMASK += "meta-variscite-bsp-imx/recipes-multimedia/gstreamer/gstreamer1.0-plugins-bad_1.24.0.imx.bbappend"
+    BBMASK += "meta-variscite-bsp-common/recipes-bsp/firmware-imx/firmware-nxp-wifi_1.0.bbappend"
+    BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend"
+

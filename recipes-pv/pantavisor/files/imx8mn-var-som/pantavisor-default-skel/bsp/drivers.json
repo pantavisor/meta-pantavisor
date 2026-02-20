@@ -1,0 +1,47 @@
+{
+    "#spec": "driver-aliases@1",
+    "all": {
+        "bluetooth": [
+            "btnxpuart",
+            "bluetooth",
+            "hci_uart"
+        ],
+        "wifi": [
+            "moal",
+            "mlan",
+            "cfg80211"
+        ],
+        "wireguard": [
+            "wireguard"
+        ],
+        "rng": [
+            "imx_rng"
+        ],
+        "tpm": [
+            "tpm_tis_i2c"
+        ],
+        "rtc": [
+            "rtc_ds1307"
+        ],
+        "can": [
+            "mcp251xfd",
+            "flexcan",
+            "can_dev"
+        ],
+        "touch": [
+            "edt_ft5x06",
+            "ads7846"
+        ],
+        "display": [
+            "ti_sn65dsi84",
+            "pwm_bl"
+        ],
+        "camera": [
+            "ov5640"
+        ],
+        "gpio": [
+            "gpio_pca953x"
+        ]
+    },
+    "dtb:all": {}
+}
