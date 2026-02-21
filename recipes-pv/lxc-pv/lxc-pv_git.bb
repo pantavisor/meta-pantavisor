@@ -41,7 +41,7 @@ FILES:${PN} += " /usr/lib/lxc"
 FILES:${PN} += " /usr/var"
 FILES:${PN} += " /lib"
 
-SRC_URI = "git://github.com/pantavisor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=95ea788679a5c82152b7a0d1213d12d6b4dafda6 \
+SRC_URI = "git://github.com/pantavisor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=be1a30526b7c4a8de81bee1d1a6b36a69522ca97 \
 	file://0001-add-new-config-lxc.tty.min-as-lower-bound-of-tty-all.patch"
 PE = "1"
 PKGV = "3.0.4+git0+pv+${GITPKGV}"
