@@ -16,26 +16,34 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Update Script
-        run: .github/scripts/check-updates.sh
+        env:
+          COMMIT_MSG_FILE: /tmp/updates-commit-msg
+        run: .github/scripts/update-components.sh
 
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ secrets.META_PANTAVISOR_UPDATE_COMPONENTS_PAT || github.token }}
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_MSG_FILE: /tmp/updates-commit-msg
         run: |
           git config user.email "pantavisor-meta@ci.pantavisor.io"
           git config user.name "Pantavisor Meta Layer CI"
 
-          # Create a new branch for the PR
-          BRANCH_NAME="auto-update/components-$(date +%Y%m%d%H%M)"
-          git checkout -b "$BRANCH_NAME"
+          # Use a fixed branch name for PRs
+          BRANCH_NAME="auto-update/components"
+          git checkout -B "$BRANCH_NAME"
 
           # Stage all modified recipes
           git add recipes-pv/
 
           # Only commit and push if there are changes
           if ! git diff --cached --quiet; then
-            git commit -m "recipes-pv: automated srcrev update"
-            git push origin "$BRANCH_NAME"
+            if [ -f "$COMMIT_MSG_FILE" ]; then
+              git commit -F "$COMMIT_MSG_FILE"
+              rm -f "$COMMIT_MSG_FILE"
+            else
+              git commit -m "recipes-pv: automated srcrev update"
+            fi
+            git push origin "$BRANCH_NAME" --force
             # Wait a few seconds for GitHub to index the branch
             sleep 5
             gh pr create --title "AutoPR: Automated Upstream Component Updates" \
