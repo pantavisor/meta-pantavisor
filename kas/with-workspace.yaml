@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 header:
   version: 14
 
@@ -6,3 +9,7 @@ repos:
     path: build/workspace
     layers:
       .:
+
+local_conf_header:
+  test-features: |
+    PANTAVISOR_FEATURES:append = " wasmedge xconnect"

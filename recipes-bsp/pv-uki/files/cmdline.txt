@@ -1,0 +1,1 @@
+root=/dev/sda4 ro console=ttyS0,115200 PV_BOOTLOADER_TYPE=efiab PV_LOG_SERVER_OUTPUTS=filetree

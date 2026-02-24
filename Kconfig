@@ -159,6 +159,15 @@ config KAS_LOCAL_PV_TAILSCALE
 	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
 endmenu
 
+menu "Features"
+config FEATURE_XCONNECT
+	bool "pv-xconnect support"
+	default n
+
+config KAS_LOCAL_FEATURE_XCONNECT
+	string
+	default "PANTAVISOR_FEATURES:append = \" xconnect\"" if FEATURE_XCONNECT
+endmenu
 config MACHINE_FILTER_ALL
 	bool "Show All Machines"
 	default y
@@ -205,6 +214,9 @@ config MACHINE_FILTER_RISCV
 config MACHINE_FILTER_RADXA
 	bool "Radxa"
 
+config MACHINE_FILTER_X86_EFI
+	bool "x86 EFI"
+
 endchoice
 
 config PLATFORM_CORAL
@@ -241,6 +253,9 @@ config PLATFORM_SUNXI
 	bool
 
 config PLATFORM_RADXA
+	bool
+
+config PLATFORM_X86_EFI
 	bool
 
 choice
@@ -418,6 +433,11 @@ config MACHINE_RADXA_ROCK5B
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RADXA
 	select PLATFORM_RADXA
 
+config MACHINE_X64_EFI
+	bool "x64-efi"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_X86_EFI
+	select PLATFORM_X86_EFI
+
 endchoice
 
 config KAS_INCLUDE_MACHINE_QEMUX86_64
@@ -584,4 +604,8 @@ config KAS_INCLUDE_MACHINE_RADXA_ROCK5A
 config KAS_INCLUDE_MACHINE_RADXA_ROCK5B
 	string
 	default "kas/machines/radxa-rock5b.yaml" if MACHINE_RADXA_ROCK5B
+
+config KAS_INCLUDE_MACHINE_X64_EFI
+	string
+	default "kas/machines/x64-efi.yaml" if MACHINE_X64_EFI
 

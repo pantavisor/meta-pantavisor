@@ -16,14 +16,14 @@ repos:
                 repo: meta-pantavisor
         url: https://github.com/yoctoproject/poky.git
         path: layers/poky
-        commit: 72983ac391008ebceb45edc7a8f0f6d5f4fe715c
+        commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
     meta-pantavisor:
     meta-virtualization:
-        commit: f92518e20530edfebca45e4170e11460949a5303
+        commit: 78abd77b8695705e6e55266745c838bb665486de
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2759d8870ea387b76c902070bed8a6649ff47b56
+        commit: ec0469748be4159fb83fb0fa0148d786484c88cf
         layers:
             meta-filesystems:
             meta-networking:
@@ -47,7 +47,7 @@ local_conf_header:
     package_management: |
         PACKAGE_CLASSES = "package_rpm"
     panta-base: |
-        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-glibc"
     pantavisor-system: |
         DISTRO_FEATURES:append = " pantavisor-appengine "
         PANTAVISOR_FEATURES:append = " dm-crypt"

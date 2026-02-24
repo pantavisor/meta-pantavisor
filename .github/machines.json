@@ -40,6 +40,11 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
+			"config": "kas/machines/x64-efi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-remix.yaml",
+			"name": "x64-efi",
+			"workflows": ["manual", "tag"]
+		},
+		{
 			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",

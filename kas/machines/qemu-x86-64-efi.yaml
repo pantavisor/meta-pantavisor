@@ -1,0 +1,16 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+  includes:
+    - kas/platforms/x86-efi.yaml
+
+# The machine as it is written into the `local.conf` of bitbake.
+machine: qemu-x86-64-efi

@@ -38,11 +38,15 @@ VIRTUAL-RUNTIME_pantavisor_skel ??= "pantavisor-default-skel"
 
 PVROOT_IMAGE_BSP ?= "empty-image"
 
+# EFI A/B: boot partition image for updates (set by machine config)
+PVBSP_EFIAB_BOOTIMG ?= ""
+
 compile_depends = ' \
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "${INITRAMFS_IMAGE}:do_image_complete", "", d)} \
 	${PVROOT_IMAGE_BSP}:do_image_complete \
 	${VIRTUAL-RUNTIME_pantavisor_skel}:do_deploy \
 	virtual/kernel:do_deploy \
+	${@'efi-boot-image:do_image_complete' if d.getVar('PVBSP_EFIAB_BOOTIMG') else ''} \
 	'
 do_compile[depends] += "${compile_depends}"
 
@@ -93,7 +97,13 @@ fakeroot do_compile(){
     if test -n "${PVBSP_UBOOT_LOGO_BMP}" && test -e "${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP}"; then
        cp -fL ${DEPLOY_DIR_IMAGE}/${PVBSP_UBOOT_LOGO_BMP} ${PVBSPSTATE}/bsp/uboot-logo.bmp
     fi
-    if echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
+    if [ -n "${PVBSP_EFIAB_BOOTIMG}" ] && [ -f "${DEPLOY_DIR_IMAGE}/${PVBSP_EFIAB_BOOTIMG}" ]; then
+       # EFI A/B: boot partition image only (kernel+initrd are in the UKI)
+       cp -fL ${DEPLOY_DIR_IMAGE}/${PVBSP_EFIAB_BOOTIMG} ${PVBSPSTATE}/bsp/efiboot.img
+       basearts='"efiab": "efiboot.img",
+                 "firmware": "firmware.squashfs",
+                 "modules": "modules.squashfs",'
+    elif echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_NAME_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.fit
        basearts='"fit": "pantavisor.fit",
@@ -148,7 +158,7 @@ fakeroot do_compile(){
            done
        fi
     fi
-          
+
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
     "addons": [],

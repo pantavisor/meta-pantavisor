@@ -66,11 +66,16 @@ python __anonymous () {
         d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
 
     d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":virtual/bootloader"+img if mc != "" else "virtual/bootloader" ) +':do_deploy')
+
+    wks = d.getVar('WKS_FILE') or ''
+    if 'efi' in wks:
+        d.appendVarFlag('do_image_wic', 'depends', ' efi-esp-image:do_image_complete efi-boot-image:do_image_complete')
+
     d.delVarFlag("do_fetch", "noexec")
     d.delVarFlag("do_unpack", "noexec")
 }
 
-PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home,${WORKDIR}/tmp"
+PSEUDO_IGNORE_PATHS .= ",${WORKDIR}/pvrrepo,${WORKDIR}/pvrconfig,${WORKDIR}/home,${WORKDIR}/tmp,${IMAGE_ROOTFS}/trails/0/.pv,${IMAGE_ROOTFS}/trails/0/.pvr"
 
 def _pvr_pvroot_images_deploy(d, factory, images, my_env):
 
