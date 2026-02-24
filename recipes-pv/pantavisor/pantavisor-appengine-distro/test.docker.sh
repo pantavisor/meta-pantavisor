@@ -243,6 +243,8 @@ exec_test() {
 	set -- $json_path
 	mkdir -p "$work_path/storage/$2/$4/"
 	cd "$work_path/storage/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
+	mkdir -p "$work_path/valgrind/$2/$4/"
+	cd "$work_path/valgrind/$2/$4/"; abs_valgrind_path=$(pwd); cd - > /dev/null
 
 	sudo -n losetup -D
 	unused_lo=$(losetup -f)
@@ -303,6 +305,7 @@ exec_test() {
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
+		-v "$abs_valgrind_path":/tmp/valgrind \
 		pantavisor-appengine-tester
 	res=$?
 
