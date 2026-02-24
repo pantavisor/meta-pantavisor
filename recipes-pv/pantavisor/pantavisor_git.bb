@@ -17,6 +17,7 @@ RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
+	${@bb.utils.contains('DISTRO_FEATURES', 'efi', 'mtools', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} libthttp-certs "
 LICENSE = "MIT"
@@ -36,7 +37,7 @@ SRCREV = "ae00fdf3d3532c728fbea9d80a78846e664d6e5e"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
+PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -56,6 +57,10 @@ FILES:${PN}-config += "/etc/resolv.conf"
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
 RDEPENDS:${PN}-pvtest += "bash"
+
+# pvcontrol meta-package: pulls in pvcontrol script + pvcurl backend
+ALLOW_EMPTY:${PN}-pvcontrol = "1"
+RDEPENDS:${PN}-pvcontrol += "pvcontrol pvcurl"
 
 inherit cmake gitpkgv
 

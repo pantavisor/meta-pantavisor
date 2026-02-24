@@ -40,7 +40,7 @@ local_conf_header:
   package_management: |
     PACKAGE_CLASSES = "package_rpm"
   panta-base: |
-    TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-glibc"
   pantavisor-system: |
     DISTRO_FEATURES:append = " pantavisor-appengine "
     PANTAVISOR_FEATURES:append = " dm-crypt"

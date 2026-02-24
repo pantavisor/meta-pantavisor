@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 SUMMARY = "Example Network Server Container"
 DESCRIPTION = "A simple HTTP server using IPAM pool networking"
 LICENSE = "MIT"

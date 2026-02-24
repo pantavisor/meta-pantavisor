@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 SUMMARY = "Pantavisor IPAM Test - Invalid Static IP (Outside Subnet)"
 DESCRIPTION = "Tests IPAM with a static IP outside the pool's subnet. Should FAIL to start and trigger rollback."
 LICENSE = "MIT"

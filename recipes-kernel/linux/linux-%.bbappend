@@ -38,6 +38,7 @@ PANTAVISOR_SRC_URI = " \
 	file://dm.cfg \
 	${TAILSCALE_KERNEL_SRC_URI} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
+	${@bb.utils.contains('MACHINE_FEATURES', 'efi', 'file://efi.cfg', '', d)} \
 "
 
 
@@ -48,6 +49,7 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 	${WORKDIR}/dm.cfg \
 	${TAILSCALE_KERNEL_FRAGMENT} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '${WORKDIR}/pantavisor-lz4.cfg', '', d)} \
+	${@bb.utils.contains('MACHINE_FEATURES', 'efi', '${WORKDIR}/efi.cfg', '', d)} \
 "
 
 SRC_URI:append = " \
@@ -59,6 +61,7 @@ KERNEL_CONFIG_FRAGMENTS:append = " \
 "
 
 COMPATIBLE_MACHINE:qemuarm-pv = "qemuarm-pv"
+COMPATIBLE_MACHINE:x64-efi = "x64-efi"
 
 
 # for bootscript in fitimage

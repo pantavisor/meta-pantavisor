@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 # Simple DRM master test - checks for /dev/dri/card0
 echo "DRM Master Container starting..."
 

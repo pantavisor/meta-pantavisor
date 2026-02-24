@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 SOCKET="/run/pv/services/network-manager.sock"
 
 while true; do

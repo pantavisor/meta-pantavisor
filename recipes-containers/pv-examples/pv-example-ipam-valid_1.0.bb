@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 SUMMARY = "Pantavisor IPAM Test - Valid Static IP"
 DESCRIPTION = "Tests IPAM with a valid static IP within the subnet. Should start successfully."
 LICENSE = "MIT"

@@ -1,0 +1,92 @@
+#!/usr/bin/expect -f
+# Boot QEMU, enter pantavisor debug shell, run diagnostic commands
+
+set timeout 90
+log_user 1
+
+set top_dir [file dirname [file dirname [file normalize $argv0]]]
+set builddir "$top_dir/build"
+set tmpdir "$builddir/tmp-scarthgap"
+set deploy "$tmpdir/deploy/images/x64-efi"
+set native_base "$tmpdir/sysroots-components/x86_64"
+set uninative "$tmpdir/sysroots-uninative/x86_64-linux"
+
+set qemu "$native_base/qemu-system-native/usr/bin/qemu-system-x86_64"
+set loader "$uninative/lib/ld-linux-x86-64.so.2"
+set qemu_data "$native_base/qemu-system-native/usr/share/qemu"
+set wic "$deploy/pantavisor-remix-x64-efi.rootfs.wic"
+set ovmf_code "$deploy/ovmf.code.qcow2"
+set ovmf_vars "$deploy/ovmf.vars.qcow2"
+
+set vars_copy "/tmp/ovmf-vars-diag.qcow2"
+file copy -force $ovmf_vars $vars_copy
+
+set lib_path "$uninative/lib:$uninative/usr/lib"
+foreach d [glob -nocomplain "$native_base/*/usr/lib"] {
+    append lib_path ":$d"
+}
+
+# Get commands from argv (default: "pvcontrol ls")
+set user_commands [lrange $argv 0 end]
+if {[llength $user_commands] == 0} {
+    set user_commands {"pvcontrol ls"}
+}
+
+spawn env LD_LIBRARY_PATH=$lib_path $loader --library-path $lib_path $qemu \
+    -L $qemu_data \
+    -machine q35 \
+    -cpu IvyBridge \
+    -m 2048 \
+    -smp 2 \
+    -nographic \
+    -drive if=pflash,format=qcow2,readonly=on,file=$ovmf_code \
+    -drive if=pflash,format=qcow2,file=$vars_copy \
+    -drive format=raw,file=$wic \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -serial mon:stdio
+
+# Wait for the debug shell countdown
+expect {
+    -re {Press.*ENTER.*debug} {
+        sleep 0.2
+        send "\r"
+    }
+    timeout {
+        puts "\n=== TIMEOUT waiting for debug shell prompt ===\n"
+        send "\x01x"
+        expect eof
+        exit 1
+    }
+}
+
+# Wait for pantavisor to settle (containers starting, network up)
+# stdout_direct is disabled so we cannot see STATE_WAIT on console;
+# instead wait for the NIC link-up message which comes near the end
+set timeout 60
+expect {
+    "NIC Link is Up" { }
+    "e1000: eth0" { }
+    timeout {
+        puts "\n=== TIMEOUT waiting for boot settle ===\n"
+    }
+}
+
+sleep 3
+send "\r"
+sleep 0.5
+
+# Run each user command
+set timeout 15
+foreach cmd $user_commands {
+    set marker "XDIAG_END_[clock clicks]"
+    send "$cmd; echo $marker\r"
+    expect {
+        $marker { }
+        timeout { puts "\n=== cmd timeout: $cmd ===" }
+    }
+    sleep 0.3
+}
+
+sleep 0.5
+send "\x01x"
+expect eof

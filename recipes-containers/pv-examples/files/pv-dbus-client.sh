@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 while true; do
     echo "--- Requesting info from D-Bus service org.pantavisor.Example ---"
     if command -v busctl >/dev/null 2>&1; then

@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 # IPAM Test Container
 # Displays network configuration and keeps running
 

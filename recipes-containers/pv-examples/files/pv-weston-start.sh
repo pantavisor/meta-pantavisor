@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 # Set up runtime directory for Weston
 export XDG_RUNTIME_DIR=/run
 mkdir -p $XDG_RUNTIME_DIR

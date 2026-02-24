@@ -1,0 +1,70 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    poky:
+        layers:
+            meta-yocto-bsp:
+            meta-poky:
+            meta:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
+    meta-pantavisor:
+    meta-virtualization:
+        commit: 78abd77b8695705e6e55266745c838bb665486de
+        path: layers/meta-virtualization
+        url: git://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: ec0469748be4159fb83fb0fa0148d786484c88cf
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-x86-efi: |
+        DISTRO_FEATURES:append = " efi virtualization vmsep"
+        PVROOT_CONTAINERS_CORE = "pv-alpine-connman pv-pvr-sdk"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: x64-efi
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-remix
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:

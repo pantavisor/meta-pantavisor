@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 """
 Simple HTTP server for IPAM network testing.
 Listens on all interfaces and returns container info.

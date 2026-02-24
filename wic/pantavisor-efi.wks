@@ -1,0 +1,16 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+# pantavisor-efi.wks — GPT partition layout for Pantavisor EFI boot
+#
+# Partition 1: ESP — stage 1 bootloader + autoboot.txt (frozen)
+# Partition 2: pvboot-a — stage 2 + UKI (A/B slot A)
+# Partition 3: pvboot-b — stage 2 + UKI (A/B slot B)
+# Partition 4: pvdata — Pantavisor state, containers, volumes
+
+bootloader --ptable gpt
+
+part esp     --source rawcopy --sourceparams="file=efi-esp-image-${MACHINE}.vfat" --ondisk sda --fstype=vfat --active --align 1024 --fixed-size 64M --part-type EF00
+part boot_a  --source rawcopy --sourceparams="file=efi-boot-image-${MACHINE}.vfat" --ondisk sda --fstype=vfat --align 1024 --fixed-size 128M
+part boot_b  --source rawcopy --sourceparams="file=efi-boot-image-${MACHINE}.vfat" --ondisk sda --fstype=vfat --align 1024 --fixed-size 128M
+part /       --source rootfs --ondisk sda --fstype=ext4 --label root --align 1024 --size 2048

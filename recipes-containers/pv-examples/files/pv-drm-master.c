@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025-2026 Pantacor Ltd.
+ * SPDX-License-Identifier: MIT
+ */
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>

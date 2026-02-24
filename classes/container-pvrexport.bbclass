@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 DEPENDS:append = " pvr-native \
 	squashfs-tools-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \

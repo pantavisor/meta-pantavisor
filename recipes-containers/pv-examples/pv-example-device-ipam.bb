@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 SUMMARY = "Device configuration with IPAM network pools"
 DESCRIPTION = "A device.json pvrexport that defines network pools for container networking"
 LICENSE = "MIT"

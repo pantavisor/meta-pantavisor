@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 STATE_FILE="/var/lib/boot_count"
 mkdir -p /var/lib
 

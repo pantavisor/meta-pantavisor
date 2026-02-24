@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 # Create dbus directory and uuid
 mkdir -p /var/lib/dbus
 dbus-uuidgen --ensure

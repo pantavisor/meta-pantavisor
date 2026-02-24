@@ -1,3 +1,6 @@
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 SUMMARY = "Pantavisor IPAM Test - IP Collision"
 DESCRIPTION = "Tests IPAM with a static IP that collides with pv-example-ipam-valid. Should FAIL when both containers are deployed."
 LICENSE = "MIT"

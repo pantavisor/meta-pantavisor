@@ -1,4 +1,8 @@
 #!/bin/sh
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 #
 # Simple network client for IPAM testing
 # Periodically queries the network server

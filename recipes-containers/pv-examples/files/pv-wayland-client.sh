@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 # Socket is injected at /run/wayland-0 by pv-xconnect
 export WAYLAND_DISPLAY="/run/wayland-0"
 

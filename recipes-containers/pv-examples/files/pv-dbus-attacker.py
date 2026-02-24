@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
 from pydbus import SystemBus
 from gi.repository import GLib
 import sys

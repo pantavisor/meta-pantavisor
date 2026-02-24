@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+
 # Fetch tags if not available (in CI usually needed)
 git fetch --tags --force 2>/dev/null || true
 
