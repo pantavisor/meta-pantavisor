@@ -128,6 +128,7 @@ Verify: `fdisk -l build/tmp-scarthgap/deploy/images/x64-efi/pantavisor-remix-x64
 |------|---------|
 | `scripts/run-qemu-efi.sh` | Interactive QEMU boot (Ctrl-A X to quit) |
 | `scripts/qemu-diag.exp` | Automated boot + diagnostics via expect |
+| `scripts/test-update-efi.exp` | EFI A/B update cycle test (pvcontrol + reboot) |
 
 ## Unified Kernel Image (UKI)
 

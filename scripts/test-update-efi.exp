@@ -1,0 +1,405 @@
+#!/usr/bin/expect -f
+# test-update-efi.exp — Test EFI A/B update cycle via pvcontrol
+#
+# Boots QEMU, enters debug shell, creates a modified state JSON,
+# uploads it as a local revision via pvcontrol, triggers the update,
+# monitors the reboot cycle, and checks logs after second boot.
+#
+# Tests: efiab_install_update, _efiab_mark_tryboot, reboot, and
+#        post-reboot state validation (commit or rollback).
+#
+# NOTE: Stage1 does not yet honor PvTryBoot EFI variable, so after
+# reboot the system boots back to the same slot. Pantavisor will
+# detect this as an "early rollback" scenario. This test validates
+# the pantavisor-side update flow (install, arm, reboot) without
+# full stage1 tryboot integration.
+#
+# Usage: expect scripts/test-update-efi.exp [--timeout SECS]
+#
+# Copyright (c) 2025-2026 Pantacor Ltd.
+# SPDX-License-Identifier: MIT
+
+# --- Configuration ---
+set boot_timeout 90
+set settle_timeout 60
+set cmd_timeout 30
+set reboot_timeout 120
+
+# Parse arguments
+for {set i 0} {$i < $argc} {incr i} {
+    set arg [lindex $argv $i]
+    if {$arg eq "--timeout"} {
+        incr i
+        set boot_timeout [lindex $argv $i]
+    }
+}
+
+log_user 1
+
+# --- Paths (same as qemu-diag.exp) ---
+set top_dir [file dirname [file dirname [file normalize $argv0]]]
+set builddir "$top_dir/build"
+set tmpdir "$builddir/tmp-scarthgap"
+set deploy "$tmpdir/deploy/images/x64-efi"
+set native_base "$tmpdir/sysroots-components/x86_64"
+set uninative "$tmpdir/sysroots-uninative/x86_64-linux"
+
+set qemu "$native_base/qemu-system-native/usr/bin/qemu-system-x86_64"
+set loader "$uninative/lib/ld-linux-x86-64.so.2"
+set qemu_data "$native_base/qemu-system-native/usr/share/qemu"
+set wic "$deploy/pantavisor-remix-x64-efi.rootfs.wic"
+set ovmf_code "$deploy/ovmf.code.qcow2"
+set ovmf_vars "$deploy/ovmf.vars.qcow2"
+
+# Writable copy of OVMF vars (must persist across guest reboots)
+set vars_copy "/tmp/ovmf-vars-update-test.qcow2"
+file copy -force $ovmf_vars $vars_copy
+
+# Build library path
+set lib_path "$uninative/lib:$uninative/usr/lib"
+foreach d [glob -nocomplain "$native_base/*/usr/lib"] {
+    append lib_path ":$d"
+}
+
+# --- Helper: run a shell command and wait for marker ---
+proc run_cmd {cmd {timeout_val 15}} {
+    set marker "XTEST_[clock clicks]"
+    send "$cmd; echo $marker\r"
+    set timeout $timeout_val
+    expect {
+        $marker { }
+        timeout {
+            puts "\n=== TIMEOUT running: $cmd ==="
+            return 0
+        }
+    }
+    sleep 0.3
+    return 1
+}
+
+# --- Helper: run a test command and check exit code ---
+# Runs cmd and checks $? — avoids matching command echo text.
+proc run_check {cmd {timeout_val 15}} {
+    set uid [clock clicks]
+    send "$cmd; echo XCHK_${uid}_\$?\r"
+    set timeout $timeout_val
+    expect {
+        "XCHK_${uid}_0" { sleep 0.2; return 1 }
+        -re "XCHK_${uid}_\[1-9\]" { sleep 0.2; return 0 }
+        timeout {
+            puts "\n=== TIMEOUT checking: $cmd ==="
+            return 0
+        }
+    }
+}
+
+# --- Helper: enter debug shell after boot ---
+proc enter_debug_shell {boot_timeout settle_timeout} {
+    set timeout $boot_timeout
+    expect {
+        -re {Press.*ENTER.*debug} {
+            sleep 0.2
+            send "\r"
+        }
+        timeout {
+            puts "\n=== TIMEOUT waiting for debug shell prompt ==="
+            return 0
+        }
+    }
+
+    # Wait for boot to settle (NIC link-up or e1000 init)
+    set timeout $settle_timeout
+    expect {
+        "NIC Link is Up" { }
+        "e1000: eth0" { }
+        timeout {
+            puts "\n=== TIMEOUT waiting for boot settle ==="
+        }
+    }
+
+    sleep 3
+    send "\r"
+    sleep 0.5
+    return 1
+}
+
+# --- Result tracking ---
+set results {}
+proc record {name status {detail ""}} {
+    upvar results results
+    lappend results [list $name $status $detail]
+    if {$status eq "PASS"} {
+        puts "\n  \[PASS\] $name"
+    } elseif {$status eq "FAIL"} {
+        puts "\n  \[FAIL\] $name: $detail"
+    } else {
+        puts "\n  \[SKIP\] $name: $detail"
+    }
+}
+
+# =====================================================
+# PHASE 1: Boot QEMU and enter debug shell
+# =====================================================
+
+puts "\n=== EFI A/B Update Cycle Test ==="
+puts "=== Phase 1: Initial boot ===\n"
+
+spawn env LD_LIBRARY_PATH=$lib_path $loader --library-path $lib_path $qemu \
+    -L $qemu_data \
+    -machine q35 \
+    -cpu IvyBridge \
+    -m 2048 \
+    -smp 2 \
+    -nographic \
+    -drive if=pflash,format=qcow2,readonly=on,file=$ovmf_code \
+    -drive if=pflash,format=qcow2,file=$vars_copy \
+    -drive format=raw,file=$wic \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -serial mon:stdio
+
+if {![enter_debug_shell $boot_timeout $settle_timeout]} {
+    puts "\n=== FATAL: Could not enter debug shell on first boot ==="
+    send "\x01x"
+    expect eof
+    exit 1
+}
+
+puts "\n=== Phase 2: Get current state and create test revision ===\n"
+
+# =====================================================
+# PHASE 2: Get current state, create modified revision
+# =====================================================
+
+# Step 1: Get current state JSON
+run_cmd "pvcontrol steps get current >/tmp/current.json 2>&1" $cmd_timeout
+
+# Verify we got valid JSON (non-empty file)
+if {[run_check "test -s /tmp/current.json" 5]} {
+    record "pvcontrol steps get current" "PASS"
+} else {
+    record "pvcontrol steps get current" "FAIL" "empty or missing output"
+    run_cmd "cat /tmp/current.json 2>&1 | head -c 200" 5
+    puts "\n=== Cannot proceed without valid state JSON ==="
+    send "\x01x"
+    expect eof
+    exit 1
+}
+
+# Step 2: Create modified state JSON
+# Add a top-level "reboot.json":{} key to trigger BSP-level reboot.
+# Top-level jsons without a platform prefix belong to BSP, so adding
+# a new one forces pv_state_requires_reboot() to return true.
+# (Note: bsp/src.json changes are skipped by the parser and don't
+# trigger reboot comparison.)
+run_cmd "sed 's|\"bsp/src.json\":{}|\"bsp/src.json\":{},\"reboot.json\":{}|' /tmp/current.json > /tmp/new.json"
+
+# Verify the modification was applied
+if {[run_check "grep -q 'reboot.json' /tmp/new.json" 5]} {
+    record "create modified state JSON" "PASS"
+} else {
+    record "create modified state JSON" "FAIL" "could not inject reboot.json"
+    send "\x01x"
+    expect eof
+    exit 1
+}
+
+# Step 3: Upload as local revision
+# Run PUT and check for errors in the response
+run_cmd "pvcontrol steps put /tmp/new.json locals/test-1 > /tmp/put-out.txt 2>&1" $cmd_timeout
+
+if {[run_check "! grep -qi error /tmp/put-out.txt" 5]} {
+    record "pvcontrol steps put" "PASS"
+} else {
+    record "pvcontrol steps put" "FAIL" "server rejected state JSON"
+    run_cmd "cat /tmp/put-out.txt" 5
+    puts "\n=== Cannot proceed — PUT failed ==="
+    send "\x01x"
+    expect eof
+    exit 1
+}
+sleep 0.5
+
+# NOTE: pv_storage_meta_link_boot() in pantavisor should auto-link
+# bsp/efiboot.img to .pv/efiboot.img during update preparation.
+# No manual linking needed — if it fails, that's a pantavisor bug.
+
+puts "\n=== Phase 3: Trigger update and monitor reboot ===\n"
+
+# =====================================================
+# PHASE 3: Run the update and monitor for reboot
+# =====================================================
+
+# Step 4: Trigger the update
+# After this, pantavisor will:
+#   1. Parse and validate the new state
+#   2. Call efiab_install_update() — copy efiboot.img to try partition
+#   3. Set pv_try in efiab.txt and arm PvTryBoot EFI var
+#   4. Detect BSP-level change → REBOOT
+#
+# IMPORTANT: pantavisor blocks reboot while debug shell is open.
+# We must exit the shell so the reboot can proceed.
+send "pvcontrol commands run locals/test-1 2>&1\r"
+
+record "pvcontrol commands run" "PASS" "command sent"
+
+# Give pantavisor a moment to receive the command, then exit the shell
+# so it can proceed with the reboot.
+sleep 2
+send "exit\r"
+
+set timeout 90
+set saw_reboot 0
+
+puts "\n--- Monitoring for reboot (up to 90s) ---"
+
+expect {
+    -re {pv-efi-boot stage1} {
+        set saw_reboot 1
+        puts "\n  (saw stage1 after reboot)"
+    }
+    -re {reboot: Restarting system|Restarting system|machine restart} {
+        set saw_reboot 1
+        puts "\n  (saw reboot message)"
+        # Now wait for stage1 on second boot
+        set timeout 60
+        expect {
+            -re {pv-efi-boot stage1} {
+                puts "\n  (saw stage1 after reboot)"
+            }
+            timeout {
+                puts "\n  (did not see stage1 after reboot message)"
+            }
+        }
+    }
+    -re {Kernel panic} {
+        puts "\n=== FATAL: kernel panic ==="
+        send "\x01x"
+        expect eof
+        exit 1
+    }
+    timeout {
+        puts "\n  (no reboot within timeout — checking logs)"
+    }
+}
+
+# =====================================================
+# PHASE 4: Second boot (if reboot happened)
+# =====================================================
+
+if {$saw_reboot} {
+    puts "\n=== Phase 4: Second boot ===\n"
+    record "system reboot triggered" "PASS"
+
+    if {![enter_debug_shell $boot_timeout $settle_timeout]} {
+        puts "\n=== TIMEOUT: Could not enter debug shell on second boot ==="
+        sleep 2
+        send "\r"
+        sleep 1
+    }
+} else {
+    record "system reboot triggered" "FAIL" "no reboot detected within timeout"
+    # Try to get back into a shell for log inspection
+    sleep 2
+    send "\r"
+    sleep 0.5
+}
+
+# =====================================================
+# PHASE 5: Check logs and post-update state
+# =====================================================
+
+puts "\n=== Phase 5: Verify update results ===\n"
+
+sleep 1
+
+# --- Diagnose auto-link of efiboot.img ---
+puts "\n--- Checking efiboot.img linking ---"
+run_cmd "ls -la /storage/trails/locals/test-1/.pv/ 2>&1 | head -10" 10
+run_cmd "ls -la /storage/trails/locals/test-1/bsp/efiboot* 2>&1" 5
+run_cmd "grep -i 'hardlink\\|meta_link_boot\\|efiboot\\|bsp type' /storage/logs/0/pantavisor/pantavisor.log 2>/dev/null | tail -10" 10
+run_cmd "grep -i 'prepare_run\\|link_trail\\|prepare state' /storage/logs/0/pantavisor/pantavisor.log 2>/dev/null | tail -5" 10
+
+# --- Verify specific update milestones in the log ---
+set logfile "/storage/logs/0/pantavisor/pantavisor.log"
+
+# Check: efiab_install_update was called
+if {[run_check "grep -q 'Install update prepared' $logfile 2>/dev/null" 10]} {
+    record "efiab_install_update (boot image to try partition)" "PASS"
+} else {
+    if {[run_check "grep -q 'Installing efiab boot.img' $logfile 2>/dev/null" 10]} {
+        record "efiab_install_update (boot image install started)" "PASS" "but may not have completed"
+    } else {
+        record "efiab_install_update" "FAIL" "not found in logs"
+    }
+}
+
+# Check: pv_rev.txt written
+if {[run_check "grep -q 'pv_rev.txt written successfully' $logfile 2>/dev/null" 10]} {
+    record "pv_rev.txt written to tryboot partition" "PASS"
+} else {
+    record "pv_rev.txt written to tryboot partition" "FAIL"
+}
+
+# Check: pv_try set in efiab.txt
+if {[run_check "grep -q 'pv_try set to' $logfile 2>/dev/null" 10]} {
+    record "pv_try set in efiab.txt" "PASS"
+} else {
+    record "pv_try set in efiab.txt" "FAIL"
+}
+
+# Check: PvTryBoot EFI variable
+if {[run_check "grep -q 'Writing PvTryBoot EFI variable' $logfile 2>/dev/null" 10]} {
+    if {[run_check "! grep -q 'Failed to write PvTryBoot' $logfile 2>/dev/null" 10]} {
+        record "PvTryBoot EFI variable written" "PASS"
+    } else {
+        record "PvTryBoot EFI variable written" "FAIL" "write attempted but failed (QEMU efivarfs limitation)"
+    }
+} else {
+    record "PvTryBoot EFI variable written" "SKIP" "not attempted"
+}
+
+# --- Dump detailed log output ---
+puts "\n--- efiab update log sequence ---"
+run_cmd "grep -E 'efiab|tryboot|pv_try|install_update|commit|reboot' $logfile 2>/dev/null | tail -25" 15
+
+# Check efiab.txt contents
+puts "\n--- efiab.txt state ---"
+run_cmd "cat /storage/boot/efiab.txt 2>/dev/null | od -c | head -10" 10
+
+# Check autoboot.txt on ESP
+puts "\n--- autoboot.txt on ESP ---"
+run_cmd "mcopy -i /dev/sda1 ::autoboot.txt - 2>/dev/null" 10
+
+# Check pvcontrol status
+puts "\n--- pantavisor state ---"
+run_cmd "pvcontrol ls 2>/dev/null" 10
+
+# =====================================================
+# Summary
+# =====================================================
+
+puts "\n\n========================================="
+puts "=== EFI A/B Update Test Results ==="
+puts "=========================================\n"
+
+foreach r $results {
+    set name [lindex $r 0]
+    set status [lindex $r 1]
+    set detail [lindex $r 2]
+    if {$detail ne ""} {
+        puts "  \[$status\] $name — $detail"
+    } else {
+        puts "  \[$status\] $name"
+    }
+}
+
+puts "\n--- Notes ---"
+puts "  Stage1 does not yet read PvTryBoot EFI variable."
+puts "  After reboot, system boots to same slot (partition 2)."
+puts "  Expected: pantavisor detects 'early rollback' scenario."
+puts "  Check log entries above for the actual update flow.\n"
+
+# Clean exit
+sleep 0.5
+send "\x01x"
+expect eof

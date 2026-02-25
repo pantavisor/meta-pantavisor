@@ -125,7 +125,7 @@ Verify with: `fdisk -l build/tmp-scarthgap/deploy/images/x64-efi/pantavisor-remi
 **Expected:**
 - [ ] `PV_BOOTLOADER_TYPE = 'efiab'` in config printout
 
-**Status:** FAILING — currently shows `uboot` despite cmdline having `efiab`. Needs investigation (config file override?).
+**Status:** FIXED — `pantavisor.config` was setting `PV_BOOTLOADER_TYPE=uboot` (default from upstream), now overridden to `efiab` in meta-x64efi layer. The kernel cmdline format was also incorrect (`PV_` vs `pv_` prefix).
 
 ### TC-5: Containers start (pv-alpine-connman, pv-pvr-sdk)
 
@@ -146,25 +146,60 @@ Verify with: `fdisk -l build/tmp-scarthgap/deploy/images/x64-efi/pantavisor-remi
 - [ ] Pressing ENTER drops to ash shell
 - [ ] Can run `lsblk`, `mount`, `cat /proc/cmdline`
 
+### TC-7: EFI A/B update cycle via pvcontrol
+
+**Steps:** Run the automated update test:
+
+```bash
+expect scripts/test-update-efi.exp
+```
+
+The script:
+1. Boots QEMU and enters debug shell
+2. Gets current state JSON via `pvcontrol steps get current`
+3. Creates modified state JSON (adds `test.json` key to trigger BSP-level diff)
+4. Uploads as `locals/test-1` via `pvcontrol steps put`
+5. Triggers update via `pvcontrol commands run locals/test-1`
+6. Monitors serial output for reboot
+7. After second boot, enters debug shell and checks logs
+
+**Expected:**
+- [ ] `pvcontrol steps get current` returns valid JSON
+- [ ] `pvcontrol steps put` succeeds
+- [ ] `pvcontrol commands run` triggers update processing
+- [ ] Logs show `efiab_install_update` / `Installing efiab boot.img`
+- [ ] Logs show `pv_try` set and `PvTryBoot` EFI variable written
+- [ ] System reboots (stage1 banner reappears)
+- [ ] After reboot, logs show boot state validation
+
+**Known limitation:** Stage1 does not yet read `PvTryBoot` EFI variable
+(see EFIPLAN.md "Not yet implemented"). After reboot, stage1 boots from
+the same partition (boot_a). Pantavisor detects this as an "early rollback"
+scenario. Full tryboot integration requires updating stage1 to honor
+`PvTryBoot` and the `[tryboot]` section of `autoboot.txt`.
+
 ## Kernel cmdline
 
 Current (`recipes-bsp/pv-uki/files/cmdline.txt`):
 ```
-root=/dev/sda4 ro console=ttyS0,115200 PV_BOOTLOADER_TYPE=efiab PV_LOG_SERVER_OUTPUTS=stdout_direct,filetree
+root=/dev/sda4 ro console=ttyS0,115200 pv_PV_BOOTLOADER_TYPE=efiab pv_PV_LOG_SERVER_OUTPUTS=filetree
 ```
 
 | Parameter | Purpose |
 |-----------|---------|
 | `root=/dev/sda4` | Root partition (pvdata) |
 | `console=ttyS0,115200` | Serial console for QEMU |
-| `PV_BOOTLOADER_TYPE=efiab` | EFI A/B boot scheme |
-| `PV_LOG_SERVER_OUTPUTS=stdout_direct,filetree` | Verbose pantavisor logging |
+| `pv_PV_BOOTLOADER_TYPE=efiab` | EFI A/B boot scheme (overrides pantavisor.config) |
+| `pv_PV_LOG_SERVER_OUTPUTS=filetree` | Pantavisor logging output |
 
-For production, remove `PV_LOG_SERVER_OUTPUTS` and add `quiet`.
+**Note:** Pantavisor cmdline config uses lowercase `pv_` prefix (parsed by `config_parse_cmdline`).
+The primary config is in `pantavisor.config` (`PV_BOOTLOADER_TYPE=efiab`); cmdline is an override mechanism.
+
+For production, remove `pv_PV_LOG_SERVER_OUTPUTS` and add `quiet`.
 
 ## Known Issues
 
-1. **PV_BOOTLOADER_TYPE shows uboot**: Despite cmdline having `efiab`, pantavisor config shows `uboot (env)`. A config file in the initramfs or rootfs may be overriding the cmdline value.
+1. **PV_BOOTLOADER_TYPE shows uboot** (FIXED): `pantavisor.config` had `PV_BOOTLOADER_TYPE=uboot` (upstream default). Fixed by overriding to `efiab` in the meta-x64efi layer config. The cmdline format was also wrong — pantavisor expects lowercase `pv_` prefix, not uppercase `PV_`.
 
 2. **cgroup warnings**: `Could not mount cpu/hugetlb/net_cls/net_prio cgroup` — harmless in QEMU, kernel cgroup v1/v2 mismatch.
 
