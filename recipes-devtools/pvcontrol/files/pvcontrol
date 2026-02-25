@@ -23,7 +23,7 @@ if command -v curl >/dev/null 2>&1; then
 elif command -v pvcurl >/dev/null 2>&1; then
 	# Use pvcurl as fallback (netcat-based curl replacement)
 	CURL_CMD=pvcurl
-	CURL="pvcurl -s -w '\n%{http_code}'"
+	CURL="pvcurl -s -w \\n%{http_code}"
 	CURL_RAW="pvcurl"
 else
 	echo "ERROR: Neither curl nor pvcurl found" >&2
@@ -712,7 +712,8 @@ show_output() {
 	http_code=`echo "$response" | tail -n 1`
 	content=`echo "$response" | head -n -1`
 
-	if ! [ "$http_code" = "200" ]; then		
+	if ! [ "$http_code" = "200" ]; then
+		# Map well-known error responses to specific exit codes
 		code=255
 		case "$content" in
 			"{\"Error\":\"Not enough disk space available\"}")
@@ -725,11 +726,22 @@ show_output() {
 				code=70
 				;;
 			*)
+				# Map HTTP status codes to exit codes
+				case "$http_code" in
+					400) code=40 ;;  # Bad request
+					403) code=43 ;;  # Forbidden
+					404) code=44 ;;  # Not found
+					409) code=49 ;;  # Conflict (update ongoing / busy)
+					412) code=42 ;;  # Precondition failed (system not ready)
+					500) code=50 ;;  # Internal server error
+					503) code=53 ;;  # Service unavailable (not fully up)
+				esac
+				;;
 		esac
-		echo "$content" 1>&2
+		echo "ERROR (HTTP $http_code): $content" 1>&2
 		exit $code
 	fi
-	
+
 	echo "$content"
 	exit 0
 }
