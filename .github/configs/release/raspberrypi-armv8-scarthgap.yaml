@@ -11,7 +11,7 @@ repos:
         path: layers/meta-raspberrypi
         url: https://github.com/agherzan/meta-raspberrypi
     meta-qt5:
-        commit: 9ae2fe2696b10f5dc4253c4f467dc388139860bd
+        commit: a0a008a9cef4c24c6ad31d2d3b37995533eed2ea
         path: layers/meta-qt5
         url: https://github.com/meta-qt5/meta-qt5/
     poky:
@@ -27,14 +27,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 72983ac391008ebceb45edc7a8f0f6d5f4fe715c
+        commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
     meta-pantavisor:
     meta-virtualization:
-        commit: f92518e20530edfebca45e4170e11460949a5303
+        commit: 78abd77b8695705e6e55266745c838bb665486de
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2759d8870ea387b76c902070bed8a6649ff47b56
+        commit: ec0469748be4159fb83fb0fa0148d786484c88cf
         layers:
             meta-filesystems:
             meta-networking:
@@ -65,6 +65,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
+    lxc-next: |
+        PANTAVISOR_FEATURES:append = " lxc-next"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
