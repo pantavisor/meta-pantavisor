@@ -51,9 +51,20 @@ jobs:
           done
           find build/tmp-*/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
 
+          find build/tmp-*/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
+          find build/tmp-*/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
+
           find build/tmp-*/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
           ls -l .
 
+      - name: Archive AppEngine artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: appengine-${{ inputs.machine_name }}
+          path: |
+            test.docker.sh
+            pantavisor-appengine*-docker.tar
+          if-no-files-found: ignore
 
       - name: Archive wic artifacts
         uses: actions/upload-artifact@v4
@@ -84,11 +95,11 @@ jobs:
           name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
             *pv_teziimg.tar.xz
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
       - name: Archive sdk tar artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sdk-artifact-${{ inputs.machine_name }}
           path: panta*.sh
-          if-no-files-found: warn
+          if-no-files-found: ignore

@@ -1,0 +1,73 @@
+name: "MAN: docker-x86_64-scarthgap-appengine-tests"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-docker-x86_64-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: pantavisor-appengine-distro-*.tar.gz
+      sdk: 0
+    secrets: inherit
+
+  test-appengine:
+    needs: build-docker-x86_64-scarthgap
+    runs-on: ["self-hosted"]
+    steps:
+      - name: Download AppEngine artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: appengine-docker-x86_64-scarthgap
+          path: .
+
+      - name: Clone pvtests-local
+        run: |
+          rm -rf local
+          git clone https://gitlab.com/pantacor/pvtests-local local
+
+      - name: Load Docker images
+        run: |
+          chmod +x test.docker.sh
+          # Cleanup before loading
+          docker ps -aq -f "name=pantavisor-" | xargs -r docker rm -f || true
+          docker images -q -f "reference=pantavisor-appengine*" | xargs -r docker rmi -f || true
+          
+          # Set paths for loading
+          export APPENGINE_PATH=pantavisor-appengine-docker.tar
+          export NETSIM_PATH=pantavisor-appengine-netsim-docker.tar
+          export TESTER_PATH=pantavisor-appengine-tester-docker.tar
+          
+          ./test.docker.sh install-docker
+
+      - name: Run AppEngine tests
+        run: |
+          set -e
+          LOG_FILE="appengine_tests.log"
+          echo "=== AppEngine Test Run started at $(date) ===" > $LOG_FILE
+          
+          # Find all numerical directories in local/data and sort them
+          TESTS=$(find local/data -maxdepth 1 -type d -regex '.*/[0-9]+' | sed 's#.*/##' | sort -n)
+          
+          for i in $TESTS; do
+            # Extract description from test.json
+            DESC=$(jq -r '.description // "No description provided"' "local/data/$i/test.json")
+            
+            echo "----------------------------------------------------------------------" | tee -a $LOG_FILE
+            echo "RUNNING TEST local:$i: $DESC" | tee -a $LOG_FILE
+            echo "----------------------------------------------------------------------" | tee -a $LOG_FILE
+            
+            # Run with verbose flag and capture all output
+            ./test.docker.sh -v run local:$i 2>&1 | tee -a $LOG_FILE
+          done
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appengine-test-logs
+          path: appengine_tests.log
