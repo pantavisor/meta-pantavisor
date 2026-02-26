@@ -31,7 +31,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 96e8e656a22e05011a7d11746c420b2b9201a8d4
+        commit: 4311e30fa138cbeec3620516cf9cd858cd50a5e6
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
     poky:
@@ -50,7 +50,7 @@ repos:
         commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
     meta-pantavisor:
     meta-virtualization:
-        commit: 78abd77b8695705e6e55266745c838bb665486de
+        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
