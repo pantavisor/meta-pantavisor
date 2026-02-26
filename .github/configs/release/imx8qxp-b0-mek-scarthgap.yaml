@@ -60,7 +60,7 @@ repos:
         commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
     meta-pantavisor:
     meta-virtualization:
-        commit: 78abd77b8695705e6e55266745c838bb665486de
+        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
         path: layers/meta-virtualization
         url: git://git.yoctoproject.org/meta-virtualization
 local_conf_header:

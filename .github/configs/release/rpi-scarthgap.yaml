@@ -47,6 +47,14 @@ local_conf_header:
         LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
         RPI_USE_U_BOOT = "1"
         ENABLE_UART = "1"
+    multi: |
+        BBMULTICONFIG = "rpi-kernel rpi-kernel7 rpi-kernel7l rpi-kernel8 rpi-kernel_2712"
+    rpi-tryboot-system: |
+        PANTAVISOR_FEATURES:append = " rpi-tryboot"
+    rpi-pagesize-compat: |
+        # RPi 5 kernel (kernel_2712) uses 16K page size. Align all ELF segments
+        # to 64K so the same initramfs binaries work on 4K, 16K and 64K kernels.
+        TARGET_LDFLAGS:append = " -Wl,-z,max-page-size=65536"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
@@ -65,13 +73,11 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
-    lxc-next: |
-        PANTAVISOR_FEATURES:append = " lxc-next"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: raspberrypi-armv8
+machine: raspberrypi
 defaults:
     repos:
         branch: scarthgap
