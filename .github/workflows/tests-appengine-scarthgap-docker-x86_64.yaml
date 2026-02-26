@@ -36,31 +36,34 @@ jobs:
           # Cleanup before loading
           docker ps -aq -f "name=pantavisor-" | xargs -r docker rm -f || true
           docker images -q -f "reference=pantavisor-appengine*" | xargs -r docker rmi -f || true
-          
+
           # Set paths for loading
           export APPENGINE_PATH=pantavisor-appengine-docker.tar
           export NETSIM_PATH=pantavisor-appengine-netsim-docker.tar
           export TESTER_PATH=pantavisor-appengine-tester-docker.tar
-          
+
           ./test.docker.sh install-docker
 
       - name: Run AppEngine tests
         run: |
+
+          apt install jq
+
           set -e
           LOG_FILE="appengine_tests.log"
           echo "=== AppEngine Test Run started at $(date) ===" > $LOG_FILE
-          
+
           # Find all numerical directories in local/data and sort them
           TESTS=$(find local/data -maxdepth 1 -type d -regex '.*/[0-9]+' | sed 's#.*/##' | sort -n)
-          
+
           for i in $TESTS; do
             # Extract description from test.json
             DESC=$(jq -r '.description // "No description provided"' "local/data/$i/test.json")
-            
+
             echo "----------------------------------------------------------------------" | tee -a $LOG_FILE
             echo "RUNNING TEST local:$i: $DESC" | tee -a $LOG_FILE
             echo "----------------------------------------------------------------------" | tee -a $LOG_FILE
-            
+
             # Run with verbose flag and capture all output
             ./test.docker.sh -v run local:$i 2>&1 | tee -a $LOG_FILE
           done
