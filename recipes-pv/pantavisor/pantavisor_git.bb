@@ -25,17 +25,17 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/pvcontrol-pvcurl"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "a841a9a3262fee28622212ddba3d56f6d9ebc76f"
+SRCREV = "30de240c655ae82fa99e9f96dacdb89a0a671fb9"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest"
+PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -45,6 +45,9 @@ FILES:${PN} += " /init"
 
 # pvtx packages
 FILES:${PN}-pvtx += " ${bindir}/pvtx"
+RPROVIDES:${PN}-pvtx += "pvcontrol-pvtx"
+RREPLACES:${PN}-pvtx += "pvcontrol-pvtx"
+RCONFLICTS:${PN}-pvtx += "pvcontrol-pvtx"
 FILES:${PN}-pvtx-static += " ${bindir}/pvtx-static"
 
 FILES:${PN}-config += "/etc/pantavisor-appengine.config"
@@ -54,6 +57,19 @@ FILES:${PN}-config += "/etc/resolv.conf"
 
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+
+# pvcontrol and pvcurl packages (replace standalone recipes)
+FILES:${PN}-pvcontrol += "${bindir}/pvcontrol"
+RDEPENDS:${PN}-pvcontrol += "${PN}-pvcurl json-sh"
+RPROVIDES:${PN}-pvcontrol += "pvcontrol"
+RREPLACES:${PN}-pvcontrol += "pvcontrol"
+RCONFLICTS:${PN}-pvcontrol += "pvcontrol"
+
+FILES:${PN}-pvcurl += "${bindir}/pvcurl"
+RDEPENDS:${PN}-pvcurl += "netcat-openbsd"
+RPROVIDES:${PN}-pvcurl += "pvcurl"
+RREPLACES:${PN}-pvcurl += "pvcurl"
+RCONFLICTS:${PN}-pvcurl += "pvcurl"
 
 inherit cmake gitpkgv
 
