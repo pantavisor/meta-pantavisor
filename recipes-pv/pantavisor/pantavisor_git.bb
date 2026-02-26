@@ -25,13 +25,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "feature/pvcontrol-pvcurl"
+PANTAVISOR_BRANCH ??= "master"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "30de240c655ae82fa99e9f96dacdb89a0a671fb9"
+SRCREV = "a25a29681cbc60c6b719b93d956e8430a5b994e9"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
