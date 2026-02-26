@@ -23,7 +23,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:.github/configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
 			"workflows": ["manual", "tag", "onpush"],
 			"sdk": 1
@@ -40,7 +40,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:.github/configs/build-appengine-distro.yaml",
+			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:.github/configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-x86_64",
