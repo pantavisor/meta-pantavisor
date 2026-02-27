@@ -17,7 +17,7 @@ This layer provides:
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow - building, testing, iterating on pantavisor and containers |
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLANS.md](TESTPLANS.md) | Executable test plans for appengine validation (IPAM, xconnect, DRM) |
-| [GEMINI.md](GEMINI.md) | Branch-specific implementation notes and upstream changes |
+| [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Quick Reference
 
@@ -127,6 +127,14 @@ Key pantavisor components:
 - `plugins/` - Container runtime plugins (LXC, etc.)
 
 See `build/workspace/sources/pantavisor/CLAUDE.md` for detailed pantavisor architecture.
+
+## PANTAVISOR_FEATURES
+
+Default features are set in `classes/pvbase.bbclass` via `??=` (weak default). Features can be added via `PANTAVISOR_FEATURES:append` in distro configs, KAS configs, or `local.conf`.
+
+**Important**: Never use `PANTAVISOR_FEATURES +=` in distro includes — it clobbers the `??=` defaults from `pvbase.bbclass`. Always use `:append` or `:remove` operators.
+
+Default features: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect`
 
 ## pv-xconnect Service Mesh
 

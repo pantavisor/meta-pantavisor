@@ -18,8 +18,9 @@ The following features can be enabled via `Kconfig` (using `kas-container menu`)
 
 ### xconnect
 Adds `pv-xconnect` (service mesh mediator) support to Pantavisor.
-- **Kconfig**: `FEATURE_XCONNECT` (Default: `n`)
+- **Kconfig**: `FEATURE_XCONNECT`
 - **PANTAVISOR_FEATURES**: `xconnect`
+- **Default**: Enabled (included in `pvbase.bbclass` defaults)
 
 ## Development with `devtool` and `kas-container`
 
