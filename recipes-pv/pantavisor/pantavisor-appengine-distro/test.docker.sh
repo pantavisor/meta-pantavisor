@@ -173,15 +173,24 @@ wait_for_status() {
     return 1
 }
 
-setup_network0() {
+generate_unique_id() {
+	local group=$1
+	local number=$2
+	echo "${group}_${number}"
+}
 
-	if ! test -n "`docker network inspect test-appengine-net >/dev/null 2>&1 | jq -r '.[].Options | select ( .["com.docker.network.container_iface_prefix"] == "lxcbrdock")'`"; then
-		docker network remove test-appengine-net >/dev/null 2>&1
-		docker network create --driver=bridge --opt com.docker.network.container_iface_prefix=lxcbrdock test-appengine-net >/dev/null
+setup_network0() {
+	local unique_id=$1
+
+	if ! test -n "`docker network inspect test-appengine-net-${unique_id} >/dev/null 2>&1 | jq -r '.[].Options | select ( .["com.docker.network.container_iface_prefix"] == "lxcbrdock")'`"; then
+		docker network remove test-appengine-net-${unique_id} >/dev/null 2>&1
+		docker network create --driver=bridge --opt com.docker.network.container_iface_prefix=lxcbrdock test-appengine-net-${unique_id} >/dev/null
 	fi
 }
 
 setup_network() {
+	local unique_id=$1
+
 	sleep 1
 	sudo -n modprobe -r mac80211_hwsim
 
@@ -190,22 +199,22 @@ setup_network() {
 	local after_phy=$(iw dev | grep -oP '(?<=phy#)\d+')
 	local new_phys=$(comm -13 <(echo "$before_phy" | sort) <(echo "$after_phy" | sort))
 
-	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-netsim" 0 5 > /dev/null 2>&1
+	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-netsim-${unique_id}" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: pantavisor-netsim not responding"
+		echo "Error: pantavisor-netsim-${unique_id} not responding"
 		exit 1
 	fi
-	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-netsim)
+	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-netsim-${unique_id})
 
 	local ap_phy=$(echo "$new_phys" | sed -n '1p')
 	sudo -n iw phy "phy$ap_phy" set netns "$pid"
 
-	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-tester" 0 5 > /dev/null 2>&1
+	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-tester-${unique_id}" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: pantavisor-tester not responding"
+		echo "Error: pantavisor-tester-${unique_id} not responding"
 		exit 1
 	fi
-	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-tester)
+	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-tester-${unique_id})
 
 	local cl_phy=$(echo "$new_phys" | sed -n '2p')
 	sudo -n iw phy "phy$cl_phy" set netns "$pid"
@@ -241,6 +250,11 @@ exec_test() {
 
 	IFS="/" 
 	set -- $json_path
+	local group=$2
+	local number=$4
+	local unique_id=$(generate_unique_id "$group" "$number")
+	local port=$(echo "$unique_id" | cksum | awk '{print $1 % 50000 + 10000}')
+
 	mkdir -p "$work_path/storage/$2/$4/"
 	cd "$work_path/storage/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
 
@@ -249,27 +263,25 @@ exec_test() {
 
 	start=$(date +%s)
 
-	setup_network0
+	setup_network0 "$unique_id"
 
 	if [ "$netsim" = "true" ]; then
 
 		docker run \
-			--name "pantavisor-netsim" \
-			--net=test-appengine-net \
+			--name "pantavisor-netsim-${unique_id}" \
+			--net=test-appengine-net-${unique_id} \
 			-d \
 			-e VERBOSE="$verbose" \
 			--rm \
 			--cap-add NET_ADMIN \
 			pantavisor-appengine-netsim > /dev/null
 
-		setup_network &
+		setup_network "$unique_id" &
 	fi
- 	# for multiple instsances --name would need to be a name unique per instance
-	# TEST_PATH results folder would need to be instance namespaced as well to not overwrite each other
-	# for sudo maybe unused_lo creation and assignment can go inside docker with CAPs
+
 	docker run \
-		--net=test-appengine-net \
-		--name "pantavisor-tester" \
+		--net=test-appengine-net-${unique_id} \
+		--name "pantavisor-tester-${unique_id}" \
 		-e TEST_PATH="/work/$test_path" \
 		-e INTERACTIVE="$interactive" \
 		-e MANUAL="$manual" \
@@ -299,21 +311,25 @@ exec_test() {
 		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
-		-p 8222:8222 \
+		-p ${port}:8222 \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
 		pantavisor-appengine-tester
 	res=$?
 
+	sudo losetup -d "$unused_lo" 2>/dev/null
+
 	sudo -n chmod -R a+rx "$work_path/storage/$2/$4/logs"
 
 	if [ "$netsim" = "true" ]; then
-		docker stop "pantavisor-netsim" > /dev/null 2>&1
-		docker wait "pantavisor-netsim" > /dev/null 2>&1
+		docker stop "pantavisor-netsim-${unique_id}" > /dev/null 2>&1
+		docker wait "pantavisor-netsim-${unique_id}" > /dev/null 2>&1
 
 		teardown_network
 	fi
+
+	docker network remove "test-appengine-net-${unique_id}" >/dev/null 2>&1
 
 	end=$(date +%s)
 	runtime=$(echo "$end - $start" | bc)
