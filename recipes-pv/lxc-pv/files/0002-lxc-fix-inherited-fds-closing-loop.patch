@@ -1,0 +1,41 @@
+From 8c00aab6c972eafa091dbd9db0b8a31c678e4eaa Mon Sep 17 00:00:00 2001
+From: kas User <kas@example.com>
+Date: Thu, 26 Feb 2026 15:44:30 +0000
+Subject: [PATCH] lxc: fix inherited fds closing loop
+
+---
+ src/lxc/start.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/lxc/start.c b/src/lxc/start.c
+index c601cee2c..3ad17fc95 100644
+--- a/src/lxc/start.c
++++ b/src/lxc/start.c
+@@ -214,7 +214,7 @@ int lxc_check_inherited(struct lxc_conf *conf, bool closeall,
+ 			int *fds_to_ignore, size_t len_fds)
+ {
+ 	struct dirent *direntp;
+-	int fd, fddir, ns;
++	int fd, fddir, ns, prev_fd = -1;
+ 	DIR *dir;
+ 	bool ignore_ns_fd;
+ 
+@@ -250,6 +250,10 @@ restart:
+ 
+ 		for (i = 0; i < len_fds; i++)
+ 			if (fds_to_ignore[i] == fd)
++		if (prev_fd == fd) {
++			WARN("Tried already to close inherited fd %d. Ignoring...", fd);
++			break;
++		}
+ 				break;
+ 
+ 		if (fd == fddir || fd == lxc_log_fd || fd == lxc_log_out_fd ||
+@@ -294,6 +298,7 @@ restart:
+ 
+ #endif
+ 		if (closeall) {
++			prev_fd = fd;
+ 			close(fd);
+ 			closedir(dir);
+ 			INFO("Closed inherited fd %d", fd);
