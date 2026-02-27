@@ -19,6 +19,9 @@ jobs:
     needs: build-docker-x86_64-scarthgap
     runs-on: ["self-hosted"]
     steps:
+      - name: Download dependencies
+        run: apt install jq -y
+
       - name: Download AppEngine artifacts
         uses: actions/download-artifact@v4
         with:
