@@ -21,6 +21,8 @@ on:
 
 jobs:
   build:
+    env:
+     TMPDIR : "tmp-scarthgap"
     runs-on: ["self-hosted"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
@@ -29,12 +31,14 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+
       - name: setup workspace
         run: |
           chown -R builder:builder $RUNNER_WORKSPACE
           chown -R builder:builder /__w
           mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
           su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+
       - name: build
         run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
       - name: build with sdk
@@ -42,21 +46,23 @@ jobs:
            if [ "${{ inputs.sdk }}" = 1 ]; then
            su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
            fi
-      - name: copy files
+
+      - name: prepare files for distribution
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
-          BUILD_BASE_DIR=$(echo build/tmp-*/deploy/images/*)
+          BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
           for pattern in ${{ inputs.output }}; do
             find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \;
           done
-          find build/tmp-*/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
 
-          find build/tmp-*/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
-          find build/tmp-*/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
 
-          find build/tmp-*/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
           ls -l .
 
+## File distribution
       - name: Archive AppEngine artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -72,6 +78,7 @@ jobs:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
              ${{ inputs.output }}
+          if-no-files-found: warn
 
       - name: Archive all pvrexport artifacts
         uses: actions/upload-artifact@v4

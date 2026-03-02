@@ -21,6 +21,8 @@ on:
 
 jobs:
   build:
+    env:
+     TMPDIR : "tmp-scarthgap"
     runs-on: ["self-hosted"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
@@ -47,7 +49,7 @@ jobs:
         run: |
          chmod -R 777 $GITHUB_WORKSPACE
 
-         BUILD_BASE_DIR=$(echo build/tmp-*/deploy/images/*)
+         BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
 
          mkdir -p images
          for pattern in ${{ inputs.output }}; do
@@ -58,7 +60,7 @@ jobs:
          find "${BUILD_BASE_DIR}" -name "*pvrexport.tgz" -exec cp {} pvexports \; 2>/dev/null || true
 
 
-         BUILD_SDK_DIR=$(ls -d build/tmp-*/deploy/sdk/ 2>/dev/null | head -n 1)
+         BUILD_SDK_DIR=$(ls -d build/${{ env.TMPDIR }}/deploy/sdk/ 2>/dev/null | head -n 1)
 
          if [ -n "$BUILD_SDK_DIR" ] && [ -d "$BUILD_SDK_DIR" ]; then
             FILES=$(find "$BUILD_SDK_DIR" -name "panta*.sh" 2>/dev/null)
