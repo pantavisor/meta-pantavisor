@@ -731,8 +731,8 @@ The pantavisor xconnect features are developed in stacked branches:
 | `feature/ingress` | + IPAM, auto-recovery, ingress TCP/HTTP | PR open |
 
 When testing, ensure you're on the correct branch for the features you need:
-- **xconnect-landing**: Tests 1-4 in TESTPLANS.md (unix, dbus, drm, daemon API)
-- **ingress**: IPAM tests, auto-recovery, ingress tests (in that branch's TESTPLANS.md)
+- xconnect service mesh: TESTPLAN-xconnect.md (unix, dbus, drm)
+- pv-ctrl API: TESTPLAN-pvctrl.md (all endpoints including daemons, graph)
 
 ## Tips
 

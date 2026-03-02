@@ -8,7 +8,8 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 |----------|-------------|
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow - building, testing, iterating on pantavisor and containers |
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
-| [TESTPLANS.md](TESTPLANS.md) | Executable test plans for appengine validation (IPAM, xconnect, DRM) |
+| [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
+| [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
 | [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
