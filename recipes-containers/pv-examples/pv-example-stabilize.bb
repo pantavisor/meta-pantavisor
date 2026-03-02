@@ -25,3 +25,4 @@ FILES:${PN} += "${bindir}/pv-stabilize"
 IMAGE_INSTALL:append = " busybox"
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-stabilize"
+PVR_APP_ADD_EXTRA_ARGS += "--volume=lxc-overlay:revision"
