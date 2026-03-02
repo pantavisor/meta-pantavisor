@@ -26,13 +26,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/auto-recovery"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "c02fa50759e24656490a73c1b79f2abd7455d64d"
+SRCREV = "27e177c62ee746c61b632d7fb2f36387143c5b87"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
