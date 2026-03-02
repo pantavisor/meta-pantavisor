@@ -1,0 +1,10 @@
+{
+    "PV_AUTO_RECOVERY": {
+        "policy": "on-failure",
+        "max_retries": 5,
+        "retry_delay": 5,
+        "backoff_factor": 2.0,
+        "reset_window": 60
+    },
+    "PV_RESTART_POLICY": "container"
+}
