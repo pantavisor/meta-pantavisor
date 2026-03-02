@@ -1,0 +1,34 @@
+{
+    "network": {
+        "pools": {
+            "internal": {
+                "type": "bridge",
+                "bridge": "br0",
+                "subnet": "10.0.4.0/24",
+                "gateway": "10.0.4.1",
+                "nat": true
+            }
+        }
+    },
+    "ingress": [
+        {
+            "name": "nginx-http-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:80",
+            "provider": "example-nginx-ingress",
+            "service": "nginx-http"
+        },
+        {
+            "name": "nginx-https-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:443",
+            "provider": "example-nginx-ingress",
+            "service": "nginx-https"
+        }
+    ],
+    "groups": [
+        { "name": "root", "restart_policy": "system", "status_goal": "STARTED" },
+        { "name": "platform", "restart_policy": "system", "status_goal": "STARTED" },
+        { "name": "app", "restart_policy": "container", "status_goal": "STARTED" }
+    ]
+}

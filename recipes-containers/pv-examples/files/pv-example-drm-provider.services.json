@@ -1,0 +1,7 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "drm-master", "type": "drm", "socket": "/dev/dri/card0"},
+    {"name": "drm-render", "type": "drm", "socket": "/dev/dri/renderD128"}
+  ]
+}

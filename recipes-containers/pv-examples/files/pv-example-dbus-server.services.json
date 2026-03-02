@@ -1,0 +1,6 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "system-bus", "type": "dbus", "socket": "/run/dbus/system_bus_socket"}
+  ]
+}
