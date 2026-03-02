@@ -2,8 +2,9 @@
 
 Comprehensive test plan for the pv-ctrl REST API and `pvcontrol` CLI wrapper.
 
-**Branch**: `feature/xconnect-landing`
 **Scope**: All pv-ctrl endpoints exposed via Unix socket at `/run/pantavisor/pv/pv-ctrl`
+
+For xconnect container-to-container tests (unix, dbus, drm), see [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md).
 
 ---
 
@@ -463,11 +464,12 @@ pvctl objects put /tmp/test-dup.txt $SHA
 ## Test 17: Daemons List
 
 **Endpoint**: `GET /daemons`
+**pvcontrol**: `pvcontrol daemons ls`
 
 ### Execute
 
 ```bash
-pvc http://localhost/daemons | jq .
+pvctl daemons ls
 ```
 
 ### Expected
@@ -481,22 +483,20 @@ pvc http://localhost/daemons | jq .
 ## Test 18: Daemon Stop
 
 **Endpoint**: `PUT /daemons/{name}` with `{"action":"stop"}`
+**pvcontrol**: `pvcontrol daemons stop <name>`
 
 ### Execute
 
 ```bash
 # Verify pv-xconnect is running
-docker exec pva-test ps aux | grep pv-xconnect | grep -v grep
+pvctl daemons ls
 
 # Stop it
-pvc -X PUT --data '{"action":"stop"}' http://localhost/daemons/pv-xconnect
+pvctl daemons stop pv-xconnect
 
 # Verify stopped
 sleep 2
-docker exec pva-test ps aux | grep pv-xconnect | grep -v grep
-
-# Check API reflects stopped state
-pvc http://localhost/daemons | jq '.[] | select(.name=="pv-xconnect")'
+pvctl daemons ls
 ```
 
 ### Expected
@@ -513,19 +513,17 @@ pvc http://localhost/daemons | jq '.[] | select(.name=="pv-xconnect")'
 ## Test 19: Daemon Start
 
 **Endpoint**: `PUT /daemons/{name}` with `{"action":"start"}`
+**pvcontrol**: `pvcontrol daemons start <name>`
 
 ### Execute
 
 ```bash
 # Start pv-xconnect (after Test 18 stopped it)
-pvc -X PUT --data '{"action":"start"}' http://localhost/daemons/pv-xconnect
+pvctl daemons start pv-xconnect
 
 # Verify running
 sleep 2
-docker exec pva-test ps aux | grep pv-xconnect | grep -v grep
-
-# Check API reflects running state
-pvc http://localhost/daemons | jq '.[] | select(.name=="pv-xconnect")'
+pvctl daemons ls
 ```
 
 ### Expected
@@ -541,11 +539,12 @@ pvc http://localhost/daemons | jq '.[] | select(.name=="pv-xconnect")'
 ## Test 20: Daemon Stop/Start - Non-Existent Daemon
 
 **Endpoint**: `PUT /daemons/{name}`
+**pvcontrol**: `pvcontrol daemons stop <name>`
 
 ### Execute
 
 ```bash
-pvc -X PUT --data '{"action":"stop"}' http://localhost/daemons/nonexistent-daemon
+pvctl daemons stop nonexistent-daemon
 ```
 
 ### Expected
@@ -557,11 +556,12 @@ pvc -X PUT --data '{"action":"stop"}' http://localhost/daemons/nonexistent-daemo
 ## Test 21: XConnect Graph
 
 **Endpoint**: `GET /xconnect-graph`
+**pvcontrol**: `pvcontrol graph ls`
 
 ### Execute
 
 ```bash
-pvc http://localhost/xconnect-graph | jq .
+pvctl graph ls
 ```
 
 ### Expected
@@ -820,11 +820,11 @@ pvctl cmd disable-ssh
 | `/drivers/{name}/load` | PUT | yes | (raw pvcurl) |
 | `/drivers/unload` | PUT | yes | (raw pvcurl) |
 | `/drivers/{name}/unload` | PUT | yes | (raw pvcurl) |
-| `/daemons` | GET | yes | (raw pvcurl) |
-| `/daemons/{name}` | PUT | yes | (raw pvcurl) |
+| `/daemons` | GET | yes | `pvcontrol daemons ls` |
+| `/daemons/{name}` | PUT | yes | `pvcontrol daemons start/stop/restart` |
 | `/signal` | POST | **no** | `pvcontrol signal ready/alive` |
 | `/commands` | POST | yes | `pvcontrol cmd <subcommand>` |
-| `/xconnect-graph` | GET | yes | (raw pvcurl) |
+| `/xconnect-graph` | GET | yes | `pvcontrol graph ls` |
 
 ---
 
