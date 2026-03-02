@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "raw-unix",
+            "target": "/run/pv/services/raw-unix.sock"
+        }
+    ]
+}

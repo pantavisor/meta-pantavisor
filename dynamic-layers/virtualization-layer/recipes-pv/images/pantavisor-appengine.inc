@@ -17,7 +17,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	iw \
 	util-linux \
 	pantavisor-pvtx \
-	pvcontrol \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \
 	${VIRTUAL-RUNTIME_pantavisor_config} \
 "
 
@@ -41,4 +41,3 @@ do_install_scripts() {
 OCI_IMAGE_ENTRYPOINT_ARGS = "/usr/bin/pv-appengine"
 
 ROOTFS_POSTPROCESS_COMMAND += "do_install_scripts"
-

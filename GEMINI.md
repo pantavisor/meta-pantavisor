@@ -10,7 +10,6 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
 | [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
-| [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
 
@@ -59,16 +58,23 @@ bitbake pantavisor-bsp
 # Load docker image
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 
-# Run appengine (interactive mode)
+# Setup
+docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
+mkdir -p pvtx.d && rm -f pvtx.d/*.pvrexport.tgz
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/*.pvrexport.tgz pvtx.d/
+
+# Run (interactive mode)
 docker run --name pva-test -d --privileged \
     -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
     -v storage-test:/var/pantavisor/storage \
     --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
 
-# Start pantavisor
+# Start and wait for ready
 docker exec pva-test sh -c 'pv-appengine &'
+sleep 25
 
-# Check status
+# Verify
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo
 docker exec pva-test lxc-ls -f
 ```
 
@@ -76,6 +82,18 @@ docker exec pva-test lxc-ls -f
 - Delete the storage volume to retrigger pvtx.d processing: `docker volume rm storage-test`
 - Alternatively, remove the `.pvtx-done` marker: `docker exec pva-test rm /var/pantavisor/storage/.pvtx-done`
 - The pvtx.d scripts only run once per storage volume (when `.pvtx-done` doesn't exist)
+
+### API Testing with pvcontrol
+
+```bash
+# pvcontrol wraps pvcurl for common operations
+docker exec pva-test pvcontrol containers ls
+docker exec pva-test pvcontrol graph ls
+docker exec pva-test pvcontrol daemons ls
+
+# For raw API access, use pvcurl (not curl)
+docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo
+```
 
 ## Architecture
 
@@ -144,9 +162,25 @@ Controls optional Pantavisor components (defined in `pvbase.bbclass`):
 - `squash-lz4`, `squash-zstd` - Compression options
 - `rpi-tryboot` - Raspberry Pi A/B boot partition support (see below)
 
-**Important**: Never use `PANTAVISOR_FEATURES +=` in distro includes — it clobbers the `??=` defaults from `pvbase.bbclass`. Always use `:append` or `:remove` operators.
-
 Default features: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect`
+
+### The `+=` vs `:append` Pitfall
+
+`pvbase.bbclass` sets defaults via `??=` (weak default):
+```bitbake
+PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect "
+```
+
+**Critical**: Distro includes must use `:append`/`:remove`, never `+=`:
+```bitbake
+# WRONG — clobbers ??= defaults, silently drops xconnect, pvcontrol, rngdaemon
+PANTAVISOR_FEATURES += "appengine"
+
+# CORRECT — preserves ??= defaults and appends
+PANTAVISOR_FEATURES:append = " appengine"
+```
+
+This was fixed in `conf/distro/panta-appengine.inc`.
 
 ### Multiconfig Architecture
 
@@ -226,7 +260,33 @@ Example services.json:
 }
 ```
 
+Consumer args.json:
+```json
+{
+  "PV_SERVICES_REQUIRED": "service1,service2",
+  "PV_SERVICES_OPTIONAL": "service3"
+}
+```
+
+pvr 047 templates (`builtin-lxc-docker.go`) transform these into `run.json` `services` section during `pvr app add`.
+
 See `build/workspace/sources/pantavisor/xconnect/XCONNECT.md` for protocol specification.
+
+### pvcurl and pvcontrol
+
+These are sub-packages of the pantavisor recipe (`pantavisor-pvcurl`, `pantavisor-pvcontrol`):
+- **pvcurl**: Shell script wrapping `nc` for HTTP-over-Unix-socket. Supports `-X`, `-T` (timeout), `-v` (verbose), `-o` (output file), `-w` (response code), `--data`.
+- **pvcontrol**: Shell script wrapping pvcurl for common pv-ctrl operations.
+
+The appengine image and initramfs conditionally install `pantavisor-pvcontrol` when the `pvcontrol` feature is enabled in `PANTAVISOR_FEATURES`.
+
+### Daemons API
+
+- `GET /daemons` — List managed daemons with PID and respawn status
+- `PUT /daemons/{name}` with `{"action":"stop"}` — Disable respawn and kill daemon
+- `PUT /daemons/{name}` with `{"action":"start"}` — Enable respawn and start daemon
+
+pv-xconnect runs as a managed daemon (registered with `DM_ALL` mode flag).
 
 ### Example Containers
 
@@ -359,30 +419,23 @@ docker exec pva-test pvcontrol daemons ls
 
 ## Common Issues
 
-### Pseudo Path Mismatch Errors
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| xconnect/pvcontrol/rngdaemon missing from build | `+=` in distro include clobbers `??=` defaults | Use `:append` instead of `+=` for PANTAVISOR_FEATURES |
+| `curl` not found in appengine | Standard curl not in image | Use `pvcontrol` or `pvcurl` (shell wrapper using nc) |
+| Container crashes on pv-xconnect start | Bad storage state | Use fresh storage volume (`docker volume rm storage-test`) |
+| pvtx.d containers not loading | `.pvtx-done` marker exists | Remove marker or delete storage volume |
+| `consumer_pid: 0` in xconnect-graph | Container not fully started | Wait for READY status before querying |
+| `path mismatch [1 link]: ino XXXXX` | Pseudo database corruption from pvr | `kas shell <config> -c "bitbake -c cleansstate <recipe>"` |
+| Multiconfig TMPDIR conflicts | Shared TMPDIR between multiconfigs | Use separate TMPDIR per multiconfig |
 
-If you see errors like `path mismatch [1 link]: ino XXXXX db '...' req '...'` during image builds, this is a pseudo database corruption issue. The pvr tool's file operations can confuse pseudo's inode tracking.
+## Development Guidelines
 
-**Fix with KAS:**
-```bash
-kas shell <config.yaml> -c "bitbake -c cleansstate <recipe-name>"
-kas build <config.yaml>
-```
-
-**Fix with BitBake (for integrators):**
-```bash
-bitbake -c cleansstate <recipe-name>
-bitbake <recipe-name>
-```
-
-The `pvroot-image.bbclass` includes `PSEUDO_IGNORE_PATHS` entries to mitigate this for pvr working directories.
-
-### Multiconfig TMPDIR Conflicts
-
-When using BBMULTICONFIG, each config should have a separate TMPDIR to avoid conflicts with package feeds, sstate, and deploy directories. Example pattern:
-```
-TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-${MULTICONFIG_NAME}-${MACHINE}"
-```
+- **Formatting**: Run `clang-format -i` on modified `.c`/`.h` files before committing pantavisor code
+- **API testing**: Use `pvcontrol` or `pvcurl` (not `curl`) inside appengine containers
+- **Storage state**: Always use fresh storage volumes when testing pvtx.d changes
+- **Kconfig changes**: Run `.github/scripts/makemachines` after modifying Kconfig
+- **SRCREV bumps**: Always verify the commit hash against the actual remote (squash merges rewrite hashes). Update `PKGV` to match the latest tag reachable from the new SRCREV.
 
 ## Supported Yocto Releases
 

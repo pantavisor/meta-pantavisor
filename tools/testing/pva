@@ -1,0 +1,35 @@
+#!/bin/sh
+# pva - appengine testing tool
+#
+# Usage:
+#   pva exec <cmd> [args...]       Run command inside appengine container
+#   pva pvc [pvcurl-args...] <url> Query pv-ctrl API via pvcurl
+#
+# Examples:
+#   pva exec lxc-ls -f
+#   pva exec sh -c 'echo hello > /tmp/test.txt'
+#   pva exec sha256sum /tmp/test.txt
+#   pva exec ps aux
+#   pva pvc http://localhost/containers
+#   pva pvc http://localhost/daemons
+#   pva pvc -X PUT --data '{"action":"stop"}' http://localhost/daemons/pv-xconnect
+#   pva pvc -X DELETE http://localhost/device-meta/some-key
+#   pva pvc -X PUT -H "Content-Type: application/octet-stream" -T /tmp/file http://localhost/objects/sha
+
+CONTAINER="${PVA_CONTAINER:-pva-test}"
+SOCKET="/run/pantavisor/pv/pv-ctrl"
+
+case "$1" in
+    exec)
+        shift
+        exec docker exec "$CONTAINER" "$@"
+        ;;
+    pvc)
+        shift
+        exec docker exec "$CONTAINER" pvcurl --unix-socket "$SOCKET" "$@"
+        ;;
+    *)
+        echo "Usage: pva <exec|pvc> [args...]" >&2
+        exit 1
+        ;;
+esac
