@@ -1,10 +1,16 @@
-# CLAUDE.md
+# meta-pantavisor
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Linux system runtime. It provides recipes, classes, and configurations for building complete BSP images with container support.
 
-## Overview
+## Documentation
 
-meta-pantavisor is a Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Linux system runtime. It provides recipes, classes, and configurations for building complete BSP images with container support.
+| Document | Description |
+|----------|-------------|
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow - building, testing, iterating on pantavisor and containers |
+| [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
+| [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
+| [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
+| [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
 
@@ -21,6 +27,15 @@ kas build .config.yaml
 
 # Build specific target combinations
 kas build kas/scarthgap.yaml:kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml
+
+# Build with release configs
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+
+# Development build (with local pantavisor workspace)
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+
+# Build specific target
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
 ```
 
 ### Common Build Targets
@@ -37,6 +52,30 @@ kas build kas/scarthgap.yaml:kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.ya
 source layers/poky/oe-init-build-env build
 bitbake pantavisor-bsp
 ```
+
+### Testing with Appengine
+
+```bash
+# Load docker image
+docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+
+# Run appengine (interactive mode)
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+
+# Start pantavisor
+docker exec pva-test sh -c 'pv-appengine &'
+
+# Check status
+docker exec pva-test lxc-ls -f
+```
+
+**Important**: When testing new containers or changes to pvtx.d:
+- Delete the storage volume to retrigger pvtx.d processing: `docker volume rm storage-test`
+- Alternatively, remove the `.pvtx-done` marker: `docker exec pva-test rm /var/pantavisor/storage/.pvtx-done`
+- The pvtx.d scripts only run once per storage volume (when `.pvtx-done` doesn't exist)
 
 ## Architecture
 
@@ -60,10 +99,38 @@ bitbake pantavisor-bsp
 
 - `classes/pvbase.bbclass` - Defines `PANTAVISOR_FEATURES` variable
 - `classes/pvrexport.bbclass` - PVR export functionality for images
+- `classes/container-pvrexport.bbclass` - Container pvrexport packaging
 - `classes/pvr-ca.bbclass` - Certificate authority handling
 - `classes/pvroot-image.bbclass` - Root container image support
 
-### PANTAVISOR_FEATURES
+### Directory Structure
+
+```
+meta-pantavisor/
+├── classes/                    # BitBake classes (container-pvrexport, image-pvrexport)
+├── conf/                       # Layer and distro configuration
+├── dynamic-layers/             # Conditional recipes for other layers
+├── kas/                        # KAS configuration fragments
+├── recipes-containers/         # Container recipes
+│   └── pv-examples/           # Example containers for testing
+├── recipes-pv/                 # Core pantavisor recipes
+│   ├── images/                # Appengine and BSP images
+│   ├── pantavisor/            # Pantavisor runtime
+│   └── pvr/                   # PVR tool
+└── recipes-devtools/           # Development tools (json-sh, fdisk)
+```
+
+### Key Paths
+
+| Path | Description |
+|------|-------------|
+| `build/workspace/sources/pantavisor/` | Pantavisor source (when using with-workspace.yaml) |
+| `build/tmp-scarthgap/deploy/images/` | Build outputs (images, pvrexports) |
+| `recipes-containers/pv-examples/` | Example container recipes |
+| `recipes-pv/` | Core pantavisor recipes |
+| `.github/configs/release/` | KAS machine configurations |
+
+## PANTAVISOR_FEATURES
 
 Controls optional Pantavisor components (defined in `pvbase.bbclass`):
 - `dm-crypt`, `dm-verity` - Disk encryption/verification
@@ -71,9 +138,15 @@ Controls optional Pantavisor components (defined in `pvbase.bbclass`):
 - `runc` - OCI runtime support
 - `tailscale` - Tailscale VPN integration
 - `debug` - Debug features
-- `pvcontrol` - PV control socket support
+- `pvcontrol` - PV control socket and CLI tools
+- `xconnect` - Service mesh for container-to-container communication
+- `rngdaemon` - Random number generator daemon
 - `squash-lz4`, `squash-zstd` - Compression options
 - `rpi-tryboot` - Raspberry Pi A/B boot partition support (see below)
+
+**Important**: Never use `PANTAVISOR_FEATURES +=` in distro includes — it clobbers the `??=` defaults from `pvbase.bbclass`. Always use `:append` or `:remove` operators.
+
+Default features: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect`
 
 ### Multiconfig Architecture
 
@@ -129,12 +202,73 @@ Where `boot.img` is the FAT image (current rpi-boot-image.vfat) with kernels, co
 2. Update WKS to use wrapper partitions instead of rawcopy
 3. Add signature generation and verification support
 
-### Supported Yocto Releases
+## pv-xconnect Service Mesh
 
-- kirkstone (LTS)
-- scarthgap (current)
+pv-xconnect mediates container-to-container communication:
 
-Layer compatibility defined in `conf/layer.conf`: `LAYERSERIES_COMPAT_meta-pantavisor = "kirkstone scarthgap"`
+- **Unix sockets**: Raw socket proxy with namespace injection
+- **REST**: HTTP-over-UDS with identity headers (X-PV-Client, X-PV-Role)
+- **D-Bus**: Policy-aware proxy with interface filtering
+- **DRM**: Device node injection for graphics (card0, renderD128)
+- **Wayland**: Compositor access for isolated UI rendering
+
+Configuration:
+- **Provider**: `services.json` declares exported services (uses `#spec: service-manifest-xconnect@1` format)
+- **Consumer**: `args.json` with `PV_SERVICES_REQUIRED`/`PV_SERVICES_OPTIONAL`
+
+Example services.json:
+```json
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {"name": "my-service", "type": "unix", "socket": "/run/my.sock"}
+  ]
+}
+```
+
+See `build/workspace/sources/pantavisor/xconnect/XCONNECT.md` for protocol specification.
+
+### Example Containers
+
+The `pv-examples` containers demonstrate pv-xconnect service mesh patterns:
+
+| Container | Type | Role | Description |
+|-----------|------|------|-------------|
+| `pv-example-unix-server` | unix | provider | Raw Unix socket server |
+| `pv-example-unix-client` | unix | consumer | Raw Unix socket client |
+| `pv-example-rest-server` | rest | provider | HTTP-over-UDS server |
+| `pv-example-rest-client` | rest | consumer | HTTP-over-UDS client |
+| `pv-example-dbus-server` | dbus | provider | D-Bus service |
+| `pv-example-dbus-client` | dbus | consumer | D-Bus client |
+| `pv-example-drm-provider` | drm | provider | DRM device exporter |
+| `pv-example-drm-master` | drm | consumer | DRM master (KMS) |
+| `pv-example-drm-render` | drm | consumer | DRM render node |
+| `pv-example-wayland-server` | wayland | provider | Weston compositor |
+| `pv-example-wayland-client` | wayland | consumer | Wayland client |
+
+See [EXAMPLES.md](EXAMPLES.md) for detailed testing instructions.
+
+## Pantavisor Source Development
+
+When using `kas/with-workspace.yaml`, workspace sources are available at:
+```
+build/workspace/sources/pantavisor/   # Pantavisor runtime
+build/workspace/sources/lxc-pv/       # LXC with pantavisor patches (if added)
+```
+
+Workspace bbappend files redirect recipes to use local sources:
+```
+build/workspace/appends/pantavisor_git.bbappend
+build/workspace/appends/lxc-pv_git.bbappend   # Create manually if needed
+```
+
+Key pantavisor components:
+- `xconnect/` - Service mesh daemon and plugins
+- `ctrl/` - REST API control server
+- `parser/` - State JSON parsing
+- `plugins/` - Container runtime plugins (LXC, etc.)
+
+See `build/workspace/sources/pantavisor/CLAUDE.md` for detailed pantavisor architecture.
 
 ## Output Artifacts
 
@@ -161,7 +295,7 @@ GitHub Actions workflows in `.github/workflows/`:
    {
        "config": "kas/machines/MACHINE.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
        "name": "MACHINE-NAME",
-       "workflows": ["manual", "tag"]  // or ["manual", "tag", "onpush"]
+       "workflows": ["manual", "tag"]
    }
    ```
 
@@ -182,6 +316,46 @@ GitHub Actions workflows in `.github/workflows/`:
 - `sdk`: 1 - Build SDK for this machine
 - `output`: "pattern" - Custom output file pattern
 - `build_target`: "recipe" - Override default build target
+
+## Common Tasks
+
+### Bump pantavisor SRCREV
+
+When updating `SRCREV` in `recipes-pv/pantavisor/pantavisor_git.bb`:
+
+1. **Always verify the commit hash against the actual remote** — squash merges rewrite hashes, so a branch SHA won't match the merged master SHA even if they share the same prefix
+2. **Update `PKGV`** to match the latest tag reachable from the new SRCREV (e.g. if latest tag is `026`, set `PKGV = "026+git0+${GITPKGV}"`)
+
+### Add a new example container
+
+1. Create recipe in `recipes-containers/pv-examples/`
+2. Add `services.json` (provider) or `args.json` (consumer) in `files/`
+3. Build with `--target pv-example-<name>`
+
+### Test xconnect changes
+
+1. Edit `build/workspace/sources/pantavisor/xconnect/`
+2. Rebuild with `:kas/with-workspace.yaml`
+3. Load new docker image and test with appengine
+
+### Debug container issues
+
+```bash
+# Check pantavisor logs (appengine path)
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
+
+# Check container logs
+docker exec pva-test cat /var/pantavisor/storage/logs/0/<container>/lxc/console.log
+
+# Enter container namespace
+docker exec -it pva-test pventer -c <container>
+
+# Query xconnect graph
+docker exec pva-test pvcontrol graph ls
+
+# Query daemon status
+docker exec pva-test pvcontrol daemons ls
+```
 
 ## Common Issues
 
@@ -210,6 +384,13 @@ When using BBMULTICONFIG, each config should have a separate TMPDIR to avoid con
 TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-${MULTICONFIG_NAME}-${MACHINE}"
 ```
 
+## Supported Yocto Releases
+
+- kirkstone (LTS)
+- scarthgap (current)
+
+Layer compatibility defined in `conf/layer.conf`: `LAYERSERIES_COMPAT_meta-pantavisor = "kirkstone scarthgap"`
+
 ## KAS vs BitBake Commands
 
 This layer is designed to be used with KAS. Below are common commands in both formats:
@@ -224,3 +405,9 @@ This layer is designed to be used with KAS. Below are common commands in both fo
 | Interactive shell | `kas shell <config.yaml>` | `source oe-init-build-env` |
 
 **Note:** Integrators who include meta-pantavisor in their own Yocto builds may use BitBake directly without KAS.
+
+## External Resources
+
+- [Pantavisor Documentation](https://docs.pantahub.com/pantavisor-architecture/)
+- [Pantahub Community](https://community.pantavisor.io)
+- [Getting Started Guide](https://docs.pantahub.com/before-you-begin/)
