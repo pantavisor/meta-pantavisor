@@ -24,6 +24,7 @@ usage() {
 	echo "  -m, --manual      Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim      Use the network simulator (experimental)"
 	echo "  -o, --overwrite   Create or overwrite the test output"
+	echo "  -V, --valgrind    Run Pantavisor with valgrind"
 	echo ""
 	echo "Environments:"
 	echo "  NETSIM_PATH      Path to docker load for netsim container"
@@ -222,6 +223,7 @@ exec_test() {
 	local overwrite=$4
 	local work_path=$5
 	local netsim=$6
+	local valgrind=$7
 
 	if [ ! -f "$json_path" ]; then
 		echo "Error: '$json_path' missing"
@@ -278,6 +280,7 @@ exec_test() {
 		-e OVERWRITE="$overwrite" \
 		-e VERBOSE="$verbose" \
 		-e NETSIM="$netsim" \
+		-e VALGRIND="$valgrind" \
 		-e PH_USER="$PH_USER" \
 		-e PH_PASS="$PH_PASS" \
 		--env-file <(echo "$env" | tr ' ' '\n') \
@@ -358,6 +361,7 @@ run_test() {
 	local manual="false"
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
+	local valgrind="false"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		group=$(echo "$1" | awk -F':' '{print $1}')
@@ -386,6 +390,10 @@ run_test() {
 				;;
 			-n|--netsim)
 				netsim="true"
+				shift
+				;;
+			-V|--valgrind)
+				valgrind="true"
 				shift
 				;;
 			*)
@@ -422,17 +430,17 @@ run_test() {
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
 		done
 	elif [ -z "$number" ]; then
 		find "$test_dir/$group" -name "test.json" | sort  | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
+			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
 		done
 	else
 		json_path="$test_dir/$group/data/$number/test.json"
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim"
+		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
 	fi
 
 	if [ "$verbose" = "true" ]; then
@@ -442,7 +450,9 @@ run_test() {
 		echo "======================================================="
 		echo "Info: workspace=$work_path"
 		echo "Info: logs=$work_path/test.docker.log"
-		echo "Info: valgrind results=$work_path/valgrind"
+		if [ "$valgrind" = "true" ]; then
+			echo "Info: valgrind results=$work_path/valgrind"
+		fi
 		echo "Info: Pantavisor storage=$work_path/storage"
 		echo ""
 		grep "^Info: 'pvtests-" "$work_path/test.docker.log"
