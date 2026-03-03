@@ -18,7 +18,7 @@ PACKAGE_INSTALL = "pantavisor \
 	base-passwd \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rngd', 'rng-tools', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'automod', 'kmod', '', d)} \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pvcurl pvcontrol', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'mtools', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
