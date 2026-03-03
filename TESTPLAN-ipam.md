@@ -130,11 +130,11 @@ sleep 15
 
 ```bash
 docker exec pva-test lxc-ls -f
-# Expected: pv-example-ipam-valid RUNNING with 10.0.3.50
+# Expected: pv-example-ipam-valid RUNNING with 10.0.5.50
 
 docker exec pva-test grep "allocated" \
     /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
-# Expected: allocated 10.0.3.50 to pv-example-ipam-valid
+# Expected: allocated 10.0.5.50 to pv-example-ipam-valid
 ```
 
 ### Expected Results
@@ -142,7 +142,7 @@ docker exec pva-test grep "allocated" \
 | Check | Expected |
 |-------|----------|
 | Container status | RUNNING |
-| Assigned IP | 10.0.3.50 (static, as requested in args.json) |
+| Assigned IP | 10.0.5.50 (static, as requested in args.json) |
 
 ---
 
