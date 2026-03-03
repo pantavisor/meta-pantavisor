@@ -15,7 +15,7 @@ RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6
 	libthttp-certs \
 	netcat-openbsd \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs e2fsprogs-dumpe2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} libthttp-certs "
