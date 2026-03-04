@@ -15,3 +15,7 @@ machine: colibri-imx6ull
 local_conf_header:
   platform-colibri-imx6ull: |
         include conf/machine/include/colibri-imx6ull.inc
+        IMAGE_CLASSES:remove = " image_type_tezi"
+        IMAGE_FSTYPES:remove  = "teziimg"
+        IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
+        IMAGE_FSTYPES:append = " pv_teziimg"

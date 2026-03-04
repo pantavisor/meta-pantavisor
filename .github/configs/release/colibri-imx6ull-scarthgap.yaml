@@ -17,16 +17,6 @@ repos:
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
         commit: 1e7ef18b775788d998db8d27d465f95665e4fe4d
-        patches:
-            add-readme-to-tezi:
-                path: patches/meta-toradex-bsp-common/0003-add-README.md-to-tezi.patch
-                repo: meta-pantavisor
-            marketing-tezi:
-                path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
-                repo: meta-pantavisor
-            support-pvboot-on-tezi:
-                path: patches/meta-toradex-bsp-common/0001-support-pvboot-on-tezi.patch
-                repo: meta-pantavisor
         path: layers/meta-toradex-bsp-common
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
@@ -69,6 +59,10 @@ local_conf_header:
         PV_UBOOT_AUTOFDT = "1"
     platform-colibri-imx6ull: |
         include conf/machine/include/colibri-imx6ull.inc
+        IMAGE_CLASSES:remove = " image_type_tezi"
+        IMAGE_FSTYPES:remove  = "teziimg"
+        IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
+        IMAGE_FSTYPES:append = " pv_teziimg"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

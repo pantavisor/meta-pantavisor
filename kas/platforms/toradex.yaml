@@ -16,16 +16,6 @@ repos:
     path: layers/meta-toradex-bsp-common
     url: "https://git.toradex.com/meta-toradex-bsp-common.git"
     branch: scarthgap-7.x.y
-    patches:
-      support-pvboot-on-tezi:
-        repo: meta-pantavisor
-        path: patches/meta-toradex-bsp-common/0001-support-pvboot-on-tezi.patch
-      marketing-tezi:
-        repo: meta-pantavisor
-        path: patches/meta-toradex-bsp-common/0002-add-marketing-png-image.patch
-      add-readme-to-tezi:
-        repo: meta-pantavisor
-        path: patches/meta-toradex-bsp-common/0003-add-README.md-to-tezi.patch
 
   meta-toradex-nxp:
     path: layers/meta-toradex-nxp
