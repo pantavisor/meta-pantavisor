@@ -49,6 +49,9 @@ local_conf_header:
   IMAGE_CLASSES:remove = " image_type_tezi"
   IMAGE_FSTYPES:remove  = "teziimg"
 
+  # Enable Pantavisor TEZI image support (eMMC storage)
+  IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
+  IMAGE_FSTYPES:append = " pv_teziimg"
 
 env:
   TORADEX_VARIANT: wifi
