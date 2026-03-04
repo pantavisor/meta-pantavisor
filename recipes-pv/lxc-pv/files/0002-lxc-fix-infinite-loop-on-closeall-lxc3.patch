@@ -1,0 +1,43 @@
+From f1e13b4d584c8121952824961e5e41870f660239 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?An=C3=ADbal=20Portero=20Hermida?=
+ <anibal.portero@pantacor.com>
+Date: Tue, 3 Mar 2026 09:18:58 +0000
+Subject: [PATCH] lxc: fix infinite loop on closeall
+
+---
+ src/lxc/start.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/src/lxc/start.c b/src/lxc/start.c
+index c601cee2c..4fc98fa6b 100644
+--- a/src/lxc/start.c
++++ b/src/lxc/start.c
+@@ -214,7 +214,7 @@ int lxc_check_inherited(struct lxc_conf *conf, bool closeall,
+ 			int *fds_to_ignore, size_t len_fds)
+ {
+ 	struct dirent *direntp;
+-	int fd, fddir, ns;
++	int fd, fddir, ns, prev_fd = -1;
+ 	DIR *dir;
+ 	bool ignore_ns_fd;
+ 
+@@ -252,6 +252,11 @@ restart:
+ 			if (fds_to_ignore[i] == fd)
+ 				break;
+ 
++		if (prev_fd == fd) {
++			WARN("Tried already to close inherited fd %d. Ignoring...", fd);
++			break;
++		}
++
+ 		if (fd == fddir || fd == lxc_log_fd || fd == lxc_log_out_fd ||
+ 		    (i < len_fds && fd == fds_to_ignore[i]))
+ 			continue;
+@@ -294,6 +299,7 @@ restart:
+ 
+ #endif
+ 		if (closeall) {
++			prev_fd = fd;
+ 			close(fd);
+ 			closedir(dir);
+ 			INFO("Closed inherited fd %d", fd);
