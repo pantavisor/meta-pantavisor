@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pantavisor <developer@pantavisor.io>
+Subject: [PATCH] meson: do not force gold linker
+
+The gold linker has been deprecated as of GNU binutils 2.44 (Feb 2025)
+and will be removed unless new maintainers step forward. Google, its
+original developer, has moved to the LLVM toolchain and LLD.
+
+More critically, gold on aarch64 miscomputes __EH_FRAME_BEGIN__ in
+crtbeginS.o, causing frame_dummy to pass address 0x0 to
+__register_frame_info. This crashes in strlen() when libgcc_s parses
+bogus CIE augmentation data during dlopen() of liblxc.so.
+
+The __register_frame_info mechanism is obsolete for shared libraries
+(replaced by .eh_frame_hdr + PT_GNU_EH_FRAME), but the constructor in
+crtbeginS.o still fires, and the wrong address causes a SIGSEGV.
+
+Remove the forced gold linker selection and use the distro default
+linker (typically ld.bfd) instead.
+
+Upstream-Status: Pending
+Signed-off-by: Pantavisor <developer@pantavisor.io>
+---
+ meson.build | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 1234567..abcdefg 100644
+--- a/meson.build
++++ b/meson.build
+@@ -230,11 +230,6 @@ possible_link_flags = [
+     '-fstack-protector-strong',
+ ]
+
+-# The gold linker fails with a bus error on sparc64
+-if build_machine.cpu_family() != 'sparc64'
+-    possible_link_flags += '-Wl,-fuse-ld=gold'
+-endif
+-
+ if sanitize == 'none'
+     possible_link_flags += '-Wl,--warn-common'
+ endif
