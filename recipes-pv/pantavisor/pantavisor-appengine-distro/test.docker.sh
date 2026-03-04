@@ -283,6 +283,7 @@ exec_test() {
 		-e VALGRIND="$valgrind" \
 		-e PH_USER="$PH_USER" \
 		-e PH_PASS="$PH_PASS" \
+		-e PVR_DISABLE_SELF_UPGRADE=true \
 		--env-file <(echo "$env" | tr ' ' '\n') \
 		$docker_it_opt \
 		--rm \
