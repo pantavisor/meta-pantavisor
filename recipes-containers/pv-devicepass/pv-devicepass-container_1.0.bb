@@ -16,11 +16,13 @@ do_unpack[noexec] = "0"
 
 SRC_URI += "file://${PN}.services.json \
             file://${PN}.args.json \
+            file://${PN}.network.json \
             file://${PN}.lxc-extra.conf \
             "
 
-# OCI/LXC entrypoint — pass tunnel socket if xconnect injects it
-PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-devicepass --config=Cmd=--tunnel-socket=/run/pv/services/tunnel.sock"
+# OCI/LXC entrypoint — connect to hub via TCP (hub has static IPAM IP)
+# --identity-dir points to the devicepass identity directory (key + address)
+PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-devicepass --config=Cmd=--tunnel-url=10.0.3.10:8080 --config=Cmd=--identity-dir=/var/lib/devicepass"
 
 # pv-devicepass is a management container — needs host /proc access for
 # direct socket proxying to container namespaces via /proc/PID/root/

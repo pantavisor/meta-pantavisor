@@ -1,0 +1,5 @@
+{
+  "pool": "internal",
+  "hostname": "devicepass-hub",
+  "ip": "10.0.3.10/24"
+}

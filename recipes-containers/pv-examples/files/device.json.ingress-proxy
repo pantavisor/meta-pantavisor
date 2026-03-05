@@ -10,6 +10,15 @@
             }
         }
     },
+    "ingress": [
+        {
+            "name": "devicepass-hub-ingress",
+            "type": "tcp",
+            "external": "0.0.0.0:8080",
+            "provider": "pv-devicepass-hub",
+            "service": "devicepass-hub"
+        }
+    ],
     "groups": [
         { "name": "root", "restart_policy": "system", "status_goal": "STARTED" },
         { "name": "platform", "restart_policy": "system", "status_goal": "STARTED" },

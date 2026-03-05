@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "devicepass-hub",
+      "type": "tcp",
+      "port": 8080
+    }
+  ]
+}

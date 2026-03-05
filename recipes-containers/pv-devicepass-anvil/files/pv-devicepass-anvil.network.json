@@ -1,0 +1,5 @@
+{
+  "pool": "internal",
+  "hostname": "anvil",
+  "ip": "10.0.3.20/24"
+}

@@ -2,6 +2,7 @@
     "PV_SERVICES_REQUIRED": [
         {
             "name": "network-manager",
+            "type": "rest",
             "target": "/run/pv/services/network-manager.sock"
         }
     ]

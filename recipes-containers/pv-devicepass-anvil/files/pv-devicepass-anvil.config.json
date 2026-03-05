@@ -1,0 +1,4 @@
+{
+  "Entrypoint": "/usr/local/bin/anvil",
+  "Cmd": ["--host", "0.0.0.0", "--port", "8545", "--chain-id", "31337"]
+}

@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "tunnel-mock",
+      "type": "unix",
+      "socket": "/run/tunnel-mock/tunnel.sock"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+templates: append Cmd when Entrypoint is a string
+
+Per Docker semantics, Cmd provides default arguments to Entrypoint
+regardless of whether Entrypoint is a string or an array. The template
+previously ignored Cmd when Entrypoint was a plain string.
+
+Fix the lxc.init.cmd template to append Cmd in all cases:
+ - string Entrypoint + string Cmd
+ - string Entrypoint + array Cmd
+
+Add test coverage for these combinations.
+
+Upstream-Status: Pending
+
+--- a/templates/builtin-lxc-docker.go
++++ b/templates/builtin-lxc-docker.go
+@@ -65,7 +65,14 @@
+ 			{{- end }}
+ 		{{- end }}
+ 	{{- else }}
+-		{{- "" }} {{ .Docker.Entrypoint }}
++		{{- "" }} {{ .Docker.Entrypoint -}}
++		{{- if .Docker.Cmd }}
++			{{- if pvr_isSlice .Docker.Cmd }}
++				{{- range pvr_sliceFrom .Docker.Cmd 0 }} "{{ . }}"{{ end }}
++			{{- else }}
++				{{- "" }} "{{ .Docker.Cmd }}"
++			{{- end }}
++		{{- end }}
+ 	{{- end }}
+ {{- else }}
+ 	{{- if .Docker.Cmd }}
+--- a/templates/compile-template_test.go
++++ b/templates/compile-template_test.go
+@@ -28,6 +28,8 @@
+ 	t.Run("docker entrypoint3", testLXCContainerConf__Docker_Entrypoint3)
+ 	t.Run("docker entrypointcmd", testLXCContainerConf__Docker_EntrypointCmd)
+ 	t.Run("docker entrypointcmd", testLXCContainerConf__Docker_EntrypointCmd2)
++	t.Run("docker string entrypoint + string cmd", testLXCContainerConf__Docker_StringEntrypointStringCmd)
++	t.Run("docker string entrypoint + array cmd", testLXCContainerConf__Docker_StringEntrypointArrayCmd)
+ 	t.Run("docker workingdir", testLXCContainerConf__Docker_WorkingDir)
+ 	t.Run("PV_IMPORT_VOLUMES LXC_CONTAINER_CONF", testLXCContainerConf_PV_VOLUME_IMPORTS)
+ }
+@@ -131,6 +133,32 @@
+ 	ErrorIfNot(t, strings.Contains(string(result), "lxc.init.cmd = run.sh \"something\" \"runit\""), "pattern not found in generated string "+string(result))
+ }
+
++func testLXCContainerConf__Docker_StringEntrypointStringCmd(t *testing.T) {
++	result, _ := compileTemplate(LXC_CONTAINER_CONF, map[string]interface{}{
++		"name": "container1",
++		"Docker": map[string]interface{}{
++			"Entrypoint": "/usr/bin/myapp",
++			"Cmd":        "--socket=/run/my.sock",
++		},
++	})
++
++	ErrorIf(t, len(result) == 0, "error when compiling template")
++	ErrorIfNot(t, strings.Contains(string(result), "lxc.init.cmd = /usr/bin/myapp \"--socket=/run/my.sock\""), "pattern not found in generated string "+string(result))
++}
++
++func testLXCContainerConf__Docker_StringEntrypointArrayCmd(t *testing.T) {
++	result, _ := compileTemplate(LXC_CONTAINER_CONF, map[string]interface{}{
++		"name": "container1",
++		"Docker": map[string]interface{}{
++			"Entrypoint": "/usr/bin/myapp",
++			"Cmd":        []interface{}{"--flag", "value"},
++		},
++	})
++
++	ErrorIf(t, len(result) == 0, "error when compiling template")
++	ErrorIfNot(t, strings.Contains(string(result), "lxc.init.cmd = /usr/bin/myapp \"--flag\" \"value\""), "pattern not found in generated string "+string(result))
++}
++
+ func testLXCContainerConf__Docker_WorkingDir(t *testing.T) {
+ 	result, _ := compileTemplate(LXC_CONTAINER_CONF, map[string]interface{}{
+ 		"name": "container1",

@@ -1,8 +1,8 @@
 # DevicePass Test Plans
 
-This document provides executable test plans for validating the devicepass system: device identity (Phase 1), smart contract (Phase 2), and the pv-devicepass management container in the appengine environment.
+This document provides executable test plans for validating the devicepass system: device identity (Phase 1), smart contract (Phase 2), guardian CLI (Phase 3), and the pv-devicepass management container in the appengine environment.
 
-**Branch**: `feature/xconnect-landing`
+**Branch**: `feature/devicepass-phase1`
 
 ## Prerequisites
 
@@ -566,23 +566,25 @@ docker exec pva-test pventer -c pv-devicepass-container \
 
 ---
 
-## Test 8: WebSocket Tunnel Client + Mock Server
+## Test 8: DevicePass Hub — Device-to-Hub TCP Tunnel
 
-**Purpose**: Verify the pv-devicepass tunnel client connects to the tunnel-mock server via xconnect-injected Unix socket, receives JSON commands over WebSocket, dispatches them through agent-ops, and sends results back.
+**Purpose**: Verify the pv-devicepass tunnel client connects to the hub over TCP/IP (IPAM network), the hub polls the device via WebSocket, and the hub REST API exposes device data and routes requests.
 
 ### Setup
 
+Build all components (pantavisor must be rebuilt for TCP tunnel support):
+
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
-    --target pv-devicepass-container \
-    --target pv-devicepass-tunnel-mock \
-    --target pv-example-rest-server
+./kas-container shell .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+    -c "bitbake pantavisor -c install -f && bitbake pv-devicepass-container pv-devicepass-hub pv-example-device-config-proxy"
 
 rm -f pvtx.d/*.pvrexport.tgz
 cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-devicepass-container.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-devicepass-tunnel-mock.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-rest-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-devicepass-hub.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-config-proxy.pvrexport.tgz pvtx.d/
 ```
+
+> **Note**: `pv-example-device-config-proxy` provides device.json with IPAM pool "internal" on 10.0.3.0/24. The hub uses static IP 10.0.3.10, device gets a dynamic IPAM IP.
 
 ### Execute
 
@@ -594,57 +596,84 @@ docker run --name pva-test -d --privileged \
     --entrypoint /bin/sh pantavisor-appengine:1.0 -c "sleep infinity"
 
 docker exec pva-test sh -c 'pv-appengine &'
-sleep 20
+sleep 25
 ```
 
 ### Verify
 
 ```bash
-# Check all three containers running
+# Check both containers running
 docker exec pva-test lxc-ls -f
-# Expected: pv-devicepass-container RUNNING, pv-devicepass-tunnel-mock RUNNING, pv-example-rest-server RUNNING
+# Expected: pv-devicepass-container RUNNING, pv-devicepass-hub RUNNING
 
-# Check xconnect-graph — tunnel-mock should be a unix provider
-docker exec pva-test pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/xconnect-graph | jq .
-# Expected: Entry with name=tunnel-mock, type=unix, consumer=pv-devicepass-container
-
-# Check tunnel socket injected into pv-devicepass namespace
-AGENT_PID=$(docker exec pva-test lxc-info -n pv-devicepass-container -p | awk '{print $2}')
-docker exec pva-test ls -la /proc/$AGENT_PID/root/run/pv/services/
-# Expected: tunnel.sock socket file
-
-# Check pv-devicepass logs — should show tunnel connected
-docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-container/lxc/console.log
-# Expected: "tunnel: WebSocket connected to /run/pv/services/tunnel.sock"
-
-# Wait for tunnel-mock to send periodic polls (default 10s interval)
-sleep 15
-
-# Check tunnel-mock logs — should show poll commands sent and responses received
-docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-tunnel-mock/lxc/console.log
+# Check hub logs — should show "hub ready" and "listening on 0.0.0.0:8080"
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-hub/lxc/console.log
 # Expected:
-#   "tunnel-mock: WebSocket handshake complete"
-#   "tunnel-mock: sent GET /containers (id=poll-1)"
-#   "tunnel-mock: response id=poll-1 status=200 body=[..."
-#   "tunnel-mock: sent GET /skills (id=poll-2)"
-#   "tunnel-mock: response id=poll-2 status=200 body=[..."
+#   "hub: starting DevicePass Hub"
+#   "hub: listening on 0.0.0.0:8080"
+#   "hub: hub ready"
+#   "hub: [device 0] WebSocket connected"
+#   "hub: [device 0] poll /containers -> 200 ..."
 
-# HTTP API still works in parallel with tunnel
+# Check device logs — should show TCP tunnel connected
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-container/lxc/console.log
+# Expected: "tunnel: connecting to tcp:10.0.3.10:8080"
+# Expected: "tunnel: WebSocket connected to 10.0.3.10:8080"
+
+# Wait for hub to poll device
+sleep 20
+
+# --- Hub REST API tests ---
+
+# Health check
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/health 2>/dev/null
+# Expected: {"status":"ok","devices_online":1,...}
+
+# List devices
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/devices 2>/dev/null
+# Expected: {"devices":[{"id":"0","online":true,"containers":[...],...}]}
+
+# Get single device
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/devices/0 2>/dev/null
+# Expected: {"id":"0","online":true,"containers":[...],"skills":[...],...}
+
+# Route a request to device via tunnel (call /containers on device)
+docker exec pva-test wget -qO- --post-data='{"method":"GET","path":"/containers"}' \
+    http://10.0.3.10:8080/v1/devices/0/call 2>/dev/null
+# Expected: {"device_id":"0","response":{"id":"hub-0-...","status":200,"body":[...]}}
+
+# Route a request to device (call /daemons)
+docker exec pva-test wget -qO- --post-data='{"method":"GET","path":"/daemons"}' \
+    http://10.0.3.10:8080/v1/devices/0/call 2>/dev/null
+# Expected: {"device_id":"0","response":{"id":"...","status":200,"body":[...]}}
+
+# Group call to all devices
+docker exec pva-test wget -qO- --post-data='{"devices":["all"],"method":"GET","path":"/containers"}' \
+    http://10.0.3.10:8080/v1/devices/group/call 2>/dev/null
+# Expected: {"results":{"0":{"response":{...}}}}
+
+# 404 for nonexistent device
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/devices/99 2>/dev/null
+# Expected: {"error":"device 99 not found"} (wget exits non-zero)
+
+# Device HTTP API still works alongside tunnel
 docker exec pva-test pventer -c pv-devicepass-container \
-    curl -s --unix-socket /run/pv-devicepass/api.sock http://localhost/containers | jq .
-# Expected: JSON array of containers (same data tunnel receives)
+    wget -qO- http://localhost/containers 2>/dev/null
+# (or via Unix socket if curl available)
 ```
 
 ### Expected Results
 
 | Check | Expected |
 |-------|----------|
-| All 3 containers | RUNNING |
-| xconnect-graph | Shows tunnel-mock unix link to pv-devicepass |
-| Tunnel socket injected | `/run/pv/services/tunnel.sock` exists in pv-devicepass |
-| pv-devicepass log | "tunnel: WebSocket connected" |
-| tunnel-mock log | Shows sent commands and received responses with status=200 |
-| HTTP API | Still functional alongside tunnel |
+| Both containers | RUNNING |
+| Hub log | Shows "hub ready", device connected, poll results |
+| Device log | Shows "tunnel: connecting to tcp:10.0.3.10:8080", "WebSocket connected" |
+| GET /v1/health | `{"status":"ok","devices_online":1,...}` |
+| GET /v1/devices | Array with 1 device, online=true, containers populated |
+| POST /v1/devices/0/call | Routes to device, returns response with status 200 |
+| POST /v1/devices/group/call | Fan-out returns aggregated results |
+| Device HTTP API | Still functional alongside tunnel |
 
 ---
 
@@ -722,17 +751,25 @@ docker exec pva-test lxc-ls -f
 
 ### Check Logs
 ```bash
-# pv-devicepass
+# pv-devicepass device
 docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-container/lxc/console.log
 
-# tunnel-mock
-docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-tunnel-mock/lxc/console.log
+# devicepass hub
+docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-devicepass-hub/lxc/console.log
 ```
 
-### Query pv-devicepass API
+### Query pv-devicepass Device API
 ```bash
 docker exec pva-test pventer -c pv-devicepass-container \
     curl -s --unix-socket /run/pv-devicepass/api.sock http://localhost/<endpoint> | jq .
+```
+
+### Query DevicePass Hub API (TCP)
+```bash
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/health
+docker exec pva-test wget -qO- http://10.0.3.10:8080/v1/devices
+docker exec pva-test wget -qO- --post-data='{"method":"GET","path":"/containers"}' \
+    http://10.0.3.10:8080/v1/devices/0/call
 ```
 
 ### Run Contract Tests
@@ -752,7 +789,7 @@ forge script script/Deploy.s.sol \
     --broadcast
 ```
 
-### Claim Device on Anvil
+### Claim Device on Anvil (via Forge script)
 ```bash
 DEVICE_KEY="0x$(docker exec pva-test pventer -c pv-devicepass-container \
     cat /var/lib/devicepass/device.key 2>/dev/null | grep -v '^export')" \
@@ -761,6 +798,37 @@ forge script script/Claim.s.sol \
     --rpc-url http://localhost:8546 \
     --private-key 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d \
     --broadcast
+```
+
+### Claim Device on Anvil (via Guardian CLI)
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
+
+# Device generates claim blob
+docker exec pva-test pventer -c pv-devicepass-container \
+    env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
+    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' > /tmp/claim.json
+
+# Guardian claims on-chain
+$SCRIPTS/devicepass-cli guardian claim \
+    --rpc=http://localhost:8546 --contract=$CONTRACT \
+    --private-key=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d \
+    /tmp/claim.json
+```
+
+### Guardian CLI Quick Commands
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+FLAGS="--rpc=http://localhost:8546 --contract=0x5FbDB2315678afecb367f032d93F642f64180aa3 --private-key=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+
+$SCRIPTS/devicepass-cli guardian list $FLAGS
+$SCRIPTS/devicepass-cli guardian list $FLAGS --json
+$SCRIPTS/devicepass-cli guardian status $FLAGS <DEVICE_ADDR>
+$SCRIPTS/devicepass-cli guardian balance --rpc=http://localhost:8546 --private-key=... <DEVICE_ADDR>
+$SCRIPTS/devicepass-cli guardian fund --rpc=http://localhost:8546 --private-key=... <DEVICE_ADDR> 0.1
+$SCRIPTS/devicepass-cli guardian transfer $FLAGS <DEVICE_ADDR> <NEW_GUARDIAN_ADDR>
+$SCRIPTS/devicepass-cli guardian revoke $FLAGS <DEVICE_ADDR>
 ```
 
 ### Fresh Restart
@@ -781,10 +849,217 @@ docker rm -f pva-test; docker volume rm storage-test
 | Claim fails with `InvalidSignature` | chain_id mismatch | Device onboard uses `DEVICEPASS_CHAIN_ID` (default 8453); Claim.s.sol uses `block.chainid` from Anvil (31337). The Forge script generates its own signature, so this only matters for manual `cast` claims |
 | `head: invalid option -- 'c'` in devicepass-cli | Busybox head doesn't support -c | Fixed — scripts use shell parameter expansion instead |
 | pv-devicepass-container not starting | Missing /proc bind mount | Check lxc-extra.conf has `/proc` entry |
-| "tunnel: connect failed" in pv-devicepass log | tunnel-mock not running or socket not injected | Check xconnect-graph for tunnel-mock link, check tunnel-mock logs |
+| "tunnel: connect failed" in pv-devicepass log | Hub not running or IPAM not set up | Check hub logs, verify IPAM pool is deployed (device-config-proxy), check `ip addr` in containers for IPAM IPs |
 | GET /skills returns empty array | xconnect-graph polling hasn't found REST services | Wait 10s for graph poll cycle, check xconnect-graph directly |
 | Proxy returns 502 Bad Gateway | Provider container not running or socket path wrong | Check provider status with `lxc-ls -f`, verify services.json socket path |
 | PUT /containers returns error | Container has restart_policy=system | Only containers with restart_policy=container can be stopped via API |
+
+---
+
+## Test 10: Guardian CLI — Claim from Device Blob
+
+**Purpose**: End-to-end flow: device generates identity and claim blob in the appengine container, guardian claims it on-chain from the host using `devicepass-cli guardian claim`.
+
+### Prerequisites
+
+- Appengine running with pv-devicepass-container (see Common Appengine Setup)
+- Anvil running on port 8546 with contract deployed (see Test 5)
+- Device identity initialized (see Test 2)
+
+### Execute
+
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"  # or your deploy address
+GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+
+# Step 1: Device generates claim blob (inside container)
+docker exec pva-test pventer -c pv-devicepass-container \
+    env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
+    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' > /tmp/device-claim.json
+
+cat /tmp/device-claim.json | jq .
+# Expected: {"version":1,"device":"0x...","nonce":...,"chain_id":31337,...,"signature":"0x..."}
+
+# Step 2: Guardian claims on-chain (from host)
+$SCRIPTS/devicepass-cli guardian claim \
+    --rpc=http://localhost:8546 \
+    --contract=$CONTRACT \
+    --private-key=$GUARDIAN_KEY \
+    /tmp/device-claim.json
+# Expected: "Device claimed successfully"
+```
+
+### Verify
+
+```bash
+DEVICE=$(jq -r '.device' /tmp/device-claim.json)
+
+$SCRIPTS/devicepass-cli guardian status \
+    --rpc=http://localhost:8546 \
+    --contract=$CONTRACT \
+    --private-key=$GUARDIAN_KEY \
+    $DEVICE
+# Expected: Device Passport with Active: true, Guardian matching Anvil account #1
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Device onboard blob | Valid JSON with device, nonce, chain_id, signature |
+| Guardian claim TX | Success, PassportCreated event |
+| Passport query | device, guardian, createdAt, active=true |
+
+---
+
+## Test 11: Guardian CLI — List, Status, Balance, Fund
+
+**Purpose**: Verify guardian management commands against an Anvil testnet with a claimed device.
+
+### Prerequisites
+
+- Device claimed on Anvil (complete Test 10 first)
+
+### Execute
+
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
+GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+DEVICE=$(jq -r '.device' /tmp/device-claim.json)
+
+# List devices
+$SCRIPTS/devicepass-cli guardian list \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY
+# Expected: Table with 1 device, Active=true
+
+# List devices (JSON)
+$SCRIPTS/devicepass-cli guardian list \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY --json 2>/dev/null
+# Expected: Valid JSON array
+
+# Status
+$SCRIPTS/devicepass-cli guardian status \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY $DEVICE
+# Expected: Device Passport with all fields
+
+# Balance (initially 0)
+$SCRIPTS/devicepass-cli guardian balance \
+    --rpc=http://localhost:8546 --private-key=$GUARDIAN_KEY $DEVICE
+# Expected: 0 ETH
+
+# Fund device
+$SCRIPTS/devicepass-cli guardian fund \
+    --rpc=http://localhost:8546 --private-key=$GUARDIAN_KEY $DEVICE 0.1
+# Expected: "Funded successfully", balance updated
+
+# Balance after fund
+$SCRIPTS/devicepass-cli guardian balance \
+    --rpc=http://localhost:8546 --private-key=$GUARDIAN_KEY $DEVICE
+# Expected: 0.1 ETH
+```
+
+### Expected Results
+
+| Command | Expected |
+|---------|----------|
+| `guardian list` | Shows 1 device, Active=true |
+| `guardian list --json` | Valid JSON array |
+| `guardian status` | Device, Guardian, Created, Active, Balance |
+| `guardian balance` | 0 ETH initially |
+| `guardian fund 0.1` | TX success, balance updated |
+| `guardian balance` (after) | 0.1 ETH |
+
+---
+
+## Test 12: Guardian CLI — Transfer and Revoke
+
+**Purpose**: Verify guardian ownership transfer and device passport revocation.
+
+### Prerequisites
+
+- Device claimed on Anvil (complete Test 10 first)
+
+### Execute
+
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
+GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+NEW_GUARDIAN_KEY=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
+NEW_GUARDIAN=0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC
+DEVICE=$(jq -r '.device' /tmp/device-claim.json)
+
+# Transfer to new guardian
+$SCRIPTS/devicepass-cli guardian transfer \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY \
+    $DEVICE $NEW_GUARDIAN
+# Expected: "Device transferred"
+
+# Verify old guardian has no devices
+$SCRIPTS/devicepass-cli guardian list \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY
+# Expected: "No devices found"
+
+# Verify new guardian has the device
+$SCRIPTS/devicepass-cli guardian list \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$NEW_GUARDIAN_KEY
+# Expected: 1 device
+
+# Revoke (as new guardian)
+$SCRIPTS/devicepass-cli guardian revoke \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$NEW_GUARDIAN_KEY \
+    $DEVICE
+# Expected: "Device passport revoked"
+
+# Verify revoked
+$SCRIPTS/devicepass-cli guardian status \
+    --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$NEW_GUARDIAN_KEY \
+    $DEVICE
+# Expected: Active: false
+```
+
+### Expected Results
+
+| Step | Expected |
+|------|----------|
+| Transfer | Old guardian loses device, new guardian gains it |
+| Old guardian list | Empty |
+| New guardian list | 1 device |
+| Revoke | Active becomes false |
+| Status after revoke | active=false |
+
+---
+
+## Test 13: Guardian CLI — Pipe Workflow
+
+**Purpose**: Verify the pipe workflow where device onboard output goes directly to guardian claim via stdin.
+
+### Execute
+
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
+GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+
+# Re-init device identity (previous was revoked)
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli init --force
+
+# Pipe: device onboard → guardian claim
+docker exec pva-test pventer -c pv-devicepass-container \
+    env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
+    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' | \
+    $SCRIPTS/devicepass-cli guardian claim \
+        --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY
+# Expected: "Device claimed successfully"
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Pipe claim | TX success without intermediate file |
 
 ---
 
