@@ -11,18 +11,18 @@ DOCKER_IMAGE_TAG = "1.0"
 DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
 # Devicepass containers to bake into pvtx.d
+# Note: pv-devicepass-anvil excluded — requires --docker-sock for Docker pull
 DEVICEPASS_CONTAINERS = " \
     pv-devicepass-container \
     pv-devicepass-hub \
-    pv-devicepass-anvil \
     pv-example-device-config-proxy \
 "
 
 # Ensure container pvrexports are built before our image
+# container-pvrexport recipes use do_image_complete, pvrexport recipes use do_deploy
 do_rootfs[depends] += " \
-    pv-devicepass-container:do_deploy \
-    pv-devicepass-hub:do_deploy \
-    pv-devicepass-anvil:do_deploy \
+    pv-devicepass-container:do_image_complete \
+    pv-devicepass-hub:do_image_complete \
     pv-example-device-config-proxy:do_deploy \
 "
 
