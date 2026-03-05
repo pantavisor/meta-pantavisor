@@ -1,5 +1,6 @@
 DEPENDS:append = " pvr-native \
 	squashfs-tools-native \
+	jq-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 "
 
@@ -86,6 +87,13 @@ EOF1
         cp -f ${WORKDIR}/${PN}.services.json ./${PN}/services.json
     elif [ -f ${WORKDIR}/services.json ]; then
         cp -f ${WORKDIR}/services.json ./${PN}/services.json
+    fi
+    if [ -f ${WORKDIR}/${PN}.network.json ]; then
+        cat ${PN}/run.json | jq --slurpfile network ${WORKDIR}/${PN}.network.json \
+            '. + { "network": $network[0] }' > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+    elif [ -f ${WORKDIR}/network.json ]; then
+        cat ${PN}/run.json | jq --slurpfile network ${WORKDIR}/network.json \
+            '. + { "network": $network[0] }' > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
     fi
     if [ -n "${PV_CONFIG_OVERLAY_DIR}" ]; then
         mkdir -p _config
