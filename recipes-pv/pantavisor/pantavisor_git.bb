@@ -26,13 +26,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "feature/xconnect-landing"
+PANTAVISOR_BRANCH ??= "poc/devicepass"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "ae00fdf3d3532c728fbea9d80a78846e664d6e5e"
+SRCREV = "44c63b63f0f576331fb517cca0d8ef5b0f0c61be"
 PE = "1"
 PKGV = "024+git0+${GITPKGV}"
 
