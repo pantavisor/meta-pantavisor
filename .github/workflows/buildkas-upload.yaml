@@ -31,14 +31,20 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
+        with:
+           fetch-tags: true
+
       - name: setup workspace
         run: |
          chown -R builder:builder $RUNNER_WORKSPACE
          chown -R builder:builder /__w
          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+         git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
       - name: build
-        run: su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake ${{ inputs.build_target }}' "
+        run: |
+         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
       - name: build-sdk
         run: |
            if [ "${{ inputs.sdk }}" = 1 ]; then

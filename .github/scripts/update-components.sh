@@ -3,7 +3,7 @@
 # Fixed list of components and their branches as found in recipes
 # Format: "component_name|recipe_glob|branch|repo_org"
 COMPONENTS=(
-    "busybox|recipes-pv/busybox/busybox*.bb|pv/1_35_stable|pantavisor"
+    "busybox-pv|recipes-pv/busybox/busybox*.bb|pv/1_35_stable|pantavisor"
     "dropbear|recipes-pv/dropbear/dropbear-pv*.bb|pv/master|pantacor"
     "libthttp|recipes-pv/libthttp/libthttp*.bb|master|pantavisor"
     "lxc-pv|recipes-pv/lxc-pv/lxc-pv*.bb|stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516|pantavisor"
@@ -66,7 +66,7 @@ for ENTRY in "${COMPONENTS[@]}"; do
         if [ "$CURRENT_SRCREV" != "$REMOTE_SHA" ]; then
             echo "  UPDATE FOUND: $REMOTE_SHA"
             if grep -q "SRCREV =" "$RECIPE"; then
-                sed -i "s/SRCREV = \"$CURRENT_SRCREV\"/SRCREV = \"$REMOTE_SHA\"/" "$RECIPE"
+                sed -i "s|SRCREV = \"$CURRENT_SRCREV\"|SRCREV = \"$REMOTE_SHA\"|" "$RECIPE"
             else
                 sed -i "s/rev=$CURRENT_SRCREV/rev=$REMOTE_SHA/" "$RECIPE"
             fi
