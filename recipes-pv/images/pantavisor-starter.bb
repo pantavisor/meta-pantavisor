@@ -8,9 +8,7 @@ FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
 
 PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk pv-alpine-connman pv-pvwificonnect"
 
-PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk"
 PVROOT_IMAGE_BSP ?= "core-image-minimal"
-
 
 do_rootfs[depends] += "virtual/bootloader:do_deploy"
 

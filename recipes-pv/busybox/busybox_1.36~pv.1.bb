@@ -23,5 +23,4 @@ SRC_URI += " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'bootchartd', 'file://0
 SRC_URI += " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'bootchartd', 'file://enable_bootchartd.cfg', '', d)}"
 
 SRCREV = "c64d10b37d647b4a38c53034bc50b76e76d53d4e"
-#SRCREV = "c0e215239b7085d5a23524ca32afaaa8eacc8f63"
 
