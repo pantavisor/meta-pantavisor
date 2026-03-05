@@ -7,10 +7,10 @@ DevicePass gives IoT devices blockchain-native identity and lets guardians manag
 ```
 Device                         Guardian                                  Chain
   |                               |                                        |
-  |  devicepass-cli init          |    CLAIMING IS LOCAL + OFFLINE         |
+  |  devicepass-cli dev init      |    CLAIMING IS LOCAL + OFFLINE         |
   |  (generate keypair)          |    No hub involved                    |
   |                               |                                        |
-  |  devicepass-cli onboard      |                                        |
+  |  devicepass-cli dev onboard  |                                        |
   |  (sign claim blob)    ------>|                                        |
   |              QR/USB/file/...  |                                        |
   |                               |  guardian claim <blob>                 |
@@ -41,6 +41,16 @@ Device                         Guardian                                  Chain
 - **The hub is just an app.** It reads the chain to authenticate devices and route traffic. It has no role in claiming, ownership, or identity. If the hub goes down, ownership state is intact on-chain and any replacement hub can pick up where it left off.
 - **Supply chain friendly.** A factory can generate device identities, create claim blobs, register itself as initial guardian, and later transfer ownership on-chain — equivalent to FIDO FDO ownership vouchers but backed by a distributed ledger instead of a centralized rendezvous server.
 
+## CLI Overview
+
+```bash
+devicepass-cli --version          # Show version
+devicepass-cli dev <subcommand>   # Device-side commands (identity, onboarding)
+devicepass-cli guardian <subcommand>  # Guardian/fleet management commands
+```
+
+Top-level shortcuts are available for device commands (`devicepass-cli init` is equivalent to `devicepass-cli dev init`) for backwards compatibility.
+
 ## Device Side
 
 The device runs `devicepass-cli` inside a Pantavisor container (`pv-devicepass-container`). All device commands are fully offline — no network or chain access required.
@@ -48,7 +58,7 @@ The device runs `devicepass-cli` inside a Pantavisor container (`pv-devicepass-c
 ### Generate Identity
 
 ```bash
-devicepass-cli init
+devicepass-cli dev init
 ```
 
 Creates a secp256k1 keypair and derives an Ethereum address:
@@ -73,17 +83,17 @@ Files created in `/var/lib/devicepass/`:
 
 ```bash
 # Open claim — any guardian can submit
-devicepass-cli onboard --quiet
+devicepass-cli dev onboard --quiet
 
 # Guardian-bound claim — only the specified guardian can submit
-devicepass-cli onboard --quiet --guardian=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
+devicepass-cli dev onboard --quiet --guardian=0x70997970C51812dc3A010C7d01b50e0d17dc79C8
 ```
 
 Signs a claim blob that proves device identity. Output is JSON:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "device": "0x71e9fc79c8a7854a6f24aed8cb25bd8d6984e719",
   "guardian": "0x0000000000000000000000000000000000000000",
   "nonce": 1771181642,
@@ -114,7 +124,7 @@ Options:
 ### Check Status
 
 ```bash
-devicepass-cli status
+devicepass-cli dev status
 ```
 
 Shows local identity info: address, ID, chain ID, contract, key directory.
@@ -122,8 +132,8 @@ Shows local identity info: address, ID, chain ID, contract, key directory.
 ### Export Key
 
 ```bash
-devicepass-cli export-key                # hex output
-devicepass-cli export-key --format=bin   # binary output
+devicepass-cli dev export-key                # hex output
+devicepass-cli dev export-key --format=bin   # binary output
 ```
 
 ## Guardian Side
@@ -152,6 +162,16 @@ All guardian commands accept:
 | `--private-key=KEY` | `DEVICEPASS_PRIVATE_KEY` | Guardian private key |
 | `--account=NAME` | `DEVICEPASS_ACCOUNT` | Cast keystore account name |
 
+### Deploy Contract
+
+```bash
+devicepass-cli guardian deploy \
+    --rpc=http://localhost:8546 \
+    --private-key=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
+
+Deploys the DevicePassRegistry contract using `forge`. Requires Foundry and contract sources (auto-detected relative to the CLI or via `DEVICEPASS_CONTRACTS_DIR`).
+
 ### Claim a Device
 
 ```bash
@@ -162,7 +182,7 @@ devicepass-cli guardian claim /path/to/claim.json \
     --private-key=0x5996...
 
 # Piped from device onboard output
-devicepass-cli onboard --quiet | devicepass-cli guardian claim --rpc=... --contract=... --private-key=...
+devicepass-cli dev onboard --quiet | devicepass-cli guardian claim --rpc=... --contract=... --private-key=...
 ```
 
 The guardian submits the device's signed claim blob to the contract. On success, the guardian becomes the device's owner.
@@ -293,10 +313,10 @@ forge test -vv
 
 ## Device Serve Mode
 
-After claiming, the device runs `devicepass-cli serve` as its persistent runtime. This connects to the hub, learns about its guardian, opens a tunnel, and announces container specs.
+After claiming, the device runs `devicepass-cli dev serve` as its persistent runtime. This connects to the hub, learns about its guardian, opens a tunnel, and announces container specs.
 
 ```bash
-devicepass-cli serve
+devicepass-cli dev serve
 ```
 
 ### Startup Flow
@@ -379,8 +399,8 @@ Environment variables (set in container or shell):
 # On Anvil for testing, Base/Sepolia for production
 
 # 2. On device — generate identity and open claim blob
-devicepass-cli init
-devicepass-cli onboard --quiet > /tmp/claim.json
+devicepass-cli dev init
+devicepass-cli dev onboard --quiet > /tmp/claim.json
 
 # 3. Transfer claim.json to guardian (USB, copy-paste, QR, etc.)
 
@@ -397,8 +417,8 @@ devicepass-cli guardian claim /tmp/claim.json \
 
 ```bash
 # 1. Factory provisions device on assembly line
-devicepass-cli init
-devicepass-cli onboard --quiet --guardian=0xFACTORY... > /tmp/claim.json
+devicepass-cli dev init
+devicepass-cli dev onboard --quiet --guardian=0xFACTORY... > /tmp/claim.json
 
 # 2. Factory claims as initial guardian
 devicepass-cli guardian claim /tmp/claim.json \

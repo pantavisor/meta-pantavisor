@@ -118,12 +118,12 @@ docker exec pva-test pventer -c pv-devicepass-container keccak256sum --help
 
 ## Test 2: Device Identity Generation
 
-**Purpose**: Verify `devicepass-cli init` generates a valid secp256k1 keypair, derives a correct Ethereum address, and stores identity files.
+**Purpose**: Verify `devicepass-cli dev init` generates a valid secp256k1 keypair, derives a correct Ethereum address, and stores identity files.
 
 ### Execute
 
 ```bash
-docker exec pva-test pventer -c pv-devicepass-container devicepass-cli init
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev init
 ```
 
 ### Verify
@@ -155,11 +155,11 @@ echo "On file:  $ADDR_FILE"
 # Expected: both match
 
 # Status command
-docker exec pva-test pventer -c pv-devicepass-container devicepass-cli status
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev status
 # Expected: Shows Address, ID, Chain ID, Contract, Key dir
 
 # Reinit should fail without --force
-docker exec pva-test pventer -c pv-devicepass-container devicepass-cli init
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev init
 # Expected: "Identity already exists" warning, exit 1
 ```
 
@@ -178,21 +178,21 @@ docker exec pva-test pventer -c pv-devicepass-container devicepass-cli init
 
 ## Test 3: Onboard Claim Blob
 
-**Purpose**: Verify `devicepass-cli onboard` produces a valid signed claim JSON blob that can be verified independently.
+**Purpose**: Verify `devicepass-cli dev onboard` produces a valid signed claim JSON blob that can be verified independently.
 
 ### Execute
 
 ```bash
-docker exec pva-test pventer -c pv-devicepass-container devicepass-cli onboard --quiet
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev onboard --quiet
 # Expected: JSON blob like:
-# {"version":1,"device":"0x...","nonce":TIMESTAMP,"chain_id":8453,"contract":"0x...","signature":"0x..."}
+# {"version":2,"device":"0x...","guardian":"0x0000...","nonce":TIMESTAMP,"chain_id":8453,"contract":"0x...","signature":"0x..."}
 ```
 
 ### Verify
 
 ```bash
 # Capture the claim
-CLAIM=$(docker exec pva-test pventer -c pv-devicepass-container devicepass-cli onboard --quiet 2>/dev/null | grep '^{')
+CLAIM=$(docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev onboard --quiet 2>/dev/null | grep '^{')
 echo "$CLAIM" | python3 -m json.tool
 # Expected: valid JSON with all fields
 
@@ -213,7 +213,7 @@ echo "v = 0x$V"
 | Check | Expected |
 |-------|----------|
 | Output format | Valid JSON |
-| version | 1 |
+| version | 2 |
 | device | Matches device.address |
 | nonce | Unix timestamp (reasonable value) |
 | chain_id | 8453 (default) |
@@ -239,6 +239,9 @@ forge test -vv
 ```
 [PASS] test_claimDevice()
 [PASS] test_claimDevice_emitsEvent()
+[PASS] test_claimDevice_guardianBound()
+[PASS] test_claimDevice_guardianBound_revert_mismatch()
+[PASS] test_claimDevice_open_anySubmitter()
 [PASS] test_claimDevice_revert_alreadyClaimed()
 [PASS] test_claimDevice_revert_badSignatureLength()
 [PASS] test_claimDevice_revert_nonceReplay()
@@ -250,7 +253,7 @@ forge test -vv
 [PASS] test_transferDevice()
 [PASS] test_transferDevice_revert_notGuardian()
 [PASS] test_transferDevice_revert_toSelf()
-Suite result: ok. 13 passed; 0 failed; 0 skipped
+Suite result: ok. 16 passed; 0 failed; 0 skipped
 ```
 
 ### What the tests cover
@@ -259,6 +262,9 @@ Suite result: ok. 13 passed; 0 failed; 0 skipped
 |------|-----------|
 | `test_claimDevice` | Happy path: device sig verified, passport created, guardian recorded |
 | `test_claimDevice_emitsEvent` | PassportCreated event emitted |
+| `test_claimDevice_guardianBound` | Guardian-bound claim succeeds when submitter matches |
+| `test_claimDevice_guardianBound_revert_mismatch` | Guardian-bound claim reverts when wrong guardian submits |
+| `test_claimDevice_open_anySubmitter` | Open claim (guardian=0x0) works with any submitter |
 | `test_claimDevice_revert_alreadyClaimed` | Cannot claim an already-active device |
 | `test_claimDevice_revert_nonceReplay` | Same nonce rejected even after revoke |
 | `test_claimDevice_revert_wrongSigner` | Signature from wrong key rejected |
@@ -778,7 +784,26 @@ cd build/workspace/sources/pantavisor/pv-devicepass/contracts
 forge test -vv
 ```
 
-### Deploy to Anvil
+### Run E2E Test (Automated)
+```bash
+cd build/workspace/sources/pantavisor/pv-devicepass/scripts
+./test-e2e-guardian-bound.sh
+```
+
+Runs all tests automatically: contract unit tests, Anvil deploy, device-side commands in container, guardian-bound claims, and management commands. Requires Foundry and optionally a running appengine with pv-devicepass-container.
+
+### Deploy to Anvil (via CLI)
+```bash
+SCRIPTS=build/workspace/sources/pantavisor/pv-devicepass/scripts
+
+anvil --chain-id 31337 --port 8546 --silent &
+
+$SCRIPTS/devicepass-cli guardian deploy \
+    --rpc=http://localhost:8546 \
+    --private-key=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
+
+### Deploy to Anvil (via Forge)
 ```bash
 anvil --chain-id 31337 --port 8546 --silent &
 
@@ -808,7 +833,7 @@ CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
 # Device generates claim blob
 docker exec pva-test pventer -c pv-devicepass-container \
     env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
-    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' > /tmp/claim.json
+    devicepass-cli dev onboard --quiet 2>/dev/null | grep '^{' > /tmp/claim.json
 
 # Guardian claims on-chain
 $SCRIPTS/devicepass-cli guardian claim \
@@ -876,10 +901,10 @@ GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
 # Step 1: Device generates claim blob (inside container)
 docker exec pva-test pventer -c pv-devicepass-container \
     env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
-    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' > /tmp/device-claim.json
+    devicepass-cli dev onboard --quiet 2>/dev/null | grep '^{' > /tmp/device-claim.json
 
 cat /tmp/device-claim.json | jq .
-# Expected: {"version":1,"device":"0x...","nonce":...,"chain_id":31337,...,"signature":"0x..."}
+# Expected: {"version":2,"device":"0x...","guardian":"0x0000...","nonce":...,"chain_id":31337,...,"signature":"0x..."}
 
 # Step 2: Guardian claims on-chain (from host)
 $SCRIPTS/devicepass-cli guardian claim \
@@ -1044,12 +1069,12 @@ CONTRACT="0x5FbDB2315678afecb367f032d93F642f64180aa3"
 GUARDIAN_KEY=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
 
 # Re-init device identity (previous was revoked)
-docker exec pva-test pventer -c pv-devicepass-container devicepass-cli init --force
+docker exec pva-test pventer -c pv-devicepass-container devicepass-cli dev init --force
 
 # Pipe: device onboard → guardian claim
 docker exec pva-test pventer -c pv-devicepass-container \
     env DEVICEPASS_CHAIN_ID=31337 DEVICEPASS_CONTRACT=$CONTRACT \
-    devicepass-cli onboard --quiet 2>/dev/null | grep '^{' | \
+    devicepass-cli dev onboard --quiet 2>/dev/null | grep '^{' | \
     $SCRIPTS/devicepass-cli guardian claim \
         --rpc=http://localhost:8546 --contract=$CONTRACT --private-key=$GUARDIAN_KEY
 # Expected: "Device claimed successfully"
