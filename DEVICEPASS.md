@@ -41,6 +41,59 @@ Device                         Guardian                                  Chain
 - **The hub is just an app.** It reads the chain to authenticate devices and route traffic. It has no role in claiming, ownership, or identity. If the hub goes down, ownership state is intact on-chain and any replacement hub can pick up where it left off.
 - **Supply chain friendly.** A factory can generate device identities, create claim blobs, register itself as initial guardian, and later transfer ownership on-chain — equivalent to FIDO FDO ownership vouchers but backed by a distributed ledger instead of a centralized rendezvous server.
 
+## Quick Start — Try DevicePass in Appengine
+
+The fastest way to try DevicePass is the pre-built appengine image. It bundles the device container, hub, and IPAM networking — no manual setup needed.
+
+### 1. Build the Image
+
+```bash
+git clone -b poc/devicepass https://github.com/pantavisor/meta-pantavisor
+cd meta-pantavisor
+
+./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+    --target pantavisor-image-devicepass
+```
+
+### 2. Run It
+
+```bash
+docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-image-devicepass-docker.tar
+
+docker run --name pva-dp -d --privileged \
+    -v storage-dp:/var/pantavisor/storage \
+    pantavisor-image-devicepass:1.0
+```
+
+Wait ~20 seconds for containers to start, then verify:
+
+```bash
+docker exec pva-dp lxc-ls -f
+# pv-devicepass-container  RUNNING  10.0.3.2
+# pv-devicepass-hub        RUNNING  10.0.3.10
+```
+
+No pvtx.d volume mount needed — containers are baked into the image and auto-provision on first boot.
+
+### 3. Generate Device Identity and Claim
+
+```bash
+# Generate identity inside the device container
+docker exec pva-dp pventer -c pv-devicepass-container "devicepass-cli dev init"
+
+# Check status
+docker exec pva-dp pventer -c pv-devicepass-container "devicepass-cli dev status"
+```
+
+From here, follow the [guardian CLI workflow](#guardian-side) to deploy a contract on Anvil and claim the device. The [E2E test script](build/workspace/sources/pantavisor/pv-devicepass/scripts/test-e2e-guardian-bound.sh) automates the full flow.
+
+### 4. Teardown
+
+```bash
+docker rm -f pva-dp
+docker volume rm storage-dp
+```
+
 ## CLI Overview
 
 ```bash
