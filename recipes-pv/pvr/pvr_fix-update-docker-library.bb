@@ -2,7 +2,7 @@ DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program.
 SECTION = "pantacor"
 HOMEPAGE = "https://golang.org/"
 
-inherit go-mod deploy
+inherit pvgo_mod deploy
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -14,8 +14,8 @@ SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
 "
 
-SRC_URI[pvr.sha256sum] = "09cf239fb9d8a8794b874d7a84fa8e112ebfc24ae1457523bafdd6bb11cec9d3"
-SRC_URI[vendor.sha256sum] = "bc770d5038b3cd604e2a68b810cd5b2304472006a2837d201e634e3daf503f21"
+SRC_URI[pvr.sha256sum] = "7c4f57f92a4d2de53e8ecbc1935905298c946bf8a470e651a9937d8808db5560"
+SRC_URI[vendor.sha256sum] = "7bd19d5bb651afa9d88b5516bb3510ec486e1fcdc42163dde57e99852f70d6cc"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
@@ -26,6 +26,7 @@ GO_LINKMODE:class-nativesdk = ""
 GO_LINKMODE:class-native = ""
 
 CGO_ENABLED = "0"
+GOBUILDFLAGS:remove = "-buildmode=pie"
 
 do_unpack[cleandirs] += "${S}/src/${GO_IMPORT}"
 relocate_source() {
@@ -37,7 +38,7 @@ do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
 do_deploy[dirs] += "${DEPLOY_DIR_TOOLS}"
 
 do_deploy() {
-        install -m 755 ${B}/bin/pvr ${DEPLOY_DIR_TOOLS}/pvr-${PACKAGE_ARCH}
+        install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOY_DIR_TOOLS}/pvr-${PACKAGE_ARCH}
 }
 
 addtask deploy after do_install

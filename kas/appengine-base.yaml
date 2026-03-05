@@ -13,6 +13,9 @@ distro: panta-appengine
 _source_dir: .
 repos:
   meta-pantavisor:
+    layers:
+      .:
+      recipes-pv/pvgo:
 
   poky:
     url: "https://github.com/yoctoproject/poky.git"
