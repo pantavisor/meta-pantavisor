@@ -6,7 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 KAS_CONFIG="${KAS_CONFIG:-.github/configs/release/docker-x86_64-scarthgap.yaml}"
 WORKDIR="$SCRIPT_DIR/workdir/appengine"
 DEPLOY_DIR="$SCRIPT_DIR/build/tmp-scarthgap/deploy/images/docker-x86_64"
-PVTESTS_REPO="${PVTESTS_REPO:-git@gitlab.com:pantacor/pvtests-local.git}"
+PVTESTS_LOCAL_REPO="${PVTESTS_LOCAL_REPO:-git@gitlab.com:pantacor/pvtests-local.git}"
+PVTESTS_REMOTE_REPO="${PVTESTS_REMOTE_REPO:-git@gitlab.com:pantacor/pvtests-remote.git}"
+PH_USER="${PH_USER:-}"
+PH_PASS="${PH_PASS:-}"
 
 usage() {
 	echo ""
@@ -25,6 +28,10 @@ usage() {
 	echo "                    If test-name is omitted, runs all tests"
 	echo ""
 	echo "Extra arguments after '--' are passed directly to test.docker.sh"
+	echo ""
+	echo "Environment:"
+	echo "  PH_USER           Pantahub username (required for remote tests)"
+	echo "  PH_PASS           Pantahub password (required for remote tests)"
 	echo ""
 	echo "Examples:"
 	echo "  $0 ls"
@@ -155,12 +162,18 @@ case "$command" in
 		echo "==> Loading docker images..."
 		./test.docker.sh install-docker
 
-		# Step 5: Clone test repo if needed
+		# Step 5: Clone test repos if needed
 		if [ ! -d "pvtests-local" ]; then
 			echo "==> Cloning pvtests-local..."
-			git clone "$PVTESTS_REPO"
+			git clone "$PVTESTS_LOCAL_REPO"
 		else
 			echo "==> pvtests-local already exists, skipping clone"
+		fi
+		if [ ! -d "pvtests-remote" ]; then
+			echo "==> Cloning pvtests-remote..."
+			git clone "$PVTESTS_REMOTE_REPO"
+		else
+			echo "==> pvtests-remote already exists, skipping clone"
 		fi
 
 		# Step 6: Cache sudo credentials and ensure loop devices exist
@@ -182,7 +195,16 @@ case "$command" in
 			sudo chmod 0660 /dev/loop0
 		fi
 
-		# Step 7: Run test
+		# Step 7: Validate credentials for remote tests
+		if [ -n "$test_name" ] && echo "$test_name" | grep -q "^pvtests-remote"; then
+			if [ -z "$PH_USER" ] || [ -z "$PH_PASS" ]; then
+				echo "Error: PH_USER and PH_PASS must be set for remote tests"
+				echo "       e.g. PH_USER=user PH_PASS=pass $0 run $test_name"
+				exit 1
+			fi
+		fi
+
+		# Step 8: Run test
 		echo "==> Running test..."
 		if [ -n "$test_name" ]; then
 			./test.docker.sh $verbose run "$test_name" "${extra_args[@]}"
