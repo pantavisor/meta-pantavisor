@@ -18,6 +18,9 @@ repos:
         path: layers/poky
         commit: 1d54d1c4736a114e1cecbe85a0306e3814d5ce70
     meta-pantavisor:
+        layers:
+            .:
+            recipes-pv/pvgo:
     meta-virtualization:
         commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
         path: layers/meta-virtualization
@@ -57,6 +60,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " debug"
     lxc-next: |
         PANTAVISOR_FEATURES:append = " lxc-next"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
