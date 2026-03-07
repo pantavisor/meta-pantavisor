@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: 26c608906925050591b802bb70c09077fb915381
+        commit: 620ceae7b6c636c2afa300be0f7d08ed7028bbd5
         patches:
             add-readme-to-tezi:
                 path: patches/meta-toradex-bsp-common/0003-add-README.md-to-tezi.patch
