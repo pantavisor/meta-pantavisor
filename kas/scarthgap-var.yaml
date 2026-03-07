@@ -1,0 +1,18 @@
+header:
+  version: 16
+  includes:
+    - kas/scarthgap.yaml
+    - kas/platforms/variscite-scarthgap.yaml
+
+#local_conf_header:
+#  variscite-devel-remove: |
+#    CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-variscite-devel packagegroup-security-tpm2"
+#    MACHINE_EXTRA_RDEPENDS:remove = "u-boot-splash u-boot-default-env"
+#    PREFERRED_PROVIDER_virtual/kernel = "linux-variscite"
+
+#bblayers_conf_header:
+#  variscite-mask: |
+#    BBMASK += "meta-variscite-bsp-imx/recipes-multimedia/gstreamer/gstreamer1.0-plugins-bad_1.24.0.imx.bbappend"
+#    BBMASK += "meta-variscite-bsp-common/recipes-bsp/firmware-imx/firmware-nxp-wifi_1.0.bbappend"
+#    BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-nxp-wifi_%.bbappend"
+
