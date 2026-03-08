@@ -27,13 +27,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/crypt-v2"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "472bbac022a9aa68ba8193cd2c1e6370f0f83637"
+SRCREV = "c80757b6cab6ec2d906d72da109c3259d9821014"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
