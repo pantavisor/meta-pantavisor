@@ -58,11 +58,11 @@ do_compile[mcdepends] += '${compile_mcdepends}'
 
 # Add mcdepends for rpi-tryboot kernel modules
 RPI_TRYBOOT_MCDEPENDS = "\
-    ${@'rpi-kernel' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel:linux-raspberrypi:do_deploy' or ''} \
-    ${@'rpi-kernel7' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel7:linux-raspberrypi:do_deploy' or ''} \
-    ${@'rpi-kernel7l' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel7l:linux-raspberrypi:do_deploy' or ''} \
-    ${@'rpi-kernel8' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel8:linux-raspberrypi:do_deploy' or ''} \
-    ${@'rpi-kernel_2712' in d.getVar('BBMULTICONFIG', '').split() and ' mc::rpi-kernel_2712:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel7' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel7:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel7l' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel7l:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel8' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel8:linux-raspberrypi:do_deploy' or ''} \
+    ${@'rpi-kernel_2712' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel_2712:linux-raspberrypi:do_deploy' or ''} \
 "
 do_compile[mcdepends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', d.getVar('RPI_TRYBOOT_MCDEPENDS'), '', d)}"
 
@@ -97,7 +97,7 @@ fakeroot do_compile(){
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
 
     # Check if rpi-tryboot is enabled (used to skip generic modules.squashfs)
-    rpi_tryboot="${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'yes', 'no', d)}"
+    rpi_tryboot='${@bb.utils.contains("PANTAVISOR_FEATURES", "rpi-tryboot", "yes", "no", d)}'
 
     # Only create generic modules.squashfs if NOT using rpi-tryboot
     # (rpi-tryboot creates per-kernel-version modules squashfs files instead)
