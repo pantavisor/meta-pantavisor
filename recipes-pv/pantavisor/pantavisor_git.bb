@@ -7,6 +7,7 @@ DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
 DEPENDS = "cmake libevent libthttp picohttpparser mbedtls zlib pkgconfig-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi', '', d)} \
 	"
 RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
 	e2fsprogs-e2fsck \
@@ -76,7 +77,7 @@ inherit cmake gitpkgv
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
-EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON', '', d)}"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', '-DPANTAVISOR_DM_CRYPT=ON -DPANTAVISOR_DCP_BLOB_CREATE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '-DPANTAVISOR_DM_VERITY=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', '-DPANTAVISOR_E2FSGROW_ENABLE=ON', '-DPANTAVISOR_E2FSGROW_ENABLE=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', '-DPANTAVISOR_RUNC_ENABLE=ON', '-DPANTAVISOR_RUNC_ENABLE=OFF', d)}"
