@@ -115,15 +115,33 @@ install_docker() {
 }
 
 install_deps() {
-	echo "This will install some packages in your system. Do you want to continue? [y/N]"
-    read -n1 answer
-    case "$answer" in
-        y|Y)
-            ;;
-        *)
-			exit 0
-            ;;
-    esac
+	local auto_yes=false
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			-y|--yes)
+				auto_yes=true
+				shift
+				;;
+			*)
+				echo "Error: Unknown argument: $1"
+				usage
+				exit 1
+				;;
+		esac
+	done
+
+	if [ "$auto_yes" != "true" ]; then
+		echo "This will install some packages in your system. Do you want to continue? [y/N]"
+		read -n1 answer
+		case "$answer" in
+			y|Y)
+				;;
+			*)
+				exit 0
+				;;
+		esac
+	fi
 
 	sudo -v
 
@@ -506,7 +524,7 @@ case "$command" in
 		add_test "$@"
 		;;
 	install-deps)
-		install_deps
+		install_deps "$@"
 		;;
 	install-docker)
 		install_docker
