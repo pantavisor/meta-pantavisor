@@ -93,7 +93,7 @@ do_finish_rootfs() {
         
         # Create symlink from /pv to /run/pantavisor/pv (only if it doesn't exist)
         if [ ! -e ${IMAGE_ROOTFS}/pv ]; then
-                ln -sf run/pantavisor/pv ${IMAGE_ROOTFS}/pv
+                ln -sf var/run/pantavisor/pv ${IMAGE_ROOTFS}/pv
         fi
         if [ ! -e ${IMAGE_ROOTFS}/media ]; then
                 ln -sf var/run/pantavisor/pv/media ${IMAGE_ROOTFS}/media
