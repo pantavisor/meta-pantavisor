@@ -1,0 +1,11 @@
+header:
+    version: 16
+
+repos:
+    meta-pantavisor:
+        layers:
+            recipes-pv/pvgo:
+
+local_conf_header:
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
