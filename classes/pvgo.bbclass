@@ -78,6 +78,8 @@ export CGO_LDFLAGS ?= "${LDFLAGS}"
 GO_INSTALL ?= "${GO_IMPORT}/..."
 GO_INSTALL_FILTEROUT ?= "${GO_IMPORT}/vendor/"
 
+GO_BUILD_BINDIR ?= "bin"
+
 B = "${WORKDIR}/build"
 export GOPATH = "${B}"
 export GOENV = "off"
