@@ -6,6 +6,8 @@ header:
   # out if it is compatible with this file. The version is an integer that
   # is increased on every format change.
   version: 16
+  includes:
+    - pvgo.yaml
 
 target: pantavisor-bsp
 build_system: oe
