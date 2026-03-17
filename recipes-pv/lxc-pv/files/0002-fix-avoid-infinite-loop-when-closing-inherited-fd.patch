@@ -1,0 +1,25 @@
+From a6a7979471beefc411958fa9063f7e42773d3499 Mon Sep 17 00:00:00 2001
+From: kas User <kas@example.com>
+Date: Tue, 17 Mar 2026 18:03:18 +0000
+Subject: [PATCH] fix: avoid infinite loop when closing inherited fd
+
+---
+ src/lxc/start.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/lxc/start.c b/src/lxc/start.c
+index c601cee2c..17f7a97fe 100644
+--- a/src/lxc/start.c
++++ b/src/lxc/start.c
+@@ -294,7 +294,10 @@ restart:
+ 
+ #endif
+ 		if (closeall) {
+-			close(fd);
++			if (close(fd)) {
++				WARN("Could not close fd %d. Continuing...", fd);
++				continue;
++			}
+ 			closedir(dir);
+ 			INFO("Closed inherited fd %d", fd);
+ 			goto restart;
