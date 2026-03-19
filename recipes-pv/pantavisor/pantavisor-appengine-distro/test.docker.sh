@@ -115,8 +115,12 @@ install_docker() {
 }
 
 install_deps() {
-	echo "This will install some packages in your system. Do you want to continue? [y/N]"
-    read -n1 answer
+echo "This will install some packages in your system. Do you want to continue? [y/N]"
+    if [[ "$CI_MODE" == "true" ]]; then
+       answer="y"
+    else
+       read -n1 answer
+    fi
     case "$answer" in
         y|Y)
             ;;
@@ -134,6 +138,7 @@ install_deps() {
 		git \
 		jq \
 		iw \
+		bc \
 		linux-modules-`uname -r` \
 		linux-modules-extra-`uname -r`
 	sudo groupadd docker
@@ -331,10 +336,13 @@ exec_test() {
 
 	if [ $res -eq 0 ]; then
 		echo -e "Info: '$2:$4' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+		return 0
 	elif [ $res -eq 2 ]; then
 		echo -e "Info: '$2:$4' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+		return 2
 	else
 		echo -e "Info: '$2:$4' ${RED}FAILED${NOCOLOR} ($runtime s)"
+			return 1
 	fi
 }
 
