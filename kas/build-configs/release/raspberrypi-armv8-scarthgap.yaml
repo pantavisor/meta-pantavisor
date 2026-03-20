@@ -49,6 +49,8 @@ local_conf_header:
         ENABLE_UART = "1"
     pv-flash-readme: |
         PV_FLASH_README = "docs/flashing/sdcard.md"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
