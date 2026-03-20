@@ -65,6 +65,8 @@ local_conf_header:
         IMAGE_FSTYPES:remove  = "teziimg"
         IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
         IMAGE_FSTYPES:append = " pv_teziimg"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
