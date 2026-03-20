@@ -25,7 +25,6 @@ GO_LINKSHARED = ""
 GO_LINKMODE:class-nativesdk = ""
 GO_LINKMODE:class-native = ""
 
-CGO_ENABLED = "0"
 
 do_unpack[cleandirs] += "${S}/src/${GO_IMPORT}"
 relocate_source() {
