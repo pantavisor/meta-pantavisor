@@ -13,3 +13,12 @@ ZEPHYR_SRC_DIR = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr/samples/pvcm
 ZEPHYR_EXTRA_MODULES = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr"
 
 SRC_URI += "file://pvcm-zephyr-shell.args.json"
+
+# native_sim fix: the NSI Makefile uses NSI_CC without --sysroot.
+# Patch nsi_config after cmake generates it.
+do_configure:append() {
+    if [ -f ${B}/zephyr/NSI/nsi_config ]; then
+        sed -i "s|^NSI_CC:=\(.*\)|NSI_CC:=\1 --sysroot=${STAGING_DIR_TARGET}|" \
+            ${B}/zephyr/NSI/nsi_config
+    fi
+}
