@@ -1,0 +1,60 @@
+From ad301c282ab253878c1cb78c02dd6933942bb7ec Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Sun, 22 Mar 2026 11:38:17 +0000
+Subject: [PATCH] zephyr-kernel-common: only pass board/soc cmake vars when set
+
+BOARD_ROOT, BOARD_DIR, ARCH_DIR, SOC_ROOT and BOARD_EXTENSION_DIRS are
+referenced as bitbake variables in EXTRA_OECMAKE but never assigned
+anywhere in meta-zephyr. When unset, bitbake expands them to empty
+strings, which get passed to cmake as -DBOARD_ROOT= etc.
+
+Zephyr's cmake boards.cmake treats an explicitly-set-but-empty
+BOARD_ROOT differently from an unset one: when set to empty, it skips
+appending ZEPHYR_BASE as the default board search root. This causes
+"Invalid BOARD" errors for all in-tree boards.
+
+Fix by moving these variables into the existing python anonymous
+function, conditionally appending them to EXTRA_OECMAKE only when set.
+
+Signed-off-by: Alexander Sack <asac@pantacor.com>
+---
+ .../zephyr-kernel/zephyr-kernel-common.inc       | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/meta-zephyr-core/recipes-kernel/zephyr-kernel/zephyr-kernel-common.inc b/meta-zephyr-core/recipes-kernel/zephyr-kernel/zephyr-kernel-common.inc
+index 579fd6c..0ff5446 100644
+--- a/meta-zephyr-core/recipes-kernel/zephyr-kernel/zephyr-kernel-common.inc
++++ b/meta-zephyr-core/recipes-kernel/zephyr-kernel/zephyr-kernel-common.inc
+@@ -17,12 +17,6 @@ ZEPHYR_MAKE_EFI_OUTPUT = "zephyr.efi"
+ EXTRA_OECMAKE = "\
+     -DZEPHYR_BASE=${ZEPHYR_BASE} \
+     -DBOARD=${BOARD} \
+-    -DARCH=${ARCH} \
+-    -DBOARD_DIR=${BOARD_DIR} \
+-    -DARCH_DIR=${ARCH_DIR} \
+-    -DBOARD_ROOT=${BOARD_ROOT} \
+-    -DBOARD_EXTENSION_DIRS=${BOARD_EXTENSION_DIRS} \
+-    -DSOC_ROOT=${SOC_ROOT} \
+     -DZEPHYR_TOOLCHAIN_VARIANT=${ZEPHYR_TOOLCHAIN_VARIANT} \
+     -DZEPHYR_MODULES=${ZEPHYR_MODULES} \
+     "
+@@ -46,6 +40,16 @@ python () {
+     d.delVar('CFLAGS')
+     d.delVar('CXXFLAGS')
+     d.delVar('LDFLAGS')
++
++    # Only pass board/soc path variables to cmake when explicitly set.
++    # When unset they expand to empty strings which override Zephyr cmake's
++    # internal board discovery -- an empty BOARD_ROOT prevents the ZEPHYR_BASE
++    # fallback from being appended, causing "Invalid BOARD" for in-tree boards.
++    for var in ('ARCH', 'BOARD_DIR', 'ARCH_DIR', 'BOARD_ROOT',
++                'BOARD_EXTENSION_DIRS', 'SOC_ROOT'):
++        val = d.getVar(var)
++        if val:
++            d.appendVar('EXTRA_OECMAKE', ' -D%s=%s' % (var, val))
+ }
+ 
+ OE_TERMINAL_EXPORTS += "BOARD"
+-- 
+2.34.1
+
