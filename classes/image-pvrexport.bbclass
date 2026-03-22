@@ -8,6 +8,8 @@ IMAGE_TYPES_MASKED:remove = "${@'pvrexportit' if not d.getVar('PVROOT_IMAGE_BSP'
 
 python __anonymous() {
     pn = d.getVar("PN")
+    if pn == "pantavisor-initramfs":
+        return
     if not d.getVar("PVROOT_IMAGE_BSP") is None and not pn in d.getVar("PVROOT_IMAGE_BSP") and \
        "linux-dummy" not in d.getVar("PREFERRED_PROVIDER_virtual/kernel"):
         d.setVar("PREFERRED_PROVIDER_virtual/kernel", "linux-dummy")
