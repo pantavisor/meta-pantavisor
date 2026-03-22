@@ -25,28 +25,71 @@ protocol/pvcm_protocol.h        canonical wire format, shared by all
                                  (Linux, U-Boot, Zephyr, FreeRTOS)
 ```
 
-### pvcm-manager (Linux side)
+### MCU Plugin (pv_pvcm.so)
 
-Part of the pantavisor binary, **not** a standalone daemon. Built when
-the `pvcm` feature is enabled:
+Container plugin, same pattern as `plugins/pv_lxc.c`. Loaded via
+`dlopen()` by pantavisor when a platform has `"type": "mcu"`.
 
-```cmake
-# pantavisor CMakeLists.txt
-if(PV_FEATURE_PVCM)
-    add_subdirectory(pvcm-manager)
-endif()
-```
+Thin plugin -- forks pvcm-proxy and sets init_pid. All MCU logic
+lives in pvcm-proxy (see below).
 
 ```
-pvcm-manager/
-    main.c
-    pvcm_transport_uart.c
-    pvcm_transport_rpmsg.c
-    pvcm_health.c
-    pvcm_firmware.c
-    pvcm_bridge.c
-    pvcm_log.c
+plugins/
+    pv_pvcm.c              MCU container plugin
+    pv_pvcm.h
 ```
+
+Exports:
+- `pv_start_container()` -- fork/exec pvcm-proxy in new namespace
+- `pv_stop_container()` -- signal pvcm-proxy to shut down MCU + exit
+- `pv_console_log_getfd()` -- MCU log stream fd from pvcm-proxy
+
+### pvcm-proxy (per-MCU runtime process)
+
+Separate binary, one instance per MCU container. Started by the MCU
+plugin inside a namespace (CLONE_NEWNS + CLONE_NEWPID). From xconnect's
+perspective, pvcm-proxy IS the container -- it has init_pid, a mount
+namespace, and service sockets.
+
+This is the same relationship as LXC plugin → LXC runtime, or runc
+plugin → runc runtime. The plugin is thin, the runtime does everything.
+
+```
+pvcm-proxy/
+    main.c                  entry point, namespace setup
+    pvcm_transport.h        transport abstraction
+    pvcm_transport_uart.c   UART transport (external MCU)
+    pvcm_transport_rpmsg.c  RPMsg transport (internal M core)
+    pvcm_protocol.c         frame encode/decode, CRC32
+    pvcm_health.c           heartbeat monitor, crash counting
+    pvcm_firmware.c         MCU firmware flash (FW_UPDATE_*)
+    pvcm_log.c              log stream → PV log server
+    pvcm_bridge.c           xconnect socket ↔ PVCM protocol bridge
+```
+
+Lifecycle:
+```
+MCU plugin start()
+  └── fork/exec pvcm-proxy --config /trails/0/mcu-display/run.json
+      └── pvcm-proxy owns everything:
+          ├── open transport (UART/RPMsg from run.json)
+          ├── probe MCU (HELLO/HELLO_RESP)
+          ├── flash firmware if needed (FW_UPDATE_*)
+          ├── start MCU (remoteproc or reset GPIO)
+          ├── run heartbeat monitor
+          ├── forward logs to PV log server
+          ├── create service sockets in its namespace
+          ├── bridge xconnect sockets ↔ PVCM protocol
+          └── report health via exit code / pipe to plugin
+```
+
+Why per-MCU proxy instead of a single manager daemon:
+- xconnect sees each MCU as a normal container (init_pid + namespace)
+- No xconnect modifications needed -- socket injection works as-is
+- Multiple MCUs = multiple proxies, clean isolation
+- Consistent with how LXC/runc work -- plugin starts runtime, done
+- services.json exports appear as normal provider sockets
+- Auto-recovery (feature/auto-recovery branch) works unchanged
 
 ### Zephyr SDK (west module)
 
@@ -468,14 +511,13 @@ pvr app add \
 
 ### Zephyr multiconfig build (2026-03-22)
 
-The multiconfig build parses and builds successfully (1398/1399 tasks).
-The single failure is `do_configure` for `pvcm-zephyr-shell` because
-the Zephyr board name `mimx8mn6_evk` doesn't exist in Zephyr 3.6.0
-(meta-zephyr scarthgap ships Zephyr 3.6.0, board naming changed in
-newer versions).
+Build succeeds: 1443/1443 tasks, produces `pvcm-zephyr-shell.elf`
+(ARM Cortex-M, 50KB bin / 1.3M elf with debug). Uses `mimx8mm_evk`
+board as stand-in (Zephyr 3.6.0 has no i.MX8MN M7 board).
 
-**TODO:** find the correct board name for i.MX8MN M7 in Zephyr 3.6.0,
-or check if a newer meta-zephyr branch is needed.
+Fixed meta-zephyr scarthgap bug: unset BOARD_ROOT/BOARD_DIR/SOC_ROOT
+bitbake vars in EXTRA_OECMAKE expand to empty strings, overriding
+Zephyr cmake board discovery. Patch applied via kas mechanism.
 
 ### meta-zephyr
 
@@ -485,6 +527,7 @@ or check if a newer meta-zephyr branch is needed.
 - Distro: `zephyr` (TCLIBC=newlib)
 - No i.MX8MN machine -- we provide `conf/machine/imx8mn-m7.conf`
 - `zephyr-sample` bbclass is what recipes inherit (not `zephyr-app`)
+- Board discovery bug patched via kas (patches/meta-zephyr/)
 
 ---
 
@@ -495,9 +538,11 @@ or check if a newer meta-zephyr branch is needed.
 1. [done] `protocol/pvcm_protocol.h` -- wire format, opcodes, structs
 2. [done] `sdk/zephyr/` -- west module skeleton, Kconfig, mandatory modules
 3. [done] `sdk/zephyr/samples/pvcm-shell/` -- Phase 1 demo app
-4. `pvcm-manager/` -- transport, probe, health, log forwarding
-5. `src/bootstate.c` refactor -- pluggable backend abstraction
-6. `src/bootstate_mcu.c` -- MCU backend
+4. `plugins/pv_pvcm.c` -- MCU container plugin (thin: fork pvcm-proxy)
+5. `pvcm-proxy/` -- per-MCU runtime (transport, protocol, health, bridge)
+6. `src/bootstate.c` refactor -- pluggable backend abstraction
+7. `src/bootstate_mcu.c` -- MCU backend
+8. Consolidate with `feature/auto-recovery` health/restart semantics
 
 ### pvr repo (feature/pvcm)
 
@@ -519,6 +564,7 @@ or check if a newer meta-zephyr branch is needed.
 7. [done] `conf/machine/imx8mn-m7.conf` -- Zephyr MCU machine
 8. [done] `recipes-pv/pantavisor/pantavisor_git.bb` -- wire PV_FEATURE_PVCM cmake flag
 9. [done] `recipes-containers/pvcm-zephyr-shell/` -- demo recipe
-10. [todo] Fix Zephyr board name for i.MX8MN M7 (Zephyr 3.6.0 compat)
-11. [todo] BSP integration -- mcdepends to pull MCU ELF into BSP container
-12. [todo] MCU pvrexport bbclass using pvr --type mcu
+10. [done] Fix Zephyr board (using mimx8mm_evk as stand-in for 3.6.0)
+11. [done] Patch meta-zephyr cmake board discovery bug via kas
+12. [todo] BSP integration -- mcdepends to pull MCU ELF into BSP container
+13. [todo] MCU pvrexport bbclass using pvr --type mcu
