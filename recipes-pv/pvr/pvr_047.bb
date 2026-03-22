@@ -9,10 +9,10 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 S = "${WORKDIR}"
 
-SRC_URI = " \
-        https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
-        https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
-"
+SRC_URI = "https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
+           https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
+           file://0001-feat-add-type-image-and-template-flag-for-MCU-contai.patch;patchdir=pvr-${PV} \
+           "
 
 SRC_URI[pvr.sha256sum] = "09cf239fb9d8a8794b874d7a84fa8e112ebfc24ae1457523bafdd6bb11cec9d3"
 SRC_URI[vendor.sha256sum] = "bc770d5038b3cd604e2a68b810cd5b2304472006a2837d201e634e3daf503f21"
