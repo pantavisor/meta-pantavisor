@@ -1,0 +1,10 @@
+{
+    "disks": [
+        {
+            "name": "dm-internal-secrets",
+            "path": "/storage/dm-crypt-files/dm-internal-secrets-nxp/caam.img,2,caam_nxpkey-internal_secrets",
+            "type": "dm-crypt-caam",
+            "mode": "nxp"
+        }
+    ]
+}

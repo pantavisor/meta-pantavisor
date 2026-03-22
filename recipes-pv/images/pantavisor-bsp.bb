@@ -83,11 +83,25 @@ fakeroot do_compile(){
     proto_image_name="${IMAGE_LINK_NAME}"
     pn="${PN}"
     proto_image_name=${PVROOT_IMAGE_BSP}-"${proto_image_name#$pn-}"
-    fstype="tar.gz"
+    # find the rootfs tarball, trying common formats
+    proto_tarball=""
+    for fstype in tar.gz tar.zst tar.bz2 tar.xz; do
+        if [ -f "${DEPLOY_DIR_IMAGE}/${proto_image_name}.rootfs.${fstype}" ]; then
+            proto_tarball="${DEPLOY_DIR_IMAGE}/${proto_image_name}.rootfs.${fstype}"
+            break
+        elif [ -f "${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype}" ]; then
+            proto_tarball="${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype}"
+            break
+        fi
+    done
     mkdir -p ${PVBSP_mods}/lib/modules
-    tar -C ${PVBSP_mods} -xvf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=4 ./lib/modules || true
     mkdir -p ${PVBSP_mods}/lib/firmware
-    tar -C ${PVBSP_fw} -xvf ${DEPLOY_DIR_IMAGE}/${proto_image_name}.${fstype} --strip-components=3 ./lib/firmware || true
+    if [ -n "$proto_tarball" ]; then
+        tar -C ${PVBSP_mods} -xvf "$proto_tarball" --strip-components=4 ./lib/modules || true
+        tar -C ${PVBSP_fw} -xvf "$proto_tarball" --strip-components=3 ./lib/firmware || true
+    else
+        bbwarn "No rootfs tarball found for ${proto_image_name}, modules/firmware will be empty"
+    fi
     cd ${PVBSPSTATE}
     pvr init
     pvr get ${DEPLOY_DIR_IMAGE}/${VIRTUAL-RUNTIME_pantavisor_skel}.pvrexport.tgz

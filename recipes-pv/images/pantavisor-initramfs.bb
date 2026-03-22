@@ -22,6 +22,8 @@ PACKAGE_INSTALL = "pantavisor \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'mtools', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
+PACKAGE_INSTALL:append = " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'keyctl-caam keyutils', '', d)}"
+
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 
 # Do not pollute the initrd image with rootfs features

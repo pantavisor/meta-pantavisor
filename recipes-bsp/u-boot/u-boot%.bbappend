@@ -10,6 +10,7 @@ PV_BOOT_OEMARGS ?= ""
 SRC_URI += " \
 	file://boot.cmd.pvgeneric \
 	file://pv.cfg \
+	file://pv.distroboot.cfg \
 	file://oemEnv.txt \
 	${PV_MACHINE_UBOOT_CONFIGS} \
 " 

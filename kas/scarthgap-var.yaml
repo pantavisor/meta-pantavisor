@@ -1,0 +1,64 @@
+# Every file needs to contain a header, that provides kas with information
+# about the context of this file.
+header:
+  # The `version` entry in the header describes for which configuration
+  # format version this file was created for. It is used by kas to figure
+  # out if it is compatible with this file. The version is an integer that
+  # is increased on every format change.
+  version: 16
+
+repos:
+  meta-variscite-bsp:
+    branch: scarthgap_6.6.52-2.2.2_var01
+  meta-variscite-hab:
+    branch: scarthgap_6.6.52-2.2.2_var01
+  meta-variscite-sdk:
+    branch: scarthgap_6.6.52-2.2.2_var01
+  meta-variscite-bsp-common:
+    url: "https://github.com/varigit/meta-variscite-bsp-common.git"
+    path: layers/meta-variscite-bsp-common
+    branch: scarthgap_6.6.52-2.2.2_var01
+  meta-variscite-sdk-common:
+    url: "https://github.com/varigit/meta-variscite-sdk-common.git"
+    path: layers/meta-variscite-sdk-common
+    branch: scarthgap_6.6.52-2.2.2_var01
+  meta-imx:
+    url: "https://github.com/nxp-imx/meta-imx.git"
+    path: layers/meta-imx
+    patches:
+      qa-issue-fix:
+        path: patches/meta-imx/0001-firmware-nxp-wifi-Fix-QA-issue.patch
+        repo: meta-pantavisor
+    branch: scarthgap-6.6.52-2.2.0
+    layers:
+      meta-imx-bsp:
+      meta-imx-ml:
+      meta-imx-sdk:
+
+  meta-openembedded:
+    path: layers/meta-openembedded
+    layers:
+      meta-perl:
+
+  meta-swupdate:
+    url: "https://github.com/sbabic/meta-swupdate.git"
+    path: layers/meta-swupdate
+
+  meta-security:
+    url: "https://git.yoctoproject.org/meta-security"
+    path: layers/meta-security
+    layers:
+      .:
+      meta-tpm:
+
+  meta-arm:
+    url: git://git.yoctoproject.org/meta-arm
+    path: layers/meta-arm
+    layers:
+      meta-arm:
+      meta-arm-toolchain:
+
+local_conf_header:
+  scarthgap-variscite: |
+    BB_DANGLINGAPPENDS_WARNONLY = "1"
+    PANTAVISOR_FEATURES:append = " caam-nxp"
