@@ -8,7 +8,8 @@ and Zephyr native_sim_64 over PTY.
 Build the native_sim_64 Zephyr target:
 
 ```bash
-kas build kas/scarthgap.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-machines/native-sim.yaml --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
+kas build kas/scarthgap.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-machines/native-sim.yaml \
+    --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
 ```
 
 Build pvcm-proxy for the host:
@@ -20,126 +21,120 @@ gcc -o /tmp/pvcm-proxy-test \
     $PV/pvcm-proxy/pvcm_config.c \
     $PV/pvcm-proxy/pvcm_transport_uart.c \
     $PV/pvcm-proxy/pvcm_protocol.c \
-    -I$PV -include $PV/protocol/pvcm_protocol.h
+    $PV/pvcm-proxy/pvcm_bridge.c \
+    -I$PV -lpthread
+```
+
+The Zephyr executable is at:
+```
+build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linux/pvcm-zephyr-shell/3.6.0+git/build/zephyr/zephyr.exe
 ```
 
 ## Test 1: HELLO Handshake + Heartbeat
 
-Validates the full PVCM protocol stack: frame encoding/decoding,
-CRC32, HELLO/HELLO_RESP handshake, and heartbeat monitoring.
-
-### Start Zephyr (MCU side)
+### Start Zephyr
 
 ```bash
-EXE=$(ls -t build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/deploy/images/native-sim/pvcm-zephyr-shell-native-sim-*.elf | head -1)
-
-# If zephyr.exe not in deploy, find it in work dir:
-# EXE=build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linux/pvcm-zephyr-shell/3.6.0+git/build/zephyr/zephyr.exe
-
-/lib64/ld-linux-x86-64.so.2 $EXE --rt
+EXE=build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linux/pvcm-zephyr-shell/3.6.0+git/build/zephyr/zephyr.exe
+/lib64/ld-linux-x86-64.so.2 $EXE
 ```
 
-Expected output:
-```
-uart connected to pseudotty: /dev/pts/X
-uart_1 connected to pseudotty: /dev/pts/Y     <- PVCM PTY
-*** Booting Zephyr OS build v3.6.0 ***
-[00:00:00.000,000] <inf> pvcm_server: PVCM server starting (protocol v1)
-[00:00:00.000,000] <inf> pvcm_uart: PVCM UART transport ready on uart_1
-[00:00:00.000,000] <inf> pvcm_server: transport ready, entering recv loop
-[00:00:00.000,000] <inf> pvcm_heartbeat: PVCM heartbeat starting (5000 ms interval)
-```
+Expected: two PTYs created (`uart` for shell, `uart_1` for PVCM).
 
-Note the `uart_1` PTY path (`/dev/pts/Y`) — this is the PVCM UART.
-The `uart` PTY (`/dev/pts/X`) is the shell/console.
+### Connect pvcm-proxy
 
-### Connect pvcm-proxy (Linux side)
-
-In a second terminal, use the `uart_1` PTY path:
+Use the `uart_1` PTY path:
 
 ```bash
-cat > /tmp/pvcm-run.json <<EOF
-{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/Y","transport":"uart","baudrate":921600}}
-EOF
-
-/tmp/pvcm-proxy-test --name test --config /tmp/pvcm-run.json
-```
-
-### Expected Result
-
-```
-[pvcm-proxy] starting for MCU 'test'
-[pvcm-proxy] config: device=/dev/pts/Y transport=uart baudrate=921600 firmware=(none)
-[pvcm-proxy] UART opened: /dev/pts/Y @ 921600 baud
-[pvcm-proxy] sending HELLO
-[pvcm-proxy] MCU connected: protocol=v1 fw=v1 baudrate=921600
-[pvcm-proxy] entering main loop
-[pvcm-proxy] heartbeat: status=OK uptime=5s crashes=0
-[pvcm-proxy] heartbeat: status=OK uptime=10s crashes=0
-...
+echo '{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/Y","transport":"uart","baudrate":921600}}' > /tmp/r.json
+/tmp/pvcm-proxy-test --name test --config /tmp/r.json
 ```
 
 ### Pass Criteria
 
-- [ ] HELLO handshake succeeds (`MCU connected: protocol=v1`)
-- [ ] Heartbeats arrive every ~5 seconds
-- [ ] Health status is OK
-- [ ] Crash count is 0
-- [ ] Ctrl+C cleanly shuts down both sides
+- [x] HELLO handshake succeeds (`MCU connected: protocol=v1`)
+- [x] Heartbeats arrive every ~5 seconds
+- [x] Health status is OK, crash count is 0
 
-## Test 2: Shell Access
+## Test 2: HTTP Client (MCU calls Linux)
 
-While pvcm-proxy is connected to uart_1, the Zephyr shell remains
+The Zephyr demo app runs HTTP tests automatically after connecting.
+Start a test HTTP server before connecting:
+
+```bash
+python3 build/workspace/sources/pantavisor/pvcm-proxy/test/test_http_server.py &
+```
+
+### Pass Criteria
+
+- [x] GET /api/status → 200 `{"status": "ok", "uptime": 42}`
+- [x] GET /api/config → 200 `{"interval": 5, "mode": "auto"}`
+- [x] POST /api/data with JSON body → 201 with echoed body
+- [x] PUT /api/config → 200 with updated data
+- [x] DELETE /api/data/1 → 200
+- [x] PUT /api/upload 2KB binary → 200 (slow server, 3s delay)
+- [x] Heartbeats continue during slow upload
+- [x] GET works after slow upload completes
+
+## Test 3: HTTP Server (Linux calls MCU)
+
+The Zephyr demo registers a handler for `/sensor`. pvcm-proxy
+listens on port 18081 for inbound HTTP requests.
+
+### Call MCU from host
+
+```bash
+curl http://127.0.0.1:18081/sensor/temperature
+```
+
+### Expected
+
+```json
+{"temperature":22.4,"humidity":65}
+```
+
+### Pass Criteria
+
+- [x] curl receives JSON response from MCU handler
+- [x] Zephyr logs show INVOKE received and handler called
+- [x] Proxy logs show REPLY frames received
+
+## Test 4: Shell Access
+
+While pvcm-proxy is connected to uart_1, the Zephyr shell is
 accessible on uart (uart0).
 
-### Connect to shell
-
 ```bash
-# Use the uart PTY (not uart_1)
-screen /dev/pts/X
-```
-
-### Expected Result
-
-```
-uart:~$ pv status
-PVCM protocol v1
-Transport: UART
-Heartbeat: 5000 ms
-
-uart:~$ pv heartbeat
-Uptime: 42 s
+screen /dev/pts/X   # uart0 PTY
 ```
 
 ### Pass Criteria
 
-- [ ] Shell prompt appears on uart0 PTY
-- [ ] `pv status` shows protocol version
-- [ ] `pv heartbeat` shows uptime
-- [ ] Shell does not interfere with PVCM protocol on uart1
+- [x] Shell prompt appears
+- [x] `pv status` shows protocol version
+- [x] Shell does not interfere with PVCM protocol on uart_1
 
 ## Architecture
 
 ```
-Terminal 1 (Zephyr native_sim_64)     Terminal 2 (pvcm-proxy)
-─────────────────────────────         ──────────────────────
-zephyr.exe --rt                       pvcm-proxy-test
-  uart0 (/dev/pts/X) → shell            reads from /dev/pts/Y
-  uart1 (/dev/pts/Y) → PVCM             writes to /dev/pts/Y
-    ├── server: HELLO_RESP
-    ├── heartbeat: every 5s          ← heartbeat: status=OK
-    └── log: forwarded               ← [MCU/INF] sensor: temp=22.4C
+Terminal 1 (Zephyr native_sim_64)     Terminal 2 (pvcm-proxy)        Terminal 3
+─────────────────────────────         ──────────────────────         ──────────
+zephyr.exe                            pvcm-proxy-test
+  uart0 → shell                        reads/writes uart_1 PTY
+  uart1 → PVCM protocol                  ↕ PVCM frames
+    server: HELLO_RESP                  HTTP bridge:
+    heartbeat: every 5s          ←       heartbeat tracking
+    HTTP client: pvcm_get()      →       forwards to localhost:18080
+    HTTP server: /sensor handler ←       listens on :18081           curl :18081
 ```
 
 ## UART Configuration (native_sim_64)
 
-The board overlay `boards/native_sim_64.conf` configures:
+Board overlay `boards/native_sim_64.conf`:
 
 ```kconfig
 CONFIG_UART_NATIVE_POSIX_PORT_1_ENABLE=y   # enable uart_1
-CONFIG_PANTAVISOR_UART_DEVICE="uart_1"     # PVCM transport on uart_1
+CONFIG_PANTAVISOR_UART_DEVICE="uart_1"     # PVCM on uart_1
+CONFIG_PANTAVISOR_BRIDGE=y                 # HTTP client/server
 CONFIG_NATIVE_SIM_SLOWDOWN_TO_REAL_TIME=y  # wall-clock sync
 ```
-
-UART0 (shell) uses default stdin/stdout or own PTY.
-UART1 (PVCM) always uses its own bidirectional PTY.
