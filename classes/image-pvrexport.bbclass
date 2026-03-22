@@ -10,7 +10,8 @@ python __anonymous() {
     pn = d.getVar("PN")
     if pn == "pantavisor-initramfs":
         return
+    kernel_provider = d.getVar("PREFERRED_PROVIDER_virtual/kernel") or ""
     if not d.getVar("PVROOT_IMAGE_BSP") is None and not pn in d.getVar("PVROOT_IMAGE_BSP") and \
-       "linux-dummy" not in d.getVar("PREFERRED_PROVIDER_virtual/kernel"):
+       "linux-dummy" not in kernel_provider:
         d.setVar("PREFERRED_PROVIDER_virtual/kernel", "linux-dummy")
 }

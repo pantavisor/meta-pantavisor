@@ -154,7 +154,7 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
                 print ("completed pvr deploy process: %d" % process.returncode)
 
         # always mix-in pantavisor-bsp pvrexport
-        pvrexportpath= deployimg + "/pantavisor-bsp-" + machine + '.pvrexport.tgz'
+        pvrexportpath= default_deployimg + "/pantavisor-bsp-" + machine + '.pvrexport.tgz'
         imgpath = tmpdir + "/pantavisor-bsp-" + machine + versionsuffix + ".pvrexport"
         Path(imgpath).mkdir(parents=True,exist_ok=True)
         process = subprocess.run(
