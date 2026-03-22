@@ -1,0 +1,8 @@
+header:
+  version: 16
+
+local_conf_header:
+  pvcm-mcu-machine: |
+    MCU_ZEPHYR_MACHINE = "native-posix"
+    MCU_ZEPHYR_BOARD = "native_posix_64"
+    MCU_ZEPHYR_TRANSPORT = "uart"
