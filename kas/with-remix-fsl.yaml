@@ -1,0 +1,10 @@
+header:
+  version: 16
+
+target: pantavisor-remix
+
+local_conf_header:
+  remix-fsl: |
+    PVROOT_IMAGE = "yes"
+    PVROOT_IMAGE_BSP = "core-image-base"
+    PVROOT_CONTAINERS_CORE += "pv-pvr-sdk pv-alpine-connman pv-pvwificonnect mc:pv-mcu-zephyr:pvcm-zephyr-shell"

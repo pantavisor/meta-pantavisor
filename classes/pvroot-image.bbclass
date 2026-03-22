@@ -32,6 +32,12 @@ PVROOT_CONTAINERS_CORE ??= ""
 PVROOT_IMAGE_BSP ??= ""
 PVROOT_IMAGE ??= ""
 
+# Multiconfig deploy dir mapping. Maps multiconfig name to its deploy
+# dir so pvroot-image can find pvrexports from any multiconfig.
+# Set automatically by multiconfig KAS snippets.
+# Example: PVROOT_MC_DEPLOY_DIR[pv-mcu-zephyr] = "/path/to/deploy/images/machine"
+PVROOT_MC_DEPLOY_DIR[doc] = "Maps multiconfig name to deploy dir"
+
 PVS_VENDOR_NAME ??= "generic"
 
 DEPENDS += " pvr-native squashfs-tools-native"
@@ -70,8 +76,19 @@ python __anonymous () {
             d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_image_complete')
     for img in d.getVar("PVROOT_CONTAINERS").split():
         d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
-    for img in d.getVar("PVROOT_CONTAINERS_CORE").split():
-        d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":"+img if mc != "" else img ) +':do_deploy')
+    for entry in d.getVar("PVROOT_CONTAINERS_CORE").split():
+        # Support mc:<multiconfig>:<recipe> syntax for cross-multiconfig containers
+        if entry.startswith("mc:"):
+            parts = entry.split(":", 2)  # mc:<mc_name>:<recipe>
+            img_mc = parts[1]
+            img = parts[2]
+            d.appendVarFlag('do_rootfs_pvroot', 'mcdepends', ' mc::' + img_mc + ':' + img + ':do_pvrexport')
+        else:
+            img = entry
+            if mc:
+                d.appendVarFlag('do_rootfs_pvroot', 'mcdepends', ' mc::' + mc + ':' + img + ':do_deploy')
+            else:
+                d.appendVarFlag('do_rootfs_pvroot', 'depends', ' ' + img + ':do_deploy')
 
     d.appendVarFlag('do_rootfs_pvroot', 'mcdepends' if mc != "" else 'depends', ' '+ ( "mc::"+mc+":virtual/bootloader"+img if mc != "" else "virtual/bootloader" ) +':do_deploy')
     d.delVarFlag("do_fetch", "noexec")
@@ -95,14 +112,24 @@ def _pvr_pvroot_images_deploy(d, factory, images, my_env):
         machine=d.getVar("MACHINE")
         configdir=d.getVar("WORKDIR") + "/pvrconfig"
         deployrootfs=d.getVar("IMAGE_ROOTFS") + "/trails/0"
-        deployimg=d.getVar("PANTA_DEPLOY_DIR_IMAGE")
+        default_deployimg=d.getVar("PANTA_DEPLOY_DIR_IMAGE")
         Path(deployrootfs).mkdir(parents=True, exist_ok=True)
         Path(tmpdir).mkdir(parents=True, exist_ok=True)
 
         bspImage = d.getVar("PVROOT_IMAGE_BSP")
         versionsuffix = d.getVar("IMAGE_VERSION_SUFFIX")
 
-        for img in images:
+        for entry in images:
+            # Parse mc:<mc_name>:<recipe> syntax
+            if entry.startswith("mc:"):
+                parts = entry.split(":", 2)
+                img_mc = parts[1]
+                img = parts[2]
+                deployimg = d.getVarFlag("PVROOT_MC_DEPLOY_DIR", img_mc) or default_deployimg
+            else:
+                img = entry
+                deployimg = default_deployimg
+
             if img == d.getVar("PVROOT_IMAGE_BSP") and not d.getVar("PVROOT_IMAGE") == "yes":
                 continue
 
