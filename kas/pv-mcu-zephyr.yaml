@@ -18,3 +18,4 @@ local_conf_header:
   pvcm-zephyr: |
     BBMULTICONFIG:append = " pv-mcu-zephyr"
     PANTAVISOR_FEATURES:append = " pvcm"
+    PVROOT_MC_DEPLOY_DIR[pv-mcu-zephyr] = "${TOPDIR}/tmp-panta-zephyr-pv-mcu-zephyr-${MCU_ZEPHYR_MACHINE}-newlib/deploy/images/${MCU_ZEPHYR_MACHINE}"
