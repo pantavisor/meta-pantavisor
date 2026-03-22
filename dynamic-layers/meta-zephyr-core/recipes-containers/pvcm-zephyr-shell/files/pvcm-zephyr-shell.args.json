@@ -1,0 +1,5 @@
+{
+    "PV_MCU_DEVICE": "display",
+    "PV_MCU_TRANSPORT": "rpmsg",
+    "PV_MCU_BAUDRATE": 921600
+}
