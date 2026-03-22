@@ -45,6 +45,16 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
+			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "imx8mn-var-som",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"name": "imx8mm-var-dart",
+			"workflows": ["manual", "tag"]
+		},
+		{
 			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:.github/configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",

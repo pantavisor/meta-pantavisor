@@ -13,5 +13,6 @@ repos:
   meta-freescale:
     commit: 3747641f1e71d8e4edd5b587b49d09dc2d243942
 
-
-
+local_conf_header:
+  kirkstone-variscite: |
+    DISTRO_FEATURES:remove = "opengl wayland x11 vulkan bluetooth"
