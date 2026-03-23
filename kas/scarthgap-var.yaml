@@ -5,14 +5,23 @@ header:
   # format version this file was created for. It is used by kas to figure
   # out if it is compatible with this file. The version is an integer that
   # is increased on every format change.
+  includes:
+    - kas/platforms/freescale.yaml
+    - kas/platforms/nxp.yaml
   version: 16
 
 repos:
   meta-variscite-bsp:
+    url: "https://github.com/varigit/meta-variscite-bsp-imx.git"
+    path: layers/meta-variscite-bsp
     branch: scarthgap_6.6.52-2.2.2_var01
   meta-variscite-hab:
+    url: "https://github.com/varigit/meta-variscite-hab.git"
+    path: layers/meta-variscite-hab
     branch: scarthgap_6.6.52-2.2.2_var01
   meta-variscite-sdk:
+    url: "https://github.com/varigit/meta-variscite-sdk.git"
+    path: layers/meta-variscite-sdk
     branch: scarthgap_6.6.52-2.2.2_var01
   meta-variscite-bsp-common:
     url: "https://github.com/varigit/meta-variscite-bsp-common.git"
@@ -62,3 +71,4 @@ local_conf_header:
   scarthgap-variscite: |
     BB_DANGLINGAPPENDS_WARNONLY = "1"
     PANTAVISOR_FEATURES:append = " caam-nxp"
+    PREFERRED_PROVIDER_virtual/kernel = "linux-variscite"
