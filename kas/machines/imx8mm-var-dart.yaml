@@ -7,7 +7,7 @@ header:
   # is increased on every format change.
   version: 16
   includes:
-    - kas/platforms/variscite.yaml
+    - kas/scarthgap-var.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
 machine: imx8mm-var-dart
