@@ -1,0 +1,64 @@
+name: "MAN: pvtests-local-docker-x86_64-scarthgap-appengine"
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_number:
+        description: 'Test number to run (e.g., "0" for local:0)'
+        required: true
+        type: string
+
+jobs:
+
+  build-docker-x86_64-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: pantavisor-appengine-distro-*.tar.gz
+      sdk: 0
+    secrets: inherit
+
+  pvtests-local-appengine:
+    needs: build-docker-x86_64-scarthgap
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/meta-pantavisor-pvtestenv:latest
+      options: --privileged
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    steps:
+      - name: Download AppEngine artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: appengine-docker-x86_64-scarthgap
+          path: .
+
+      - name: Clone pvtests-local repository
+        run: |
+          rm -rf pvtests-local
+          git clone https://gitlab.com/pantacor/pvtests-local.git pvtests-local
+
+      - name: Load AppEngine Docker images
+        env:
+            CI_MODE: "true"
+        run: |
+            docker images | grep 'pantavisor' | awk '{print $2}' | xargs -r docker rmi -f
+            chmod +x test.docker.sh
+            ./test.docker.sh install-docker
+
+      - name: Run AppEngine test
+        run: |
+          echo "=== Avaliable Tests === "
+          ./test.docker.sh ls
+
+          echo "=== AppEngine Test Run started at $(date) ==="
+
+          TEST_NUMBER="${{ github.event.inputs.test_number }}"
+
+          echo "----------------------------------------------------------------------"
+          echo "RUNNING TEST pvtests-local:$TEST_NUMBER"
+          echo "----------------------------------------------------------------------"
+
+          ./test.docker.sh -v run pvtests-local:$TEST_NUMBER
