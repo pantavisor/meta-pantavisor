@@ -10,6 +10,7 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
 | [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
+| [TESTPLAN-pvcm.md](TESTPLAN-pvcm.md) | PVCM MCU protocol tests (handshake, HTTP gateway, MCU server) |
 | [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
@@ -247,6 +248,78 @@ The `pv-examples` containers demonstrate pv-xconnect service mesh patterns:
 | `pv-example-wayland-client` | wayland | consumer | Wayland client |
 
 See [EXAMPLES.md](EXAMPLES.md) for detailed testing instructions.
+
+## PVCM -- MCU Containers
+
+Pantavisor supports MCU firmware as a fourth container type alongside
+LXC, runc, and Wasm. MCU containers are managed by `pvcm-proxy` (one
+instance per MCU) which runs in a namespace like any other container.
+
+### Building MCU Containers
+
+```bash
+# Build Zephyr MCU firmware + pvrexport (multiconfig)
+kas build kas/scarthgap.yaml:kas/machines/imx8mn-var-som.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-machines/imx8mn-m7.yaml \
+    --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
+
+# Build for local testing (native_sim_64 — runs as Linux executable)
+kas build kas/scarthgap.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-machines/native-sim.yaml \
+    --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
+```
+
+### Including MCU Containers in Remix
+
+Add to `PVROOT_CONTAINERS_CORE` with `mc:` prefix:
+
+```python
+PVROOT_CONTAINERS_CORE += "mc:pv-mcu-zephyr:pvcm-zephyr-shell"
+```
+
+The `mc:` prefix routes the dependency to the Zephyr multiconfig.
+The `PVROOT_MC_DEPLOY_DIR[pv-mcu-zephyr]` varflag (set by
+`kas/pv-mcu-zephyr.yaml`) tells pvroot-image where to find the
+pvrexport.
+
+### Key Files
+
+| Path | Description |
+|------|-------------|
+| `kas/pv-mcu-zephyr.yaml` | KAS snippet: meta-zephyr repo + multiconfig |
+| `kas/mcu-machines/imx8mn-m7.yaml` | i.MX8MN Cortex-M7 MCU machine |
+| `kas/mcu-machines/native-sim.yaml` | native_sim_64 for local testing |
+| `conf/distro/panta-zephyr.conf` | Zephyr distro (layers on meta-zephyr) |
+| `conf/multiconfig/pv-mcu-zephyr.conf` | MCU multiconfig |
+| `conf/machine/imx8mn-m7.conf` | i.MX8MN M7 Yocto machine |
+| `conf/machine/native-sim.conf` | native_sim_64 Yocto machine |
+| `classes/zephyr-pvrexport.bbclass` | Builds Zephyr ELF + creates pvrexport |
+| `dynamic-layers/meta-zephyr-core/recipes-containers/pvcm-zephyr-shell/` | Shell demo recipe |
+| `recipes-pv/pvr/files/0001-feat-add-type-image-*.patch` | pvr --type image support |
+
+### MCU Container Recipe Pattern
+
+```python
+inherit zephyr-pvrexport
+
+ZEPHYR_SRC_DIR = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr/samples/pvcm-shell"
+ZEPHYR_EXTRA_MODULES = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr"
+
+SRC_URI += "file://my-container.args.json"
+```
+
+The `args.json` specifies MCU device, transport, and baudrate:
+
+```json
+{
+    "PV_MCU_DEVICE": "display",
+    "PV_MCU_TRANSPORT": "rpmsg",
+    "PV_MCU_BAUDRATE": 921600
+}
+```
+
+### Testing
+
+See [TESTPLAN-pvcm.md](TESTPLAN-pvcm.md) for end-to-end protocol
+testing using Zephyr native_sim_64.
 
 ## Pantavisor Source Development
 

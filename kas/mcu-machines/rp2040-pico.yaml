@@ -1,0 +1,8 @@
+header:
+  version: 16
+
+local_conf_header:
+  pvcm-mcu-machine: |
+    MCU_ZEPHYR_MACHINE = "rp2040-pico"
+    MCU_ZEPHYR_BOARD = "rpi_pico"
+    MCU_ZEPHYR_TRANSPORT = "uart"
