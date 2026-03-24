@@ -4,7 +4,5 @@ header:
 local_conf_header:
   pvcm-mcu-machine: |
     MCU_ZEPHYR_MACHINE = "imx8mn-m7"
-    # Zephyr 3.6.0 has no mimx8mn M7 board; mimx8mm_evk (M4) is
-    # the closest match on the same SoC family. Custom board TBD.
-    MCU_ZEPHYR_BOARD = "mimx8mm_evk"
+    MCU_ZEPHYR_BOARD = "mimx8mn_evk"
     MCU_ZEPHYR_TRANSPORT = "rpmsg"

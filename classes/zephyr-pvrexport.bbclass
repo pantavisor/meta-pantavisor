@@ -25,14 +25,14 @@ fakeroot do_pvrexport() {
     cd ${PVSTATE}
     pvr init
 
-    # find firmware binary (prefer .bin over .elf for flash size)
+    # find firmware (prefer .elf over .bin -- remoteproc needs ELF)
     # Use DEPLOY_DIR_IMAGE (shared deploy) since DEPLOYDIR (per-recipe
     # staging) may be cleaned by the deploy class before we run.
     fw=""
-    if [ -f ${DEPLOY_DIR_IMAGE}/${PN}.bin ]; then
-        fw="${DEPLOY_DIR_IMAGE}/${PN}.bin"
-    elif [ -f ${DEPLOY_DIR_IMAGE}/${PN}.elf ]; then
+    if [ -f ${DEPLOY_DIR_IMAGE}/${PN}.elf ]; then
         fw="${DEPLOY_DIR_IMAGE}/${PN}.elf"
+    elif [ -f ${DEPLOY_DIR_IMAGE}/${PN}.bin ]; then
+        fw="${DEPLOY_DIR_IMAGE}/${PN}.bin"
     else
         bbfatal "No firmware found in DEPLOY_DIR_IMAGE for ${PN}"
     fi

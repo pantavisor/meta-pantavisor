@@ -224,24 +224,18 @@ fakeroot do_compile(){
     \"firmware\": \"firmware.squashfs\",
     \"modules\": \"modules.squashfs\","
        fi
-       if [ -n "${PV_INITIAL_DTB}" ]; then
+       if [ -n "${PV_INITIAL_DTB}" -a -z "${PV_UBOOT_AUTOFDT}" ]; then
            cp -f ${DEPLOY_DIR_IMAGE}/${PV_INITIAL_DTB} ${PVBSPSTATE}/bsp/${PV_INITIAL_DTB}
            basearts="$basearts
        \"fdt\": \"${PV_INITIAL_DTB}\","
        fi
        if [ -n "${PV_UBOOT_AUTOFDT}" -a -n "${KERNEL_DEVICETREE}" ]; then
-           firstdtb=""
            for dtb in ${KERNEL_DEVICETREE}; do
                dtb_file=`basename $dtb`
                if [ -n "${PV_UBOOT_FLATFDT}" ]; then
                    dtb=""
                fi
                install -D -m 0644 ${DEPLOY_DIR_IMAGE}/$dtb_file ${PVBSPSTATE}/bsp/$dtb
-               if [ -z "$firstdtb" ]; then
-                   firstdtb=${dtb:-$dtb_file}
-               fi
-               basearts="$basearts
-      \"fdt\": \"${firstdtb}\","
            done
        fi
     fi
