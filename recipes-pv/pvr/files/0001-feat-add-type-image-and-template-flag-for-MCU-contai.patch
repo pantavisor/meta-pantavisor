@@ -389,7 +389,7 @@
  type GetSTOptions struct {
 --- a/templates/builtin-mcu.go
 +++ b/templates/builtin-mcu.go
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,87 @@
 +//
 +// Copyright 2024-2026  Pantacor Ltd.
 +//
@@ -421,6 +421,9 @@
 +		{{- end -}}
 +		{{- if .Source.args.PV_MCU_BAUDRATE -}}
 +		,"baudrate": {{- .Source.args.PV_MCU_BAUDRATE -}}
++		{{- end -}}
++		{{- if .Source.args.PV_MCU_REMOTEPROC -}}
++		,"remoteproc": "{{- .Source.args.PV_MCU_REMOTEPROC -}}"
 +		{{- end }}
 +	},
 +	{{- if .Source.args.PV_MCU_FIRMWARE }}
