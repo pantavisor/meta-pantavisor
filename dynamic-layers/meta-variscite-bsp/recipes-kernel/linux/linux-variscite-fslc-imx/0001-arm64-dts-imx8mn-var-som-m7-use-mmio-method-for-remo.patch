@@ -1,40 +1,27 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Pantavisor <dev@pantavisor.io>
 Date: Mon, 24 Mar 2026 00:00:00 +0000
-Subject: [PATCH] arm64: dts: imx8mn-var-som-m7: fix remoteproc for Linux
- start
+Subject: [PATCH] arm64: dts: imx8mn-var-som-m7: fix M7 clock for remoteproc
 
-Fix two issues preventing the M7 core from being started via Linux
-remoteproc:
-
-1. Switch from SMC to MMIO method (fsl,imx8mn-cm7-mmio). The SMC
-   method calls into ATF which may not implement SIP_RPROC on all
-   boards. MMIO uses the GPR22 register directly, matching U-Boot's
-   bootaux mechanism. Add required syscon and fsl,iomuxc-gpr phandles.
-
-2. Reference the actual M7 core clock (IMX8MN_CLK_M7_CORE) instead
-   of CLK_DUMMY. Without this, Linux's clock framework gates the M7
-   clock during boot, causing a hard hang when remoteproc tries to
-   access M7 memory or start the core.
+Reference the actual M7 core clock (IMX8MN_CLK_M7_CORE) instead of
+CLK_DUMMY. Without this, Linux's clock framework gates the M7 clock
+during boot, causing a hard hang when remoteproc tries to start the
+M7 core or access its memory regions.
 
 Signed-off-by: Pantavisor <dev@pantavisor.io>
 ---
- .../freescale/imx8mn-var-som-symphony-m7.dts  | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
-index abcdef1..1234567 100644
 --- a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
 +++ b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
-@@ -10,8 +10,10 @@
- 	model = "Variscite VAR-SOM-MX8M-NANO M7 on Symphony-Board";
-
+@@ -12,7 +12,7 @@
  	imx8mn-cm7 {
--		compatible = "fsl,imx8mn-cm7";
--		rsc-da = <0x40000000>;
-+		compatible = "fsl,imx8mn-cm7-mmio";
-+		syscon = <&src>;
-+		fsl,iomuxc-gpr = <&gpr>;
-+		rsc-da = <0x40000000>;
- 		clocks = <&clk IMX8MN_CLK_M7_CORE>;
+ 		compatible = "fsl,imx8mn-cm7";
+ 		rsc-da = <0x40000000>;
+-		clocks = <&clk IMX8MN_CLK_DUMMY>;
++		clocks = <&clk IMX8MN_CLK_M7_CORE>;
  		mbox-names = "tx", "rx", "rxdb";
+ 		mboxes = <&mu 0 1
+ 			  &mu 1 1
