@@ -1,48 +1,90 @@
-name: "Build Test Environment Container"
+name: "MAN: pvtests-remote-docker-x86_64-scarthgap-appengine"
 
 on:
-  push:
-    paths:
-      - 'tools/ci-containers/pvtests/Dockerfile'
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      test_number:
+        description: 'Test number to run (e.g., "0" for remote:0)'
+        required: true
+        type: string
 
 jobs:
-  build-push:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+
+  build-docker-x86_64-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: pantavisor-appengine-distro-*.tar.gz
+      sdk: 0
+    secrets: inherit
+
+  pvtests-local-appengine:
+    needs: build-docker-x86_64-scarthgap
+    runs-on: ["pvtest-runner"]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Download AppEngine artifacts
+        uses: actions/download-artifact@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: appengine-docker-x86_64-scarthgap
+          path: .
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/meta-pantavisor-pvtestenv
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=sha-
-            type=ref,event=branch
-            type=semver,pattern={{version}}
+      - name: Clone pvtests-local repository
+        run: |
+          rm -rf pvtests-remote
+          git clone https://gitlab.com/pantacor/pvtests-local.git pvtests-remote
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Load and prepare
+        env:
+            CI_MODE: "true"
+        run: |
+          chmod +x test.docker.sh
+
+          for tar in pantavisor-appengine-*-docker.tar pantavisor-appengine-docker.tar; do
+            [ -f "$tar" ] && docker load -i "$tar"
+          done
+
+          echo "=== Avaliable Tests === "
+          ./test.docker.sh ls
+
+      - name: Run AppEngine test
+        run: |
+          echo "=== AppEngine Test Run started at $(date) ==="
+
+          TEST_NUMBER="${{ github.event.inputs.test_number }}"
+
+          echo "---------------------------------------------------------------"
+          echo "RUNNING TEST pvtests-remote:$TEST_NUMBER"
+          echo "---------------------------------------------------------------"
+
+          set -e
+          set -o pipefail
+
+          PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
+          ./test.docker.sh -v run pvtests-remote:$TEST_NUMBER 2>&1 \
+          | tee -a pvtests-remote-${{ github.event.inputs.test_number }}.log
+
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          context: tools/ci-containers/pvtests
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: pvtests-remote-${{ github.event.inputs.test_number }}
+          path: pvtests-remote-${{ github.event.inputs.test_number }}.log
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker ps -aq \
+          | xargs -r docker inspect --format '{{.Image}} {{.ID}}' \
+          | grep -E 'pantavisor-appengine(-netsim|-tester)?' \
+          | awk '{print $2}' \
+          | xargs -r docker rm -f
+
+          docker images --format '{{.Repository}}:{{.Tag}}' \
+          | grep -E '^pantavisor-appengine(-netsim|-tester)?:' \
+          | xargs -r docker rmi -f
+
+          rm pantavisor-appengine-*
+          rm -rf pvtests-remote

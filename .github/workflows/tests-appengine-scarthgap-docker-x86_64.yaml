@@ -54,22 +54,23 @@ jobs:
 
           TEST_NUMBER="${{ github.event.inputs.test_number }}"
 
-          echo "----------------------------------------------------------------------"
+          echo "---------------------------------------------------------------"
           echo "RUNNING TEST pvtests-local:$TEST_NUMBER"
-          echo "----------------------------------------------------------------------"
+          echo "---------------------------------------------------------------"
 
           set -e
           set -o pipefail
 
-          ./test.docker.sh -v run pvtests-local:$TEST_NUMBER 2>&1 | tee -a pvtests-local.log
+          ./test.docker.sh -v run pvtests-local:$TEST_NUMBER 2>&1 \
+          | tee -a pvtests-local-${{ github.event.inputs.test_number }}.log
 
 
       - name: Upload test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: appengine-test-${{ github.event.inputs.test_number }}-log
-          path: pvtests-local.log
+          name: pvtests-local-${{ github.event.inputs.test_number }}
+          path: pvtests-local-${{ github.event.inputs.test_number }}.log
 
       - name: Clean up
         if: always()
@@ -85,4 +86,4 @@ jobs:
           | xargs -r docker rmi -f
 
           rm pantavisor-appengine-*
-
+          rm -rf pvtests-local
