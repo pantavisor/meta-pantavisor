@@ -1,12 +1,7 @@
-name: "MAN: specific pvtests-remote-docker-x86_64-scarthgap-appengine"
+name: "MAN: all pvtests-remote-docker-x86_64-scarthgap-appengine"
 
 on:
   workflow_dispatch:
-    inputs:
-      test_number:
-        description: 'Test number to run (e.g., "0" for remote:0)'
-        required: true
-        type: string
 
 jobs:
 
@@ -56,14 +51,14 @@ jobs:
           echo "=== AppEngine Test Run started at $(date) ==="
 
           echo "---------------------------------------------------------------"
-          echo "RUNNING ALL TEST pvtests-remote
+          echo "RUNNING ALL TEST pvtests-remote"
           echo "---------------------------------------------------------------"
 
           PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
           ./test.docker.sh -v run pvtests-remote 2>&1 \
           | tee -a pvtests-remote-all.log
 
-          LOG_NAME="pvtests-remote-all-$(date -I'seconds').log"
+          LOG_NAME="pvtests-remote-all-$(date +%s).log"
           mv pvtests-remote-all.log "$LOG_NAME"
           echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
 

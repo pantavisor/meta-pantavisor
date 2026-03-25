@@ -64,7 +64,7 @@ jobs:
           ./test.docker.sh -v run pvtests-local:$TEST_NUMBER 2>&1 \
           | tee -a pvtests-local.log
 
-          LOG_NAME="pvtests-local-$TEST_NUMBER-$(date -I'seconds').log"
+          LOG_NAME="pvtests-local-$TEST_NUMBER-$(date +%s).log"
           mv pvtests-local.log "$LOG_NAME"
           echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
 

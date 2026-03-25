@@ -2,11 +2,6 @@ name: "MAN: all pvtests-local-docker-x86_64-scarthgap-appengine"
 
 on:
   workflow_dispatch:
-    inputs:
-      test_number:
-        description: 'Test number to run (e.g., "0" for local:0)'
-        required: true
-        type: string
 
 jobs:
 
@@ -62,7 +57,7 @@ jobs:
           ./test.docker.sh -v run pvtests-local 2>&1 \
           | tee -a pvtests-local-all.log
 
-          LOG_NAME="pvtests-local-all-$(date -I'seconds').log"
+          LOG_NAME="pvtests-local-all-$(date +%s).log"
           mv pvtests-local-all.log "$LOG_NAME"
           echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
 
