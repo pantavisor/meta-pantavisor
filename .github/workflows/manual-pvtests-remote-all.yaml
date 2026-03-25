@@ -1,10 +1,10 @@
-name: "MAN: pvtests-local-docker-x86_64-scarthgap-appengine"
+name: "MAN: specific pvtests-remote-docker-x86_64-scarthgap-appengine"
 
 on:
   workflow_dispatch:
     inputs:
       test_number:
-        description: 'Test number to run (e.g., "0" for local:0)'
+        description: 'Test number to run (e.g., "0" for remote:0)'
         required: true
         type: string
 
@@ -32,8 +32,8 @@ jobs:
 
       - name: Clone pvtests-local repository
         run: |
-          rm -rf pvtests-local
-          git clone https://gitlab.com/pantacor/pvtests-local.git pvtests-local
+          rm -rf pvtests-remote
+          git clone https://gitlab.com/pantacor/pvtests-remote.git pvtests-remote
 
       - name: Load and prepare
         env:
@@ -50,27 +50,30 @@ jobs:
 
       - name: Run AppEngine test
         run: |
-          echo "=== AppEngine Test Run started at $(date) ==="
-
-          TEST_NUMBER="${{ github.event.inputs.test_number }}"
-
-          echo "---------------------------------------------------------------"
-          echo "RUNNING TEST pvtests-local:$TEST_NUMBER"
-          echo "---------------------------------------------------------------"
-
           set -e
           set -o pipefail
 
-          ./test.docker.sh -v run pvtests-local:$TEST_NUMBER 2>&1 \
-          | tee -a pvtests-local-${{ github.event.inputs.test_number }}.log
+          echo "=== AppEngine Test Run started at $(date) ==="
+
+          echo "---------------------------------------------------------------"
+          echo "RUNNING ALL TEST pvtests-remote
+          echo "---------------------------------------------------------------"
+
+          PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
+          ./test.docker.sh -v run pvtests-remote 2>&1 \
+          | tee -a pvtests-remote-all.log
+
+          LOG_NAME="pvtests-remote-all-$(date -I'seconds').log"
+          mv pvtests-remote-all.log "$LOG_NAME"
+          echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
 
 
       - name: Upload test log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pvtests-local-${{ github.event.inputs.test_number }}
-          path: pvtests-local-${{ github.event.inputs.test_number }}.log
+          name: pvtests-remote-all
+          path: ${{ env.LOG_NAME }}
 
       - name: Clean up
         if: always()
@@ -86,4 +89,4 @@ jobs:
           | xargs -r docker rmi -f
 
           rm pantavisor-appengine-*
-          rm -rf pvtests-local
+          rm -rf pvtests-remote
