@@ -1,0 +1,23 @@
+name: "MAN: start pvtests"
+
+on:
+  workflow_dispatch:
+    inputs:
+
+      test_type:
+        description: 'pvtests-local or pvtests-remote'
+        required: true
+        type: string
+
+      test_number:
+        description: 'Test number to run (e.g., "0" for remote:0)'
+        required: false
+        type: string
+
+jobs:
+
+  start-pvtest:
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_type: ${{ inputs.test_type}}
+      test_number: ${{ inputs.test_number }}
