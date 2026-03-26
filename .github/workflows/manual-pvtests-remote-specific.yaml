@@ -20,7 +20,7 @@ jobs:
       sdk: 0
     secrets: inherit
 
-  pvtests-local-appengine:
+  pvtests-appengine:
     needs: build-docker-x86_64-scarthgap
     runs-on: ["pvtest-runner"]
     steps:
@@ -48,7 +48,7 @@ jobs:
           echo "=== Avaliable Tests === "
           ./test.docker.sh ls
 
-      - name: Run AppEngine test
+      - name: Run pvtests
         run: |
           set -e
           set -o pipefail
@@ -69,6 +69,10 @@ jobs:
           LOG_NAME="pvtests-remote-$TEST_NUMBER-$(date +%s).log"
           mv pvtests-remote.log "$LOG_NAME"
           echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
+
+      - name: Show Tests Summary
+        run: |
+          cat
 
 
       - name: Upload test log

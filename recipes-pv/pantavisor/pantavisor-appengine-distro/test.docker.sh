@@ -371,6 +371,7 @@ run_test() {
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
+	local failed_flag="$work_path/.failed"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		group=$(echo "$1" | awk -F':' '{print $1}')
@@ -440,16 +441,19 @@ run_test() {
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
 			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 		done
 	elif [ -z "$number" ]; then
 		find "$test_dir/$group" -name "test.json" | sort  | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
 			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 		done
 	else
 		json_path="$test_dir/$group/data/$number/test.json"
 		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 	fi
 
 	if [ "$verbose" = "true" ]; then
@@ -468,6 +472,14 @@ run_test() {
 		echo "======================================================="
 		set -h
 	fi
+
+	# make summary available to the run path for the CI
+	mv $work_path/test.docker.log ./test.docker.log
+
+	if [ -f "$failed_flag" ]; then
+		return 1
+	fi
+	return 0
 }
 
 RED='\033[0;31m'
