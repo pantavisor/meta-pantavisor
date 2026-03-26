@@ -1,0 +1,198 @@
+---
+name: pv-deploy-monitor
+description: Deploy one or more pvrexport tarballs to a Pantavisor device via pantahub, then monitor until DONE/UPDATED/ERROR/timeout. Prints a comprehensive summary at the end.
+user_invocable: true
+arguments:
+  - name: device
+    description: "Device ID or pantahub path (e.g. asacasa/labslave_var-som-mx8mn)"
+    required: true
+  - name: pvrexports
+    description: "Space-separated paths to .pvrexport.tgz files to merge"
+    required: true
+  - name: message
+    description: "Commit message for the revision"
+    required: false
+  - name: timeout
+    description: "Timeout in seconds to wait for completion (default: 300)"
+    required: false
+---
+
+Deploy pvrexport(s) to a Pantavisor device and monitor until the update completes or fails.
+
+## Steps
+
+Run these steps as a single bash script. Do NOT use any tool other than Bash. All logic must be in one script.
+
+### Variables from arguments:
+- DEVICE: $device
+- PVREXPORTS: $pvrexports
+- MESSAGE: $message (default: "deploy via pv-deploy-monitor skill")
+- TIMEOUT: $timeout (default: 300)
+
+### Script
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+DEVICE="<device argument>"
+PVREXPORTS="<pvrexports argument, space-separated>"
+MESSAGE="<message argument or default>"
+TIMEOUT_SECS=<timeout argument or 300>
+
+WORKDIR=$(mktemp -d /tmp/pvr-deploy-XXXXXX)
+trap "rm -rf $WORKDIR" EXIT
+
+echo "=== PV Deploy Monitor ==="
+echo "Device:    $DEVICE"
+echo "Exports:   $PVREXPORTS"
+echo "Message:   $MESSAGE"
+echo "Timeout:   ${TIMEOUT_SECS}s"
+echo ""
+
+# Step 1: Resolve device — if it looks like an ID, get the nick
+if echo "$DEVICE" | grep -qE '^[0-9a-f]{24}$'; then
+    DEVICE_ID="$DEVICE"
+    OWNER_NICK=$(pvr device get "$DEVICE_ID" 2>/dev/null | jq -r '.["owner-nick"] // empty')
+    DEVICE_NICK=$(pvr device get "$DEVICE_ID" 2>/dev/null | jq -r '.nick // empty')
+    if [ -z "$OWNER_NICK" ] || [ -z "$DEVICE_NICK" ]; then
+        echo "ERROR: Could not resolve device ID $DEVICE_ID"
+        exit 1
+    fi
+    PVR_URL="${OWNER_NICK}/${DEVICE_NICK}"
+else
+    PVR_URL="${DEVICE}"
+    DEVICE_ID=""
+fi
+
+echo "Step 1: Cloning $PVR_URL"
+pvr clone "$PVR_URL" "$WORKDIR/state" 2>&1 | tail -1
+cd "$WORKDIR/state"
+
+# Step 2: Merge each pvrexport
+MERGE_COUNT=0
+for exp in $PVREXPORTS; do
+    if [ ! -f "$exp" ]; then
+        echo "ERROR: pvrexport not found: $exp"
+        exit 1
+    fi
+    echo "Step 2: Merging $(basename $exp)"
+    pvr merge "$exp" 2>&1 | tail -1
+    MERGE_COUNT=$((MERGE_COUNT + 1))
+done
+
+# Step 3: Checkout
+echo "Step 3: Checkout"
+pvr checkout 2>&1 | tail -1
+
+# Step 4: Sign
+echo "Step 4: Signing"
+pvr sig up 2>&1 | tail -3
+pvr add 2>&1 | tail -1
+pvr commit 2>&1 | tail -1
+
+# Step 5: Post
+echo "Step 5: Posting revision"
+POST_OUTPUT=$(pvr post -m "$MESSAGE" 2>&1)
+echo "$POST_OUTPUT" | tail -1
+
+# Extract revision number and device ID from output
+REV=$(echo "$POST_OUTPUT" | grep -oP 'Revision \K[0-9]+' || echo "")
+if [ -z "$DEVICE_ID" ]; then
+    DEVICE_ID=$(echo "$POST_OUTPUT" | grep -oP 'device id \K[0-9a-f]+' || echo "")
+fi
+
+if [ -z "$REV" ]; then
+    echo "ERROR: Could not determine revision number from post output"
+    echo "$POST_OUTPUT"
+    exit 1
+fi
+
+echo ""
+echo "=== Monitoring Rev $REV ==="
+
+# Step 5: Monitor — terminal states are DONE, UPDATED, ERROR, ROLLEDBACK
+START_TIME=$(date +%s)
+LAST_STATUS=""
+FINAL_STATUS=""
+FINAL_PROGRESS=""
+FINAL_MSG=""
+
+while true; do
+    NOW=$(date +%s)
+    ELAPSED=$((NOW - START_TIME))
+
+    if [ $ELAPSED -gt $TIMEOUT_SECS ]; then
+        FINAL_STATUS="TIMEOUT"
+        FINAL_MSG="Timed out after ${TIMEOUT_SECS}s"
+        break
+    fi
+
+    STATUS_JSON=$(pvr device status "$DEVICE_ID" --rev="$REV" 2>/dev/null || echo '{}')
+    STATUS=$(echo "$STATUS_JSON" | jq -r '.progress.status // "UNKNOWN"')
+    PROGRESS=$(echo "$STATUS_JSON" | jq -r '.progress.progress // 0')
+    STATUS_MSG=$(echo "$STATUS_JSON" | jq -r '.progress["status-msg"] // ""')
+
+    if [ "$STATUS" != "$LAST_STATUS" ]; then
+        echo "[${ELAPSED}s] $STATUS ${PROGRESS}% - $STATUS_MSG"
+        LAST_STATUS="$STATUS"
+    fi
+
+    FINAL_STATUS="$STATUS"
+    FINAL_PROGRESS="$PROGRESS"
+    FINAL_MSG="$STATUS_MSG"
+
+    # Terminal states
+    case "$STATUS" in
+        DONE|UPDATED|ERROR|ROLLEDBACK)
+            break
+            ;;
+    esac
+
+    sleep 10
+done
+
+END_TIME=$(date +%s)
+TOTAL_TIME=$((END_TIME - START_TIME))
+
+echo ""
+echo "========================================"
+echo "        DEPLOYMENT SUMMARY"
+echo "========================================"
+echo "Device:       ${OWNER_NICK:-$DEVICE}/${DEVICE_NICK:-}"
+echo "Device ID:    $DEVICE_ID"
+echo "Revision:     $REV"
+echo "Merged:       $MERGE_COUNT pvrexport(s)"
+echo "Message:      $MESSAGE"
+echo "Final Status: $FINAL_STATUS"
+echo "Progress:     ${FINAL_PROGRESS}%"
+echo "Status Msg:   $FINAL_MSG"
+echo "Duration:     ${TOTAL_TIME}s"
+echo "========================================"
+
+case "$FINAL_STATUS" in
+    DONE)
+        echo "RESULT: SUCCESS (committed as rollback point)"
+        exit 0
+        ;;
+    UPDATED)
+        echo "RESULT: SUCCESS (running but not yet committed as rollback point)"
+        exit 0
+        ;;
+    TIMEOUT)
+        echo "RESULT: TIMEOUT (last seen: $LAST_STATUS)"
+        exit 2
+        ;;
+    *)
+        echo "RESULT: FAILED ($FINAL_STATUS)"
+        exit 1
+        ;;
+esac
+```
+
+## Important notes
+- Use the actual argument values, do not use placeholder strings
+- Run the entire script in a single Bash invocation with a timeout of TIMEOUT+60 seconds
+- The script cleans up its temp directory on exit
+- Exit codes: 0=success (DONE or UPDATED), 1=error/rollback, 2=timeout
+- Terminal states: DONE (committed), UPDATED (running, not committed), ERROR, ROLLEDBACK

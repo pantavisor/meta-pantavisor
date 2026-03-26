@@ -1,22 +1,22 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Pantavisor <dev@pantavisor.io>
 Date: Mon, 24 Mar 2026 00:00:00 +0000
-Subject: [PATCH] arm64: dts: imx8mn-var-som-m7: fix M7 clock for remoteproc
+Subject: [PATCH] arm64: dts: imx8mn-var-som-m7: fix clock and remove
+ rsc-table for remoteproc
 
 Reference the actual M7 core clock (IMX8MN_CLK_M7_CORE) instead of
-CLK_DUMMY. Without this, Linux's clock framework gates the M7 clock
-during boot, causing a hard hang when remoteproc tries to start the
-M7 core or access its memory regions.
+CLK_DUMMY to prevent Linux from gating the M7 clock.
+
+Remove the fixed rsc-table@400ff000 reserved memory node so that
+imx_rproc discovers the resource table from the ELF section.
 
 Signed-off-by: Pantavisor <dev@pantavisor.io>
 ---
- arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
+index 86faddeaedd8..684c533b5a37 100644
 --- a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
 +++ b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
-@@ -12,7 +12,7 @@
+@@ -12,12 +12,12 @@ / {
  	imx8mn-cm7 {
  		compatible = "fsl,imx8mn-cm7";
  		rsc-da = <0x40000000>;
@@ -25,3 +25,22 @@ diff --git a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts b/arch
  		mbox-names = "tx", "rx", "rxdb";
  		mboxes = <&mu 0 1
  			  &mu 1 1
+ 			  &mu 3 1>;
+-		memory-region = <&vdevbuffer>, <&vdev0vring0>, <&vdev0vring1>, <&m_core_reserved>, <&rsc_table>;
++		memory-region = <&vdevbuffer>, <&vdev0vring0>, <&vdev0vring1>, <&m_core_reserved>;
+ 		status = "okay";
+ 		fsl,startup-delay-ms = <500>;
+ 	};
+@@ -56,12 +56,6 @@ vdev0vring1: vdev0vring1@40008000 {
+ 			reg = <0 0x40008000 0 0x8000>;
+ 			no-map;
+ 		};
+-
+-		rsc_table: rsc-table@400ff000 {
+-			reg = <0 0x400ff000 0 0x1000>;
+-			no-map;
+-		};
+-
+ 		vdevbuffer: vdevbuffer@40400000 {
+ 			compatible = "shared-dma-pool";
+ 			reg = <0 0x40400000 0 0x100000>;

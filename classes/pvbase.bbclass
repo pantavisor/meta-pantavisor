@@ -10,6 +10,7 @@ PANTAVISOR_FEATURES ??= " \
 	pvcontrol \
 	xconnect \
 	container-mdev \
+	pvcm \
 "
 # PANTAVISOR_FEATURES += "lxc-next"
 # PANTAVISOR_FEATURES += "console-logging"
