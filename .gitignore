@@ -17,3 +17,4 @@ layers
 .gemini/
 gha-creds-*.json
 temp.json
+workdir

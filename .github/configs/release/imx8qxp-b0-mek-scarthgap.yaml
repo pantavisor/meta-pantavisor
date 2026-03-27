@@ -75,6 +75,8 @@ local_conf_header:
         PANTAVISOR_MACHINE_FIRMWARE = ""
         PANTAVISOR_MACHINE_KERNEL_MODULES = ""
         PREFERRED_PROVIDER_virtual/kernel = "linux-imx"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

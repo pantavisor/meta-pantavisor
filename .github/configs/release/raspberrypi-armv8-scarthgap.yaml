@@ -47,6 +47,8 @@ local_conf_header:
         LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
         RPI_USE_U_BOOT = "1"
         ENABLE_UART = "1"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
