@@ -13,6 +13,7 @@ ZEPHYR_SRC_DIR = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr/samples/pvcm
 ZEPHYR_EXTRA_MODULES = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr"
 
 SRC_URI += "file://pvcm-zephyr-shell.args.json"
+SRC_URI += "file://0001-soc-arm-nxp-add-mimx8mn6_m7-i.MX8M-Nano-M7-SOC.patch;patchdir=zephyr"
 
 # native_sim fix: the NSI Makefile uses NSI_CC without --sysroot.
 # Patch nsi_config after cmake generates it.
