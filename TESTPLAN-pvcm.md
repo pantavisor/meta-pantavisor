@@ -138,3 +138,207 @@ CONFIG_PANTAVISOR_UART_DEVICE="uart_1"     # PVCM on uart_1
 CONFIG_PANTAVISOR_BRIDGE=y                 # HTTP client/server
 CONFIG_NATIVE_SIM_SLOWDOWN_TO_REAL_TIME=y  # wall-clock sync
 ```
+
+---
+
+# Hardware Tests (i.MX8MN RPMsg)
+
+End-to-end testing on Variscite VAR-SOM-MX8M-NANO with Cortex-M7
+over RPMsg/remoteproc. Two RPMsg channels: shell (ttyRPMSG0) and
+PVCM protocol (ttyRPMSG1).
+
+## Hardware Prerequisites
+
+```bash
+# Start M7 firmware
+echo /storage > /sys/module/firmware_class/parameters/path
+cp /storage/trails/current/pvcm-zephyr-shell/pvcm-zephyr-shell.elf /storage/
+echo pvcm-zephyr-shell.elf > /sys/class/remoteproc/remoteproc0/firmware
+echo start > /sys/class/remoteproc/remoteproc0/state
+sleep 5
+
+# Start pvcm-proxy
+pvcm-proxy --name pvcm-zephyr-shell \
+    --config /storage/trails/current/pvcm-zephyr-shell/run.json \
+    --device /dev/ttyRPMSG1 &
+```
+
+### Stop / Restart (no reboot needed)
+
+```bash
+echo stop > /sys/class/remoteproc/remoteproc0/state
+sleep 3  # must reach "offline" before changing firmware
+echo start > /sys/class/remoteproc/remoteproc0/state
+```
+
+## Test H1: RPMsg Channel Creation
+
+```bash
+echo start > /sys/class/remoteproc/remoteproc0/state
+sleep 5
+ls -la /dev/ttyRPMSG*
+dmesg | grep "creating channel"
+```
+
+### Pass Criteria
+
+- [ ] `/dev/ttyRPMSG0` exists (char device, shell channel)
+- [ ] `/dev/ttyRPMSG1` exists (char device, protocol channel)
+- [ ] dmesg: `creating channel rpmsg-tty addr 0x400` and `addr 0x401`
+
+## Test H2: HELLO Handshake + Heartbeat
+
+```bash
+pvcm-proxy --name pvcm-zephyr-shell \
+    --config /storage/trails/current/pvcm-zephyr-shell/run.json \
+    --device /dev/ttyRPMSG1
+```
+
+### Pass Criteria
+
+- [ ] `MCU connected: protocol=v1 fw=v1 baudrate=921600`
+- [ ] Heartbeats every ~5s: `heartbeat: status=OK uptime=Ns crashes=0`
+- [ ] No CRC or sync mismatches after handshake
+
+## Test H3: Shell over RPMsg
+
+```bash
+cat /dev/ttyRPMSG0 &
+printf "\r" > /dev/ttyRPMSG0; sleep 3
+printf "pv status\r" > /dev/ttyRPMSG0; sleep 2
+printf "pv heartbeat\r" > /dev/ttyRPMSG0; sleep 2
+printf "help\r" > /dev/ttyRPMSG0; sleep 2
+```
+
+### Pass Criteria
+
+- [ ] `mcu:~$` prompt appears after initial CR
+- [ ] `pv status`: `PVCM protocol v1`, `Transport: RPMsg`, `Heartbeat: 5000 ms`
+- [ ] `pv heartbeat`: shows uptime in seconds
+- [ ] `help`: lists `pv`, `kernel`, `devmem` commands
+- [ ] Shell does not interfere with protocol channel
+
+## Test H4: HTTP Linux → MCU
+
+```bash
+printf "GET /sensor HTTP/1.0\r\nHost: localhost\r\n\r\n" | nc -w 10 127.0.0.1 18081
+```
+
+### Expected
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 51
+Connection: close
+
+{"temperature":22.4,"humidity":65,"uptime_ms":NNNN}
+```
+
+### Pass Criteria
+
+- [ ] HTTP 200 OK with JSON body
+- [ ] `uptime_ms` reflects actual M7 uptime
+- [ ] Response within 1 second
+
+## Test H5: HTTP MCU → Linux
+
+```bash
+# Via shell (pvcm-proxy must be running):
+cat /dev/ttyRPMSG0 &
+printf "\r" > /dev/ttyRPMSG0; sleep 2
+printf "pv http /cgi-bin/logs\r" > /dev/ttyRPMSG0; sleep 12
+```
+
+### Pass Criteria
+
+- [ ] Shell shows `GET /cgi-bin/logs ...`
+- [ ] Shell shows `HTTP NNN (N bytes)` with response body
+- [ ] Bridge log: `HTTP_REQ: GET /cgi-bin/logs` and `upstream response: NNN`
+
+## Test H6: Stop / Start
+
+```bash
+echo stop > /sys/class/remoteproc/remoteproc0/state; sleep 3
+cat /sys/class/remoteproc/remoteproc0/state   # "offline"
+echo start > /sys/class/remoteproc/remoteproc0/state; sleep 5
+ls /dev/ttyRPMSG*
+# Reconnect pvcm-proxy and verify handshake + shell
+```
+
+### Pass Criteria
+
+- [ ] State reaches `offline` after stop
+- [ ] Both ttyRPMSG devices reappear after start
+- [ ] Handshake succeeds on reconnect
+- [ ] Shell works after restart
+- [ ] No stale data from previous session
+
+## Test H7: Sequential Load (20 requests)
+
+```bash
+SUCCESS=0; FAIL=0; i=0
+while [ $i -lt 20 ]; do
+  RESP=$(printf "GET /sensor HTTP/1.0\r\nHost: localhost\r\n\r\n" | nc -w 5 127.0.0.1 18081)
+  if echo "$RESP" | grep -q "200 OK"; then SUCCESS=$((SUCCESS+1))
+  else FAIL=$((FAIL+1)); fi
+  i=$((i+1))
+done
+echo "$SUCCESS OK, $FAIL FAIL out of 20"
+```
+
+### Pass Criteria
+
+- [ ] 20/20 return HTTP 200 OK
+- [ ] Each response has valid JSON with incrementing `uptime_ms`
+- [ ] Stream IDs increment (no reuse)
+- [ ] Heartbeats continue (no gaps > 10s)
+
+## Test H8: Parallel Load (5 concurrent)
+
+```bash
+i=0
+while [ $i -lt 5 ]; do
+  (printf "GET /sensor HTTP/1.0\r\nHost: localhost\r\n\r\n" | nc -w 10 127.0.0.1 18081 | head -1) &
+  i=$((i+1))
+done
+wait
+```
+
+### Pass Criteria
+
+- [ ] All 5 return HTTP 200 OK
+- [ ] No crashes or protocol corruption
+- [ ] Heartbeats resume after burst
+
+## Test H9: Sustained Load (60 seconds)
+
+```bash
+END=$(($(date +%s) + 60)); COUNT=0; FAIL=0
+while [ $(date +%s) -lt $END ]; do
+  RESP=$(printf "GET /sensor HTTP/1.0\r\nHost: localhost\r\n\r\n" | nc -w 5 127.0.0.1 18081)
+  if echo "$RESP" | grep -q "200 OK"; then COUNT=$((COUNT+1))
+  else FAIL=$((FAIL+1)); fi
+done
+echo "60s: $COUNT OK, $FAIL FAIL"
+```
+
+### Pass Criteria
+
+- [ ] Zero failures over 60 seconds
+- [ ] Throughput > 1 req/s
+- [ ] Heartbeats never stop
+- [ ] M7 uptime increases monotonically
+
+## Key Configuration
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| `CONFIG_IPM_IMX_MAX_DATA_SIZE_4` | `y` | MU register must match Linux DTB mbox index 1 |
+| `CONFIG_OPENAMP_RSC_TABLE_NUM_RPMSG_BUFF` | `32` | Prevents TX vring exhaustion |
+| `CONFIG_OPENAMP_MASTER` | `n` | M7 is remote/device role |
+| `cfmakeraw()` on ttyRPMSG | required | Binary protocol, no line discipline |
+| Residual buffer in proxy | required | Handles concatenated frames in tty read |
+| `ipm_send(id=1)` | hardcoded | Matches Linux DTB mbox rx index 1 |
+| `METAL_MAX_DEVICE_REGIONS` | `2` | Shared memory + resource table |
+| `memset(SHM_START_ADDR)` | at M7 boot | Clears stale vrings for stop/start |
