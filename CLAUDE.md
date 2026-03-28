@@ -306,20 +306,60 @@ ZEPHYR_EXTRA_MODULES = "${TOPDIR}/workspace/sources/pantavisor/sdk/zephyr"
 SRC_URI += "file://my-container.args.json"
 ```
 
-The `args.json` specifies MCU device, transport, and baudrate:
+The `args.json` specifies MCU device, transport, and remoteproc:
 
 ```json
 {
     "PV_MCU_DEVICE": "display",
     "PV_MCU_TRANSPORT": "rpmsg",
-    "PV_MCU_BAUDRATE": 921600
+    "PV_MCU_BAUDRATE": 921600,
+    "PV_STATUS_GOAL": "MOUNTED",
+    "PV_MCU_REMOTEPROC": "remoteproc0"
 }
+```
+
+### Zephyr SDK Architecture
+
+The firmware creates two RPMsg channels:
+- **Channel 0 (ttyRPMSG0)**: Zephyr shell — interactive debug (`pv status`, `pv http`)
+- **Channel 1 (ttyRPMSG1)**: PVCM protocol — heartbeat, HTTP gateway
+
+Key Zephyr configs (`samples/pvcm-shell/boards/mimx8mn_evk.conf`):
+```kconfig
+CONFIG_IPM_IMX_MAX_DATA_SIZE_4=y   # MU register index matches Linux DTB
+CONFIG_OPENAMP_MASTER=n            # M7 is remote/device role
+```
+
+Key Zephyr configs (`samples/pvcm-shell/prj.conf`):
+```kconfig
+CONFIG_PANTAVISOR=y
+CONFIG_PANTAVISOR_TRANSPORT_RPMSG=y
+CONFIG_PANTAVISOR_BRIDGE=y         # HTTP client/server
+CONFIG_PANTAVISOR_SHELL=y          # pv shell commands
+CONFIG_SHELL=y                     # Zephyr shell over RPMsg
+```
+
+### Quick Iteration (west build)
+
+```bash
+cd build/workspace/sources/pantavisor/sdk/zephyr-sdk
+source zephyr/zephyr-env.sh
+west build -b mimx8mn_evk -d build-test \
+    ../zephyr/samples/pvcm-shell -- \
+    -DBOARD_ROOT=$(pwd)/../zephyr \
+    -DZEPHYR_EXTRA_MODULES=$(pwd)/../zephyr
+
+# Upload and test (no reboot needed)
+cat build-test/zephyr/zephyr.elf | ssh -p 8222 _pv_@<ip> 'cat > /storage/fw.elf'
+ssh -p 8222 _pv_@<ip> 'echo stop > /sys/class/remoteproc/remoteproc0/state; sleep 3; \
+    echo fw.elf > /sys/class/remoteproc/remoteproc0/firmware; \
+    echo start > /sys/class/remoteproc/remoteproc0/state'
 ```
 
 ### Testing
 
 See [TESTPLAN-pvcm.md](TESTPLAN-pvcm.md) for end-to-end protocol
-testing using Zephyr native_sim_64.
+testing — both native_sim_64 (UART/PTY) and hardware (i.MX8MN RPMsg).
 
 ## Pantavisor Source Development
 
