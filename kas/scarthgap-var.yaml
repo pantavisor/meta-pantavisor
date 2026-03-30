@@ -7,7 +7,6 @@ header:
   # is increased on every format change.
   includes:
     - kas/platforms/freescale.yaml
-    - kas/platforms/nxp.yaml
   version: 16
 
 repos:
@@ -47,6 +46,7 @@ repos:
   meta-openembedded:
     path: layers/meta-openembedded
     layers:
+      meta-multimedia:
       meta-perl:
 
   meta-swupdate:
@@ -71,4 +71,4 @@ local_conf_header:
   scarthgap-variscite: |
     BB_DANGLINGAPPENDS_WARNONLY = "1"
     PANTAVISOR_FEATURES:append = " caam-nxp"
-    PREFERRED_PROVIDER_virtual/kernel = "linux-variscite"
+    PV_UBOOT_AUTOFDT = "1"
