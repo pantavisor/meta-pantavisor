@@ -22,7 +22,8 @@ gcc -o /tmp/pvcm-proxy-test \
     $PV/pvcm-proxy/pvcm_transport_uart.c \
     $PV/pvcm-proxy/pvcm_protocol.c \
     $PV/pvcm-proxy/pvcm_bridge.c \
-    -I$PV -lpthread
+    $PV/pvcm-proxy/pvcm_dbus_bridge.c \
+    -I$PV -lpthread $(pkg-config --cflags --libs dbus-1)
 ```
 
 The Zephyr executable is at:
@@ -426,8 +427,7 @@ Requires pvcm-proxy started with `--dbus-socket`:
 
 ```bash
 pvcm-proxy --name pvcm-zephyr-shell \
-    --config /storage/trails/current/pvcm-zephyr-shell/run.json \
-    --device /dev/ttyRPMSG1 \
+    --device /dev/ttyRPMSG1 --transport rpmsg \
     --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket &
 ```
 
@@ -438,33 +438,48 @@ pv dbus list
 
 ### Pass Criteria
 
-- [ ] Returns JSON array of system bus names
-- [ ] Contains `"net.connman"`, `"org.pantacor.PvWificonnect"`
-- [ ] Response within 1 second
+- [x] Returns JSON array of system bus names
+- [x] Contains `"net.connman"`, `"org.pantacor.PvWificonnect"`, `"org.freedesktop.NetworkManager"`
+- [x] Response within 1 second
+- [x] Heartbeats continue during D-Bus calls
 
 ## Test H11: D-Bus Method Call (Hardware)
 
 ```bash
-pv dbus call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetNameOwner '["net.connman"]'
+# Bare args work (Zephyr shell strips JSON quotes):
+pv dbus call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetNameOwner [net.connman]
 ```
 
 ### Pass Criteria
 
-- [ ] Returns unique bus name (e.g. `":1.0"`)
-- [ ] No errors
-- [ ] Heartbeats continue
+- [x] Returns unique bus name (e.g. `":1.0"`)
+- [x] No errors
+- [x] Heartbeats continue
 
 ## Test H12: D-Bus Signal Subscription (Hardware)
 
 ```bash
-pv dbus subscribe - /org/freedesktop/DBus org.freedesktop.DBus NameOwnerChanged
+pv dbus subscribe org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus NameOwnerChanged
 ```
 
 ### Pass Criteria
 
-- [ ] Subscription confirmed
-- [ ] Signals appear when services start/stop
-- [ ] No interference with heartbeat or HTTP
+- [x] Subscription confirmed (`subscribed: sub_id=1`)
+- [x] Signals appear when services start/stop
+- [x] No interference with heartbeat or HTTP
+
+## Test H13: D-Bus Truncation Error (Hardware)
+
+```bash
+# GetTechnologies returns a(oa{sv}) — exceeds 246 byte frame limit:
+pv dbus call net.connman / net.connman.Manager GetTechnologies
+```
+
+### Pass Criteria
+
+- [x] Returns `D-Bus error 6: reply exceeds 245 byte frame limit`
+- [x] Error code is PVCM_DBUS_ERR_TRUNCATED (6)
+- [x] No crash or hang
 
 ## Key Configuration
 
