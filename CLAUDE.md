@@ -10,7 +10,8 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
 | [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
-| [TESTPLAN-pvcm.md](TESTPLAN-pvcm.md) | PVCM MCU protocol tests (handshake, HTTP gateway, MCU server) |
+| [DEVELOPMENT-pvcm.md](DEVELOPMENT-pvcm.md) | PVCM development workflows (native_sim + hardware iteration) |
+| [TESTPLAN-pvcm.md](TESTPLAN-pvcm.md) | PVCM MCU protocol tests (handshake, HTTP gateway, D-Bus gateway) |
 | [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
