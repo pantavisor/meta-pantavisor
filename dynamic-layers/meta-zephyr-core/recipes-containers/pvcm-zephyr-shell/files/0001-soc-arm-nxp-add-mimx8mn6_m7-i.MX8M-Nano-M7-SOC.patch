@@ -1,0 +1,583 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Thu, 27 Mar 2026 00:00:00 +0000
+Subject: [PATCH] soc: arm: nxp: add mimx8mn6_m7 i.MX8M Nano M7 SOC
+
+Add proper SOC definition for the i.MX8M Nano Cortex-M7 core.
+
+Key differences from mimx8ml8_m7 (i.MX8M Plus M7):
+- M7 clock: 600 MHz via SysPLL3 (Plus uses 800 MHz / SysPLL1)
+- DDR code region: 0x7E000000 (Plus uses 0x80000000)
+- Resource table at 0x400FF000 (matches Linux DTB rsc-table node)
+- NUM_IRQS: 128 (Plus has 159)
+- Part number: MIMX8MN6DVTJZ
+
+Signed-off-by: Alexander Sack <asac@pantacor.com>
+---
+diff --git a/soc/arm/nxp_imx/Kconfig b/soc/arm/nxp_imx/Kconfig
+index cd77ab5c717..254ea3d870c 100644
+--- a/soc/arm/nxp_imx/Kconfig
++++ b/soc/arm/nxp_imx/Kconfig
+@@ -30,6 +30,7 @@ config SOC_PART_NUMBER
+ 	default SOC_PART_NUMBER_IMX7_M4 if SOC_SERIES_IMX7_M4
+ 	default SOC_PART_NUMBER_IMX8MM_M4 if SOC_SERIES_IMX8MM_M4
+ 	default SOC_PART_NUMBER_IMX8ML_M7 if SOC_SERIES_IMX8ML_M7
++	default SOC_PART_NUMBER_IMX8MN_M7 if SOC_SERIES_IMX8MN_M7
+ 	default SOC_PART_NUMBER_IMX8MQ_M4 if SOC_SERIES_IMX8MQ_M4
+ 
+ config FLASH_MCUX_FLEXSPI_XIP
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/CMakeLists.txt b/soc/arm/nxp_imx/mimx8mn6_m7/CMakeLists.txt
+new file mode 100644
+index 00000000000..795419fbad7
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/CMakeLists.txt
+@@ -0,0 +1,19 @@
++#
++# Copyright (c) 2024-2026 Pantacor Ltd.
++#
++# SPDX-License-Identifier: Apache-2.0
++#
++
++zephyr_include_directories(${ZEPHYR_BASE}/drivers)
++
++zephyr_sources(
++  soc.c
++  mpu_regions.c
++)
++
++if(CONFIG_OPENAMP_RSC_TABLE)
++  zephyr_linker_section(NAME .resource_table GROUP ROM_REGION NOINPUT)
++  zephyr_linker_section_configure(SECTION .resource_table KEEP INPUT ".resource_table*")
++endif()
++
++set(SOC_LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld CACHE INTERNAL "")
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.mimx8mn6_m7 b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.mimx8mn6_m7
+new file mode 100644
+index 00000000000..c2d9f3b11cc
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.mimx8mn6_m7
+@@ -0,0 +1,43 @@
++# MIMX8MN6 SoC defconfig
++
++# Copyright (c) 2024-2026 Pantacor Ltd.
++# SPDX-License-Identifier: Apache-2.0
++
++if SOC_MIMX8MN6
++
++config SOC
++	string
++	default "mimx8mn6"
++
++config SYS_CLOCK_HW_CYCLES_PER_SEC
++	int
++	default 600000000
++
++config GPIO
++	default y
++
++config IPM_IMX
++	default y
++	depends on IPM
++
++if CODE_ITCM
++
++config FLASH_SIZE
++	default $(dt_node_reg_size_int,/soc/itcm@0,0,K)
++
++config FLASH_BASE_ADDRESS
++	default $(dt_node_reg_addr_hex,/soc/itcm@0)
++
++endif # CODE_ITCM
++
++if CODE_DDR
++
++config FLASH_SIZE
++	default $(dt_node_reg_size_int,/soc/code@80000000,0,K)
++
++config FLASH_BASE_ADDRESS
++	default $(dt_node_reg_addr_hex,/soc/code@80000000)
++
++endif # CODE_DDR
++
++endif # SOC_MIMX8MN6
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.series b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.series
+new file mode 100644
+index 00000000000..bbd6d8460ef
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.series
+@@ -0,0 +1,22 @@
++# i.MX8MN M7 SoC series defconfig
++
++# Copyright (c) 2024-2026 Pantacor Ltd.
++# SPDX-License-Identifier: Apache-2.0
++
++if SOC_SERIES_IMX8MN_M7
++
++config SOC_SERIES
++	default "mimx8mn6_m7"
++
++config NUM_IRQS
++	int
++	# must be >= the highest interrupt number used
++	default 128
++
++config PINCTRL_IMX
++	default y if HAS_MCUX_IOMUXC
++	depends on PINCTRL
++
++source "soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.defconfig.mimx8mn6_m7"
++
++endif # SOC_SERIES_IMX8MN_M7
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.series b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.series
+new file mode 100644
+index 00000000000..52c457ad375
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.series
+@@ -0,0 +1,15 @@
++# i.MX8MN M7 core series
++
++# Copyright (c) 2024-2026 Pantacor Ltd.
++# SPDX-License-Identifier: Apache-2.0
++
++config SOC_SERIES_IMX8MN_M7
++	bool "i.MX8MN M7 Core Series"
++	select ARM
++	select CPU_CORTEX_M7
++	select SOC_FAMILY_IMX
++	select CPU_HAS_FPU
++	select CPU_HAS_ICACHE
++	select CPU_HAS_DCACHE
++	help
++	  Enable support for i.MX8MN M7 MCU series
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.soc b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.soc
+new file mode 100644
+index 00000000000..209fffe392b
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/Kconfig.soc
+@@ -0,0 +1,47 @@
++# i.MX8MN M7 SoC series
++
++# Copyright (c) 2024-2026 Pantacor Ltd.
++# SPDX-License-Identifier: Apache-2.0
++
++choice
++prompt "i.MX8MN M7 Selection"
++depends on SOC_SERIES_IMX8MN_M7
++
++config SOC_MIMX8MN6
++	bool "SOC_MIMX8MN6"
++	select HAS_MCUX
++	select HAS_MCUX_CCM
++	select HAS_MCUX_RDC
++	select CPU_HAS_ARM_MPU
++	select CPU_HAS_CUSTOM_FIXED_SOC_MPU_REGIONS
++	select ARM_MPU
++	select HAS_MCUX_IGPIO
++	select HAS_MCUX_IOMUXC
++
++endchoice
++
++if SOC_SERIES_IMX8MN_M7
++
++config SOC_PART_NUMBER_MIMX8MN6DVTJZ
++	bool
++
++config SOC_PART_NUMBER_IMX8MN_M7
++	string
++	default "MIMX8MN6DVTJZ" if SOC_PART_NUMBER_MIMX8MN6DVTJZ
++	help
++	  This string holds the full part number of the SoC. It is a hidden option
++	  that you should not set directly. The part number selection choice defines
++	  the default value for this string.
++
++choice CODE_LOCATION
++	prompt "Code location selection"
++
++config CODE_ITCM
++	bool "Link code into internal instruction tightly coupled memory (ITCM)"
++
++config CODE_DDR
++	bool "Link code into DDR memory"
++
++endchoice
++
++endif # SOC_SERIES_IMX8MN_M7
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/linker.ld b/soc/arm/nxp_imx/mimx8mn6_m7/linker.ld
+new file mode 100644
+index 00000000000..0d6f3c58143
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/linker.ld
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (c) 2024-2026 Pantacor Ltd.
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * i.MX8M Nano M7 — DDR region at 0x7E000000 (16 MiB reserved by Linux).
++ * Resource table at 0x400FF000 to match Linux DTB rsc-table node.
++ */
++
++#include <zephyr/devicetree.h>
++
++MEMORY
++     {
++#if defined(CONFIG_CODE_DDR)
++        DDR  (wx) : ORIGIN = 0x7e000000, LENGTH = 0x01000000
++#else
++        DDR  (wx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
++#endif
++        RSC_TABLE  (w) : ORIGIN = 0x400ff000, LENGTH = 0x1000
++     }
++
++#include <zephyr/arch/arm/cortex_m/scripts/linker.ld>
++
++SECTIONS
++     {
++#ifdef CONFIG_OPENAMP_RSC_TABLE
++        SECTION_PROLOGUE(.resource_table,, SUBALIGN(4))
++        {
++            KEEP(*(.resource_table*))
++        } > RSC_TABLE
++#endif
++     }
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/mpu_regions.c b/soc/arm/nxp_imx/mimx8mn6_m7/mpu_regions.c
+new file mode 100644
+index 00000000000..0373e5c3c49
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/mpu_regions.c
+@@ -0,0 +1,85 @@
++/*
++ * Copyright (c) 2024-2026 Pantacor Ltd.
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <zephyr/devicetree.h>
++#include <zephyr/arch/arm/cortex_m/arm_mpu_mem_cfg.h>
++
++#define REGION_MASK_BASE_ADDRESS			0x00000000U
++#define REGION_ITCM_BASE_ADDRESS			0x00000000U
++#define REGION_QSPI_BASE_ADDRESS			0x08000000U
++#define REGION_DTCM_BASE_ADDRESS			0x20000000U
++#define REGION_DDR_BASE_ADDRESS				0x40000000U
++#define REGION_DDR2_BASE_ADDRESS			0x80000000U
++#if defined(CONFIG_CODE_DDR)
++#define REGION_DDR_CODE_BASE_ADDRESS		0x7E000000U
++#define REGION_DDR_CODE_SIZE				0x01000000U
++#endif
++
++static const struct arm_mpu_region mpu_regions[] = {
++	/*
++	 * Region 0 [0x0000_0000 - 0x4000_0000]:
++	 * Memory with Device type, not executable, not shareable, non-cacheable.
++	 */
++	MPU_REGION_ENTRY("MASK", REGION_MASK_BASE_ADDRESS,
++					 { ARM_MPU_RASR(1, ARM_MPU_AP_FULL,
++					 0, 0, 0, 1, 0, ARM_MPU_REGION_SIZE_1GB) }),
++
++	/*
++	 * Region 1 ITCM[0x0000_0000 - 0x0001_FFFF]:
++	 * Memory with Normal type, not shareable, non-cacheable
++	 */
++	MPU_REGION_ENTRY("ITCM", REGION_ITCM_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL,
++					 1, 0, 0, 0, 0, ARM_MPU_REGION_SIZE_128KB) }),
++
++	/*
++	 * Region 2 QSPI[0x0800_0000 - 0x0FFF_FFFF]:
++	 * Memory with Normal type, not shareable, cacheable
++	 */
++	MPU_REGION_ENTRY("QSPI", REGION_QSPI_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL,
++					 1, 0, 1, 1, 0, ARM_MPU_REGION_SIZE_128MB) }),
++
++	/*
++	 * Region 3 DTCM[0x2000_0000 - 0x2002_0000]:
++	 * Memory with Normal type, not shareable, non-cacheable
++	 */
++	MPU_REGION_ENTRY("DTCM", REGION_DTCM_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL,
++					 1, 0, 0, 0, 0, ARM_MPU_REGION_SIZE_128KB) }),
++
++	/*
++	 * Region 4 DDR[0x4000_0000 - 0x8000_0000]:
++	 * Memory with Normal type, not shareable, non-cacheable
++	 */
++	MPU_REGION_ENTRY("DDR", REGION_DDR_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL,
++					 1, 0, 0, 0, 0, ARM_MPU_REGION_SIZE_1GB) }),
++
++	/*
++	 * Region 5 DDR[0x8000_0000 - 0xBFFFFFFF]:
++	 * Memory with Normal type, not shareable, non-cacheable
++	 */
++	MPU_REGION_ENTRY("DDR2", REGION_DDR2_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL,
++					 1, 0, 0, 0, 0, ARM_MPU_REGION_SIZE_1GB) }),
++
++#if defined(CONFIG_CODE_DDR)
++	/*
++	 * Region 6: DDR code area [0x7E00_0000, 16 MiB] — cacheable overlay.
++	 * Linux reserves this region for M7 firmware. Make it cacheable
++	 * for instruction fetch and data access performance.
++	 */
++	MPU_REGION_ENTRY("DDR_CODE", REGION_DDR_CODE_BASE_ADDRESS,
++					 { ARM_MPU_RASR(0, ARM_MPU_AP_FULL, 1,
++					 0, 1, 1, 0, REGION_DDR_CODE_SIZE) }),
++#endif
++};
++
++const struct arm_mpu_config mpu_config = {
++	.num_regions = ARRAY_SIZE(mpu_regions),
++	.mpu_regions = mpu_regions,
++};
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/pinctrl_soc.h b/soc/arm/nxp_imx/mimx8mn6_m7/pinctrl_soc.h
+new file mode 100644
+index 00000000000..19000dd1fe6
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/pinctrl_soc.h
+@@ -0,0 +1,83 @@
++/*
++ * Copyright (c) 2024-2026 Pantacor Ltd.
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#ifndef ZEPHYR_SOC_ARM_NXP_MIMX8MN6_M7_PINCTRL_SOC_H_
++#define ZEPHYR_SOC_ARM_NXP_MIMX8MN6_M7_PINCTRL_SOC_H_
++
++#include <zephyr/devicetree.h>
++#include <zephyr/types.h>
++#include "fsl_common.h"
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#define MCUX_IMX_INPUT_SCHMITT_ENABLE_SHIFT IOMUXC_SW_PAD_CTL_PAD_HYS_SHIFT
++#define MCUX_IMX_BIAS_PULL_UP_SHIFT IOMUXC_SW_PAD_CTL_PAD_PUE_SHIFT
++#define MCUX_IMX_BIAS_PULL_ENABLE_SHIFT IOMUXC_SW_PAD_CTL_PAD_PE_SHIFT
++#define MCUX_IMX_DRIVE_OPEN_DRAIN_SHIFT IOMUXC_SW_PAD_CTL_PAD_ODE_SHIFT
++#define MCUX_IMX_SLEW_RATE_SHIFT IOMUXC_SW_PAD_CTL_PAD_FSEL_SHIFT
++#define MCUX_IMX_DRIVE_STRENGTH_SHIFT IOMUXC_SW_PAD_CTL_PAD_DSE_SHIFT
++#define MCUX_IMX_INPUT_ENABLE_SHIFT 31 /* Shift to a bit not used by IOMUXC_SW_PAD_CTL */
++#define MCUX_IMX_INPUT_ENABLE(x) ((x >> MCUX_IMX_INPUT_ENABLE_SHIFT) & 0x1)
++
++#define Z_PINCTRL_MCUX_IMX_PINCFG_INIT(node_id)							\
++	((DT_PROP(node_id, input_schmitt_enable) << MCUX_IMX_INPUT_SCHMITT_ENABLE_SHIFT) |	\
++	 (DT_PROP(node_id, bias_pull_up) << MCUX_IMX_BIAS_PULL_UP_SHIFT) |			\
++	 ((DT_PROP(node_id, bias_pull_up) | DT_PROP(node_id, bias_pull_down))			\
++		<< MCUX_IMX_BIAS_PULL_ENABLE_SHIFT) |						\
++	 (DT_PROP(node_id, drive_open_drain) << MCUX_IMX_DRIVE_OPEN_DRAIN_SHIFT) |		\
++	 (DT_ENUM_IDX(node_id, drive_strength) << MCUX_IMX_DRIVE_STRENGTH_SHIFT) |		\
++	 (DT_ENUM_IDX(node_id, slew_rate) << MCUX_IMX_SLEW_RATE_SHIFT) |			\
++	 (DT_PROP(node_id, input_enable) << MCUX_IMX_INPUT_ENABLE_SHIFT))
++
++
++/* This struct must be present. It is used by the mcux gpio driver */
++struct pinctrl_soc_pinmux {
++	uint32_t mux_register; /*!< IOMUXC SW_PAD_MUX register */
++	uint32_t config_register; /*!< IOMUXC SW_PAD_CTL register */
++	uint32_t input_register; /*!< IOMUXC SELECT_INPUT DAISY register */
++	uint8_t mux_mode: 4; /*!< Mux value for SW_PAD_MUX register */
++	uint32_t input_daisy:4; /*!< Mux value for SELECT_INPUT_DAISY register */
++};
++
++struct pinctrl_soc_pin {
++	struct pinctrl_soc_pinmux pinmux;
++	uint32_t pin_ctrl_flags; /*!< value to write to IOMUXC_SW_PAD_CTL register */
++};
++
++typedef struct pinctrl_soc_pin pinctrl_soc_pin_t;
++
++/* This definition must be present. It is used by the mcux gpio driver */
++#define MCUX_IMX_PINMUX(node_id)						\
++	{									\
++	  .mux_register = DT_PROP_BY_IDX(node_id, pinmux, 0),			\
++	  .config_register = DT_PROP_BY_IDX(node_id, pinmux, 4),		\
++	  .input_register = DT_PROP_BY_IDX(node_id, pinmux, 2),			\
++	  .mux_mode = DT_PROP_BY_IDX(node_id, pinmux, 1),			\
++	  .input_daisy = DT_PROP_BY_IDX(node_id, pinmux, 3),			\
++	}
++
++#define Z_PINCTRL_PINMUX(group_id, pin_prop, idx)				\
++	MCUX_IMX_PINMUX(DT_PHANDLE_BY_IDX(group_id, pin_prop, idx))
++
++#define Z_PINCTRL_STATE_PIN_INIT(group_id, pin_prop, idx)			\
++	{									\
++	  .pinmux = Z_PINCTRL_PINMUX(group_id, pin_prop, idx),			\
++	  .pin_ctrl_flags = Z_PINCTRL_MCUX_IMX_PINCFG_INIT(group_id),		\
++	},
++
++
++#define Z_PINCTRL_STATE_PINS_INIT(node_id, prop)				\
++	{DT_FOREACH_CHILD_VARGS(DT_PHANDLE(node_id, prop),			\
++		DT_FOREACH_PROP_ELEM, pinmux, Z_PINCTRL_STATE_PIN_INIT)};	\
++
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* ZEPHYR_SOC_ARM_NXP_MIMX8MN6_M7_PINCTRL_SOC_H_ */
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/soc.c b/soc/arm/nxp_imx/mimx8mn6_m7/soc.c
+new file mode 100644
+index 00000000000..59107b805d9
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/soc.c
+@@ -0,0 +1,125 @@
++/*
++ * Copyright (c) 2024-2026 Pantacor Ltd.
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <zephyr/device.h>
++#include <fsl_clock.h>
++#include <fsl_common.h>
++#include <fsl_rdc.h>
++#include <zephyr/init.h>
++#include <zephyr/kernel.h>
++#include <soc.h>
++
++#include <zephyr/dt-bindings/rdc/imx_rdc.h>
++
++/* OSC/PLL is already initialized by ROM and Cortex-A53 (u-boot) */
++static void SOC_RdcInit(void)
++{
++	/* Move M7 core to specific RDC domain 1 */
++	rdc_domain_assignment_t assignment = {0};
++	uint8_t domainId                   = 0U;
++
++	domainId = RDC_GetCurrentMasterDomainId(RDC);
++	/* Only configure the RDC if RDC peripheral write access allowed. */
++	if ((0x1U & RDC_GetPeriphAccessPolicy(RDC, kRDC_Periph_RDC, domainId)) != 0U) {
++		assignment.domainId = M7_DOMAIN_ID;
++		RDC_SetMasterDomainAssignment(RDC, kRDC_Master_M7, &assignment);
++	}
++
++	/*
++	 * The M7 core is running at domain 1, now enable the clock gate of the following IP/BUS/PLL
++	 * in domain 1 in the CCM. In this way, to ensure the clock of the peripherals used by M
++	 * core not be affected by A core which is running at domain 0.
++	 */
++	CLOCK_EnableClock(kCLOCK_Iomux);
++
++	CLOCK_EnableClock(kCLOCK_Ipmux1);
++	CLOCK_EnableClock(kCLOCK_Ipmux2);
++	CLOCK_EnableClock(kCLOCK_Ipmux3);
++
++#if defined(FLASH_TARGET)
++	CLOCK_EnableClock(kCLOCK_Qspi);
++#endif
++
++	/* Enable the CCGR gate for SysPLL1 in Domain 1 */
++	CLOCK_ControlGate(kCLOCK_SysPll1Gate, kCLOCK_ClockNeededAll);
++	/* Enable the CCGR gate for SysPLL2 in Domain 1 */
++	CLOCK_ControlGate(kCLOCK_SysPll2Gate, kCLOCK_ClockNeededAll);
++	/* Enable the CCGR gate for SysPLL3 in Domain 1 */
++	CLOCK_ControlGate(kCLOCK_SysPll3Gate, kCLOCK_ClockNeededAll);
++}
++
++static void SOC_ClockInit(void)
++{
++	/*
++	 * The ROM has already configured SYSTEM PLL1 to 800MHz when powering up the SOC,
++	 * and A core enables SYSTEM PLL1, PLL2, PLL3 dividers via U-Boot.
++	 * Do not reconfigure PLLs on M7 side — risk of SOC hang.
++	 *
++	 * i.MX8MN M7 max frequency: 600 MHz (SysPLL3).
++	 */
++
++	/* switch AHB NOC root to 24M first in order to configure the SYSTEM PLL1. */
++	CLOCK_SetRootMux(kCLOCK_RootAhb, kCLOCK_AhbRootmuxOsc24M);
++
++	/* switch AXI M7 root to 24M first in order to reconfigure. */
++	CLOCK_SetRootMux(kCLOCK_RootM7, kCLOCK_M7RootmuxOsc24M);
++
++	/* Set M7 root clock to 600 MHz (SysPLL3 = 600 MHz, divider 1:1) */
++	CLOCK_SetRootDivider(kCLOCK_RootM7, 1U, 1U);
++	CLOCK_SetRootMux(kCLOCK_RootM7, kCLOCK_M7RootmuxSysPll3);
++
++	/* Set AHB root clock to 133 MHz (SysPLL1 DIV6 = 800/6 ≈ 133 MHz) */
++	CLOCK_SetRootDivider(kCLOCK_RootAhb, 1U, 1U);
++	CLOCK_SetRootMux(kCLOCK_RootAhb, kCLOCK_AhbRootmuxSysPll1Div6);
++
++#if defined(CONFIG_UART_MCUX_IUART)
++#if DT_NODE_HAS_STATUS(DT_NODELABEL(uart1), okay)
++	CLOCK_SetRootMux(kCLOCK_RootUart1, kCLOCK_UartRootmuxSysPll1Div10);
++	CLOCK_SetRootDivider(kCLOCK_RootUart1, 1U, 1U);
++#endif
++#if DT_NODE_HAS_STATUS(DT_NODELABEL(uart2), okay)
++	CLOCK_SetRootMux(kCLOCK_RootUart2, kCLOCK_UartRootmuxSysPll1Div10);
++	CLOCK_SetRootDivider(kCLOCK_RootUart2, 1U, 1U);
++#endif
++#if DT_NODE_HAS_STATUS(DT_NODELABEL(uart3), okay)
++	CLOCK_SetRootMux(kCLOCK_RootUart3, kCLOCK_UartRootmuxSysPll1Div10);
++	CLOCK_SetRootDivider(kCLOCK_RootUart3, 1U, 1U);
++#endif
++#if DT_NODE_HAS_STATUS(DT_NODELABEL(uart4), okay)
++	CLOCK_SetRootMux(kCLOCK_RootUart4, kCLOCK_UartRootmuxSysPll1Div10);
++	CLOCK_SetRootDivider(kCLOCK_RootUart4, 1U, 1U);
++#endif
++#endif
++
++	CLOCK_EnableClock(kCLOCK_Rdc);   /* Enable RDC clock */
++	CLOCK_EnableClock(kCLOCK_Ocram); /* Enable Ocram clock */
++
++	/* The purpose to enable the following modules clock is to make sure the M7 core could work
++	 * normally when A53 core enters the low power status.
++	 */
++	CLOCK_EnableClock(kCLOCK_Sim_display);
++	CLOCK_EnableClock(kCLOCK_Sim_m);
++	CLOCK_EnableClock(kCLOCK_Sim_main);
++	CLOCK_EnableClock(kCLOCK_Sim_s);
++	CLOCK_EnableClock(kCLOCK_Sim_wakeup);
++	CLOCK_EnableClock(kCLOCK_Debug);
++	CLOCK_EnableClock(kCLOCK_Dram);
++	CLOCK_EnableClock(kCLOCK_Sec_Debug);
++}
++
++static int nxp_mimx8mn6_init(void)
++{
++
++	/* SoC specific RDC settings */
++	SOC_RdcInit();
++
++	/* SoC specific Clock settings */
++	SOC_ClockInit();
++
++	return 0;
++}
++
++SYS_INIT(nxp_mimx8mn6_init, PRE_KERNEL_1, 0);
+diff --git a/soc/arm/nxp_imx/mimx8mn6_m7/soc.h b/soc/arm/nxp_imx/mimx8mn6_m7/soc.h
+new file mode 100644
+index 00000000000..c6a7acea07f
+--- /dev/null
++++ b/soc/arm/nxp_imx/mimx8mn6_m7/soc.h
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (c) 2024-2026 Pantacor Ltd.
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#ifndef _SOC__H_
++#define _SOC__H_
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifndef _ASMLANGUAGE
++
++#include <fsl_device_registers.h>
++
++#endif /* !_ASMLANGUAGE */
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* _SOC__H_ */

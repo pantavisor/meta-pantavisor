@@ -8,6 +8,7 @@ SECTION = "base"
 DEPENDS = "cmake libevent libthttp picohttpparser mbedtls zlib pkgconfig-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcm', 'dbus', '', d)} \
 	"
 RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
 	e2fsprogs-e2fsck \
@@ -18,6 +19,7 @@ RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs e2fsprogs-dumpe2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcm', 'dbus-lib', '', d)} \
 	"
 RDEPENDS:${PN}:qemumips += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} libthttp-certs "
 LICENSE = "MIT"
@@ -83,6 +85,7 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', '-DPAN
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', '-DPANTAVISOR_RUNC_ENABLE=ON', '-DPANTAVISOR_RUNC_ENABLE=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect', '-DPANTAVISOR_XCONNECT=ON', '-DPANTAVISOR_XCONNECT=OFF', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPANTAVISOR_APPENGINE=ON', '-DPANTAVISOR_APPENGINE=OFF', d)}"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcm', '-DPANTAVISOR_PVCM=ON', '-DPANTAVISOR_PVCM=OFF', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_PVTEST=ON'

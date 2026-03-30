@@ -168,6 +168,60 @@ config KAS_LOCAL_FEATURE_XCONNECT
 	string
 	default "PANTAVISOR_FEATURES:append = \" xconnect\"" if FEATURE_XCONNECT
 endmenu
+menu "MCU Containers"
+
+config PVCM_ENABLE
+	bool "Enable MCU container support (PVCM)"
+	default n
+	help
+	  Build MCU firmware as a Pantavisor container alongside the
+	  Linux BSP. Adds pvcm-manager to pantavisor and builds the
+	  selected RTOS firmware via multiconfig.
+
+choice
+	prompt "MCU RTOS"
+	depends on PVCM_ENABLE
+	default PVCM_RTOS_ZEPHYR
+
+config PVCM_RTOS_ZEPHYR
+	bool "Zephyr RTOS"
+
+config PVCM_RTOS_FREERTOS
+	bool "FreeRTOS"
+
+endchoice
+
+choice
+	prompt "MCU Machine"
+	depends on PVCM_ENABLE
+
+config PVCM_MCU_IMX8MN_M7
+	bool "i.MX8MN Cortex-M7 (Variscite, internal RPMsg)"
+	depends on PVCM_RTOS_ZEPHYR
+	help
+	  Internal M7 core on i.MX8MN SoC. Transport: RPMsg.
+	  Zephyr board: mimx8mn6_evk/mimx8mn6/m7
+
+config PVCM_MCU_RP2040_PICO
+	bool "RP2040 Pico (external USB UART)"
+	depends on PVCM_RTOS_ZEPHYR
+	help
+	  Raspberry Pi Pico via USB. Transport: UART over /dev/ttyACM*.
+	  Zephyr board: rpi_pico
+
+endchoice
+
+endmenu
+
+config KAS_INCLUDE_PVCM
+	string
+	default "kas/pv-mcu-zephyr.yaml" if PVCM_RTOS_ZEPHYR && PVCM_ENABLE
+
+config KAS_INCLUDE_PVCM_MCU
+	string
+	default "kas/mcu-machines/imx8mn-m7.yaml" if PVCM_MCU_IMX8MN_M7
+	default "kas/mcu-machines/rp2040-pico.yaml" if PVCM_MCU_RP2040_PICO
+
 config MACHINE_FILTER_ALL
 	bool "Show All Machines"
 	default y

@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Thu, 27 Mar 2026 00:00:00 +0000
+Subject: [PATCH] arm64: dts: imx8mn-var-som-m7: fix M7 clock for remoteproc
+
+Reference the actual M7 core clock (IMX8MN_CLK_M7_CORE) instead of
+CLK_DUMMY to prevent Linux from gating the M7 clock when remoteproc
+manages the M7 core.
+
+Signed-off-by: Alexander Sack <asac@pantacor.com>
+---
+diff --git a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
+index 86faddeaedd8..f52325ff4ead 100644
+--- a/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
++++ b/arch/arm64/boot/dts/freescale/imx8mn-var-som-symphony-m7.dts
+@@ -12,7 +12,7 @@ / {
+ 	imx8mn-cm7 {
+ 		compatible = "fsl,imx8mn-cm7";
+ 		rsc-da = <0x40000000>;
+-		clocks = <&clk IMX8MN_CLK_DUMMY>;
++		clocks = <&clk IMX8MN_CLK_M7_CORE>;
+ 		mbox-names = "tx", "rx", "rxdb";
+ 		mboxes = <&mu 0 1
+ 			  &mu 1 1

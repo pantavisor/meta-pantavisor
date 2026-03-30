@@ -1,0 +1,8 @@
+header:
+  version: 16
+
+local_conf_header:
+  pvcm-mcu-machine: |
+    MCU_ZEPHYR_MACHINE = "native-sim"
+    MCU_ZEPHYR_BOARD = "native_sim_64"
+    MCU_ZEPHYR_TRANSPORT = "uart"

@@ -1,0 +1,21 @@
+header:
+  version: 16
+
+repos:
+  meta-zephyr:
+    url: git://git.yoctoproject.org/meta-zephyr
+    path: layers/meta-zephyr
+    branch: scarthgap
+    patches:
+      fix-cmake-board-discovery:
+        repo: meta-pantavisor
+        path: patches/meta-zephyr/0001-zephyr-kernel-common-fix-cmake-board-discovery.scarthgap.patch
+    layers:
+      meta-zephyr-core:
+      meta-zephyr-bsp:
+
+local_conf_header:
+  pvcm-zephyr: |
+    BBMULTICONFIG:append = " pv-mcu-zephyr"
+    PANTAVISOR_FEATURES:append = " pvcm"
+    PVROOT_MC_DEPLOY_DIR[pv-mcu-zephyr] = "${TOPDIR}/tmp-panta-zephyr-pv-mcu-zephyr-${MCU_ZEPHYR_MACHINE}-newlib/deploy/images/${MCU_ZEPHYR_MACHINE}"
