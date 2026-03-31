@@ -1,0 +1,142 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-freescale:
+        url: https://github.com/Freescale/meta-freescale.git
+        path: layers/meta-freescale
+        commit: 902dde8c5bd29bb507ac8d37772565a6c9ab77cd
+    meta-freescale-3rdparty:
+        url: https://github.com/Freescale/meta-freescale-3rdparty.git
+        path: layers/meta-freescale-3rdparty
+        commit: 70c83e96c7f75e73245cb77f1b0cada9ed4bbc6d
+    meta-freescale-distro:
+        url: https://github.com/Freescale/meta-freescale-distro.git
+        path: layers/meta-freescale-distro
+        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+    meta-variscite-bsp:
+        url: https://github.com/varigit/meta-variscite-bsp-imx.git
+        path: layers/meta-variscite-bsp
+        branch: scarthgap_6.6.52-2.2.2_var01
+        commit: 44b14d628db42202e52e2e6cd51005d7bfe915a6
+    meta-variscite-hab:
+        url: https://github.com/varigit/meta-variscite-hab.git
+        path: layers/meta-variscite-hab
+        branch: scarthgap_6.6.52-2.2.2_var01
+        commit: a10254910cedc3f75d7edb0bce19c2484c7a607f
+    meta-variscite-sdk:
+        url: https://github.com/varigit/meta-variscite-sdk.git
+        path: layers/meta-variscite-sdk
+        branch: scarthgap_6.6.52-2.2.2_var01
+        commit: 27b7f5619616a7181785f0a701d67723c485afc2
+    meta-variscite-bsp-common:
+        url: https://github.com/varigit/meta-variscite-bsp-common.git
+        path: layers/meta-variscite-bsp-common
+        branch: scarthgap_6.6.52-2.2.2_var01
+        commit: 1f8c1035f2453efab73396ebb671f39b4c6cd59a
+    meta-variscite-sdk-common:
+        url: https://github.com/varigit/meta-variscite-sdk-common.git
+        path: layers/meta-variscite-sdk-common
+        branch: scarthgap_6.6.52-2.2.2_var01
+        commit: 8370a7fa058e9f2a1f4332eb17ebccce4524bdae
+    meta-imx:
+        url: https://github.com/nxp-imx/meta-imx.git
+        path: layers/meta-imx
+        patches:
+            qa-issue-fix:
+                path: patches/meta-imx/0001-firmware-nxp-wifi-Fix-QA-issue.patch
+                repo: meta-pantavisor
+        branch: scarthgap-6.6.52-2.2.0
+        layers:
+            meta-imx-bsp:
+            meta-imx-ml:
+            meta-imx-sdk:
+        commit: a0cf309d2e2d544111e520f572db8dff335eca01
+    meta-openembedded:
+        path: layers/meta-openembedded
+        layers:
+            meta-multimedia:
+            meta-perl:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        url: https://github.com/openembedded/meta-openembedded.git
+        commit: 06f846a325fde423bb0a6d49d771d8c1e144d7eb
+    meta-swupdate:
+        url: https://github.com/sbabic/meta-swupdate.git
+        path: layers/meta-swupdate
+        commit: 81f4faa406e70dfa514e2f7642f97df33d3b84ae
+    meta-security:
+        url: https://git.yoctoproject.org/meta-security
+        path: layers/meta-security
+        layers:
+            .:
+            meta-tpm:
+        commit: b13f1705d723650de61277670c8a76aadea4cfdd
+    meta-arm:
+        url: git://git.yoctoproject.org/meta-arm
+        path: layers/meta-arm
+        layers:
+            meta-arm:
+            meta-arm-toolchain:
+        commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
+    poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: da5493bf86b3e75bbae4c5789fdfaca67b6f6a65
+    meta-pantavisor:
+    meta-virtualization:
+        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
+        path: layers/meta-virtualization
+        url: git://git.yoctoproject.org/meta-virtualization
+local_conf_header:
+    platform-freescale: |
+        ACCEPT_FSL_EULA = "1"
+    scarthgap-variscite: |
+        BB_DANGLINGAPPENDS_WARNONLY = "1"
+        PANTAVISOR_FEATURES:append = " caam-nxp"
+        PV_UBOOT_AUTOFDT = "1"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: imx8mn-var-som
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-starter
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:

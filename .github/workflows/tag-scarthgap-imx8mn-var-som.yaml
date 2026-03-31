@@ -1,0 +1,25 @@
+
+name: "TAG: imx8mn-var-som-scarthgap"
+
+on:
+  push:
+    paths:
+      - '**'
+      - '.github/configs/**'
+      - '.github/workflows/!WORKFLOW.yaml'
+      - '!.github/scripts/**'
+      - '!.github/templates/**'
+    tags:
+      - 0*
+      - '*-rc*'
+jobs:
+
+  build-imx8mn-var-som-scarthgap:
+    uses: ./.github/workflows/buildkas-upload.yaml
+    with:
+      configs: .github/configs/release/imx8mn-var-som-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: imx8mn-var-som-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
+    secrets: inherit

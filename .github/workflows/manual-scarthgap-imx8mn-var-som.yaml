@@ -1,0 +1,16 @@
+name: "MAN: imx8mn-var-som-scarthgap"
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build-imx8mn-var-som-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/imx8mn-var-som-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: imx8mn-var-som-scarthgap
+      build_target: pantavisor-starter
+      output: pantavisor-starter*.rootfs.wic*
+      sdk: 0
+    secrets: inherit
