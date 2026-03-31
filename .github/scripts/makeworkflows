@@ -2,11 +2,11 @@
 
 set -e
 
+YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
+
 create_files() {
 
     workflow_type=$1
-
-    YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
 
     jq -c ".machines[] | select(.workflows | contains([\"$workflow_type\"]))" .github/machines.json | while read -r machine; do
         MACHINE=$(echo "$machine" | jq -r .name)
@@ -31,10 +31,12 @@ create_files() {
         done
 }
 
-rm -f .github/workflows/tag*
-rm -f .github/workflows/manual*
-rm -f .github/workflows/onpush*
+rm -f .github/workflows/tag-$YOCTO_BRANCH*
+rm -f .github/workflows/manual-$YOCTO_BRANCH*
+rm -f .github/workflows/onpush-$YOCTO_BRANCH*
 
 create_files manual
 create_files tag
 create_files onpush
+
+echo "All workflows generated successfully!"
