@@ -253,7 +253,7 @@ See [EXAMPLES.md](EXAMPLES.md) for detailed testing instructions.
 ## PVCM -- MCU Containers
 
 Pantavisor supports MCU firmware as a fourth container type alongside
-LXC, runc, and Wasm. MCU containers are managed by `pvcm-proxy` (one
+LXC, runc, and Wasm. MCU containers are managed by `pvcm-run` (one
 instance per MCU) which runs in a namespace like any other container.
 
 ### Building MCU Containers
