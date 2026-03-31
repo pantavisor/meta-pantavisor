@@ -481,6 +481,25 @@ pv dbus call net.connman / net.connman.Manager GetTechnologies
 - [x] Error code is PVCM_DBUS_ERR_TRUNCATED (6)
 - [x] No crash or hang
 
+## Test H14: Transport Ping — Multi-frame (Hardware)
+
+Tests bidirectional RPMsg transport with multi-frame responses.
+Proxy splits the requested total size into 400-byte frames.
+
+```bash
+pv ping 100    # 1 frame
+pv ping 500    # 2 frames
+pv ping 1000   # 3 frames
+```
+
+### Pass Criteria
+
+- [x] `pv ping 100` — PASS: 1 frame, 100 bytes
+- [x] `pv ping 500` — PASS: 2 frames, 500 bytes
+- [x] `pv ping 1000` — PASS: 3 frames, 1000 bytes
+- [x] Heartbeats continue throughout all tests
+- [x] MCU stays alive after multi-frame delivery
+
 ## Key Configuration
 
 | Setting | Value | Why |
