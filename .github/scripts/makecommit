@@ -3,7 +3,7 @@
 set -xe
 
 changed=`git diff HEAD .github/configs/release | lsdiff | sed 's/.\///'`
-changed2=`git diff HEAD .github/workflows/onpush.yaml | lsdiff | sed 's/.\///'`
+changed2=`git diff HEAD .github/workflows/ | lsdiff | sed 's/.\///'`
 
 if [ -z "$changed" -a -z "$changed2" ]; then
 	echo "NO changes"
@@ -94,7 +94,8 @@ done
 
 if [ -n "$changed2" ]; then
 	echo >> $commitmsg
-	echo "Changed: $changed2" >> $commitmsg
+	echo "Changed workflows:" >> $commitmsg
+	for wf in $changed2; do echo "  $wf" >> $commitmsg; done
 fi
 
 rm -rf $gitdirs

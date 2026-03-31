@@ -39,15 +39,17 @@ To develop on Pantavisor recipes using `devtool`, you can use the workspace laye
 ./kas-container --repo-rw build <config>:kas/with-workspace.yaml
 ```
 
-| Board | Build(Scarthgap) | Flash | Tested |
-| :--- | :--- | :--- | :--- |
-| **docker-x86_64** | [![TAG: docker-x86_64-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml) | | |
-| **sunxi-orange-pi-3lts** | [![TAG: sunxi-orange-pi-3lts-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml) | | |
-| **sunxi-orange-pi-r1** | [![TAG: sunxi-orange-pi-r1-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml) | | |
-| **sunxi-bananapi-m2-berry** | [![TAG: sunxi-bananapi-m2-berry-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml) | | |
-| **imx8qxp-b0-mek** | [![TAG: imx8qxp-b0-mek-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml) | | |
-| **raspberrypi-armv8** | [![TAG: raspberrypi-armv8-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml) | | |
-| **colibri-imx6ull** | [![TAG: colibri-imx6ull-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-colibri-imx6ull.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-colibri-imx6ull.yaml) | | |
-| **radxa-rock5a** | [![TAG: radxa-rock5a-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml) | | |
+| Board | Build(Scarthgap) |
+| :--- | :--- |
+| **docker-x86_64** | [![TAG: docker-x86_64-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml) |
+| **sunxi-orange-pi-3lts** | [![TAG: sunxi-orange-pi-3lts-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml) |
+| **sunxi-orange-pi-r1** | [![TAG: sunxi-orange-pi-r1-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml) |
+| **sunxi-bananapi-m2-berry** | [![TAG: sunxi-bananapi-m2-berry-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml) |
+| **imx8qxp-b0-mek** | [![TAG: imx8qxp-b0-mek-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml) |
+| **raspberrypi-armv8** | [![TAG: raspberrypi-armv8-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml) |
+| **rpi** | [![TAG: rpi-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-rpi.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-rpi.yaml) |
+| **imx8mn-var-som** | [![TAG: imx8mn-var-som-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mn-var-som.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mn-var-som.yaml) |
+| **imx8mm-var-dart** | [![TAG: imx8mm-var-dart-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mm-var-dart.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mm-var-dart.yaml) |
+| **radxa-rock5a** | [![TAG: radxa-rock5a-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml) |
 
 

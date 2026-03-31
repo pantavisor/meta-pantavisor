@@ -24,7 +24,9 @@ jobs:
       - run: ls .github/scripts
       - run: pwd
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE
-      - run: .github/scripts/makemachines
+      - run: |
+          .github/scripts/makeworkflows
+          .github/scripts/makemachines
       - run: git config --global user.email "pantavisor-meta@ci.pantavisor.io"
       - run: git config --global user.name "Pantavisor Meta Layer CI"
       - run: git checkout -b autopr/machine-update-$GITHUB_REF_NAME-next
