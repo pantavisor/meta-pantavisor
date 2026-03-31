@@ -17,15 +17,15 @@ Turnaround: seconds.
 kas build kas/scarthgap.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-machines/native-sim.yaml \
     --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
 
-# Build pvcm-proxy for the host
+# Build pvcm-run for the host
 PV=build/workspace/sources/pantavisor
-gcc -o /tmp/pvcm-proxy-test \
-    $PV/pvcm-proxy/main.c \
-    $PV/pvcm-proxy/pvcm_config.c \
-    $PV/pvcm-proxy/pvcm_transport_uart.c \
-    $PV/pvcm-proxy/pvcm_protocol.c \
-    $PV/pvcm-proxy/pvcm_bridge.c \
-    $PV/pvcm-proxy/pvcm_dbus_bridge.c \
+gcc -o /tmp/pvcm-run-test \
+    $PV/pvcm-run/main.c \
+    $PV/pvcm-run/pvcm_config.c \
+    $PV/pvcm-run/pvcm_transport_uart.c \
+    $PV/pvcm-run/pvcm_protocol.c \
+    $PV/pvcm-run/pvcm_bridge.c \
+    $PV/pvcm-run/pvcm_dbus_bridge.c \
     -I$PV -lpthread $(pkg-config --cflags --libs dbus-1)
 ```
 
@@ -43,12 +43,12 @@ EXE=build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linu
 
 # Note the PTY paths from output (e.g. /dev/pts/3 and /dev/pts/4)
 
-# Terminal 2: connect pvcm-proxy to uart_1 PTY
+# Terminal 2: connect pvcm-run to uart_1 PTY
 echo '{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/4","transport":"uart","baudrate":921600}}' > /tmp/r.json
-/tmp/pvcm-proxy-test --name test --config /tmp/r.json
+/tmp/pvcm-run-test --name test --config /tmp/r.json
 
 # For D-Bus testing, add --dbus-session to use the session bus:
-/tmp/pvcm-proxy-test --name test --config /tmp/r.json --dbus-session
+/tmp/pvcm-run-test --name test --config /tmp/r.json --dbus-session
 
 # Terminal 3: interactive shell on uart PTY
 screen /dev/pts/3
@@ -56,7 +56,7 @@ screen /dev/pts/3
 
 ### Iterate
 
-Edit source, recompile pvcm-proxy with gcc (instant), or rebuild the
+Edit source, recompile pvcm-run with gcc (instant), or rebuild the
 Zephyr target with kas (~30s). No cleanup needed between runs.
 
 ### D-Bus Testing (native_sim)
@@ -64,7 +64,7 @@ Zephyr target with kas (~30s). No cleanup needed between runs.
 Start a test D-Bus service on the session bus:
 
 ```bash
-python3 build/workspace/sources/pantavisor/pvcm-proxy/test/test_dbus_service.py &
+python3 build/workspace/sources/pantavisor/pvcm-run/test/test_dbus_service.py &
 ```
 
 Then from the Zephyr shell:
@@ -120,7 +120,7 @@ Look up the KAS config in `.github/machines.json` for the machine,
 replace the release target with `kas/with-workspace.yaml`:
 
 ```bash
-# BSP build with workspace (includes pvcm-proxy in initramfs)
+# BSP build with workspace (includes pvcm-run in initramfs)
 ./kas-container build \
     kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/with-workspace.yaml \
     -- pantavisor-bsp
@@ -158,7 +158,7 @@ This takes ~30s and produces `build-test/zephyr/zephyr.elf`.
 ### Deploy BSP (pvr post — causes reboot)
 
 Use pvr to push BSP updates over Pantahub. Only needed when changing
-kernel, DTBs, initramfs (pvcm-proxy binary), or pantavisor itself.
+kernel, DTBs, initramfs (pvcm-run binary), or pantavisor itself.
 
 ```bash
 mkdir -p /tmp/pvr-deploy && cd /tmp/pvr-deploy
@@ -230,18 +230,18 @@ remoteproc, transport, and device:
 
 ## 5. Running and Testing
 
-### Start pvcm-proxy
+### Start pvcm-run
 
 ```bash
 # Basic (HTTP gateway only)
-$SSH 'pvcm-proxy --name pvcm-test --transport rpmsg --device /dev/ttyRPMSG1 &'
+$SSH 'pvcm-run --name pvcm-test --transport rpmsg --device /dev/ttyRPMSG1 &'
 
 # With D-Bus gateway (connects to system bus)
-$SSH 'pvcm-proxy --name pvcm-test --transport rpmsg --device /dev/ttyRPMSG1 \
+$SSH 'pvcm-run --name pvcm-test --transport rpmsg --device /dev/ttyRPMSG1 \
     --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket &'
 
 # Check proxy log
-$SSH 'cat /tmp/pvcm-proxy.log'
+$SSH 'cat /tmp/pvcm-run.log'
 ```
 
 ### Interactive Shell Testing
@@ -283,8 +283,8 @@ $SSH 'echo "pv dbus subscribe org.freedesktop.DBus /org/freedesktop/DBus org.fre
 ### Monitor
 
 ```bash
-# pvcm-proxy log
-$SSH 'cat /tmp/pvcm-proxy.log'
+# pvcm-run log
+$SSH 'cat /tmp/pvcm-run.log'
 
 # Pantavisor container logs via HTTP (port 12368, Tailscale IP)
 curl "http://<tailscale-ip>:12368/cgi-bin/logs?rev=N&source=pvcm-zephyr-shell"
@@ -298,11 +298,11 @@ curl "http://<tailscale-ip>:12368/cgi-bin/logs?rev=N&n=+0"
 | Change | Deploy Method | Turnaround |
 |--------|---------------|------------|
 | Protocol structs (pvcm_protocol.h) | native_sim (gcc + run) | seconds |
-| pvcm-proxy C code | native_sim (gcc + run) | seconds |
+| pvcm-run C code | native_sim (gcc + run) | seconds |
 | Zephyr SDK / shell commands | native_sim (kas) or west build + upload | 30s |
 | D-Bus bridge logic | native_sim (gcc + session bus) | seconds |
 | Zephyr sample app (firmware) | west build + upload to /storage/ | 30s |
-| pvcm-proxy in initramfs | BSP build + pvr post (reboot) | ~10 min |
+| pvcm-run in initramfs | BSP build + pvr post (reboot) | ~10 min |
 | Kernel / DTB changes | BSP build + pvr post (reboot) | ~10 min |
 | MCU container (production) | BSP build with PVROOT_CONTAINERS_CORE | ~10 min |
 
@@ -310,7 +310,7 @@ curl "http://<tailscale-ip>:12368/cgi-bin/logs?rev=N&n=+0"
 
 | Path | Description |
 |------|-------------|
-| `build/workspace/sources/pantavisor/pvcm-proxy/` | pvcm-proxy source |
+| `build/workspace/sources/pantavisor/pvcm-run/` | pvcm-run source |
 | `build/workspace/sources/pantavisor/sdk/zephyr/` | Zephyr SDK (client lib + shell) |
 | `build/workspace/sources/pantavisor/protocol/` | Protocol header (canonical copy) |
 | `build/workspace/sources/pantavisor/sdk/zephyr/include/pantavisor/` | Zephyr SDK headers (protocol copy synced here) |
@@ -326,7 +326,7 @@ Zephyr firmware     zephyr.exe (Linux process)        Cortex-M7 (remoteproc)
   Shell channel     uart → /dev/pts/X                 ttyRPMSG0
   PVCM channel      uart_1 → /dev/pts/Y              ttyRPMSG1
 
-pvcm-proxy          /tmp/pvcm-proxy-test              /usr/bin/pvcm-proxy
+pvcm-run          /tmp/pvcm-run-test              /usr/bin/pvcm-run
   Transport         UART (PTY)                        RPMsg (ttyRPMSG1)
   HTTP bridge       localhost:18080 ↔ MCU             pv-ctrl ↔ MCU
   D-Bus bridge      session bus (--dbus-session)      system bus (--dbus-socket)

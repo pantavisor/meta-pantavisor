@@ -1,6 +1,6 @@
 # PVCM Protocol Test Plan
 
-End-to-end testing of the PVCM protocol between pvcm-proxy (Linux)
+End-to-end testing of the PVCM protocol between pvcm-run (Linux)
 and Zephyr native_sim_64 over PTY.
 
 ## Prerequisites
@@ -12,17 +12,17 @@ kas build kas/scarthgap.yaml:kas/bsp-base.yaml:kas/pv-mcu-zephyr.yaml:kas/mcu-ma
     --target mc:pv-mcu-zephyr:pvcm-zephyr-shell
 ```
 
-Build pvcm-proxy for the host:
+Build pvcm-run for the host:
 
 ```bash
 PV=build/workspace/sources/pantavisor
-gcc -o /tmp/pvcm-proxy-test \
-    $PV/pvcm-proxy/main.c \
-    $PV/pvcm-proxy/pvcm_config.c \
-    $PV/pvcm-proxy/pvcm_transport_uart.c \
-    $PV/pvcm-proxy/pvcm_protocol.c \
-    $PV/pvcm-proxy/pvcm_bridge.c \
-    $PV/pvcm-proxy/pvcm_dbus_bridge.c \
+gcc -o /tmp/pvcm-run-test \
+    $PV/pvcm-run/main.c \
+    $PV/pvcm-run/pvcm_config.c \
+    $PV/pvcm-run/pvcm_transport_uart.c \
+    $PV/pvcm-run/pvcm_protocol.c \
+    $PV/pvcm-run/pvcm_bridge.c \
+    $PV/pvcm-run/pvcm_dbus_bridge.c \
     -I$PV -lpthread $(pkg-config --cflags --libs dbus-1)
 ```
 
@@ -42,13 +42,13 @@ EXE=build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linu
 
 Expected: two PTYs created (`uart` for shell, `uart_1` for PVCM).
 
-### Connect pvcm-proxy
+### Connect pvcm-run
 
 Use the `uart_1` PTY path:
 
 ```bash
 echo '{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/Y","transport":"uart","baudrate":921600}}' > /tmp/r.json
-/tmp/pvcm-proxy-test --name test --config /tmp/r.json
+/tmp/pvcm-run-test --name test --config /tmp/r.json
 ```
 
 ### Pass Criteria
@@ -63,7 +63,7 @@ The Zephyr demo app runs HTTP tests automatically after connecting.
 Start a test HTTP server before connecting:
 
 ```bash
-python3 build/workspace/sources/pantavisor/pvcm-proxy/test/test_http_server.py &
+python3 build/workspace/sources/pantavisor/pvcm-run/test/test_http_server.py &
 ```
 
 ### Pass Criteria
@@ -79,7 +79,7 @@ python3 build/workspace/sources/pantavisor/pvcm-proxy/test/test_http_server.py &
 
 ## Test 3: HTTP Server (Linux calls MCU)
 
-The Zephyr demo registers a handler for `/sensor`. pvcm-proxy
+The Zephyr demo registers a handler for `/sensor`. pvcm-run
 listens on port 18081 for inbound HTTP requests.
 
 ### Call MCU from host
@@ -102,7 +102,7 @@ curl http://127.0.0.1:18081/sensor/temperature
 
 ## Test 4: Shell Access
 
-While pvcm-proxy is connected to uart_1, the Zephyr shell is
+While pvcm-run is connected to uart_1, the Zephyr shell is
 accessible on uart (uart0).
 
 ```bash
@@ -118,9 +118,9 @@ screen /dev/pts/X   # uart0 PTY
 ## Architecture
 
 ```
-Terminal 1 (Zephyr native_sim_64)     Terminal 2 (pvcm-proxy)        Terminal 3
+Terminal 1 (Zephyr native_sim_64)     Terminal 2 (pvcm-run)        Terminal 3
 ─────────────────────────────         ──────────────────────         ──────────
-zephyr.exe                            pvcm-proxy-test
+zephyr.exe                            pvcm-run-test
   uart0 → shell                        reads/writes uart_1 PTY
   uart1 → PVCM protocol                  ↕ PVCM frames
     server: HELLO_RESP                  HTTP bridge:
@@ -149,14 +149,14 @@ CONFIG_NATIVE_SIM_SLOWDOWN_TO_REAL_TIME=y  # wall-clock sync
 Start a test D-Bus service on the session bus:
 
 ```bash
-python3 build/workspace/sources/pantavisor/pvcm-proxy/test/test_dbus_service.py &
+python3 build/workspace/sources/pantavisor/pvcm-run/test/test_dbus_service.py &
 ```
 
-Connect pvcm-proxy with `--dbus-session`:
+Connect pvcm-run with `--dbus-session`:
 
 ```bash
 echo '{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/Y","transport":"uart","baudrate":921600}}' > /tmp/r.json
-/tmp/pvcm-proxy-test --name test --config /tmp/r.json --dbus-session
+/tmp/pvcm-run-test --name test --config /tmp/r.json --dbus-session
 ```
 
 ## Test D1: D-Bus ListNames
@@ -248,8 +248,8 @@ echo pvcm-zephyr-shell.elf > /sys/class/remoteproc/remoteproc0/firmware
 echo start > /sys/class/remoteproc/remoteproc0/state
 sleep 5
 
-# Start pvcm-proxy
-pvcm-proxy --name pvcm-zephyr-shell \
+# Start pvcm-run
+pvcm-run --name pvcm-zephyr-shell \
     --config /storage/trails/current/pvcm-zephyr-shell/run.json \
     --device /dev/ttyRPMSG1 &
 ```
@@ -280,7 +280,7 @@ dmesg | grep "creating channel"
 ## Test H2: HELLO Handshake + Heartbeat
 
 ```bash
-pvcm-proxy --name pvcm-zephyr-shell \
+pvcm-run --name pvcm-zephyr-shell \
     --config /storage/trails/current/pvcm-zephyr-shell/run.json \
     --device /dev/ttyRPMSG1
 ```
@@ -335,7 +335,7 @@ Connection: close
 ## Test H5: HTTP MCU → Linux
 
 ```bash
-# Via shell (pvcm-proxy must be running):
+# Via shell (pvcm-run must be running):
 cat /dev/ttyRPMSG0 &
 printf "\r" > /dev/ttyRPMSG0; sleep 2
 printf "pv http /cgi-bin/logs\r" > /dev/ttyRPMSG0; sleep 12
@@ -354,7 +354,7 @@ echo stop > /sys/class/remoteproc/remoteproc0/state; sleep 3
 cat /sys/class/remoteproc/remoteproc0/state   # "offline"
 echo start > /sys/class/remoteproc/remoteproc0/state; sleep 5
 ls /dev/ttyRPMSG*
-# Reconnect pvcm-proxy and verify handshake + shell
+# Reconnect pvcm-run and verify handshake + shell
 ```
 
 ### Pass Criteria
@@ -423,10 +423,10 @@ echo "60s: $COUNT OK, $FAIL FAIL"
 
 ## Test H10: D-Bus ListNames (Hardware)
 
-Requires pvcm-proxy started with `--dbus-socket` and `--route`:
+Requires pvcm-run started with `--dbus-socket` and `--route`:
 
 ```bash
-pvcm-proxy --name pvcm-zephyr-shell \
+pvcm-run --name pvcm-zephyr-shell \
     --device /dev/ttyRPMSG1 --transport rpmsg \
     --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket \
     --route pv-ctrl=unix:/pv/pv-ctrl \
@@ -506,10 +506,10 @@ pv ping 10000    # 25 frames
 
 ## Test H15: HTTP via pv-ctrl Unix Socket (Hardware)
 
-Requires pvcm-proxy with `--route`:
+Requires pvcm-run with `--route`:
 
 ```bash
-pvcm-proxy --name pvcm-zephyr-shell \
+pvcm-run --name pvcm-zephyr-shell \
     --device /dev/ttyRPMSG1 --transport rpmsg \
     --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket \
     --route pv-ctrl=unix:/pv/pv-ctrl \
