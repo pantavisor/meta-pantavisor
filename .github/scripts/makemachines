@@ -2,6 +2,8 @@
 
 set -e
 
+.github/scripts/makeworkflows
+
 yocto_branch=$(jq -r .yocto_branch .github/machines.json)
 
 configs=$(jq -r '.machines[] | .config' .github/machines.json)
