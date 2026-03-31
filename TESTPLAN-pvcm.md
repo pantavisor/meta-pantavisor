@@ -423,12 +423,14 @@ echo "60s: $COUNT OK, $FAIL FAIL"
 
 ## Test H10: D-Bus ListNames (Hardware)
 
-Requires pvcm-proxy started with `--dbus-socket`:
+Requires pvcm-proxy started with `--dbus-socket` and `--route`:
 
 ```bash
 pvcm-proxy --name pvcm-zephyr-shell \
     --device /dev/ttyRPMSG1 --transport rpmsg \
-    --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket &
+    --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket \
+    --route pv-ctrl=unix:/pv/pv-ctrl \
+    --route pvr-sdk=tcp:127.0.0.1:12368 &
 ```
 
 ```bash
@@ -487,9 +489,10 @@ Tests bidirectional RPMsg transport with multi-frame responses.
 Proxy splits the requested total size into 400-byte frames.
 
 ```bash
-pv ping 100    # 1 frame
-pv ping 500    # 2 frames
-pv ping 1000   # 3 frames
+pv ping 100      # 1 frame
+pv ping 500      # 2 frames
+pv ping 1000     # 3 frames
+pv ping 10000    # 25 frames
 ```
 
 ### Pass Criteria
@@ -497,8 +500,41 @@ pv ping 1000   # 3 frames
 - [x] `pv ping 100` — PASS: 1 frame, 100 bytes
 - [x] `pv ping 500` — PASS: 2 frames, 500 bytes
 - [x] `pv ping 1000` — PASS: 3 frames, 1000 bytes
+- [x] `pv ping 10000` — PASS: 25 frames, 10000 bytes
 - [x] Heartbeats continue throughout all tests
 - [x] MCU stays alive after multi-frame delivery
+
+## Test H15: HTTP via pv-ctrl Unix Socket (Hardware)
+
+Requires pvcm-proxy with `--route`:
+
+```bash
+pvcm-proxy --name pvcm-zephyr-shell \
+    --device /dev/ttyRPMSG1 --transport rpmsg \
+    --dbus-socket /volumes/os/docker--pvrun-dbus/system_bus_socket \
+    --route pv-ctrl=unix:/pv/pv-ctrl \
+    --route pvr-sdk=tcp:127.0.0.1:12368 &
+```
+
+```bash
+# Small response (error)
+pv http http://pv-ctrl.pvlocal/x
+# Large response (2337 bytes buildinfo)
+pv http http://pv-ctrl.pvlocal/buildinfo
+# Medium response (container list)
+pv http http://pv-ctrl.pvlocal/containers
+# TCP route (pvr-sdk)
+pv http pvr-sdk /api/v1/device/info
+```
+
+### Pass Criteria
+
+- [x] `/x` — HTTP 400 (32 bytes)
+- [x] `/buildinfo` — HTTP 200 (2337 bytes, truncated to MCU buffer)
+- [x] `/containers` — HTTP 200
+- [x] TCP route — HTTP 404 (default pantavisor HTTP)
+- [x] MCU stays alive after all requests
+- [x] Heartbeats continue throughout
 
 ## Key Configuration
 
