@@ -13,11 +13,9 @@ on:
 
 jobs:
   updaterelease:
-    runs-on: ["self-hosted"]
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
-      volumes:
-        - shared:/shared
       options: --user root
     steps:
       - uses: actions/checkout@v4

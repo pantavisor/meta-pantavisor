@@ -1,4 +1,8 @@
 name: "run pvtests"
+
+env:
+  WORKSPACE: /tmp/workspace-${{ github.run_id }}
+
 on:
   workflow_call:
     inputs:
@@ -12,8 +16,11 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      has_test_number: ${{ steps.check.outputs.has_test_number }}
     steps:
       - name: Validate test_type input
+        id: check
         run: |
           if [[ "${{ inputs.test_type }}" != "pvtests-local" && "${{ inputs.test_type }}" != "pvtests-remote" ]]; then
             echo "❌ Invalid test_type: '${{ inputs.test_type }}'"
@@ -25,14 +32,21 @@ jobs:
           if [[ -n "${{ inputs.test_number }}" ]]; then
             echo "test_number was provided: ${{ inputs.test_number }}"
             echo "=== Running test number: ${{ inputs.test_number }} ==="
-            echo "HAS_TEST_NUMBER=true" >> $GITHUB_ENV
+            echo "has_test_number=true" >> $GITHUB_OUTPUT
           else
             echo "test_number was not provided"
             echo "=== Running All tests ==="
-            echo "HAS_TEST_NUMBER=false" >> $GITHUB_ENV
+            echo "has_test_number=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ -n "${{ inputs.test_number }}" ]]; then
+            echo "Running ${{ inputs.test_type }}":${{ inputs.test_number }} >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Running all tests for ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
           fi
 
   build-docker-x86_64-scarthgap:
+    needs: validate
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
@@ -42,82 +56,82 @@ jobs:
       sdk: 0
     secrets: inherit
 
-  pvtests:
+  tests:
     needs: build-docker-x86_64-scarthgap
     runs-on: ["pvtest-runner"]
     steps:
+      - name: Clone ${{ inputs.test_type }} repository
+        run: |
+          mkdir -p $WORKSPACE
+          cd $WORKSPACE
+          git clone https://gitlab.com/pantacor/${{ inputs.test_type }}.git ${{ inputs.test_type }}
+
       - name: Download AppEngine artifacts
         uses: actions/download-artifact@v4
         with:
           name: appengine-docker-x86_64-scarthgap
-          path: .
+          path: ${{ env.WORKSPACE }}
 
-      - name: Clone ${{ inputs.test_type }} repository
+      - name: Run pvtests
+        working-directory: ${{ env.WORKSPACE }}
         run: |
-          rm -rf ${{ inputs.test_type }}
-          git clone https://gitlab.com/pantacor/${{ inputs.test_type }}.git ${{ inputs.test_type }}
+          set -e
+          set -o pipefail
 
-      - name: Load and prepare
-        env:
-            CI_MODE: "true"
-        run: |
           chmod +x test.docker.sh
 
           for tar in pantavisor-appengine-*-docker.tar pantavisor-appengine-docker.tar; do
             [ -f "$tar" ] && docker load -i "$tar"
           done
 
-          echo "=== Avaliable Tests === "
-          ./test.docker.sh ls
-
-      - name: Run pvtests
-        run: |
-          set -e
-          set -o pipefail
-
           echo "=== AppEngine Test Run started at $(date) ==="
 
-          if [[ "$HAS_TEST_NUMBER" == "true" ]]; then
-            echo "--------------------------------------------------------------------------"
-            echo "RUNNING ${{ inputs.test_type }}" with test_number:${{ inputs.test_number }}
-            echo "--------------------------------------------------------------------------"
-            if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
-                PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-                ./test.docker.sh -v run ${{ inputs.test_type }}:${{ inputs.test_number }}
-            else
-                ./test.docker.sh -v run ${{ inputs.test_type }}:${{ inputs.test_number }}
-            fi
+          TEST_TARGET="${{ inputs.test_type }}"
+          [[ "${{ needs.validate.outputs.has_test_number }}" == "true" ]] && TEST_TARGET="${{ inputs.test_type }}:${{ inputs.test_number }}"
 
+          echo "------------------------------------------------------"
+          echo "RUNNING: $TEST_TARGET"
+          echo "------------------------------------------------------"
+
+          if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
+            PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
+            ./test.docker.sh -v run "$TEST_TARGET"
           else
-            echo "---------------------------------------------------------------"
-            echo "RUNNING ALL TEST: ${{ inputs.test_type }}"
-            echo "---------------------------------------------------------------"
-
-            if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
-                PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-                ./test.docker.sh -v run ${{ inputs.test_type }}
-            else
-                ./test.docker.sh -v run ${{ inputs.test_type }}
+            ./test.docker.sh -v run "$TEST_TARGET"
           fi
 
-          LOG_NAME="test.docker-$(date +%s).log"
-          cp test.docker.log "$LOG_NAME"
-          echo "LOG_NAME=$LOG_NAME" >> $GITHUB_ENV
-
-
       - name: Show Tests Summary
-        run: |
-          sed -n '/=======/,/=======/p' test.docker.log
-          sed -n '/=======/,/=======/p' test.docker.log  > summary.log
-
-      - name: Upload test log
         if: always()
+        run: |
+          if [ -f test.docker.log ]; then
+
+            sed -n '/=======/,/=======/p' test.docker.log
+            sed -n '/=======/,/=======/p' test.docker.log > summary.log
+
+            echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat summary.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+
+          else
+            echo "===== Tests failed ====="
+            echo "## Tests Run Failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Upload workspace on failure
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: pvtests-logs
-          path: |
-              ${{ env.LOG_NAME }}
-              summary.log
+          name: pvtests-workspace
+          path: ${{ env.WORKSPACE }}
+
+      - name: Upload log on success
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pvtests-log
+          path: test.docker.log
 
       - name: Clean up
         if: always()
@@ -132,5 +146,4 @@ jobs:
           | grep -E '^pantavisor-appengine(-netsim|-tester)?:' \
           | xargs -r docker rmi -f
 
-          rm pantavisor-appengine-*
-          rm -rf pvtests-local
+          rm -rf $WORKSPACE

@@ -2,60 +2,60 @@
 	"yocto_branch": "scarthgap",
 	"machines": [
 		{
-			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-orange-pi-3lts",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/sunxi-orange-pi-r1.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/sunxi-orange-pi-r1.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-orange-pi-r1",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-bananapi-m2-berry",
 			"workflows": ["manual", "tag", "onpush"],
 			"sdk": 1
 		},
 		{
-			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "imx8qxp-b0-mek",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
 			"workflows": ["manual", "tag", "onpush"],
 			"sdk": 1
 		},
 		{
-			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "rpi",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "colibri-imx6ull",
 			"output": " pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz pantavisor-README.md",
 			"workflows": ["manual"]
 		},
 		{
-			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "radxa-rock5a",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "imx8mn-var-som",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:.github/configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "imx8mm-var-dart",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:.github/configs/build-appengine-distro.yaml",
+			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-x86_64",

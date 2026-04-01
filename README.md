@@ -39,17 +39,16 @@ To develop on Pantavisor recipes using `devtool`, you can use the workspace laye
 ./kas-container --repo-rw build <config>:kas/with-workspace.yaml
 ```
 
-| Board | Build(Scarthgap) |
+<!-- WORKFLOW_TABLE_START -->
+| Workflow | Status |
 | :--- | :--- |
-| **docker-x86_64** | [![TAG: docker-x86_64-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-docker-x86_64.yaml) |
-| **sunxi-orange-pi-3lts** | [![TAG: sunxi-orange-pi-3lts-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-3lts.yaml) |
-| **sunxi-orange-pi-r1** | [![TAG: sunxi-orange-pi-r1-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-orange-pi-r1.yaml) |
-| **sunxi-bananapi-m2-berry** | [![TAG: sunxi-bananapi-m2-berry-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-sunxi-bananapi-m2-berry.yaml) |
-| **imx8qxp-b0-mek** | [![TAG: imx8qxp-b0-mek-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8qxp-b0-mek.yaml) |
-| **raspberrypi-armv8** | [![TAG: raspberrypi-armv8-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-raspberrypi-armv8.yaml) |
-| **rpi** | [![TAG: rpi-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-rpi.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-rpi.yaml) |
-| **imx8mn-var-som** | [![TAG: imx8mn-var-som-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mn-var-som.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mn-var-som.yaml) |
-| **imx8mm-var-dart** | [![TAG: imx8mm-var-dart-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mm-var-dart.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-imx8mm-var-dart.yaml) |
-| **radxa-rock5a** | [![TAG: radxa-rock5a-scarthgap](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml/badge.svg)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap-radxa-rock5a.yaml) |
+| **manual-pvtests** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-pvtests.yaml) |
+| **manual-scarthgap** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-scarthgap.yaml) |
+| **onpush-scarthgap** | [![PUSH](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/onpush-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=PUSH)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-scarthgap.yaml) |
+| **schedule-pvtests** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-pvtests.yaml) |
+| **schedule-updatemachines** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updatemachines.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updatemachines.yaml) |
+| **schedule-updates** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updates.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updates.yaml) |
+| **tag-scarthgap** | [![TAG](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/tag-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=TAG)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+<!-- WORKFLOW_TABLE_END -->
 
 
