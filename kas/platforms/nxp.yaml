@@ -42,4 +42,4 @@ bblayers_conf_header:
   platform-nxp: |
         BBMASK += "meta-imx/meta-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
         BBMASK += "meta-imx/meta-imx-bsp/recipes-bsp/firmware-imx/firmware-imx.*"
-
+        BBMASK += "meta-imx/meta-imx-bsp/recipes-connectivity/openssl"

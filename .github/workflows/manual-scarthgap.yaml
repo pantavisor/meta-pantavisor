@@ -1,0 +1,53 @@
+name: "MAN: scarthgap"
+
+on:
+  workflow_dispatch:
+    inputs:
+      machine:
+        description: 'Machine to build'
+        required: true
+        type: choice
+        options:
+          - sunxi-orange-pi-3lts
+          - sunxi-orange-pi-r1
+          - sunxi-bananapi-m2-berry
+          - imx8qxp-b0-mek
+          - raspberrypi-armv8
+          - rpi
+          - colibri-imx6ull
+          - radxa-rock5a
+          - imx8mn-var-som
+          - imx8mm-var-dart
+          - docker-x86_64
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      configs: ${{ steps.lookup.outputs.configs }}
+      build_target: ${{ steps.lookup.outputs.build_target }}
+      output: ${{ steps.lookup.outputs.output }}
+      sdk: ${{ steps.lookup.outputs.sdk }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: lookup
+        run: |
+          machine="${{ inputs.machine }}"
+          build_target=$(jq -r ".machines[] | select(.name == \"$machine\") | .build_target // \"pantavisor-starter\"" .github/machines.json)
+          output=$(jq -r ".machines[] | select(.name == \"$machine\") | .output // \"pantavisor-starter*.rootfs.wic*\"" .github/machines.json)
+          sdk=$(jq -r ".machines[] | select(.name == \"$machine\") | if .sdk == 1 then 1 else 0 end" .github/machines.json)
+          echo "configs=kas/build-configs/release/$machine-scarthgap.yaml:kas/build-configs/shared-vols.yaml" >> $GITHUB_OUTPUT
+          echo "build_target=$build_target" >> $GITHUB_OUTPUT
+          echo "output=$output" >> $GITHUB_OUTPUT
+          echo "sdk=$sdk" >> $GITHUB_OUTPUT
+
+  build:
+    needs: resolve
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: ${{ needs.resolve.outputs.configs }}
+      machine_name: ${{ inputs.machine }}-scarthgap
+      build_target: ${{ needs.resolve.outputs.build_target }}
+      output: ${{ needs.resolve.outputs.output }}
+      sdk: ${{ fromJSON(needs.resolve.outputs.sdk) }}
+    secrets: inherit

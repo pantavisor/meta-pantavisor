@@ -5,9 +5,12 @@ on:
     inputs:
 
       test_type:
-        description: 'pvtests-local or pvtests-remote'
+        description: 'Select the type of the test'
         required: true
-        type: string
+        type: choice
+        options:
+          - pvtests-local
+          - pvtests-remote
 
       test_number:
         description: 'Test number to run (e.g., "0" for remote:0)'

@@ -1,0 +1,20 @@
+name: "SCHEDULE: pvtests"
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  pvtests-local:
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_type: pvtests-local
+    secrets: inherit
+
+  pvtests-remote:
+    needs: pvtests-local
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_type: pvtests-remote
+    secrets: inherit

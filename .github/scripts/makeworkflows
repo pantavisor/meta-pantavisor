@@ -4,39 +4,14 @@ set -e
 
 YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
 
-create_files() {
-
-    workflow_type=$1
-
-    jq -c ".machines[] | select(.workflows | contains([\"$workflow_type\"]))" .github/machines.json | while read -r machine; do
-        MACHINE=$(echo "$machine" | jq -r .name)
-        BUILD_TARGET=$(echo "$machine" | jq -r '.build_target // "pantavisor-starter"')
-        OUTPUT=$(echo "$machine" | jq -r '.output // "pantavisor-starter*.rootfs.wic*"')
-
-        SDK=$(echo "$machine" | jq -r '.sdk' )
-        if [ "$SDK" != 1 ]; then
-            SDK=0
-        else
-            SDK=1
-        fi
-
-        echo "new $workflow_type workflow for: $MACHINE"
-        cat .github/template/$workflow_type.yaml | \
-        sed "s;!MACHINE;$MACHINE;g" | \
-        sed "s;!YOCTO_BRANCH;$YOCTO_BRANCH;g" | \
-        sed "s;!BUILD_TARGET;$BUILD_TARGET;g" | \
-        sed "s;!SDK;$SDK;g" | \
-        sed "s;!OUTPUT;$OUTPUT;g" > .github/workflows/$workflow_type-$YOCTO_BRANCH-$MACHINE.yaml
-
-        done
-}
 
 rm -f .github/workflows/tag-$YOCTO_BRANCH*
 rm -f .github/workflows/manual-$YOCTO_BRANCH*
 rm -f .github/workflows/onpush-$YOCTO_BRANCH*
 
-create_files manual
-create_files tag
-create_files onpush
+.github/scripts/make-manual-dispatch.py
+.github/scripts/make-tag-matrix.py
+.github/scripts/make-onpush-matrix.py
+.github/scripts/update-readme-board.py
 
 echo "All workflows generated successfully!"
