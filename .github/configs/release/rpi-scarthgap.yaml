@@ -55,6 +55,8 @@ local_conf_header:
         # RPi 5 kernel (kernel_2712) uses 16K page size. Align all ELF segments
         # to 64K so the same initramfs binaries work on 4K, 16K and 64K kernels.
         TARGET_LDFLAGS:append = " -Wl,-z,max-page-size=65536"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

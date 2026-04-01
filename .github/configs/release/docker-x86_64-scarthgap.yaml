@@ -38,6 +38,8 @@ local_conf_header:
         DISTRO_FEATURES:append = " virtualization vmsep opengl wayland"
         #    PANTAVISOR_FEATURES += "appengine"
         # DISTRO_FEATURES += "staticdev"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
