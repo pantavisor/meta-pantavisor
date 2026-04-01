@@ -2,7 +2,7 @@
 
 set -xe
 
-changed=`git diff HEAD .github/configs/release | lsdiff | sed 's/.\///'`
+changed=`git diff HEAD kas/build-configs/release | lsdiff | sed 's/.\///'`
 changed2=`git diff HEAD .github/workflows/ | lsdiff | sed 's/.\///'`
 
 if [ -z "$changed" -a -z "$changed2" ]; then
