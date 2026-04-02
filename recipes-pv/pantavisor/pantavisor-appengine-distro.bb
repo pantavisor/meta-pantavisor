@@ -97,3 +97,40 @@ do_create_tarball() {
 
 addtask create_tarball after do_unpack before do_build
 do_create_tarball[dirs] += "${WORKDIR}"
+
+# Paths relative to the meta-pantavisor layer root, set per-machine in
+# kas/machines/<machine>.yaml via local_conf_header.
+# PV_FLASH_README      - board/method-specific flashing doc (required)
+# PV_FLASH_README_DEPS - space-separated list of method docs to prepend
+#                        before PV_FLASH_README (e.g. tezi.md, uuu.md)
+# Deployed as: pantavisor.md + deps (in order) + PV_FLASH_README
+PV_FLASH_README ??= ""
+PV_FLASH_README_DEPS ??= ""
+
+python do_deploy_readme () {
+    readme = d.getVar('PV_FLASH_README')
+    if not readme:
+        return
+    import os
+    # FILE is the absolute path of this recipe; layer root is 3 dirs up
+    # (.../meta-pantavisor/recipes-pv/pantavisor/pantavisor-appengine-distro.bb)
+    layer_dir = os.path.dirname(os.path.dirname(os.path.dirname(d.getVar('FILE'))))
+    deps = (d.getVar('PV_FLASH_README_DEPS') or '').split()
+    paths = [os.path.join(layer_dir, 'docs/pantavisor.md')]
+    paths += [os.path.join(layer_dir, dep) for dep in deps]
+    paths += [os.path.join(layer_dir, readme)]
+    dst = os.path.join(d.getVar('DEPLOY_DIR_IMAGE'), 'pantavisor-README.md')
+    parts = []
+    for path in paths:
+        if os.path.exists(path):
+            with open(path) as f:
+                parts.append(f.read())
+        else:
+            bb.warn('pantavisor-README: file not found: %s' % path)
+    if parts:
+        with open(dst, 'w') as f:
+            f.write('\n\n---\n\n'.join(parts))
+        bb.note('Deployed pantavisor-README.md to %s' % dst)
+}
+
+addtask deploy_readme after do_create_tarball before do_build

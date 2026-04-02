@@ -12,6 +12,8 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 machine: docker-armv8
 local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/docker.md"
   kas-machine-genericarm64: |
     #    HOSTTOOLS += "docker fakeroot"
 

@@ -12,3 +12,8 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 machine: imx8mn-var-som
 
+local_conf_header:
+  platform-imx8mn-var-som: |
+        PV_FLASH_README = "docs/flashing/boards/imx8mn-var-som.md"
+        PV_FLASH_README_DEPS = "docs/flashing/sdcard.md docs/flashing/uuu.md"
+

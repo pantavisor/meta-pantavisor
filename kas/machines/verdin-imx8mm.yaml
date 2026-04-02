@@ -13,6 +13,8 @@ machine: verdin-imx8mm
 # This ensures the correct WiFi-enabled device tree is selected
 local_conf_header:
  platform-verdin-imx8mm: |
+  PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
+  PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
   UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
 
   # Alternative device trees based on carrier board

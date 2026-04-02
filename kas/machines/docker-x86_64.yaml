@@ -12,3 +12,7 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 machine: docker-x86_64
 
+local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/docker.md"
+

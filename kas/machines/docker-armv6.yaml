@@ -12,6 +12,8 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 machine: docker-armv6
 local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/docker.md"
   kas-appengine: |
     CORE_IMAGE_EXTRA_INSTALL += "pantavisor"
 

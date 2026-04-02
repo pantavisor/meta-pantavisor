@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 44b14d628db42202e52e2e6cd51005d7bfe915a6
+        commit: 58129a4b639cf0d717b284889bf5b44e7b4f43fc
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -94,7 +94,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: da5493bf86b3e75bbae4c5789fdfaca67b6f6a65
+        commit: 1e8099846661571ede077f533eb1b6c86818ddce
     meta-pantavisor:
     meta-virtualization:
         commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
@@ -107,6 +107,9 @@ local_conf_header:
         BB_DANGLINGAPPENDS_WARNONLY = "1"
         PANTAVISOR_FEATURES:append = " caam-nxp"
         PV_UBOOT_AUTOFDT = "1"
+    platform-imx8mn-var-som: |
+        PV_FLASH_README = "docs/flashing/boards/imx8mn-var-som.md"
+        PV_FLASH_README_DEPS = "docs/flashing/sdcard.md docs/flashing/uuu.md"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

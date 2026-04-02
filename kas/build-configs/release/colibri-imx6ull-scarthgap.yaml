@@ -37,7 +37,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: da5493bf86b3e75bbae4c5789fdfaca67b6f6a65
+        commit: 1e8099846661571ede077f533eb1b6c86818ddce
     meta-pantavisor:
     meta-virtualization:
         commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
@@ -58,6 +58,8 @@ local_conf_header:
     platform-toradex: |
         PV_UBOOT_AUTOFDT = "1"
     platform-colibri-imx6ull: |
+        PV_FLASH_README = "docs/flashing/boards/colibri-imx6ull.md"
+        PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
         include conf/machine/include/colibri-imx6ull.inc
         IMAGE_CLASSES:remove = " image_type_tezi"
         IMAGE_FSTYPES:remove  = "teziimg"
