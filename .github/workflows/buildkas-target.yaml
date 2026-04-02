@@ -34,7 +34,7 @@ jobs:
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
-          git fetch --tags --force --depth=${{ inputs.fetch-depth || 1 }}
+          git fetch --tags --force
       - name: setup workspace
         run: |
           chown -R builder:builder $RUNNER_WORKSPACE
