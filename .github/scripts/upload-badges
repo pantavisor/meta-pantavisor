@@ -1,0 +1,69 @@
+#!/bin/bash
+# Usage: upload-badges <repository> <run_id> <tag> <s3_bucket>
+set -e
+
+REPOSITORY=$1
+RUN_ID=$2
+TAG=$3
+AWS_S3_BUCKET=$4
+
+mkdir -p badges
+
+gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/jobs" | \
+  jq -r '.jobs[] | select(.name | startswith("build (")) | {
+    machine: (.name | capture("build \\((?<m>[^)]+)\\)").m),
+    conclusion: .conclusion
+  } | @base64' | \
+while IFS= read -r row; do
+  job=$(echo "$row" | base64 -d)
+  machine=$(echo "$job" | jq -r '.machine')
+  conclusion=$(echo "$job" | jq -r '.conclusion')
+
+  if [ "$conclusion" = "success" ]; then
+    message="passing"
+    color="brightgreen"
+  elif [ "$conclusion" = "failure" ]; then
+    message="failing"
+    color="red"
+  elif [ "$conclusion" = "cancelled" ]; then
+    message="cancelled"
+    color="lightgrey"
+  else
+    message="skipped"
+    color="yellow"
+  fi
+
+  jq -n \
+    --arg label "$machine" \
+    --arg message "$message" \
+    --arg color "$color" \
+    '{schemaVersion: 1, label: $label, message: $message, color: $color}' \
+    > "badges/${machine}.json"
+done
+
+if [[ "$TAG" == *"-rc"* ]]; then
+  RELEASE_TYPE="latest-rc"
+  TAG_LABEL="latest rc"
+  TAG_COLOR="orange"
+else
+  RELEASE_TYPE="latest-stable"
+  TAG_LABEL="latest stable"
+  TAG_COLOR="blue"
+fi
+
+for f in badges/*.json; do
+  machine=$(basename "$f" .json)
+  # Upload to tag-specific path for historical reference
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${TAG}/badges/${machine}.json" \
+    --cache-control "no-cache" --content-type "application/json"
+  # Upload to release-type latest/ path so README badges always reflect the most recent run
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/${machine}.json" \
+    --cache-control "no-cache" --content-type "application/json"
+done
+
+# Upload a tag badge so README can display the latest tag dynamically per release type
+jq -n --arg label "$TAG_LABEL" --arg tag "$TAG" --arg color "$TAG_COLOR" \
+  '{schemaVersion: 1, label: $label, message: $tag, color: $color}' \
+  > badges/tag.json
+aws s3 cp badges/tag.json "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/tag.json" \
+  --cache-control "no-cache" --content-type "application/json"

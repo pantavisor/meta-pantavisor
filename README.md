@@ -39,16 +39,44 @@ To develop on Pantavisor recipes using `devtool`, you can use the workspace laye
 ./kas-container --repo-rw build <config>:kas/with-workspace.yaml
 ```
 
-<!-- WORKFLOW_TABLE_START -->
-| Workflow | Status |
+## CI Infrastructure
+
+See [.github/README-ci.md](.github/README-ci.md) for the full CI/CD documentation.
+
+## Latest Release Build Summary
+
+### Stable [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/tag.json)](https://github.com/pantavisor/meta-pantavisor/releases)
+
+<!-- BUILD_SUMMARY_STABLE_START -->
+| Machine | Status |
 | :--- | :--- |
-| **manual-pvtests** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-pvtests.yaml) |
-| **manual-scarthgap** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-scarthgap.yaml) |
-| **onpush-scarthgap** | [![PUSH](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/onpush-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=PUSH)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-scarthgap.yaml) |
-| **schedule-pvtests** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-pvtests.yaml) |
-| **schedule-updatemachines** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updatemachines.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updatemachines.yaml) |
-| **schedule-updates** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updates.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updates.yaml) |
-| **tag-scarthgap** | [![TAG](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/tag-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=TAG)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
-<!-- WORKFLOW_TABLE_END -->
+| radxa-rock5a-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/radxa-rock5a-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-bananapi-m2-berry-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/sunxi-bananapi-m2-berry-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8qxp-b0-mek-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/imx8qxp-b0-mek-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-orange-pi-3lts-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/sunxi-orange-pi-3lts-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| raspberrypi-armv8-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/raspberrypi-armv8-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8mn-var-som-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/imx8mn-var-som-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8mm-var-dart-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/imx8mm-var-dart-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-orange-pi-r1-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/sunxi-orange-pi-r1-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| rpi-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/rpi-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| docker-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-stable/badges/docker-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+<!-- BUILD_SUMMARY_STABLE_END -->
+
+### Release Candidate [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/tag.json)](https://github.com/pantavisor/meta-pantavisor/releases)
+
+<!-- BUILD_SUMMARY_RC_START -->
+| Machine | Status |
+| :--- | :--- |
+| radxa-rock5a-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/radxa-rock5a-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-bananapi-m2-berry-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/sunxi-bananapi-m2-berry-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8qxp-b0-mek-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/imx8qxp-b0-mek-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-orange-pi-3lts-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/sunxi-orange-pi-3lts-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| raspberrypi-armv8-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/raspberrypi-armv8-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8mn-var-som-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/imx8mn-var-som-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| imx8mm-var-dart-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/imx8mm-var-dart-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| sunxi-orange-pi-r1-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/sunxi-orange-pi-r1-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| rpi-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/rpi-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| docker-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest-rc/badges/docker-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+<!-- BUILD_SUMMARY_RC_END -->
 
 

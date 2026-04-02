@@ -14,6 +14,8 @@ machine: colibri-imx6ull
 
 local_conf_header:
   platform-colibri-imx6ull: |
+        PV_FLASH_README = "docs/flashing/boards/colibri-imx6ull.md"
+        PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
         include conf/machine/include/colibri-imx6ull.inc
         IMAGE_CLASSES:remove = " image_type_tezi"
         IMAGE_FSTYPES:remove  = "teziimg"

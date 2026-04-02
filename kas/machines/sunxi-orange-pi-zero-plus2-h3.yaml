@@ -16,3 +16,7 @@ local_conf_header:
   machine-orange-pi-zero-plus2-h3:
     MACHINE_EXTRA_RRECOMMENDS:append = " xradio "
 
+
+local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"

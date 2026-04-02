@@ -12,3 +12,7 @@ header:
 # The machine as it is written into the `local.conf` of bitbake.
 machine: beaglebone
 
+
+local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"
