@@ -530,10 +530,62 @@ pv http pvr-sdk /api/v1/device/info
 ### Pass Criteria
 
 - [x] `/x` — HTTP 400 (32 bytes)
-- [x] `/buildinfo` — HTTP 200 (2337 bytes, truncated to MCU buffer)
-- [x] `/containers` — HTTP 200
+- [x] `/buildinfo` — HTTP 200 (2337 bytes, full body)
+- [x] `/containers` — HTTP 200 (752 bytes)
 - [x] TCP route — HTTP 404 (default pantavisor HTTP)
 - [x] MCU stays alive after all requests
+- [x] Heartbeats continue throughout
+
+## Test H16: HTTP POST/PUT/DELETE (Hardware)
+
+```bash
+pv http POST http://pv-ctrl.pvlocal/user-meta {"test":"hello"}
+pv http PUT http://pv-ctrl.pvlocal/user-meta {"updated":true}
+pv http DELETE http://pv-ctrl.pvlocal/user-meta/test
+```
+
+### Pass Criteria
+
+- [x] POST — body delivered (proxy shows `body=12 bytes`), response received
+- [x] PUT — body delivered (proxy shows `body=14 bytes`), response received
+- [x] DELETE — routed correctly, HTTP 404 response
+- [x] Content-Type: application/json header sent automatically with body
+- [x] MCU stays alive, heartbeats continue
+
+## Test H17: Large Header Streaming (Hardware)
+
+```bash
+pv hdrtest 100     # 1 frame
+pv hdrtest 600     # 2 frames
+pv hdrtest 1500    # 4 frames
+pv hdrtest 3000    # 7 frames
+```
+
+### Pass Criteria
+
+- [x] 100-byte header — PASS, routed to pv-ctrl
+- [x] 600-byte header — PASS, routed to pv-ctrl
+- [x] 1500-byte header — PASS, routed to pv-ctrl
+- [x] 3000-byte header — PASS, Host header preserved, routed correctly
+- [x] MCU stays alive throughout
+
+## Test H18: D-Bus Streaming (Hardware)
+
+D-Bus calls and responses use streaming DBUS_DATA frames.
+No fixed 246-byte limit on results.
+
+```bash
+pv dbus list
+pv dbus call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus GetNameOwner [net.connman]
+pv dbus subscribe org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus NameOwnerChanged
+```
+
+### Pass Criteria
+
+- [x] ListNames — full JSON array via streaming DBUS_DATA
+- [x] GetNameOwner — `:1.0` via streaming response
+- [x] Subscribe — `sub_id=1`, signals delivered via streaming
+- [x] All async — shell uses semaphore convenience, SDK is non-blocking
 - [x] Heartbeats continue throughout
 
 ## Key Configuration
