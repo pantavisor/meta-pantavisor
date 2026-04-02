@@ -600,3 +600,19 @@ pv dbus subscribe org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBu
 | `ipm_send(id=1)` | hardcoded | Matches Linux DTB mbox rx index 1 |
 | `METAL_MAX_DEVICE_REGIONS` | `2` | Shared memory + resource table |
 | `memset(SHM_START_ADDR)` | at M7 boot | Clears stale vrings for stop/start |
+
+## Test H19: D-Bus Large Payload (Hardware)
+
+Previously truncated at 246 bytes — now streaming via DBUS_DATA.
+
+```bash
+pv dbus call net.connman / net.connman.Manager GetTechnologies
+pv dbus call net.connman / net.connman.Manager GetServices
+```
+
+### Pass Criteria
+
+- [x] GetTechnologies — full `a(oa{sv})` result (~450 bytes JSON)
+- [x] GetServices — full service config (~900 bytes with IPv4/IPv6/DNS)
+- [x] Previously truncated results now delivered complete
+- [x] MCU stays alive, heartbeats continue
