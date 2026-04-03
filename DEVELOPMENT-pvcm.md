@@ -23,10 +23,13 @@ gcc -o /tmp/pvcm-run-test \
     $PV/pvcm-run/main.c \
     $PV/pvcm-run/pvcm_config.c \
     $PV/pvcm-run/pvcm_transport_uart.c \
+    $PV/pvcm-run/pvcm_transport_rpmsg.c \
     $PV/pvcm-run/pvcm_protocol.c \
     $PV/pvcm-run/pvcm_bridge.c \
     $PV/pvcm-run/pvcm_dbus_bridge.c \
-    -I$PV -lpthread $(pkg-config --cflags --libs dbus-1)
+    $PV/pvcm-run/pvcm_fs_bridge.c \
+    $PV/pvcm-run/pvcm_sendq.c \
+    -I$PV -levent $(pkg-config --cflags --libs dbus-1)
 ```
 
 The Zephyr executable is at:
@@ -47,8 +50,14 @@ EXE=build/tmp-panta-zephyr-pv-mcu-zephyr-native-sim-glibc/work/x86_64-yocto-linu
 echo '{"name":"test","type":"mcu","mcu":{"device":"/dev/pts/4","transport":"uart","baudrate":921600}}' > /tmp/r.json
 /tmp/pvcm-run-test --name test --config /tmp/r.json
 
-# For D-Bus testing, add --dbus-session to use the session bus:
+# With D-Bus gateway (session bus):
 /tmp/pvcm-run-test --name test --config /tmp/r.json --dbus-session
+
+# With filesystem share:
+/tmp/pvcm-run-test --name test --config /tmp/r.json --fs-share storage=/tmp/my-share
+
+# All gateways:
+/tmp/pvcm-run-test --name test --config /tmp/r.json --dbus-session --fs-share storage=/tmp/my-share
 
 # Terminal 3: interactive shell on uart PTY
 screen /dev/pts/3
@@ -73,6 +82,23 @@ Then from the Zephyr shell:
 pv dbus list
 pv dbus call org.pantavisor.TestService /test org.pantavisor.TestService Echo [hello]
 pv dbus subscribe org.pantavisor.TestService /test org.pantavisor.TestService Tick
+```
+
+### Filesystem Testing (native_sim)
+
+Start pvcm-run with `--fs-share`:
+
+```bash
+mkdir -p /tmp/my-share && echo "hello" > /tmp/my-share/test.txt
+/tmp/pvcm-run-test --name test --config /tmp/r.json --fs-share storage=/tmp/my-share
+```
+
+Then from the Zephyr shell:
+
+```
+pv mount storage /storage
+fs ls /storage
+fs cat /storage/test.txt
 ```
 
 ## 2. Hardware Setup (i.MX8MN VAR-SOM)
