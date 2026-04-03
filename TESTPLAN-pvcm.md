@@ -20,10 +20,13 @@ gcc -o /tmp/pvcm-run-test \
     $PV/pvcm-run/main.c \
     $PV/pvcm-run/pvcm_config.c \
     $PV/pvcm-run/pvcm_transport_uart.c \
+    $PV/pvcm-run/pvcm_transport_rpmsg.c \
     $PV/pvcm-run/pvcm_protocol.c \
     $PV/pvcm-run/pvcm_bridge.c \
     $PV/pvcm-run/pvcm_dbus_bridge.c \
-    -I$PV -lpthread $(pkg-config --cflags --libs dbus-1)
+    $PV/pvcm-run/pvcm_fs_bridge.c \
+    $PV/pvcm-run/pvcm_sendq.c \
+    -I$PV -levent $(pkg-config --cflags --libs dbus-1)
 ```
 
 The Zephyr executable is at:
@@ -587,6 +590,67 @@ pv dbus subscribe org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBu
 - [x] Subscribe — `sub_id=1`, signals delivered via streaming
 - [x] All async — shell uses semaphore convenience, SDK is non-blocking
 - [x] Heartbeats continue throughout
+
+## Test H20: Filesystem Gateway — Mount + ls (native_sim)
+
+Mount a Linux directory on MCU and list contents.
+
+```bash
+# pvcm-run: --fs-share storage=/tmp/pvcm-test-storage
+# Shell:
+pv mount storage /storage
+fs ls /storage
+```
+
+### Pass Criteria
+
+- [x] `pv mount` succeeds, proxy logs `mounted: storage -> ...`
+- [x] `fs ls /` shows `storage/` (VFS mount registered)
+- [x] `fs ls /storage` lists files (opendir → readdir → closedir RPC)
+- [x] Subdirectories listed correctly
+
+## Test H21: Filesystem Gateway — Read File (Hardware)
+
+Read file content from mounted share on i.MX8MN over RPMsg.
+
+```bash
+# Create test file: echo "hello from device" > /storage/pvcm-test.txt
+fs cat /storage/pvcm-test.txt
+```
+
+### Pass Criteria
+
+- [x] `fs cat` prints file contents (stat → open → read → close RPC chain)
+- [x] Content matches: "hello from device"
+
+## Test H22: Filesystem Gateway — Write File (Hardware)
+
+Write content to a file via MCU and read back.
+
+```bash
+# Zephyr fs write takes hex bytes
+fs write /storage/mcu-hex-test.txt 48 69 20 4d 43 55 0a
+fs cat /storage/mcu-hex-test.txt
+```
+
+### Pass Criteria
+
+- [x] File created on Linux filesystem
+- [x] `fs cat` reads back "Hi MCU"
+- [x] Verified on Linux side: `cat /storage/mcu-hex-test.txt` matches
+
+## Test H23: Filesystem Gateway — Subdirectory (Hardware)
+
+List files in subdirectory of mounted share.
+
+```bash
+fs ls /storage/config
+```
+
+### Pass Criteria
+
+- [x] Lists files in subdirectory (e.g., pantahub.config)
+- [x] No path resolution errors
 
 ## Key Configuration
 
