@@ -250,7 +250,7 @@ remoteproc, transport, and device:
     "PV_MCU_DEVICE": "display",
     "PV_MCU_TRANSPORT": "rpmsg",
     "PV_MCU_REMOTEPROC": "remoteproc0",
-    "PV_STATUS_GOAL": "MOUNTED"
+    "PV_STATUS_GOAL": "STARTED"
 }
 ```
 
