@@ -314,7 +314,7 @@ The `args.json` specifies MCU device, transport, and remoteproc:
     "PV_MCU_DEVICE": "display",
     "PV_MCU_TRANSPORT": "rpmsg",
     "PV_MCU_BAUDRATE": 921600,
-    "PV_STATUS_GOAL": "STARTED",
+    "PV_STATUS_GOAL": "MOUNTED",
     "PV_MCU_REMOTEPROC": "remoteproc0"
 }
 ```
