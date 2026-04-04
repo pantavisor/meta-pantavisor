@@ -1,4 +1,4 @@
-name: "Scheduled Recipe Updates"
+name: "scheduled: fetch recipe updates"
 
 permissions:
   contents: write
@@ -13,7 +13,7 @@ jobs:
   check-and-update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -47,15 +47,15 @@ jobs:
             git push origin "$BRANCH_NAME" --force
             # Wait a few seconds for GitHub to index the branch
             sleep 5
-            
+
             # Extract title and body for the PR
             PR_TITLE=$(head -n 1 "$COMMIT_MSG_FILE")
             PR_BODY=$(tail -n +3 "$COMMIT_MSG_FILE")
-            
+
             # Create or update the PR
             gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base master --head "$BRANCH_NAME" || \
             gh pr edit "$BRANCH_NAME" --title "$PR_TITLE" --body "$PR_BODY"
-            
+
             rm -f "$COMMIT_MSG_FILE" || true
           else
             echo "No changes to commit."

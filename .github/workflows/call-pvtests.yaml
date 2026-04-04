@@ -67,7 +67,7 @@ jobs:
           git clone https://gitlab.com/pantacor/${{ inputs.test_type }}.git ${{ inputs.test_type }}
 
       - name: Download AppEngine artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: appengine-docker-x86_64-scarthgap
           path: ${{ env.WORKSPACE }}
@@ -95,9 +95,9 @@ jobs:
 
           if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
             PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-            ./test.docker.sh -v run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET"
           else
-            ./test.docker.sh -v run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET"
           fi
 
       - name: Show Tests Summary
@@ -121,14 +121,14 @@ jobs:
 
       - name: Upload workspace on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvtests-workspace
           path: ${{ env.WORKSPACE }}
 
       - name: Upload log on success
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvtests-log
           path: test.docker.log

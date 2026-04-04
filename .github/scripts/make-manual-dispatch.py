@@ -14,7 +14,7 @@ machine_names = [m["name"] for m in machines]
 options = "\n".join(f"          - {name}" for name in machine_names)
 
 content = f"""\
-name: "MAN: {branch}"
+name: "manual: {branch}"
 
 on:
   workflow_dispatch:
@@ -35,7 +35,7 @@ jobs:
       output: ${{{{ steps.lookup.outputs.output }}}}
       sdk: ${{{{ steps.lookup.outputs.sdk }}}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: lookup
         run: |
           machine="${{{{ inputs.machine }}}}"

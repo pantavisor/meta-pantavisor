@@ -29,7 +29,7 @@ SUMMARY_JOB = [
 ]
 
 lines = [
-    f'name: "PUSH: {branch}"',
+    f'name: "onpush: {branch}"',
     "",
     "on:",
     "  push:",
