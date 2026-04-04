@@ -1,4 +1,4 @@
-name: "MAN: scarthgap"
+name: "manual: scarthgap"
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
       output: ${{ steps.lookup.outputs.output }}
       sdk: ${{ steps.lookup.outputs.sdk }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - id: lookup
         run: |
           machine="${{ inputs.machine }}"

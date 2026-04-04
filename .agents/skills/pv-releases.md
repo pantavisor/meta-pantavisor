@@ -16,6 +16,8 @@ The JSON has two top-level keys:
 Each machine entry has: `name`, `full_image.url`, `pvrexports.url`, `bsp.url`.
 The S3 prefix for a version is derived from the URL, e.g. `meta-pantavisor/026/`.
 
+The user must have aws s3 credential authenticated on his computer.
+
 ## Steps
 
 1. Create the local directory and download the file:

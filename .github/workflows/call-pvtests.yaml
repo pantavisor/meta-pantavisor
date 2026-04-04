@@ -16,8 +16,6 @@ jobs:
 
   validate:
     runs-on: ubuntu-latest
-    outputs:
-      has_test_number: ${{ steps.check.outputs.has_test_number }}
     steps:
       - name: Validate test_type input
         id: check
@@ -32,11 +30,9 @@ jobs:
           if [[ -n "${{ inputs.test_number }}" ]]; then
             echo "test_number was provided: ${{ inputs.test_number }}"
             echo "=== Running test number: ${{ inputs.test_number }} ==="
-            echo "has_test_number=true" >> $GITHUB_OUTPUT
           else
             echo "test_number was not provided"
             echo "=== Running All tests ==="
-            echo "has_test_number=false" >> $GITHUB_OUTPUT
           fi
 
           if [[ -n "${{ inputs.test_number }}" ]]; then
@@ -45,19 +41,8 @@ jobs:
             echo "Running all tests for ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
           fi
 
-  build-docker-x86_64-scarthgap:
-    needs: validate
-    uses: ./.github/workflows/buildkas-target.yaml
-    with:
-      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
-      machine_name: docker-x86_64-scarthgap
-      build_target: pantavisor-appengine-distro
-      output: pantavisor-appengine-distro-*.tar.gz
-      sdk: 0
-    secrets: inherit
-
   tests:
-    needs: build-docker-x86_64-scarthgap
+    needs: validate
     runs-on: ["pvtest-runner"]
     steps:
       - name: Clone ${{ inputs.test_type }} repository
@@ -67,7 +52,7 @@ jobs:
           git clone https://gitlab.com/pantacor/${{ inputs.test_type }}.git ${{ inputs.test_type }}
 
       - name: Download AppEngine artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: appengine-docker-x86_64-scarthgap
           path: ${{ env.WORKSPACE }}
@@ -75,19 +60,18 @@ jobs:
       - name: Run pvtests
         working-directory: ${{ env.WORKSPACE }}
         run: |
-          set -e
-          set -o pipefail
-
           chmod +x test.docker.sh
 
           for tar in pantavisor-appengine-*-docker.tar pantavisor-appengine-docker.tar; do
             [ -f "$tar" ] && docker load -i "$tar"
           done
 
-          echo "=== AppEngine Test Run started at $(date) ==="
-
           TEST_TARGET="${{ inputs.test_type }}"
-          [[ "${{ needs.validate.outputs.has_test_number }}" == "true" ]] && TEST_TARGET="${{ inputs.test_type }}:${{ inputs.test_number }}"
+          if [ -n "${{ inputs.test_number }}" ]; then
+            TEST_TARGET="${TEST_TARGET}:${{ inputs.test_number }}"
+          fi
+
+          echo "=== AppEngine Test Run started at $(date) ==="
 
           echo "------------------------------------------------------"
           echo "RUNNING: $TEST_TARGET"
@@ -95,43 +79,44 @@ jobs:
 
           if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
             PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-            ./test.docker.sh -v run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee pvtests-run.log
           else
-            ./test.docker.sh -v run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee pvtests-run.log
           fi
+          echo "PVTEST_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+
+          LOG_PATH=$(grep -m1 'Info: test logs can be found at' pvtests-run.log | sed 's/.*Info: test logs can be found at //')
+          echo "PVTEST_LOG=${LOG_PATH}" >> $GITHUB_ENV
 
       - name: Show Tests Summary
+        working-directory: ${{ env.WORKSPACE }}
         if: always()
         run: |
-          if [ -f test.docker.log ]; then
-
-            sed -n '/=======/,/=======/p' test.docker.log
-            sed -n '/=======/,/=======/p' test.docker.log > summary.log
-
-            echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat summary.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-
+          if [ -n "$PVTEST_LOG" ] && [ -f "$PVTEST_LOG" ]; then
+            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+## Test Results
+\`\`\`
+$(cat "$PVTEST_LOG")
+\`\`\`
+EOF
           else
-            echo "===== Tests failed ====="
-            echo "## Tests Run Failed" >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "## Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
           fi
+          [ "$PVTEST_EXIT" = "0" ] || exit 1
 
       - name: Upload workspace on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvtests-workspace
           path: ${{ env.WORKSPACE }}
 
       - name: Upload log on success
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvtests-log
-          path: test.docker.log
+          path: ${{ env.PVTEST_LOG }}
 
       - name: Clean up
         if: always()

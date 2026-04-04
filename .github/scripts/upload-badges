@@ -59,6 +59,11 @@ for f in badges/*.json; do
   # Upload to release-type latest/ path so README badges always reflect the most recent run
   aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/${machine}.json" \
     --cache-control "no-cache" --content-type "application/json"
+  # For stable releases, also update the top-level latest/ path used by README-CI.md badges
+  if [[ "$RELEASE_TYPE" == "latest-stable" ]]; then
+    aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/latest/badges/${machine}.json" \
+      --cache-control "no-cache" --content-type "application/json"
+  fi
 done
 
 # Upload a tag badge so README can display the latest tag dynamically per release type

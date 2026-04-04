@@ -1,4 +1,4 @@
-name: "SCHEDULE: pvtests"
+name: "schedule: pvtests"
 
 on:
   schedule:
@@ -6,14 +6,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-docker-x86_64-scarthgap:
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: .github/configs/release/docker-x86_64-scarthgap.yaml:.github/configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: pantavisor-appengine-distro-*.tar.gz
+      sdk: 0
+    secrets: inherit
+
   pvtests-local:
+    needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_type: pvtests-local
     secrets: inherit
 
   pvtests-remote:
-    needs: pvtests-local
+    needs: [build-docker-x86_64-scarthgap, pvtests-local]
+    if: always()
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_type: pvtests-remote
