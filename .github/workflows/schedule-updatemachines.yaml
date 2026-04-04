@@ -18,7 +18,7 @@ jobs:
       image: ghcr.io/pantacor/kas/kas:next-v7
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: ls .github/scripts
       - run: pwd
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE

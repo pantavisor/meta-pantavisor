@@ -1,4 +1,4 @@
-name: "MAN: start pvtests"
+name: "manual: start pvtests"
 
 on:
   workflow_dispatch:

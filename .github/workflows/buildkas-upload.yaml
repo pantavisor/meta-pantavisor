@@ -30,7 +30,7 @@ jobs:
         - shared:/shared
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
@@ -80,14 +80,14 @@ jobs:
          fi
 
       - name: Archive wic artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
              images/${{ inputs.output }}
 
       - name: Archive all pvrexport artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvrexports-${{ inputs.machine_name }}
           path: |
@@ -95,7 +95,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive bsp pvrexport artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pantavisor-bsp-${{ inputs.machine_name }}
           path: |
@@ -103,7 +103,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive tezi tar artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
@@ -111,7 +111,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive sdk tar artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdk-artifact-${{ inputs.machine_name }}
           path: sdk/panta*.sh
