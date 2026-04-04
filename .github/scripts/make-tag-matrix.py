@@ -17,6 +17,10 @@ SUMMARY_JOB = [
     "    if: always()",
     "    runs-on: ubuntu-latest",
     "    steps:",
+    "      - name: Checkout",
+    "        uses: actions/checkout@v6",
+    "        with:",
+    "          ref: ${{ github.ref }}",
     "      - name: Build Summary",
     "        env:",
     "          GH_TOKEN: ${{ github.token }}",
@@ -29,7 +33,7 @@ SUMMARY_JOB = [
 ]
 
 lines = [
-    f'name: "TAG: {branch}"',
+    f'name: "ontag: {branch}"',
     "",
     "on:",
     "  push:",

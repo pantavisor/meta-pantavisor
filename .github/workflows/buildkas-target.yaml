@@ -30,7 +30,7 @@ jobs:
         - shared:/shared
       options: --user root
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
@@ -46,11 +46,11 @@ jobs:
       - name: build
         run: |
            su - builder -c "cd $GITHUB_WORKSPACE && env  && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
+
       - name: build with sdk
+        if: inputs.sdk == 1
         run: |
-           if [ "${{ inputs.sdk }}" = 1 ]; then
            su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
-           fi
 
       - name: prepare files for distribution
         run: |
@@ -69,7 +69,7 @@ jobs:
 
 ## File distribution
       - name: Archive AppEngine artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: appengine-${{ inputs.machine_name }}
           path: |
@@ -78,23 +78,23 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive wic artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
              ${{ inputs.output }}
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
       - name: Archive all pvrexport artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pvrexports-${{ inputs.machine_name }}
           path: |
             *pvrexport.tgz
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
       - name: Archive bsp pvrexport artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pantavisor-bsp-${{ inputs.machine_name }}
           path: |
@@ -102,7 +102,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Archive tezi tar artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
           path: |
@@ -110,7 +110,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive sdk tar artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdk-artifact-${{ inputs.machine_name }}
           path: panta*.sh

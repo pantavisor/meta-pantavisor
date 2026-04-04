@@ -41,7 +41,7 @@ To develop on Pantavisor recipes using `devtool`, you can use the workspace laye
 
 ## CI Infrastructure
 
-See [.github/README-ci.md](.github/README-ci.md) for the full CI/CD documentation.
+See [.github/README-CI.md](.github/README-CI.md) for the full CI/CD documentation.
 
 ## Latest Release Build Summary
 

@@ -1,4 +1,4 @@
-name: "PUSH: scarthgap"
+name: "onpush: scarthgap"
 
 on:
   push:
