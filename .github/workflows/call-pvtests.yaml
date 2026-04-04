@@ -75,9 +75,6 @@ jobs:
       - name: Run pvtests
         working-directory: ${{ env.WORKSPACE }}
         run: |
-          set -e
-          set -o pipefail
-
           chmod +x test.docker.sh
 
           for tar in pantavisor-appengine-*-docker.tar pantavisor-appengine-docker.tar; do
@@ -95,29 +92,28 @@ jobs:
 
           if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
             PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-            ./test.docker.sh run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee /tmp/pvtests-run.log
           else
-            ./test.docker.sh run "$TEST_TARGET"
+            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee /tmp/pvtests-run.log
           fi
+          echo "PVTEST_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+
+          LOG_PATH=$(grep -m1 'Info: test logs can be found at' /tmp/pvtests-run.log | sed 's/.*Info: test logs can be found at //')
+          echo "PVTEST_LOG=${LOG_PATH}" >> $GITHUB_ENV
 
       - name: Show Tests Summary
+        working-directory: ${{ env.WORKSPACE }}
         if: always()
         run: |
-          if [ -f test.docker.log ]; then
-
-            sed -n '/=======/,/=======/p' test.docker.log
-            sed -n '/=======/,/=======/p' test.docker.log > summary.log
-
+          if [ -n "${{ env.PVTEST_LOG }}" ] && [ -f "${{ env.PVTEST_LOG }}" ]; then
             echo "## Test Results" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            cat summary.log >> $GITHUB_STEP_SUMMARY
+            cat "${{ env.PVTEST_LOG }}" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-
           else
-            echo "===== Tests failed ====="
-            echo "## Tests Run Failed" >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "## Tests Run Failed (no log found)" >> $GITHUB_STEP_SUMMARY
           fi
+          [ "${{ env.PVTEST_EXIT }}" = "0" ] || exit 1
 
       - name: Upload workspace on failure
         if: failure()
@@ -131,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: pvtests-log
-          path: test.docker.log
+          path: ${{ env.PVTEST_LOG }}
 
       - name: Clean up
         if: always()
