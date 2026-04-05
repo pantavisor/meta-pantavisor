@@ -9,7 +9,7 @@ repos:
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
-        commit: 70c83e96c7f75e73245cb77f1b0cada9ed4bbc6d
+        commit: ce10c065119c2d4e359235c77aae7e0d843533ef
     meta-freescale-distro:
         url: https://github.com/Freescale/meta-freescale-distro.git
         path: layers/meta-freescale-distro
@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 58129a4b639cf0d717b284889bf5b44e7b4f43fc
+        commit: ae4d41e69df4c1c0a7f3a4894e130ef3491087c6
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
