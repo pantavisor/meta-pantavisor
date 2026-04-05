@@ -4,7 +4,9 @@
         "max_retries": 5,
         "retry_delay": 2,
         "backoff_factor": 1.5,
-        "reset_window": 300
+        "reset_window": 300,
+        "stable_timeout": 15,
+        "backoff_policy": "reboot"
     },
     "PV_RESTART_POLICY": "container"
 }
