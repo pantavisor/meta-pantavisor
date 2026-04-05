@@ -10,6 +10,7 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
 | [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md) | pv-ctrl API test plan (all endpoints) |
+| [TESTPLAN-auto-recovery.md](TESTPLAN-auto-recovery.md) | Auto-recovery, stability tracking, and backoff policy tests |
 | [GEMINI.md](GEMINI.md) | Implementation notes, upstream changes, and known pitfalls |
 
 ## Build Commands
@@ -247,6 +248,72 @@ The `pv-examples` containers demonstrate pv-xconnect service mesh patterns:
 | `pv-example-wayland-client` | wayland | consumer | Wayland client |
 
 See [EXAMPLES.md](EXAMPLES.md) for detailed testing instructions.
+
+### Auto-Recovery Example Containers
+
+| Container | Group | auto_recovery | Description |
+|-----------|-------|---------------|-------------|
+| `pv-example-recovery` | root | per-container | Crashes after 10s, on-failure with backoff_policy="10min" |
+| `pv-example-stabilize` | root | per-container | Fails 3x then stabilizes, backoff_policy="reboot" |
+| `pv-example-random` | root | per-container | Random exit timing, always policy, backoff_policy="never" |
+| `pv-example-app-crash` | app | inherited from group | Crashes after 10s, inherits app group's auto_recovery |
+
+See [TESTPLAN-auto-recovery.md](TESTPLAN-auto-recovery.md) for test scenarios.
+
+## Container Auto-Recovery
+
+Containers can be configured for automatic restart on crash. Configuration can be set per-container in `args.json` or inherited from the group in `device.json`.
+
+### Per-Container Configuration
+
+Add `PV_AUTO_RECOVERY` to the container's `args.json`:
+
+```json
+{
+    "PV_AUTO_RECOVERY": {
+        "policy": "on-failure",
+        "max_retries": 5,
+        "retry_delay": 5,
+        "backoff_factor": 2.0,
+        "reset_window": 60,
+        "stable_timeout": 30,
+        "backoff_policy": "10min"
+    },
+    "PV_RESTART_POLICY": "container"
+}
+```
+
+This flows through `pvr app add --arg-json` into `run.json`'s `auto_recovery` object.
+
+### Group-Level Defaults
+
+Groups in `device.json` (and `defaults/groups.json` in pantavisor) can define a default `auto_recovery`. Containers inherit it **all-or-nothing** — if a container has its own `PV_AUTO_RECOVERY`, the group default is ignored entirely.
+
+The default `app` group ships with:
+
+```json
+{
+    "name": "app",
+    "restart_policy": "container",
+    "status_goal": "STARTED",
+    "timeout": 30,
+    "auto_recovery": {
+        "policy": "on-failure",
+        "max_retries": 5,
+        "retry_delay": 5,
+        "backoff_factor": 2.0,
+        "stable_timeout": 30,
+        "backoff_policy": "reboot"
+    }
+}
+```
+
+To place a container in the `app` group, set `PVR_APP_ADD_GROUP = "app"` in the recipe.
+
+### Key Concepts
+
+- **stable_timeout**: Seconds a container must run without crashing after reaching its status goal before being considered stable. Does not block group startup chaining. During TESTING, commit is held until all containers are stable.
+- **backoff_policy**: What happens after `max_retries` is exhausted in steady state: `"reboot"` (default), `"never"` (leave stopped), or a duration like `"10min"` (wait then retry). During TESTING, exhaustion always triggers rollback.
 
 ## Pantavisor Source Development
 

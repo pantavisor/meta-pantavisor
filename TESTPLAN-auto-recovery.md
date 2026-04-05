@@ -204,6 +204,164 @@ docker exec pva-test pvcontrol ls
 
 ---
 
+## Test 4: Group-Level Auto-Recovery Inheritance
+
+**Purpose**: Verify a container without `auto_recovery` in its `run.json` inherits the group's default auto-recovery policy from `device.json`.
+
+### Setup
+
+This test uses a custom `device.json` that adds `auto_recovery` to the `root` group, and a container that has **no** `PV_AUTO_RECOVERY` in its `args.json`.
+
+```bash
+rm -f pvtx.d/*.pvrexport.tgz
+# Use a container without auto_recovery (e.g., a plain busybox container)
+# The group-level auto_recovery in device.json will apply
+```
+
+**device.json group config:**
+```json
+{
+    "name": "root",
+    "restart_policy": "container",
+    "status_goal": "STARTED",
+    "timeout": 30,
+    "auto_recovery": {
+        "policy": "on-failure",
+        "max_retries": 3,
+        "retry_delay": 2,
+        "backoff_factor": 1.5,
+        "stable_timeout": 15,
+        "backoff_policy": "never"
+    }
+}
+```
+
+### Verify
+
+```bash
+# Check pantavisor log for inherited auto-recovery
+docker exec pva-test grep -i "auto-recovery\|attempt\|STABLE" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log | tail -10
+
+# Check pvcontrol shows inherited values
+docker exec pva-test pvcontrol ls
+# Expected: auto_recovery.max_retries = 3, stable_timeout = 15
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Container has no auto_recovery in run.json | No `PV_AUTO_RECOVERY` in args.json |
+| Inherited from group | pvcontrol shows max_retries=3, stable_timeout=15 |
+| Recovery works | Container restarts on crash with group's policy |
+| All-or-nothing | All fields come from group, not mixed with defaults |
+
+---
+
+## Test 5: Container Auto-Recovery Overrides Group
+
+**Purpose**: Verify a container with its own `auto_recovery` in `run.json` does NOT inherit from the group — all-or-nothing semantics.
+
+### Setup
+
+Use a group with `auto_recovery` AND a container with its own `PV_AUTO_RECOVERY` (e.g., `pv-example-recovery`).
+
+### Verify
+
+```bash
+docker exec pva-test pvcontrol ls
+# Expected: container's own values (max_retries=5, stable_timeout=30),
+# NOT the group's values
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Container has auto_recovery | Its own values used |
+| Group also has auto_recovery | Group values ignored |
+| max_retries | Container's value (5), not group's |
+
+---
+
+## Test 6: Stable Timeout Prevents Premature Commit
+
+**Purpose**: Verify that during TESTING, the commit is held until all containers with `stable_timeout` have survived their stability window.
+
+### Verify
+
+```bash
+# Check pantavisor log during an update
+docker exec pva-test grep -i "commit held\|STABLE\|commit" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log | tail -10
+# Expected: "commit held: waiting for all containers to become stable"
+# followed by "is now STABLE" and then commit
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Commit timer expires | Commit not immediate |
+| stable_timeout pending | "commit held" log message |
+| Container survives window | "is now STABLE" log message |
+| Then commit | `pv_update_set_final()` proceeds |
+
+---
+
+## Test 7: Backoff Policy "never" — Container Stays Stopped
+
+**Purpose**: Verify `backoff_policy: "never"` leaves a container stopped after max_retries without triggering a system reboot.
+
+### Verify
+
+```bash
+# After max_retries exhausted:
+docker exec pva-test grep -i "backoff_policy.*never\|leaving.*stopped\|recovery_failed" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log | tail -5
+# Expected: "backoff_policy=never — leaving 'container' stopped"
+
+docker exec pva-test lxc-ls -f
+# Expected: container STOPPED, system still running (no reboot)
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| Container status | STOPPED |
+| System state | Still running, no reboot |
+| Log message | "backoff_policy=never" |
+| Other containers | Unaffected, still running |
+
+---
+
+## Test 8: Backoff Policy Duration — Retry Cycle Reset
+
+**Purpose**: Verify `backoff_policy: "10min"` waits the configured duration after max_retries, then resets the retry counter and restarts recovery.
+
+### Verify
+
+```bash
+# After max_retries exhausted:
+docker exec pva-test grep -i "backoff_policy.*600\|scheduling.*retry\|recovery.*timer.*finished" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log | tail -5
+# Expected: "backoff_policy=600s — scheduling retry cycle reset"
+# After 600s: "recovery timer finished" and new attempt 1/N
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| After max_retries | "scheduling retry cycle reset" |
+| Container status | RECOVERING (waiting 600s) |
+| After duration | Retry counter resets, new recovery cycle starts |
+| New attempts | "attempt 1/5" logged again |
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
