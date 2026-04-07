@@ -33,7 +33,15 @@
 	    "name": "app",
 	    "restart_policy": "container",
 	    "status_goal": "STARTED",
-	    "timeout": 30
+	    "timeout": 30,
+	    "auto_recovery": {
+		"policy": "on-failure",
+		"max_retries": 5,
+		"retry_delay": 5,
+		"backoff_factor": 2.0,
+		"stable_timeout": 30,
+		"backoff_policy": "reboot"
+	    }
 	}
     ],
     "volumes": {
