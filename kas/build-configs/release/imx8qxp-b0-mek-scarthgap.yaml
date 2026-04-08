@@ -43,7 +43,7 @@ repos:
             meta-arm:
             meta-arm-toolchain:
         path: layers/meta-arm
-        url: git://git.yoctoproject.org/meta-arm
+        url: https://git.yoctoproject.org/meta-arm
     poky:
         patches:
             fit-image-multiconfig:
@@ -62,7 +62,7 @@ repos:
     meta-virtualization:
         commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
         path: layers/meta-virtualization
-        url: git://git.yoctoproject.org/meta-virtualization
+        url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:
     platform-freescale: |
         ACCEPT_FSL_EULA = "1"

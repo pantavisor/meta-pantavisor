@@ -61,7 +61,7 @@ repos:
       meta-tpm:
 
   meta-arm:
-    url: git://git.yoctoproject.org/meta-arm
+    url: https://git.yoctoproject.org/meta-arm
     path: layers/meta-arm
     layers:
       meta-arm:
