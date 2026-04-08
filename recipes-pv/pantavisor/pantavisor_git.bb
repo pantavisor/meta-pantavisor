@@ -27,13 +27,14 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+# TODO: restore "master" + update SRCREV once pantavisor#680 is merged
+PANTAVISOR_BRANCH ??= "feat/test-pvtx-enhance-suite"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "c7a1f533b52190872e709859703bb892e1b4734c"
+SRCREV = "719279228fc1a62a581111ac0840a606c3bbf291"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
@@ -59,6 +60,7 @@ FILES:${PN}-config += "/etc/resolv.conf"
 
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/pvtx"
 
 # pvcontrol and pvcurl packages (replace standalone recipes)
 FILES:${PN}-pvcontrol += "${bindir}/pvcontrol"
@@ -95,4 +97,28 @@ do_install() {
 	cmake_do_install
 	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
+}
+
+# Install pvtx unit test data so the tests can be run inside the appengine
+# container via run-pvtx-tests.  Only installed when PANTAVISOR_PVTEST=ON.
+do_install:append() {
+	if [ -d "${S}/test/pvtx" ]; then
+		install -d "${D}${datadir}/pantavisor/pvtest/pvtx/resources"
+		install -d "${D}${datadir}/pantavisor/pvtest/pvtx/expected"
+		install -m 0755 "${S}/test/pvtx/pvtx.sh" \
+			"${D}${datadir}/pantavisor/pvtest/pvtx/"
+		for f in "${S}/test/pvtx/resources/"*.json; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/resources/" || true
+		done
+		for f in "${S}/test/pvtx/resources/"*.tar \
+		          "${S}/test/pvtx/resources/"*.tgz; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/resources/" || true
+		done
+		for f in "${S}/test/pvtx/expected/"*.json; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/expected/" || true
+		done
+	fi
 }

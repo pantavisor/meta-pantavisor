@@ -1,0 +1,100 @@
+#!/bin/sh
+# run-pvtx-tests - run the pvtx unit test suite inside the appengine container
+#
+# Usage:
+#   run-pvtx-tests [IMAGE_TAG]
+#
+# Environment variables:
+#   PVA_CONTAINER        container name to reuse (default: pva-pvtx)
+#   PVTX_TEST_PRINT_ALL  set to 1 for verbose pvtx output
+#   IMAGE_TAG            appengine image tag (default: latest)
+#
+# The test suite is installed at /usr/share/pantavisor/pvtest/pvtx/ inside
+# the image when the pantavisor-pvtest package is included.  Build the image
+# with the standard appengine config:
+#
+#   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+#   docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+#
+# See TESTPLAN-pvtx.md for full documentation.
+
+set -e
+
+IMAGE_TAG="${1:-${IMAGE_TAG:-latest}}"
+CONTAINER="${PVA_CONTAINER:-pva-pvtx}"
+IMAGE="pantavisor-appengine:${IMAGE_TAG}"
+TEST_DATA_DIR="/usr/share/pantavisor/pvtest/pvtx"
+TEST_SCRIPT="${TEST_DATA_DIR}/pvtx.sh"
+
+# The test script expects (SRC_DIR BIN_DIR) where:
+#   SRC_DIR/test/pvtx/ holds the test data
+#   BIN_DIR/pvtx       is the pvtx binary
+#
+# Since the data is installed flat under TEST_DATA_DIR we create a
+# compatible layout in a tmpdir inside the container.
+
+SETUP_CMD=$(cat <<'EOF'
+set -e
+TMPDIR=$(mktemp -d /tmp/pvtx-test.XXXXXX)
+# Build a fake "source tree" layout the test script expects:
+#   $TMPDIR/test/pvtx/{pvtx.sh,resources/,expected/}
+mkdir -p "${TMPDIR}/test/pvtx"
+cp -r /usr/share/pantavisor/pvtest/pvtx/. "${TMPDIR}/test/pvtx/"
+
+# BIN_DIR: directory containing pvtx binary
+BIN_DIR=$(dirname "$(command -v pvtx)")
+
+export PVTXDIR="${TMPDIR}/pvtxdir"
+mkdir -p "${PVTXDIR}"
+
+echo "=== pvtx test suite ==="
+echo "  image pvtx : $(pvtx --version 2>/dev/null || echo '(no --version)')"
+echo "  test data  : /usr/share/pantavisor/pvtest/pvtx"
+echo ""
+
+sh "${TMPDIR}/test/pvtx/pvtx.sh" "${TMPDIR}" "${BIN_DIR}"
+STATUS=$?
+rm -rf "${TMPDIR}"
+exit ${STATUS}
+EOF
+)
+
+cleanup() {
+    docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
+}
+
+echo "Checking image ${IMAGE} ..."
+if ! docker image inspect "${IMAGE}" >/dev/null 2>&1; then
+    echo "Error: image '${IMAGE}' not found." >&2
+    echo "Build it first:" >&2
+    echo "  ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml" >&2
+    echo "  docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar" >&2
+    exit 1
+fi
+
+docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
+trap cleanup EXIT
+
+echo "Starting container ${CONTAINER} ..."
+docker run --name "${CONTAINER}" -d \
+    --entrypoint /bin/sh \
+    "${IMAGE}" -c "sleep infinity"
+
+echo "Running pvtx tests ..."
+echo ""
+
+EXEC_ENV=""
+if [ -n "${PVTX_TEST_PRINT_ALL}" ]; then
+    EXEC_ENV="-e PVTX_TEST_PRINT_ALL=1"
+fi
+
+docker exec ${EXEC_ENV} "${CONTAINER}" sh -c "${SETUP_CMD}"
+STATUS=$?
+
+echo ""
+if [ "${STATUS}" -eq 0 ]; then
+    echo "=== All pvtx tests PASSED ==="
+else
+    echo "=== pvtx tests FAILED (exit ${STATUS}) ===" >&2
+fi
+exit "${STATUS}"
