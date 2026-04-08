@@ -8,12 +8,14 @@ DOCKER_IMAGE_TAG = "1.0"
 DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
 CORE_IMAGE_EXTRA_INSTALL += " \
+	bc \
 	curl \
 	jq \
 	pantavisor-pvtest \
 	procps \
 	pvr \
 	valgrind \
+	vim-xxd \
 "
 
 PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" MANUAL="false" OVERWRITE="false" VERBOSE="false" NETSIM="false"'

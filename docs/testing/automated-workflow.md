@@ -102,3 +102,4 @@ Test plans covering specific features live in [testplans/](testplans/):
 | [testplan-container-control.md](testplans/testplan-container-control.md) | Container lifecycle API (stop/start/restart, user_stopped, batch jobs) |
 | [testplan-pvctrl.md](testplans/testplan-pvctrl.md) | Full pv-ctrl REST API coverage |
 | [testplan-xconnect.md](testplans/testplan-xconnect.md) | xconnect service mesh (unix, D-Bus, DRM) |
+| [testplan-pvtx.md](testplans/testplan-pvtx.md) | pvtx transaction tool unit tests (no Pantavisor needed) |

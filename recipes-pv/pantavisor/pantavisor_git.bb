@@ -27,13 +27,15 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
+# TODO: restore "master" + update SRCREV once pantavisor#680 is merged
 PANTAVISOR_BRANCH ??= "master"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "dba91c26a90b39f23f6dbb1842851f0c47ae0b6b"
+SRCREV = "1cb03f1baf0f19c0f222888d61f938e357a3bc5c"
+
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
@@ -59,6 +61,7 @@ FILES:${PN}-config += "/etc/resolv.conf"
 
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/pvtx"
 
 # pvcontrol and pvcurl packages (replace standalone recipes)
 FILES:${PN}-pvcontrol += "${bindir}/pvcontrol"
@@ -100,4 +103,26 @@ do_install() {
 	cmake_do_install
 	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
+}
+
+do_install:append() {
+	if [ -d "${S}/test/pvtx" ]; then
+		install -d "${D}${datadir}/pantavisor/pvtest/pvtx/resources"
+		install -d "${D}${datadir}/pantavisor/pvtest/pvtx/expected"
+		install -m 0755 "${S}/test/pvtx/pvtx.sh" \
+			"${D}${datadir}/pantavisor/pvtest/pvtx/"
+		for f in "${S}/test/pvtx/resources/"*.json; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/resources/" || true
+		done
+		for f in "${S}/test/pvtx/resources/"*.tar \
+		          "${S}/test/pvtx/resources/"*.tgz; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/resources/" || true
+		done
+		for f in "${S}/test/pvtx/expected/"*.json; do
+			[ -f "$f" ] && install -m 0644 "$f" \
+				"${D}${datadir}/pantavisor/pvtest/pvtx/expected/" || true
+		done
+	fi
 }

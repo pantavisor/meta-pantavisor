@@ -14,6 +14,7 @@ Yocto/OpenEmbedded layer for building Pantavisor-based BSP images for embedded L
 | `classes/container-pvrexport.bbclass` | Container pvrexport packaging |
 | `.github/machines.json` | CI machine configurations — edit before regenerating workflows |
 
+
 ## Documentation Structure
 
 New documents should follow this layout:
