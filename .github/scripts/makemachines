@@ -22,7 +22,7 @@ for i in "${!config_array[@]}"; do
     echo "Processing: $m"
     echo "Config: $cc"
     
-    KAS_WORK_DIR=. kas-container dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > kas/build-configs/release/$m-$yocto_branch.yaml
+    KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > kas/build-configs/release/$m-$yocto_branch.yaml
     
     echo "- Created config for machine: $m"
     echo ""
