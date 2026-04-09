@@ -14,6 +14,7 @@ do_fetch[noexec] = "0"
 do_unpack[noexec] = "0"
 
 SRC_URI += "file://pv-unix-server.sh \
+            file://${PN}.args.json \
             file://${PN}.services.json"
 
 install_scripts() {
