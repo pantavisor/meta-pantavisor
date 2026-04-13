@@ -18,12 +18,12 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 034e3451e840a1c15f785149b540c9075a5b3c2b
+        commit: 098cb26cdbddcbc5906cbd82488ef56fee5e8979
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: a10254910cedc3f75d7edb0bce19c2484c7a607f
+        commit: 572bc2d9b477ac0f757a26671a20354e26c22656
     meta-variscite-sdk:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
@@ -33,12 +33,12 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 1f8c1035f2453efab73396ebb671f39b4c6cd59a
+        commit: 2a7c846763ef3a3686a6bd3125e9bb436d8fab2c
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 4438511f4c6ebeab2f4c8fd20bc66658467ddf7a
+        commit: 9505b68ffbc5065c9397ee16084b030aba9a769c
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
