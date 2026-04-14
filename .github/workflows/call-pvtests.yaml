@@ -93,12 +93,12 @@ jobs:
         if: always()
         run: |
           if [ -n "$PVTEST_LOG" ] && [ -f "$PVTEST_LOG" ]; then
-            cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-## Test Results
-\`\`\`
-$(cat "$PVTEST_LOG")
-\`\`\`
-EOF
+            {
+              echo "## Test Results"
+              echo '```'
+              cat "$PVTEST_LOG"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
           fi
