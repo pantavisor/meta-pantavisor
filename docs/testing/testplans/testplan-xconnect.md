@@ -2,7 +2,7 @@
 
 Tests for pv-xconnect container-to-container communication via the appengine environment.
 
-For pv-ctrl API tests (daemons, graph, metadata, objects, etc.), see [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md).
+For pv-ctrl API tests (daemons, graph, metadata, objects, etc.), see [testplan-pvctrl.md](testplan-pvctrl.md).
 
 ---
 
