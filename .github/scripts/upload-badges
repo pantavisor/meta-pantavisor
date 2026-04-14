@@ -42,11 +42,11 @@ while IFS= read -r row; do
 done
 
 if [[ "$TAG" == *"-rc"* ]]; then
-  RELEASE_TYPE="latest-rc"
+  RELEASE_TYPE="latest/release-candidate"
   TAG_LABEL="latest rc"
   TAG_COLOR="orange"
 else
-  RELEASE_TYPE="latest-stable"
+  RELEASE_TYPE="latest/stable"
   TAG_LABEL="latest stable"
   TAG_COLOR="blue"
 fi
@@ -54,21 +54,16 @@ fi
 for f in badges/*.json; do
   machine=$(basename "$f" .json)
   # Upload to tag-specific path for historical reference
-  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${TAG}/badges/${machine}.json" \
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/${TAG}/badges/${machine}.json" \
     --cache-control "no-cache" --content-type "application/json"
   # Upload to release-type latest/ path so README badges always reflect the most recent run
-  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/${machine}.json" \
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/${RELEASE_TYPE}/badges/${machine}.json" \
     --cache-control "no-cache" --content-type "application/json"
-  # For stable releases, also update the top-level latest/ path used by README-CI.md badges
-  if [[ "$RELEASE_TYPE" == "latest-stable" ]]; then
-    aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/latest/badges/${machine}.json" \
-      --cache-control "no-cache" --content-type "application/json"
-  fi
 done
 
 # Upload a tag badge so README can display the latest tag dynamically per release type
 jq -n --arg label "$TAG_LABEL" --arg tag "$TAG" --arg color "$TAG_COLOR" \
   '{schemaVersion: 1, label: $label, message: $tag, color: $color}' \
   > badges/tag.json
-aws s3 cp badges/tag.json "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/tag.json" \
+aws s3 cp badges/tag.json "s3://${AWS_S3_BUCKET}/${RELEASE_TYPE}/badges/tag.json" \
   --cache-control "no-cache" --content-type "application/json"
