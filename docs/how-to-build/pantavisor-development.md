@@ -36,7 +36,7 @@ build/workspace/appends/lxc-pv_git.bbappend   # create manually if needed
    ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
    ```
 
-3. **Test** — see [../testing/appengine-testing.md](../testing/appengine-testing.md)
+3. **Test** — see [../testing/development-workflow.md](../testing/development-workflow.md)
 
 4. **Commit when ready**:
    ```bash

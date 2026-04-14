@@ -2,8 +2,8 @@
 
 Tests for the `PUT /containers/{name}` API using existing xconnect example containers.
 
-For xconnect service mesh tests, see [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md).
-For pv-ctrl API tests, see [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md).
+For xconnect service mesh tests, see [testplan-xconnect.md](testplan-xconnect.md).
+For pv-ctrl API tests, see [testplan-pvctrl.md](testplan-pvctrl.md).
 
 ---
 
