@@ -9,13 +9,25 @@ For pv-ctrl API tests, see [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md).
 
 ## Prerequisites
 
+### Example Containers
+
+| Container | Group | policy | max_retries | backoff_policy |
+|-----------|-------|--------|-------------|----------------|
+| `pv-example-recovery` | root | on-failure | 3, delay 5s, factor 2x | 10min |
+| `pv-example-stabilize` | root | on-failure | 3 | reboot |
+| `pv-example-random` | root | always | — | never |
+| `pv-example-app-crash` | app | inherited from group | 5, delay 5s, factor 2x | reboot |
+
+`pv-example-app-crash` uses `PVR_APP_ADD_GROUP = "app"` in its recipe and inherits the default `app` group auto-recovery policy from `device.json`.
+
 ### Build Appengine Image and Test Containers
 
 ```bash
 ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-recovery \
     --target pv-example-stabilize \
-    --target pv-example-random
+    --target pv-example-random \
+    --target pv-example-app-crash
 
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 ```
