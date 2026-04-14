@@ -24,12 +24,13 @@ New documents should follow this layout:
 | `docs/how-to-build/` | Build recipes, workspace dev, container authoring |
 | `docs/how-to-install/` | Board-specific flashing guides |
 | `docs/examples/` | xconnect and other feature examples |
-| `docs/testing/` | Test plans (`testplan-*.md`) and appengine testing workflow |
+| `docs/testing/` | Development and automated test workflows; test plans under `testplans/` |
 
 Key documents:
 - [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
 - [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide
-- [docs/testing/appengine-testing.md](docs/testing/appengine-testing.md) — appengine test workflow
+- [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
+- [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, testplans)
 
 ## Key Pitfalls
 

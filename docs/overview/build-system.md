@@ -76,7 +76,8 @@ Build outputs are in `build/tmp-{codename}/deploy/images/{machine}/`:
 | `*.pvrexport.tgz` | Pantavisor export bundles (main deployment artifact) |
 | `*.wic` / `*.wic.bz2` | Complete disk images |
 | `pantavisor-initramfs-*.cpio.gz` | Initramfs image |
-| `pantavisor-appengine-docker.tar` | Docker image for appengine testing |
+| `pantavisor-appengine-docker.tar` | Docker image for manual appengine testing |
+| `pantavisor-appengine-distro-docker-x86_64-*.tar.gz` | Self-contained test bundle: Docker images + `test.docker.sh` runner |
 
 ## Key Build Paths
 

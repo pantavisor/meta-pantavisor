@@ -4,7 +4,7 @@ Comprehensive test plan for the pv-ctrl REST API and `pvcontrol` CLI wrapper.
 
 **Scope**: All pv-ctrl endpoints exposed via Unix socket at `/run/pantavisor/pv/pv-ctrl`
 
-For xconnect container-to-container tests (unix, dbus, drm), see [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md).
+For xconnect container-to-container tests (unix, dbus, drm), see [testplan-xconnect.md](testplan-xconnect.md).
 
 ---
 

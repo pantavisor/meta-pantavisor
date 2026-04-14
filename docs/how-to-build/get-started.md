@@ -49,6 +49,7 @@ Adds `kas/with-workspace.yaml` to create a devtool workspace with editable panta
 | `pantavisor-remix` | BSP with root container support |
 | `pantavisor-starter` | Minimal starter image |
 | `pantavisor-appengine` | Docker-based appengine image |
+| `pantavisor-appengine-distro` | Full test distribution tarball (appengine + tester + netsim images + `test.docker.sh`) — see [automated-workflow.md](../testing/automated-workflow.md) |
 
 Build a specific target:
 ```bash
@@ -78,7 +79,7 @@ bitbake pantavisor-bsp
 
 ## Testing the Build
 
-After building the appengine image, see [../testing/appengine-testing.md](../testing/appengine-testing.md) for the full test workflow.
+After building the appengine image, see [../testing/development-workflow.md](../testing/development-workflow.md) for the manual dev workflow, or [../testing/automated-workflow.md](../testing/automated-workflow.md) for structured automated testing.
 
 Quick smoke test:
 ```bash

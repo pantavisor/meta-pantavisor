@@ -2,8 +2,8 @@
 
 Tests for container auto-recovery with exponential backoff via the appengine environment.
 
-For xconnect service mesh tests, see [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md).
-For pv-ctrl API tests, see [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md).
+For xconnect service mesh tests, see [testplan-xconnect.md](testplan-xconnect.md).
+For pv-ctrl API tests, see [testplan-pvctrl.md](testplan-pvctrl.md).
 
 ---
 
