@@ -26,4 +26,5 @@ local_conf_header:
     LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
     RPI_USE_U_BOOT = "1"
     ENABLE_UART = "1"
+    PANTAVISOR_MACHINE_FIRMWARE = "linux-firmware-rpidistro-bcm43430 linux-firmware-rpidistro-bcm43455 linux-firmware-rpidistro-bcm43456 linux-firmware-rpidistro-bcm43436 linux-firmware-rpidistro-bcm43436s"
 
