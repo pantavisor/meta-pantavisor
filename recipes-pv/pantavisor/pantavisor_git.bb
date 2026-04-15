@@ -37,7 +37,7 @@ SRCREV = "357b04163bd73b3ff53e2c882c0c273257834c16"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl"
+PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -66,6 +66,11 @@ RDEPENDS:${PN}-pvcontrol += "${PN}-pvcurl json-sh"
 RPROVIDES:${PN}-pvcontrol += "pvcontrol"
 RREPLACES:${PN}-pvcontrol += "pvcontrol"
 RCONFLICTS:${PN}-pvcontrol += "pvcontrol"
+
+# mdev LXC mount hook — split out so BSPs that don't use per-container
+# mdev rules can drop it (PANTAVISOR_FEATURES:remove = "container-mdev") to
+# avoid the fork-exec cost of running the hook on every container start.
+FILES:${PN}-hooks-mdev = "${libdir}/pantavisor/pv/hooks_lxc-mount.d/mdev.sh"
 
 FILES:${PN}-pvcurl += "${bindir}/pvcurl"
 RDEPENDS:${PN}-pvcurl += "netcat-openbsd"
