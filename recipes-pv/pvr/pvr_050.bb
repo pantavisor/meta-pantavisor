@@ -14,8 +14,8 @@ SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
 "
 
-SRC_URI[pvr.sha256sum] = "5177d08547000f23763874991fd3881eebc3d6a491d5a627da08b6cb34175e22"
-SRC_URI[vendor.sha256sum] = "ad7795e2d5431e459b01031b588f7e84a61c770865203a09bc5a35f6593bdbec"
+SRC_URI[pvr.sha256sum] = "9cba05717f2fd6e8d8fa2bd8aaef0e4b641f7ef81afebbf498c50eaf4bc83bf5"
+SRC_URI[vendor.sha256sum] = "019feba257ee70b0d10775cc1a8547e113f8adc07c66898e041d09f8a6413e6d"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
