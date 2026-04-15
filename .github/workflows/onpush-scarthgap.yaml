@@ -7,6 +7,12 @@ on:
       - 'kas/build-configs/release/**'
       - '!.github/scripts/**'
       - '!.github/templates/**'
+  pull_request:
+    paths:
+      - '**'
+      - 'kas/build-configs/release/**'
+      - '!.github/scripts/**'
+      - '!.github/templates/**'
 
 jobs:
   build:
