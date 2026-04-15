@@ -1,0 +1,10 @@
+{
+    "ap": {
+        "ssid": "pvwificonnect",
+        "password": "1234567890"
+    },
+    "auto_mode": true,
+    "wait_time_in_sec": 60,
+    "watcher": true,
+    "watcher_interval": "1m"
+}
