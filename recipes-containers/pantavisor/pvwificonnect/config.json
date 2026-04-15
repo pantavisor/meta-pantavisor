@@ -1,0 +1,12 @@
+{
+    "Entrypoint": ["/app/pvwificonnect"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PV_WIFI_CONNECT_WATCHER=true",
+        "PV_WIFI_CONNECT_INTERVAL=1m"
+    ],
+    "WorkingDir": "/app",
+    "Volumes": {
+        "/tmp": {}
+    }
+}
