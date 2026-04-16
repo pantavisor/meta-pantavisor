@@ -23,9 +23,25 @@ jobs:
       test_type: pvtests-local
     secrets: inherit
 
-  pvtests-remote:
+  pvtests-remote-1:
     needs: [build-docker-x86_64-scarthgap, pvtests-local]
     if: always()
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_type: pvtests-remote
+    secrets: inherit
+
+  pvtests-remote-2:
+    needs: pvtests-remote-1
+    if: needs.pvtests-remote-1.result == 'failure'
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_type: pvtests-remote
+    secrets: inherit
+
+  pvtests-remote-3:
+    needs: [pvtests-remote-1, pvtests-remote-2]
+    if: needs.pvtests-remote-1.result == 'failure' && needs.pvtests-remote-2.result == 'failure'
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_type: pvtests-remote
