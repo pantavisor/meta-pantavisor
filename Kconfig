@@ -157,6 +157,13 @@ config CONTAINER_PV_TAILSCALE
 config KAS_LOCAL_PV_TAILSCALE
 	string
 	default "PVROOT_CONTAINERS_CORE += \"pv-tailscale\"" if CONTAINER_PV_TAILSCALE
+
+config CONTAINER_PV_AVAHI
+	bool "pv-avahi"
+
+config KAS_LOCAL_PV_AVAHI
+	string
+	default "PVROOT_CONTAINERS_CORE += \"pv-avahi\"" if CONTAINER_PV_AVAHI
 endmenu
 
 menu "Features"
