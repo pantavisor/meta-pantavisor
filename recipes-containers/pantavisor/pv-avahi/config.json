@@ -1,0 +1,10 @@
+{
+    "Entrypoint": ["/usr/bin/pv-avahi-start"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "WorkingDir": "/",
+    "Volumes": {
+        "/tmp": {}
+    }
+}
