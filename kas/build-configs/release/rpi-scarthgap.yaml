@@ -47,7 +47,7 @@ local_conf_header:
         LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
         RPI_USE_U_BOOT = "1"
         ENABLE_UART = "1"
-        PANTAVISOR_MACHINE_FIRMWARE = "linux-firmware-rpidistro-bcm43430 linux-firmware-rpidistro-bcm43455 linux-firmware-rpidistro-bcm43456 linux-firmware-rpidistro-bcm43436 linux-firmware-rpidistro-bcm43436s"
+        PANTAVISOR_MACHINE_FIRMWARE = "linux-firmware-rpidistro-bcm43430 linux-firmware-rpidistro-bcm43455 linux-firmware-rpidistro-bcm43456 linux-firmware-rpidistro-bcm43436 linux-firmware-rpidistro-bcm43436s bluez-firmware-rpidistro-bcm4345c0-hcd bluez-firmware-rpidistro-bcm4345c5-hcd"
     multi: |
         BBMULTICONFIG = "rpi-kernel rpi-kernel7 rpi-kernel7l rpi-kernel8 rpi-kernel_2712"
     rpi-tryboot-system: |
