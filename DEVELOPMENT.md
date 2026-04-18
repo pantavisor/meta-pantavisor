@@ -22,14 +22,14 @@ cd meta-pantavisor
 
 Build using upstream sources:
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
 ```
 
 ### Workspace Build (Development)
 
 Build with local pantavisor source for development:
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 ```
 
 This overlays `kas/with-workspace.yaml` which:
@@ -45,7 +45,7 @@ This overlays `kas/with-workspace.yaml` which:
 
 First build initializes the workspace:
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 ```
 
 The workspace sources are at:
@@ -71,7 +71,7 @@ build/workspace/appends/lxc-pv_git.bbappend
 2. **Rebuild:**
    ```bash
    cd /path/to/meta-pantavisor
-   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+   ./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
    ```
 
 3. **Test with appengine:**
@@ -92,13 +92,13 @@ build/workspace/appends/lxc-pv_git.bbappend
 
 Build only pantavisor (faster iteration):
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pantavisor
 ```
 
 Build pantavisor and appengine:
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pantavisor-appengine
 ```
 
@@ -151,7 +151,7 @@ Example containers are in `recipes-containers/pv-examples/`. Each container need
 ### Building Containers
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-foo
 ```
 
@@ -364,7 +364,7 @@ vim xconnect/plugins/drm.c
 
 # 2. Rebuild (from meta-pantavisor root)
 cd /path/to/meta-pantavisor
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 # 3. Reload docker image
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
@@ -411,7 +411,7 @@ cat > recipes-containers/pv-examples/files/pv-example-mytest.args.json << 'EOF'
 EOF
 
 # 3. Build
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-mytest
 
 # 4. Deploy for testing
@@ -427,7 +427,7 @@ vim xconnect/plugins/unix.c
 
 # 2. Build appengine
 cd /path/to/meta-pantavisor
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 # 3. Reload and test
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
@@ -538,7 +538,7 @@ git checkout <branch>
 If you see errors about missing files or stale OCI images:
 ```bash
 # Clean specific recipe state
-./kas-container shell .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     -c "bitbake -c cleansstate <recipe-name>"
 
 # Example: clean pantavisor-appengine-netsim

@@ -15,6 +15,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	dnsmasq \
 	hostapd \
 	iw \
+	nftables \
 	util-linux \
 	pantavisor-pvtx \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \

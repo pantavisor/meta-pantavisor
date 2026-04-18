@@ -27,13 +27,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "feature/ipam"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "f44df967f8a92d9e4f1249e32088dd01b9e1446d"
+SRCREV = "8b7bc433236d43ac74f101fb0d179eb4e4b77964"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 

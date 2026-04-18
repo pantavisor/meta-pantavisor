@@ -1,0 +1,5 @@
+{
+    "PV_NETWORK_POOL": "pvcnet",
+    "PV_NETWORK_HOSTNAME": "net-pvcnet",
+    "PV_RESTART_POLICY": "container"
+}
