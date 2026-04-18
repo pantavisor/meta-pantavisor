@@ -365,6 +365,49 @@ docker exec pva-test grep -E \
 
 ---
 
+## Test 8: Pool-using container with baked `lxc.net.*` is refused
+
+**Purpose**: Verify that a container which declares an IPAM pool AND bakes `lxc.net.*` entries into its `lxc.container.conf` is refused at start time via the backend plugin's `validate_config` hook. The error bubbles up the same way as an unknown-pool reference — `pv_state_run → _pv_run → PV_STATE_ROLLBACK` in a TESTING update.
+
+**Policy** (see [Pantavisor IPAM overview](https://github.com/pantavisor/pantavisor/blob/master/docs/overview/ipam.md#pre-start-validation)): if a container opts into an IPAM pool, it must let pantavisor own its network namespace. Pantavisor injects its own `lxc.net.0.*` from the allocated IP/MAC/bridge at start time; silently overwriting a user-baked `lxc.net.0` would leak orphan attributes (e.g. stale `lxc.net.0.macvlan.mode` after type is rewritten to veth).
+
+`lxc.namespace.keep = net` is **not** treated as a conflict — pvr's default template includes it, and pantavisor strips `net` from the keep list at runtime.
+
+### Verification approach
+
+Constructing a signed pvrexport with `lxc.net.*` baked in requires a recipe-level post-processing step that is not shipped today (the default `pvr app add` does not produce `lxc.net.*` entries). Two ways to exercise this test:
+
+#### Option A — code review (recommended default)
+
+- Confirm `plugins/pv_lxc.c:pv_validate_container_config` scans for a prefix `lxc.net.` after trimming leading whitespace and skipping comments.
+- Confirm `platforms.c:pv_platform_start` calls `ctrl->validate_config(p, path)` before the IPAM allocation block and returns `-1` on non-zero.
+- Confirm the dlsym in `load_pv_plugin` wires `pv_validate_container_config` into `cont_ctrl[].validate_config`.
+
+#### Option B — manual reproduction
+
+In a non-signed development build, stop pantavisor, append `lxc.net.0.type = veth` to a pool-using container's `lxc.container.conf` in the trail, and restart pantavisor. (On a signed production build this fails signature verification first, which is a different error path — useful as a regression guard but not for exercising the `validate_config` hook.)
+
+### Expected log
+
+```
+ERROR [pv_lxc]: pv_validate_container_config: platform '<name>' declares an IPAM pool but its lxc.container.conf already contains lxc.net.* entries — pantavisor will not overwrite them. Remove the baked lxc.net.* config, or drop the PV_NETWORK_POOL reference.
+ERROR [platforms]: pv_platform_start: platform '<name>' refused by backend pre-start validation
+ERROR [state]: pv_state_start_platform: platform <name> could not be started
+ERROR [controller]: _pv_wait: a platform did not work as expected. Tearing down...
+```
+
+And `docker exec pva-test lxc-ls -f` shows no containers running.
+
+### Regression guard
+
+Re-running Tests 1-7 must still pass — the validation only fires when:
+1. The container declares `PV_NETWORK_POOL` (→ `p->network->mode == NET_MODE_POOL`), and
+2. The baked `lxc.container.conf` contains a line starting with `lxc.net.`.
+
+Default pvr-generated containers have no `lxc.net.*` lines, so the check is a no-op for them.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
