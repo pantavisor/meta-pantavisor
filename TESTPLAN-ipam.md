@@ -210,7 +210,7 @@ docker exec pva-test pventer -c pv-example-net-lab-server ping 10.0.6.1 -c 2
 | net-lab-server → 10.0.6.1 (gateway) | 0% packet loss (bridge-local, no NAT needed) |
 | IPAM log | `added pool 'internal': ..., nat=yes` and `added pool 'lab': ..., nat=no`; `setup NAT (nftables) for pool internal` appears but no such line for `lab` |
 
-**Note**: With the current IPAM implementation there is no cross-pool isolation — `internal → lab` (e.g. `ping 10.0.6.2` from net-server) will succeed because the kernel's FORWARD chain defaults to ACCEPT. Cross-pool isolation is a separate feature (tracked for a follow-up).
+**Note**: Cross-pool traffic is blocked by default — see Test 5.
 
 ---
 
@@ -240,6 +240,71 @@ docker exec pva-test nft list ruleset
 ### Verify iptables fallback (optional)
 
 To exercise the fallback path you would need a variant appengine image that ships `iptables` but not `nftables`, and confirm the log then says `setup NAT (iptables) for pool <name>`. This isn't covered by the default appengine image.
+
+---
+
+## Test 5: Cross-pool isolation (default)
+
+**Purpose**: Verify that containers in different pools cannot reach each other at L3 by default. Same-pool connectivity and external egress (for pools with `nat: true`) must continue to work. Cross-pool service access is expected to go through xconnect.
+
+Isolation is enforced by pantavisor at `pv_ipam_setup_bridges()` time via netfilter: a `ct state related,established accept` rule is installed once in the FORWARD chain, followed by per-pair DROP rules between every bridge-type pool (nftables preferred, iptables fallback).
+
+### Setup
+
+Reuse the Test 3 setup (`pv-example-device-ipam-2pools` + `pv-example-net-server` in `internal` + `pv-example-net-lab-server` in `lab`).
+
+```bash
+rm -f pvtx.d/*.pvrexport.tgz
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam-2pools.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-lab-server.pvrexport.tgz pvtx.d/
+
+docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 20
+```
+
+### Verify
+
+```bash
+# Isolation ruleset present (nftables path)
+docker exec pva-test nft list ruleset
+# Expected: a `table inet pv_ipam` with:
+#   - chain forward { type filter hook forward priority 0 ...
+#   - ct state established,related accept
+#   - iifname "pvbr0" oifname "pvbr1" drop
+#   - iifname "pvbr1" oifname "pvbr0" drop
+
+# Same-pool and own-gateway — should work
+docker exec pva-test pventer -c pv-example-net-server ping 10.0.5.1 -c 2
+docker exec pva-test pventer -c pv-example-net-lab-server ping 10.0.6.1 -c 2
+
+# External NAT from internal (nat=true) — should work
+docker exec pva-test pventer -c pv-example-net-server ping 8.8.8.8 -c 2
+
+# Cross-pool — should TIMEOUT (isolated)
+docker exec pva-test pventer -c pv-example-net-server ping 10.0.6.2 -c 2
+docker exec pva-test pventer -c pv-example-net-lab-server ping 10.0.5.2 -c 2
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| `nft list ruleset` shows `pv_ipam` filter table | Yes, with conntrack-accept prelude + two pvbr0↔pvbr1 drop rules |
+| Same-pool (own gateway) | 0% loss |
+| internal (nat=true) → 8.8.8.8 | 0% loss |
+| internal → lab (10.0.6.2) | **100% loss** |
+| lab → internal (10.0.5.2) | **100% loss** |
+| IPAM log | `pool isolation (nftables): 2 cross-pool drop rule(s) installed` |
+
+### Regression guard
+
+Re-running Tests 1 and 2 after this change must still pass — isolation rules do not affect single-pool setups (they only install when at least two bridge pools are present).
 
 ---
 
