@@ -243,6 +243,72 @@ To exercise the fallback path you would need a variant appengine image that ship
 
 ---
 
+## Test 6: IPAM lease stability across stop/start
+
+**Purpose**: Verify that stopping and starting a container via the container-control API (`pvcontrol containers stop` / `start`) keeps the container's IPAM-assigned IP stable. The same expectation applies to the auto-recovery restart path — a container that crashes and is restarted by `pv_state_check_auto_recovery` also comes back with the same IP.
+
+The lease is keyed by `(pool_name, container_name)` and `pv_ipam_allocate` reuses any existing lease before allocating a new IP, so the IP persists across any lifecycle transition that doesn't destroy the platform (container-control stop/start, auto-recovery retries). Platform teardown (`pv_platform_free`, on state transition / reboot / rollback) does release the lease; that is intentional.
+
+### Setup
+
+Reuse the Test 1 single-pool setup (`pv-example-device-ipam` + `pv-example-net-server`).
+
+```bash
+rm -f pvtx.d/*.pvrexport.tgz
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+
+docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 20
+```
+
+### Execute + verify
+
+```bash
+# 1) Baseline — record the running container's IP
+docker exec pva-test lxc-ls -f
+# Expected: pv-example-net-server RUNNING with 10.0.5.2
+
+# 2) Stop via the container-control API
+docker exec pva-test pvcontrol containers stop pv-example-net-server
+sleep 10
+docker exec pva-test lxc-ls -f
+# Expected: pv-example-net-server STOPPED (IPv4 column is blank)
+
+# 3) Start again via the API
+docker exec pva-test pvcontrol containers start pv-example-net-server
+sleep 10
+docker exec pva-test lxc-ls -f
+# Expected: pv-example-net-server RUNNING with 10.0.5.2 (same as baseline)
+
+# 4) The IPAM log confirms the lease was reused, not re-allocated
+docker exec pva-test grep "reusing existing lease\|allocated 10.0.5" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
+# Expected to see exactly one "allocated 10.0.5.2/24 to pv-example-net-server"
+# line from the initial start, followed by a "reusing existing lease for
+# pv-example-net-server: 10.0.5.2/24" line from the post-stop restart.
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| IP before stop | 10.0.5.2 |
+| State after stop | STOPPED |
+| IP after start | 10.0.5.2 (unchanged) |
+| IPAM log | one `allocated` line + one `reusing existing lease` line |
+
+### Auto-recovery note
+
+The same `pv_ipam_allocate` reuse-by-name logic is taken when the auto-recovery path restarts a crashed container (both the delayed-retry branch via `timer_retry` and the immediate-retry branch — see the `fix(ipam): keep IPAM lease stable across auto-recovery restarts` commit that removed the pre-restart `pv_ipam_release()` on the immediate branch). A future expansion of this test could use a purpose-built crashing recipe to exercise that path end-to-end; for now the invariant is covered by code review plus this stop/start check, which drives the same allocate-with-reuse code path.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
