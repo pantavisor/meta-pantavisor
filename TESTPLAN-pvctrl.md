@@ -14,10 +14,10 @@ For xconnect container-to-container tests (unix, dbus, drm), see [TESTPLAN-xconn
 
 ```bash
 # Build with workspace overlay (for testing local pantavisor changes)
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 # Build example containers for xconnect tests
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client
 

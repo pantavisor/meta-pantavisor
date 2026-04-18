@@ -9,7 +9,7 @@ Tests for IPAM (IP Address Management) pool-based container networking via the a
 ### Build Appengine Image and Test Containers
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-device-ipam \
     --target pv-example-net-server \
     --target pv-example-net-client \

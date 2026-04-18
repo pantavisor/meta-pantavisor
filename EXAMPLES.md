@@ -22,11 +22,11 @@ Build example containers using kas-container:
 cd /path/to/meta-pantavisor
 
 # Build specific containers
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 
 # Build with workspace (when iterating on pantavisor source)
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 ```
 
@@ -100,7 +100,7 @@ Demonstrates raw Unix domain socket proxying between containers.
 
 ```bash
 # Build containers
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 
 # Copy to pvtx.d
@@ -152,7 +152,7 @@ Demonstrates HTTP-over-UDS with identity header injection (`X-PV-Client`, `X-PV-
 ### Build
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-rest-server --target pv-example-rest-client
 ```
 
@@ -219,7 +219,7 @@ This demonstrates how `pv-xconnect` bridges identities across namespaces by mapp
 
 ```bash
 # Build D-Bus containers
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-dbus-server --target pv-example-dbus-client
 
 # Copy to pvtx.d
@@ -294,7 +294,7 @@ ls -la /dev/dri/
 
 ```bash
 # Build DRM containers
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider --target pv-example-drm-master
 
 # Copy to pvtx.d
@@ -373,7 +373,7 @@ Demonstrates Wayland compositor access with DRM dependency.
 ### Build
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider \
     --target pv-example-wayland-server \
     --target pv-example-wayland-client

@@ -30,13 +30,13 @@ kas build .config.yaml
 kas build kas/scarthgap.yaml:kas/machines/raspberrypi-armv8.yaml:kas/bsp-base.yaml
 
 # Build with release configs
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
 
 # Development build (with local pantavisor workspace)
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 # Build specific target
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
 ```
 
 ### Common Build Targets
@@ -129,7 +129,7 @@ meta-pantavisor/
 | `build/tmp-scarthgap/deploy/images/` | Build outputs (images, pvrexports) |
 | `recipes-containers/pv-examples/` | Example container recipes |
 | `recipes-pv/` | Core pantavisor recipes |
-| `.github/configs/release/` | KAS machine configurations |
+| `kas/build-configs/release/` | KAS machine configurations |
 
 ## PANTAVISOR_FEATURES
 

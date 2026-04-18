@@ -11,7 +11,7 @@ For pv-ctrl API tests (daemons, graph, metadata, objects, etc.), see [TESTPLAN-p
 ### Build Appengine Image
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 ```
@@ -40,7 +40,7 @@ docker volume rm storage-test
 ### Setup
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client
 
@@ -97,7 +97,7 @@ docker exec pva-test ls -la /proc/$CLIENT_PID/root/run/pv/services/
 ### Setup
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-dbus-server \
     --target pv-example-dbus-client
 
@@ -158,7 +158,7 @@ docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-example-dbus-client/l
 # Load VKMS on host (if no real GPU)
 sudo modprobe vkms
 
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider \
     --target pv-example-drm-master
 

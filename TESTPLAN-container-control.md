@@ -12,7 +12,7 @@ For pv-ctrl API tests, see [TESTPLAN-pvctrl.md](TESTPLAN-pvctrl.md).
 ### Build Appengine Image and Example Containers
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client \
     --target pv-example-cleanexit \

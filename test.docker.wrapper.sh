@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-KAS_CONFIG="${KAS_CONFIG:-.github/configs/release/docker-x86_64-scarthgap.yaml}"
+KAS_CONFIG="${KAS_CONFIG:-kas/build-configs/release/docker-x86_64-scarthgap.yaml}"
 WORKDIR="$SCRIPT_DIR/workdir/appengine"
 DEPLOY_DIR="$SCRIPT_DIR/build/tmp-scarthgap/deploy/images/docker-x86_64"
 PVTESTS_LOCAL_REPO="${PVTESTS_LOCAL_REPO:-git@gitlab.com:pantacor/pvtests-local.git}"
