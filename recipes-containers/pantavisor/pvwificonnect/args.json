@@ -1,0 +1,13 @@
+{
+    "PV_GROUP": "platform",
+    "PV_LXC_CAP_KEEP": [
+        "block_suspend",
+        "wake_alarm",
+        "sys_time",
+        "net_admin net_raw net_bind_service"
+    ],
+    "PV_RESTART_POLICY": "system",
+    "PV_VOLUME_IMPORTS": [
+        "os:/pvrun/dbus:/var/run/dbus"
+    ]
+}

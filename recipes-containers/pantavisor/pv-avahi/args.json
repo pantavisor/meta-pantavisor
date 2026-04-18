@@ -1,0 +1,15 @@
+{
+    "PV_GROUP": "platform",
+    "PV_LXC_CAP_KEEP": [
+        "net_admin",
+        "net_raw",
+        "net_bind_service",
+        "setuid",
+        "setgid",
+        "chown",
+        "dac_override",
+        "sys_chroot",
+        "kill"
+    ],
+    "PV_RESTART_POLICY": "system"
+}

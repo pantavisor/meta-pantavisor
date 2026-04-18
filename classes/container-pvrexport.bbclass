@@ -33,6 +33,8 @@ PVR_APP_ADD_GROUP ??= "root"
 
 PVRIMAGE_AUTO_MDEV ??= "1"
 
+PVR_SIG_ADD_ARGS ??= "--noconfig --part ${PN}"
+
 # Define a config overlay directory that the image recipe will make available
 # in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
 # This directory will be added to the pvrexport as _config/${PN}
@@ -93,7 +95,7 @@ EOF1
     fi
     pvr add
     pvr commit
-    pvr sig add --noconfig --part ${PN}
+    pvr sig add ${PVR_SIG_ADD_ARGS}
     pvr add
     pvr commit
     mkdir -p ${IMGDEPLOYDIR}/
