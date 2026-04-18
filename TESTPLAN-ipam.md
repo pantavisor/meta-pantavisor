@@ -18,6 +18,7 @@ Tests for IPAM (IP Address Management) pool-based container networking via the a
     --target pv-example-ipam-valid \
     --target pv-example-ipam-invalid \
     --target pv-example-ipam-collision \
+    --target pv-example-ipam-nopool \
     --target pantavisor-appengine
 
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
@@ -306,6 +307,61 @@ docker exec pva-test grep "reusing existing lease\|allocated 10.0.5" \
 ### Auto-recovery note
 
 The same `pv_ipam_allocate` reuse-by-name logic is taken when the auto-recovery path restarts a crashed container (both the delayed-retry branch via `timer_retry` and the immediate-retry branch — see the `fix(ipam): keep IPAM lease stable across auto-recovery restarts` commit that removed the pre-restart `pv_ipam_release()` on the immediate branch). A future expansion of this test could use a purpose-built crashing recipe to exercise that path end-to-end; for now the invariant is covered by code review plus this stop/start check, which drives the same allocate-with-reuse code path.
+
+---
+
+## Test 7: Revision rejected on unknown pool reference
+
+**Purpose**: Verify pantavisor refuses the revision when any container declares `PV_NETWORK_POOL` referencing a pool that is not defined in `device.json`. In an in-progress update this propagates through `pv_state_run → _pv_run` into `PV_STATE_ROLLBACK`; in steady state into `PV_STATE_REBOOT`. The check is performed at `pv_platform_start` time and short-circuits before any namespace / LXC work happens.
+
+The `pv-example-ipam-nopool` recipe ships with `PV_NETWORK_POOL: "does-not-exist"` and reuses the minimal `inherit image` template — it is a ~2.7 MB pvrexport with just busybox and a defensive idle-loop entrypoint (the entrypoint should never actually run).
+
+### Setup
+
+```bash
+rm -f pvtx.d/*.pvrexport.tgz
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-nopool.pvrexport.tgz pvtx.d/
+
+docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 25
+```
+
+### Verify
+
+```bash
+# No containers running — the revision was torn down
+docker exec pva-test lxc-ls -f
+# Expected: empty output
+
+# The pantavisor log confirms the refuse + teardown sequence
+docker exec pva-test grep -E \
+    "unknown pool|failed IPAM network validation|did not work as expected" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
+# Expected sequence (each pv_state_run tick retries and logs again):
+#   ERROR [platforms] ... references unknown pool 'does-not-exist', refusing to start
+#   ERROR [platforms] ... failed IPAM network validation, triggering rollback if in try-boot
+#   ERROR [controller] ... a platform did not work as expected. Tearing down...
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| `lxc-ls -f` | Empty — no containers running (including the well-formed `pv-example-net-server` in the same revision) |
+| Pantavisor log | The three ERROR lines above appear in order |
+| `pv_state_run` return | Non-zero — propagates into `_pv_run` which goes to `PV_STATE_ROLLBACK` (in TESTING) or `PV_STATE_REBOOT` (steady state) |
+
+### Notes
+
+- The `pv_platform_start` bubble-up is the single error-handling path — no separate validate step. The same mechanism catches volume-mount and driver-load failures.
+- `pv_state_run`'s platform loop does not break on first error, so other platforms in the same revision may briefly attempt their starts before the overall return value triggers teardown. They still end up torn down; the only cost is a few extra log lines per tick.
 
 ---
 

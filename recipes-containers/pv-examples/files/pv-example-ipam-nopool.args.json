@@ -1,0 +1,4 @@
+{
+    "PV_NETWORK_POOL": "does-not-exist",
+    "PV_RESTART_POLICY": "container"
+}
