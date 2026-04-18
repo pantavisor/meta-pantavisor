@@ -12,13 +12,16 @@ Tests for IPAM (IP Address Management) pool-based container networking via the a
 ./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-device-ipam \
     --target pv-example-device-ipam-2pools \
+    --target pv-example-device-ipam-lxcbr \
     --target pv-example-net-server \
     --target pv-example-net-lab-server \
     --target pv-example-net-client \
+    --target pv-example-net-pvcnet \
     --target pv-example-ipam-valid \
     --target pv-example-ipam-invalid \
     --target pv-example-ipam-collision \
     --target pv-example-ipam-nopool \
+    --target pv-example-ipam-static \
     --target pantavisor-appengine
 
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
@@ -405,6 +408,75 @@ Re-running Tests 1-7 must still pass — the validation only fires when:
 2. The baked `lxc.container.conf` contains a line starting with `lxc.net.`.
 
 Default pvr-generated containers have no `lxc.net.*` lines, so the check is a no-op for them.
+
+---
+
+## Test 9: Static-IP reservation from backend-native containers
+
+**Purpose**: Verify pantavisor's reservation walk picks up a hard-coded `lxc.net.0.ipv4.address` in a legacy (non-pool) container and keeps the IPAM allocator from handing the same address out to a pool-using container on the same subnet.
+
+The test pairs three artifacts:
+
+| Artifact | Role |
+|---|---|
+| `pv-example-device-ipam-lxcbr` | device.json: single pool `pvcnet`, bridge `lxcbr0`, subnet `10.0.3.0/24`, gateway `10.0.3.1` |
+| `pv-example-ipam-static` | Legacy container. Does **not** set `PV_NETWORK_POOL`. Uses `PV_LXC_NETWORK_*` pvr template vars to bake `lxc.net.0.type = veth`, `lxc.net.0.link = lxcbr0`, `lxc.net.0.ipv4.address = 10.0.3.2/24` directly into its lxc.container.conf. |
+| `pv-example-net-pvcnet` | Pool-using container attached to the `pvcnet` pool via `PV_NETWORK_POOL`. Expects IPAM to hand it the next free address after the reserved `10.0.3.2`, which is `10.0.3.3`. |
+
+### Setup
+
+```bash
+rm -f pvtx.d/*.pvrexport.tgz
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam-lxcbr.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-static.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-pvcnet.pvrexport.tgz pvtx.d/
+
+docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 25
+```
+
+### Verify
+
+```bash
+# Container state — both containers RUNNING with distinct IPs
+docker exec pva-test lxc-ls -f
+# Expected:
+#   pv-example-ipam-static  RUNNING 10.0.3.2   (from baked lxc.net.0.ipv4.address)
+#   pv-example-net-pvcnet   RUNNING 10.0.3.3   (allocator skipped .2 because it was reserved)
+
+# IPAM log — confirm the reservation and the allocation
+docker exec pva-test grep -E "reserved static|allocated|created bridge|setup NAT" \
+    /var/pantavisor/storage/logs/0/pantavisor/pantavisor.log
+# Expected sequence:
+#   INFO [ipam] setup_bridge: created bridge lxcbr0 with IP 10.0.3.1/24
+#   INFO [ipam] setup_nat: setup NAT (nftables) for pool pvcnet
+#   INFO [ipam] pv_ipam_reserve_static: reserved static IP 10.0.3.2 (from pv-example-ipam-static) in pool 'pvcnet'
+#   INFO [ipam] pv_ipam_allocate: allocated 10.0.3.3/24 to pv-example-net-pvcnet from pool pvcnet
+```
+
+### Expected Results
+
+| Check | Expected |
+|-------|----------|
+| `pv-example-ipam-static` IPv4 | 10.0.3.2 (baked directly into lxc.container.conf, not allocated from the pool) |
+| `pv-example-net-pvcnet` IPv4 | 10.0.3.3 (next-available, with .2 reserved and .1 being the gateway) |
+| Log: reservation line | `reserved static IP 10.0.3.2 (from pv-example-ipam-static) in pool 'pvcnet'` |
+| Log: allocation line | `allocated 10.0.3.3/24 to pv-example-net-pvcnet from pool pvcnet` |
+
+### What failure looks like
+
+If the reservation walk is broken or not being called, IPAM would happily allocate `10.0.3.2` to `pv-example-net-pvcnet` (since that's the first free IP after the gateway), then both containers end up fighting for the same L3 address. `lxc-ls -f` would show the pool-using container on `10.0.3.2` and ARP for that address on the bridge would flap between the two.
+
+### Notes
+
+- The baked address (`10.0.3.2/24`) is generated via `PV_LXC_NETWORK_*` pvr template variables in `pv-example-ipam-static.args.json`, not by hand-editing `lxc.container.conf`. See the `PVR_TEMPLATES.md` reference for the supported vars.
+- pv-example-ipam-static does **not** set `PV_NETWORK_POOL` — the validation hook introduced in Test 8 would reject a container that declares both. The two approaches are mutually exclusive by design.
+- Same-subnet coexistence between lxc-native and pool-using containers is the whole point of this design. Different-subnet coexistence (legacy container on a different bridge pantavisor doesn't know about) falls through the reservation walk with a DEBUG log and no effect on pool allocation.
 
 ---
 

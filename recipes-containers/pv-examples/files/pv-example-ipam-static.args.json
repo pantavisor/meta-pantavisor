@@ -1,0 +1,6 @@
+{
+    "PV_RESTART_POLICY": "container",
+    "PV_LXC_NETWORK_TYPE": "veth",
+    "PV_LXC_NETWORK_IPV4_ADDRESS": "10.0.3.2/24",
+    "PV_LXC_NETWORK_IPV4_GATEWAY": "10.0.3.1"
+}
