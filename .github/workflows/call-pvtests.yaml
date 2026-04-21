@@ -59,6 +59,9 @@ jobs:
 
       - name: Run pvtests
         working-directory: ${{ env.WORKSPACE }}
+        env:
+          PH_USER: ${{ secrets.PH_USER }}
+          PH_PASS: ${{ secrets.PH_PASS }}
         run: |
           chmod +x test.docker.sh
 
@@ -84,17 +87,17 @@ jobs:
 
             while [ $attempt -le $max_retries ]; do
               echo "Attempt $attempt of $max_retries..."
-              if PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' ./test.docker.sh run "$TEST_TARGET"; then
+              if ./test.docker.sh -v run "$TEST_TARGET"; then
                 success=1
                 break
               fi
-              
+
               echo "Attempt $attempt failed."
               attempt=$((attempt + 1))
-              
-              if [ $attempt -le $max_retries ]; do
+
+              if [ $attempt -le $max_retries ]; then
                 sleep 5 # Brief delay before next retry
-              done
+              fi
             done
 
             if [ $success -eq 0 ]; then
@@ -102,7 +105,7 @@ jobs:
               exit 1
             fi
           else
-            ./test.docker.sh run "$TEST_TARGET"
+            ./test.docker.sh -v run "$TEST_TARGET"
           fi
 
       - name: Show Tests Summary

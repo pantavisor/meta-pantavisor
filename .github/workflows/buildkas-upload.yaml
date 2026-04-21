@@ -101,7 +101,7 @@ jobs:
           name: pantavisor-bsp-${{ inputs.machine_name }}
           path: |
             pvexports/pantavisor-bsp*
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
       - name: Archive tezi tar artifacts
         uses: actions/upload-artifact@v7
@@ -141,7 +141,7 @@ jobs:
           done
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: github.ref_type == 'tag'
         with:
          body_path: notes.md
