@@ -78,8 +78,29 @@ jobs:
           echo "------------------------------------------------------"
 
           if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
-            PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-            ./test.docker.sh run "$TEST_TARGET"
+            max_retries=3
+            attempt=1
+            success=0
+
+            while [ $attempt -le $max_retries ]; do
+              echo "Attempt $attempt of $max_retries..."
+              if PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' ./test.docker.sh run "$TEST_TARGET"; then
+                success=1
+                break
+              fi
+              
+              echo "Attempt $attempt failed."
+              attempt=$((attempt + 1))
+              
+              if [ $attempt -le $max_retries ]; do
+                sleep 5 # Brief delay before next retry
+              done
+            done
+
+            if [ $success -eq 0 ]; then
+              echo "All $max_retries attempts failed."
+              exit 1
+            fi
           else
             ./test.docker.sh run "$TEST_TARGET"
           fi
