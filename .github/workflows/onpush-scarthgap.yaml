@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - '**'
-      - 'kas/build-configs/release/**'
-      - '!.github/scripts/**'
-      - '!.github/templates/**'
+      - '!.github/**'
+  pull_request:
+    paths:
+      - '**'
+      - '!.github/**'
 
 jobs:
   build:

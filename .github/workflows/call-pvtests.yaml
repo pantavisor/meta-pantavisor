@@ -59,6 +59,9 @@ jobs:
 
       - name: Run pvtests
         working-directory: ${{ env.WORKSPACE }}
+        env:
+          PH_USER: ${{ secrets.PH_USER }}
+          PH_PASS: ${{ secrets.PH_PASS }}
         run: |
           chmod +x test.docker.sh
 
@@ -78,31 +81,46 @@ jobs:
           echo "------------------------------------------------------"
 
           if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
-            PH_USER='${{ secrets.PH_USER }}' PH_PASS='${{ secrets.PH_PASS }}' \
-            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee pvtests-run.log
-          else
-            ./test.docker.sh run "$TEST_TARGET" 2>&1 | tee pvtests-run.log
-          fi
-          echo "PVTEST_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+            max_retries=3
+            attempt=1
+            success=0
 
-          LOG_PATH=$(grep -m1 'Info: test logs can be found at' pvtests-run.log | sed 's/.*Info: test logs can be found at //')
-          echo "PVTEST_LOG=${LOG_PATH}" >> $GITHUB_ENV
+            while [ $attempt -le $max_retries ]; do
+              echo "Attempt $attempt of $max_retries..."
+              if ./test.docker.sh -v run "$TEST_TARGET"; then
+                success=1
+                break
+              fi
+
+              echo "Attempt $attempt failed."
+              attempt=$((attempt + 1))
+
+              if [ $attempt -le $max_retries ]; then
+                sleep 5 # Brief delay before next retry
+              fi
+            done
+
+            if [ $success -eq 0 ]; then
+              echo "All $max_retries attempts failed."
+              exit 1
+            fi
+          else
+            ./test.docker.sh -v run "$TEST_TARGET"
+          fi
 
       - name: Show Tests Summary
         working-directory: ${{ env.WORKSPACE }}
         if: always()
         run: |
-          if [ -n "$PVTEST_LOG" ] && [ -f "$PVTEST_LOG" ]; then
+          if [ -f test.docker.log ]; then
             {
-              echo "## Test Results"
               echo '```'
-              cat "$PVTEST_LOG"
+              sed -n '/SUMMARY/,$p' test.docker.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "## Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
+            echo "Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
           fi
-          [ "$PVTEST_EXIT" = "0" ] || exit 1
 
       - name: Upload workspace on failure
         if: failure()
@@ -115,8 +133,8 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v7
         with:
-          name: pvtests-log
-          path: ${{ env.PVTEST_LOG }}
+          name: test.docker.log
+          path: ${{ env.WORKSPACE }}/test.docker.log
 
       - name: Clean up
         if: always()
