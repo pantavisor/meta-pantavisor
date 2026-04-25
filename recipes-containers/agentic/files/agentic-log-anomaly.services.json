@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "log-anomaly",
+      "type": "rest",
+      "socket": "/run/logs/anomaly.sock"
+    }
+  ]
+}

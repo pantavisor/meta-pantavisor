@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "camera-analysis",
+      "type": "rest",
+      "socket": "/run/camera/analysis.sock"
+    }
+  ]
+}

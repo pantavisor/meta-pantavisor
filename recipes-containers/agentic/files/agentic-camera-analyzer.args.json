@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "camera-feed",
+            "target": "/run/pv/services/camera-feed.sock"
+        }
+    ]
+}

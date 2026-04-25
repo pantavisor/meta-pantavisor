@@ -1,0 +1,10 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "name": "log-feed",
+      "type": "rest",
+      "socket": "/run/logs/feed.sock"
+    }
+  ]
+}

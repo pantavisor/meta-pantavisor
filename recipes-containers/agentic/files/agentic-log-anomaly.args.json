@@ -1,0 +1,14 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "log-feed",
+            "target": "/run/pv/services/log-feed.sock"
+        }
+    ],
+    "PV_SERVICES_OPTIONAL": [
+        {
+            "name": "deepseek-r1",
+            "target": "/run/pv/services/deepseek-r1.sock"
+        }
+    ]
+}
