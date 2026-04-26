@@ -2,9 +2,9 @@
   "#spec": "service-manifest-xconnect@1",
   "services": [
     {
-      "name": "deepseek-r1",
+      "name": "pv-llama",
       "type": "rest",
-      "socket": "/run/deepseek-r1/api.sock"
+      "socket": "/run/pv-llama/api.sock"
     }
   ]
 }

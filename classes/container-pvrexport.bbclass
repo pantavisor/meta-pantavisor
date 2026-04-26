@@ -69,6 +69,18 @@ fakeroot IMAGE_CMD:pvrexportit(){
         $args ${PVR_APP_ADD_EXTRA_ARGS} \
         --format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
         ${PN}
+
+    # Recipe hook: invoked after `pvr app add` (which has populated
+    # ${PVSTATE}/${PN}/ with root.squashfs, run.json, lxc.container.conf
+    # …) but before the first `pvr add` / `pvr commit`. Use it to drop
+    # extra artifacts into the staged container directory — e.g. a
+    # separately-built data.squashfs for content that should travel as
+    # its own object so updates that only touch the rootfs don't have
+    # to re-upload it.
+    if [ -n "${PVR_APP_ADD_POST_HOOK}" ]; then
+        ${PVR_APP_ADD_POST_HOOK}
+    fi
+
     pvr add
     pvr commit
     if [ -f ${WORKDIR}/${PN}.mdev.json ]; then

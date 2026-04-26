@@ -5,8 +5,10 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=1539dadbedb60aa18519febfeab70632"
 
 SRC_URI = "gitsm://github.com/ggml-org/llama.cpp;protocol=https;branch=master"
 
-# b4404 (pin a known-good tag; bump as needed)
-SRCREV = "ba1cb19cdd0d92e012e0f6e009e0620f854b6afd"
+# b4600 (pin a known-good tag; bump as needed). Must be >= b4514 for
+# DeepSeek-R1-Qwen distill tokenizer support (added in commit ec7f3ac9
+# on 2025-01-20).
+SRCREV = "553f1e46e9e864514bbd6bf4009146db66be0541"
 PV = "0.0+git${SRCPV}"
 
 S = "${WORKDIR}/git"
@@ -20,7 +22,7 @@ inherit cmake pkgconfig
 EXTRA_OECMAKE = " \
     -DLLAMA_BUILD_SERVER=ON \
     -DLLAMA_BUILD_TESTS=OFF \
-    -DLLAMA_BUILD_EXAMPLES=OFF \
+    -DLLAMA_BUILD_EXAMPLES=ON \
     -DLLAMA_CURL=ON \
     -DGGML_NATIVE=OFF \
     -DGGML_BLAS=OFF \

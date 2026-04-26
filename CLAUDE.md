@@ -6,6 +6,8 @@ Yocto/OpenEmbedded layer for building Pantavisor, a container-based embedded Lin
 
 | Document | Description |
 |----------|-------------|
+| [AGENTIC.md](AGENTIC.md) | Vision for agentic / on-device AI: pipeline pattern, model lineup, killer demos |
+| [AGENTIC-LLAMA.md](AGENTIC-LLAMA.md) | The pv-llama reasoner container — internals, model packaging, agent-app consumption, alignment audit |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow - building, testing, iterating on pantavisor and containers |
 | [EXAMPLES.md](EXAMPLES.md) | Example containers for pv-xconnect service mesh (Unix, REST, D-Bus, DRM, Wayland) |
 | [TESTPLAN-xconnect.md](TESTPLAN-xconnect.md) | xconnect service mesh tests (unix, dbus, drm) |
