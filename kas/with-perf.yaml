@@ -1,0 +1,21 @@
+header:
+  version: 14
+
+# Enable on-device profiling via the pv-perf debug container.
+#
+# This overlay only enables DISTRO_FEATURES=tools-profile, which is
+# what the kernel recipe needs to build the `perf` package. The
+# pv-perf container recipe (recipes-containers/debug/pv-perf_1.0.bb)
+# pulls perf in via IMAGE_INSTALL and keeps the host PID/net/IPC/UTS
+# namespaces + CAP_SYS_ADMIN/PTRACE/PERFMON so
+# `pventer -c pv-perf perf top -p $(pidof pv-main-loop)` profiles
+# pantavisor's hot worker.
+#
+# We deliberately do NOT add `perf` to PANTAVISOR_FEATURES here:
+# putting perf in the initramfs grows it past the 128 MB rpi boot
+# partition and breaks the rpiab tryboot installer on devices already
+# flashed at that size. The container approach keeps perf out of the
+# boot path — it ships as a regular pvr object on the rootfs side.
+local_conf_header:
+  perf-feature: |
+    DISTRO_FEATURES:append = " tools-profile"
