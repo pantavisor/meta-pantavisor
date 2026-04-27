@@ -396,7 +396,8 @@ xconnect wiring, auto-recovery) comes from the skeleton.
 | `agentic-log-anomaly`              | Single-product agent-app: log triage          | ✅      |
 | `pv-llama-model-smollm2-135m`      | SmolLM2-135M-Instruct (~100 MB Q4)            | ✅      |
 | `pv-llama-model-smollm2-360m`      | SmolLM2-360M-Instruct (~260 MB Q4)            | ✅      |
-| `agentic-app-skeleton`             | Generic agent-app harness (loop, tool exec)   | 🚧 next |
+| `agentic-app-skeleton`             | Generic agent-app harness (loop, tool exec)   | ✅      |
+| `agentic-example-log-triage`       | Reference product: log triage on top of the skeleton | ✅      |
 | `pv-llama-router` (litellm)        | Cloud offload (Anthropic / Bedrock / OpenAI)  | 🚧 next |
 | `pv-llama-model-smolvlm-256m`      | SmolVLM-256M vision-language (~250 MB)        | 🚧 next |
 | `pv-llama-model-moondream2`        | Moondream2 (~900 MB) richer VLM for Pi 5 size | 🚧 next |
@@ -534,10 +535,12 @@ Near-term (already in the recipes tree or being added):
 - [x] `pv-llama` multi-model serving with `llama-swap`
 - [x] DeepSeek-R1 1.5B and Qwen2.5 0.5B model recipes
 - [x] SmolLM2-135M and SmolLM2-360M model recipes
-- [ ] `agentic-app-skeleton` — generic agent-app harness with the
+- [x] `agentic-app-skeleton` — generic agent-app harness with the
       reasoner-loop / tool-dispatch / schema-validation plumbing so
       product apps only have to ship a system prompt, a tools.json,
       and a Python module of tool implementations
+      (see `recipes-containers/agentic/agentic-app-skeleton.inc` for the
+      product contract; reference product in `agentic-example-log-triage`)
 - [ ] SmolVLM-256M / Moondream2 vision-language model recipes
       (multimodal needs `llama.cpp`'s `llama-mtmd-cli` path —
       separate binary, separate `.mmproj-*` projector file alongside

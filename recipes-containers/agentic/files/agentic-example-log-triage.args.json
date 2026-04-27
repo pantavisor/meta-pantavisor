@@ -1,0 +1,3 @@
+{
+    "PV_SERVICES_REQUIRED": "pv-llama:rest:default,log-feed:rest:default"
+}

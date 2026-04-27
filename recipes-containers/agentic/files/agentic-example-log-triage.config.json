@@ -1,0 +1,17 @@
+{
+    "model": "local-qwen",
+    "llm": {
+        "uds": "/run/pv/services/pv-llama.sock"
+    },
+    "feeds": [
+        {
+            "name": "log-feed",
+            "socket": "/run/pv/services/log-feed.sock",
+            "path": "/subscribe"
+        }
+    ],
+    "sink": {
+        "socket": "/run/agentic-app/triage.sock"
+    },
+    "max_iterations": 4
+}

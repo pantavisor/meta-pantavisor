@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+# Entrypoint for the agentic-app skeleton. Defers all logic to the
+# `agentic_skeleton` package so we don't drift between this script and the
+# library.
+from agentic_skeleton.runtime import main
+
+if __name__ == "__main__":
+    main()

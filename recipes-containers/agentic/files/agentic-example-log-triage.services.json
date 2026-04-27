@@ -1,0 +1,10 @@
+{
+    "#spec": "service-manifest-xconnect@1",
+    "services": [
+        {
+            "name": "agentic-log-triage",
+            "type": "rest",
+            "socket": "/run/agentic-app/triage.sock"
+        }
+    ]
+}

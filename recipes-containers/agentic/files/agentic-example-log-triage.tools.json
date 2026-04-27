@@ -1,0 +1,27 @@
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "classify",
+            "description": "Record a triage verdict for the current log event. Call exactly once per event before emitting the final answer.",
+            "parameters": {
+                "type": "object",
+                "required": ["severity", "notify", "reason"],
+                "properties": {
+                    "severity": {
+                        "type": "string",
+                        "description": "One of: critical, warn, info, ignore."
+                    },
+                    "notify": {
+                        "type": "boolean",
+                        "description": "True if a human should be alerted."
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "Short one-line justification, max 120 chars."
+                    }
+                }
+            }
+        }
+    }
+]
