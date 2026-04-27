@@ -1,0 +1,16 @@
+{
+    "PV_LXC_NAMESPACE_KEEP": "user pid net ipc",
+    "PV_LXC_CAP_KEEP": [
+        "sys_admin",
+        "sys_ptrace",
+        "sys_resource",
+        "syslog",
+        "dac_read_search",
+        "ipc_lock",
+        "net_admin"
+    ],
+    "PV_SECURITY_WITH_HOSTPROC": "1",
+    "PV_SECURITY_WITH_STORAGE": "1",
+    "PV_LXC_DISABLE_CONSOLE": "1",
+    "LXC_TTY_MAX": "0"
+}
