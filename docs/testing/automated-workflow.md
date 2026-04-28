@@ -103,3 +103,4 @@ Test plans covering specific features live in [testplans/](testplans/):
 | [testplan-pvctrl.md](testplans/testplan-pvctrl.md) | Full pv-ctrl REST API coverage |
 | [testplan-xconnect.md](testplans/testplan-xconnect.md) | xconnect service mesh (unix, D-Bus, DRM) |
 | [testplan-pvtx.md](testplans/testplan-pvtx.md) | pvtx transaction tool unit tests (no Pantavisor needed) |
+| [testplan-cgroup.md](testplans/testplan-cgroup.md) | cgroup HYBRID-mode destroy and no-suffix accumulation (lenient + force stop) |
