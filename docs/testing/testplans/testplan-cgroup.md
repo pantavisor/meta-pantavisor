@@ -1,4 +1,4 @@
-# TESTPLAN-cgroup
+# testplan-cgroup
 
 Validation for pantavisor's cgroup handling on HYBRID-mode devices (embedded/standalone init), covering both lenient-stop and force-stop (SIGKILL) container lifecycle paths.
 
