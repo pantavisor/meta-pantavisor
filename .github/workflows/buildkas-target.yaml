@@ -53,6 +53,7 @@ jobs:
            su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
 
       - name: prepare files for distribution
+        if: always()
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
           BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
@@ -72,6 +73,7 @@ jobs:
 
 ## File distribution
       - name: Archive AppEngine artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: appengine-${{ inputs.machine_name }}
@@ -81,6 +83,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive wic artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
@@ -89,6 +92,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive all pvrexport artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: pvrexports-${{ inputs.machine_name }}
@@ -97,6 +101,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive bsp pvrexport artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: pantavisor-bsp-${{ inputs.machine_name }}
@@ -105,6 +110,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive tezi tar artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
@@ -113,6 +119,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive sdk tar artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: sdk-artifact-${{ inputs.machine_name }}
@@ -120,6 +127,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive manifest audit artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: manifest-audit-${{ inputs.build_target }}-${{ inputs.machine_name }}
