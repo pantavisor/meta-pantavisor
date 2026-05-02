@@ -1,0 +1,1196 @@
+# pv-manifest-audit v1
+# format: type mode uid gid path[ -> symlink-target | major,minor]
+# machine: docker-x86_64
+# distro:  panta-appengine (scarthgap)
+# prefix:  pv-appengine
+# exclude: /var/lib/rpm /var/lib/dnf /var/lib/opkg /usr/lib/opkg /var/cache/ldconfig /var/cache/dnf /var/cache/yum
+d 0755 0 0 /bin
+l 0777 0 0 /bin/ash -> /bin/busybox
+l 0777 0 0 /bin/base64 -> /usr/bin/base64.coreutils
+l 0777 0 0 /bin/bash -> /bin/bash.bash
+f 0755 0 0 /bin/bash.bash
+f 4755 0 0 /bin/busybox
+l 0777 0 0 /bin/busybox.nosuid -> busybox
+l 0777 0 0 /bin/cat -> /bin/cat.coreutils
+f 0755 0 0 /bin/cat.coreutils
+l 0777 0 0 /bin/chattr -> /bin/busybox
+l 0777 0 0 /bin/chgrp -> /bin/chgrp.coreutils
+f 0755 0 0 /bin/chgrp.coreutils
+l 0777 0 0 /bin/chmod -> /bin/chmod.coreutils
+f 0755 0 0 /bin/chmod.coreutils
+l 0777 0 0 /bin/chown -> /bin/chown.coreutils
+f 0755 0 0 /bin/chown.coreutils
+l 0777 0 0 /bin/cp -> /bin/cp.coreutils
+f 0755 0 0 /bin/cp.coreutils
+l 0777 0 0 /bin/cpio -> /bin/busybox
+l 0777 0 0 /bin/date -> /bin/date.coreutils
+f 0755 0 0 /bin/date.coreutils
+l 0777 0 0 /bin/dd -> /bin/dd.coreutils
+f 0755 0 0 /bin/dd.coreutils
+l 0777 0 0 /bin/df -> /usr/bin/df.coreutils
+l 0777 0 0 /bin/dmesg -> /bin/dmesg.util-linux
+f 0755 0 0 /bin/dmesg.util-linux
+l 0777 0 0 /bin/dnsdomainname -> /bin/busybox
+l 0777 0 0 /bin/dumpkmap -> /bin/busybox
+l 0777 0 0 /bin/echo -> /bin/echo.coreutils
+f 0755 0 0 /bin/echo.coreutils
+l 0777 0 0 /bin/egrep -> /bin/busybox
+l 0777 0 0 /bin/false -> /bin/false.coreutils
+f 0755 0 0 /bin/false.coreutils
+l 0777 0 0 /bin/fgrep -> /bin/busybox
+l 0777 0 0 /bin/getopt -> /bin/getopt.util-linux
+f 0755 0 0 /bin/getopt.util-linux
+l 0777 0 0 /bin/grep -> /bin/busybox
+l 0777 0 0 /bin/gunzip -> /bin/busybox
+l 0777 0 0 /bin/gzip -> /bin/busybox
+l 0777 0 0 /bin/hostname -> /bin/hostname.coreutils
+f 0755 0 0 /bin/hostname.coreutils
+l 0777 0 0 /bin/kill -> /bin/kill.coreutils
+f 0755 0 0 /bin/kill.coreutils
+f 0755 0 0 /bin/kill.util-linux
+f 0755 0 0 /bin/kmod
+l 0777 0 0 /bin/ln -> /bin/ln.coreutils
+f 0755 0 0 /bin/ln.coreutils
+l 0777 0 0 /bin/login -> /bin/login.shadow
+f 0755 0 0 /bin/login.shadow
+l 0777 0 0 /bin/ls -> /bin/ls.coreutils
+f 0755 0 0 /bin/ls.coreutils
+l 0777 0 0 /bin/lsmod -> /bin/lsmod.kmod
+l 0777 0 0 /bin/lsmod.kmod -> kmod
+l 0777 0 0 /bin/mkdir -> /bin/mkdir.coreutils
+f 0755 0 0 /bin/mkdir.coreutils
+l 0777 0 0 /bin/mknod -> /bin/mknod.coreutils
+f 0755 0 0 /bin/mknod.coreutils
+l 0777 0 0 /bin/mktemp -> /usr/bin/mktemp.coreutils
+l 0777 0 0 /bin/more -> /bin/more.util-linux
+f 0755 0 0 /bin/more.util-linux
+l 0777 0 0 /bin/mount -> /bin/mount.util-linux
+f 4755 0 0 /bin/mount.util-linux
+l 0777 0 0 /bin/mountpoint -> /bin/mountpoint.util-linux
+f 0755 0 0 /bin/mountpoint.sysvinit
+f 0755 0 0 /bin/mountpoint.util-linux
+l 0777 0 0 /bin/mv -> /bin/mv.coreutils
+f 0755 0 0 /bin/mv.coreutils
+l 0777 0 0 /bin/netstat -> /bin/busybox
+l 0777 0 0 /bin/nice -> /usr/bin/nice.coreutils
+l 0777 0 0 /bin/pidof -> /bin/pidof.sysvinit
+l 0777 0 0 /bin/pidof.sysvinit -> /sbin/killall5
+l 0777 0 0 /bin/ping -> /bin/busybox
+l 0777 0 0 /bin/ping6 -> /bin/busybox
+l 0777 0 0 /bin/printenv -> /usr/bin/printenv.coreutils
+l 0777 0 0 /bin/ps -> /bin/busybox
+l 0777 0 0 /bin/pwd -> /bin/pwd.coreutils
+f 0755 0 0 /bin/pwd.coreutils
+l 0777 0 0 /bin/rm -> /bin/rm.coreutils
+f 0755 0 0 /bin/rm.coreutils
+l 0777 0 0 /bin/rmdir -> /bin/rmdir.coreutils
+f 0755 0 0 /bin/rmdir.coreutils
+l 0777 0 0 /bin/run-parts -> /bin/busybox
+l 0777 0 0 /bin/sed -> /bin/busybox
+l 0777 0 0 /bin/sh -> /bin/bash.bash
+l 0777 0 0 /bin/sleep -> /bin/sleep.coreutils
+f 0755 0 0 /bin/sleep.coreutils
+f 0755 0 0 /bin/start_getty
+l 0777 0 0 /bin/stat -> /bin/stat.coreutils
+f 0755 0 0 /bin/stat.coreutils
+l 0777 0 0 /bin/stty -> /bin/stty.coreutils
+f 0755 0 0 /bin/stty.coreutils
+l 0777 0 0 /bin/su -> /bin/su.shadow
+f 4755 0 0 /bin/su.shadow
+l 0777 0 0 /bin/sync -> /bin/sync.coreutils
+f 0755 0 0 /bin/sync.coreutils
+l 0777 0 0 /bin/tar -> /bin/busybox
+l 0777 0 0 /bin/touch -> /bin/touch.coreutils
+f 0755 0 0 /bin/touch.coreutils
+l 0777 0 0 /bin/true -> /bin/true.coreutils
+f 0755 0 0 /bin/true.coreutils
+l 0777 0 0 /bin/umount -> /bin/umount.util-linux
+f 4755 0 0 /bin/umount.util-linux
+l 0777 0 0 /bin/uname -> /bin/uname.coreutils
+f 0755 0 0 /bin/uname.coreutils
+l 0777 0 0 /bin/usleep -> /bin/busybox
+l 0777 0 0 /bin/vi -> /bin/busybox
+l 0777 0 0 /bin/watch -> /bin/busybox
+l 0777 0 0 /bin/zcat -> /bin/busybox
+d 0755 0 0 /boot
+d 0755 0 0 /dev
+d 0755 0 0 /etc
+d 0755 0 0 /etc/avahi
+f 0644 0 0 /etc/avahi/avahi-daemon.conf
+f 0644 0 0 /etc/avahi/hosts
+d 0755 0 0 /etc/avahi/services
+f 0644 0 0 /etc/bindresvport.blacklist
+f 0644 0 0 /etc/busybox.links
+d 0755 0 0 /etc/dbus-1
+f 0644 0 0 /etc/dbus-1/session.conf
+f 0644 0 0 /etc/dbus-1/system.conf
+d 0755 0 0 /etc/dbus-1/system.d
+f 0644 0 0 /etc/dbus-1/system.d/avahi-dbus.conf
+d 0755 0 0 /etc/default
+f 0755 0 0 /etc/default/devpts
+f 0644 0 0 /etc/default/mountall
+f 0644 0 0 /etc/default/rcS
+f 0644 0 0 /etc/default/useradd
+d 0755 0 0 /etc/default/volatiles
+f 0644 0 0 /etc/default/volatiles/00_core
+f 0644 0 0 /etc/default/volatiles/01_bootlogd
+f 0644 0 0 /etc/default/volatiles/99_dbus
+d 0755 0 0 /etc/depmod.d
+d 0755 0 0 /etc/dnf
+f 0644 0 0 /etc/dnf/dnf.conf
+d 0755 0 0 /etc/dnf/modules.d
+d 0755 0 0 /etc/dnf/vars
+f 0644 0 0 /etc/dnf/vars/arch
+f 0644 0 0 /etc/dnf/vars/releasever
+f 0644 0 0 /etc/dnsmasq.conf
+d 0755 0 0 /etc/dnsmasq.d
+f 0644 0 0 /etc/ethertypes
+f 0644 0 0 /etc/fstab
+f 0644 0 0 /etc/group
+f 0644 0 0 /etc/group-
+f 0400 0 0 /etc/gshadow
+f 0400 0 0 /etc/gshadow-
+f 0644 0 0 /etc/host.conf
+f 0644 0 0 /etc/hostapd.conf
+f 0644 0 0 /etc/hostname
+f 0644 0 0 /etc/hosts
+d 0755 0 0 /etc/init.d
+f 0755 0 0 /etc/init.d/avahi-daemon
+f 0755 0 0 /etc/init.d/banner.sh
+f 0755 0 0 /etc/init.d/bootlogd
+f 0755 0 0 /etc/init.d/bootmisc.sh
+f 0755 0 0 /etc/init.d/checkroot.sh
+f 0755 0 0 /etc/init.d/dbus-1
+f 0755 0 0 /etc/init.d/devpts.sh
+f 0755 0 0 /etc/init.d/dmesg.sh
+f 0755 0 0 /etc/init.d/dnsmasq
+f 0644 0 0 /etc/init.d/functions
+f 0755 0 0 /etc/init.d/halt
+f 0755 0 0 /etc/init.d/hostapd
+f 0755 0 0 /etc/init.d/hostname.sh
+f 0755 0 0 /etc/init.d/hwclock.sh
+f 0755 0 0 /etc/init.d/modutils.sh
+f 0755 0 0 /etc/init.d/mountall.sh
+f 0755 0 0 /etc/init.d/mountnfs.sh
+f 0755 0 0 /etc/init.d/networking
+f 0755 0 0 /etc/init.d/populate-volatile.sh
+f 0755 0 0 /etc/init.d/rc
+f 0755 0 0 /etc/init.d/rcS
+f 0755 0 0 /etc/init.d/read-only-rootfs-hook.sh
+f 0755 0 0 /etc/init.d/reboot
+f 0755 0 0 /etc/init.d/rmnologin.sh
+f 0755 0 0 /etc/init.d/rpcbind
+f 0755 0 0 /etc/init.d/save-rtc.sh
+f 0755 0 0 /etc/init.d/sendsigs
+f 0755 0 0 /etc/init.d/single
+l 0777 0 0 /etc/init.d/stop-bootlogd -> bootlogd
+f 0755 0 0 /etc/init.d/sysfs.sh
+f 0755 0 0 /etc/init.d/syslog
+f 0755 0 0 /etc/init.d/udev
+f 0755 0 0 /etc/init.d/umountfs
+f 0755 0 0 /etc/init.d/umountnfs.sh
+f 0755 0 0 /etc/init.d/urandom
+f 0644 0 0 /etc/inittab
+d 0755 0 0 /etc/inittab.d
+f 0644 0 0 /etc/issue
+f 0644 0 0 /etc/issue.net
+f 0644 0 0 /etc/ld.so.conf
+d 0755 0 0 /etc/libnl
+f 0644 0 0 /etc/libnl/classid
+f 0644 0 0 /etc/libnl/pktloc
+f 0644 0 0 /etc/limits
+f 0644 0 0 /etc/login.access
+f 0644 0 0 /etc/login.defs
+f 0644 0 0 /etc/logrotate-dmesg.conf
+d 0755 0 0 /etc/lxc
+f 0644 0 0 /etc/lxc/default.conf
+f 0644 0 0 /etc/mke2fs.conf
+d 0755 0 0 /etc/modprobe.d
+f 0644 0 0 /etc/motd
+l 0777 0 0 /etc/mtab -> /proc/mounts
+f 0644 0 0 /etc/netconfig
+d 0755 0 0 /etc/network
+d 0755 0 0 /etc/network/if-down.d
+d 0755 0 0 /etc/network/if-post-down.d
+d 0755 0 0 /etc/network/if-pre-up.d
+f 0755 0 0 /etc/network/if-pre-up.d/nfsroot
+d 0755 0 0 /etc/network/if-up.d
+f 0644 0 0 /etc/network/interfaces
+f 0644 0 0 /etc/nsswitch.conf
+d 0755 0 0 /etc/pantavisor
+f 0644 0 0 /etc/pantavisor-appengine.config
+d 0755 0 0 /etc/pantavisor/defaults
+f 0644 0 0 /etc/pantavisor/defaults/groups.json
+d 0755 0 0 /etc/pantavisor/policies
+f 0644 0 0 /etc/pantavisor/policies/prod.config
+f 0644 0 0 /etc/pantavisor/policies/test.config
+d 0755 0 0 /etc/pantavisor/pvs
+d 0755 0 0 /etc/pantavisor/pvs/trust
+f 0644 0 0 /etc/pantavisor/pvs/trust/ca-certificates.crt
+f 0644 0 0 /etc/pantavisor/pvs/trust/ca-oem-certificates.crt
+d 0755 0 0 /etc/pantavisor/ssh
+f 0644 0 0 /etc/pantavisor/ssh/README.ssh
+f 0644 0 0 /etc/passwd
+f 0644 0 0 /etc/passwd-
+f 0644 0 0 /etc/profile
+f 0644 0 0 /etc/protocols
+d 0755 0 0 /etc/rc0.d
+l 0777 0 0 /etc/rc0.d/K19avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc0.d/K20dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc0.d/K20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc0.d/K20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc0.d/K20hwclock.sh -> ../init.d/hwclock.sh
+l 0777 0 0 /etc/rc0.d/K20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc0.d/K31umountnfs.sh -> ../init.d/umountnfs.sh
+l 0777 0 0 /etc/rc0.d/K60rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc0.d/K80networking -> ../init.d/networking
+l 0777 0 0 /etc/rc0.d/S20sendsigs -> ../init.d/sendsigs
+l 0777 0 0 /etc/rc0.d/S25save-rtc.sh -> ../init.d/save-rtc.sh
+l 0777 0 0 /etc/rc0.d/S38urandom -> ../init.d/urandom
+l 0777 0 0 /etc/rc0.d/S40umountfs -> ../init.d/umountfs
+l 0777 0 0 /etc/rc0.d/S90halt -> ../init.d/halt
+d 0755 0 0 /etc/rc1.d
+l 0777 0 0 /etc/rc1.d/K19avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc1.d/K20dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc1.d/K20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc1.d/K20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc1.d/K20hwclock.sh -> ../init.d/hwclock.sh
+l 0777 0 0 /etc/rc1.d/K20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc1.d/K31umountnfs.sh -> ../init.d/umountnfs.sh
+l 0777 0 0 /etc/rc1.d/K60rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc1.d/K80networking -> ../init.d/networking
+d 0755 0 0 /etc/rc2.d
+l 0777 0 0 /etc/rc2.d/S01networking -> ../init.d/networking
+l 0777 0 0 /etc/rc2.d/S02dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc2.d/S12rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc2.d/S15mountnfs.sh -> ../init.d/mountnfs.sh
+l 0777 0 0 /etc/rc2.d/S20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc2.d/S20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc2.d/S20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc2.d/S21avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc2.d/S99rmnologin.sh -> ../init.d/rmnologin.sh
+l 0777 0 0 /etc/rc2.d/S99stop-bootlogd -> ../init.d/stop-bootlogd
+d 0755 0 0 /etc/rc3.d
+l 0777 0 0 /etc/rc3.d/S01networking -> ../init.d/networking
+l 0777 0 0 /etc/rc3.d/S02dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc3.d/S12rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc3.d/S15mountnfs.sh -> ../init.d/mountnfs.sh
+l 0777 0 0 /etc/rc3.d/S20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc3.d/S20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc3.d/S20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc3.d/S21avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc3.d/S99rmnologin.sh -> ../init.d/rmnologin.sh
+l 0777 0 0 /etc/rc3.d/S99stop-bootlogd -> ../init.d/stop-bootlogd
+d 0755 0 0 /etc/rc4.d
+l 0777 0 0 /etc/rc4.d/S01networking -> ../init.d/networking
+l 0777 0 0 /etc/rc4.d/S12rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc4.d/S15mountnfs.sh -> ../init.d/mountnfs.sh
+l 0777 0 0 /etc/rc4.d/S20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc4.d/S20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc4.d/S20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc4.d/S21avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc4.d/S99rmnologin.sh -> ../init.d/rmnologin.sh
+l 0777 0 0 /etc/rc4.d/S99stop-bootlogd -> ../init.d/stop-bootlogd
+d 0755 0 0 /etc/rc5.d
+l 0777 0 0 /etc/rc5.d/S01networking -> ../init.d/networking
+l 0777 0 0 /etc/rc5.d/S02dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc5.d/S12rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc5.d/S15mountnfs.sh -> ../init.d/mountnfs.sh
+l 0777 0 0 /etc/rc5.d/S20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc5.d/S20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc5.d/S20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc5.d/S21avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc5.d/S99rmnologin.sh -> ../init.d/rmnologin.sh
+l 0777 0 0 /etc/rc5.d/S99stop-bootlogd -> ../init.d/stop-bootlogd
+d 0755 0 0 /etc/rc6.d
+l 0777 0 0 /etc/rc6.d/K19avahi-daemon -> ../init.d/avahi-daemon
+l 0777 0 0 /etc/rc6.d/K20dbus-1 -> ../init.d/dbus-1
+l 0777 0 0 /etc/rc6.d/K20dnsmasq -> ../init.d/dnsmasq
+l 0777 0 0 /etc/rc6.d/K20hostapd -> ../init.d/hostapd
+l 0777 0 0 /etc/rc6.d/K20hwclock.sh -> ../init.d/hwclock.sh
+l 0777 0 0 /etc/rc6.d/K20syslog -> ../init.d/syslog
+l 0777 0 0 /etc/rc6.d/K31umountnfs.sh -> ../init.d/umountnfs.sh
+l 0777 0 0 /etc/rc6.d/K60rpcbind -> ../init.d/rpcbind
+l 0777 0 0 /etc/rc6.d/K80networking -> ../init.d/networking
+l 0777 0 0 /etc/rc6.d/S20sendsigs -> ../init.d/sendsigs
+l 0777 0 0 /etc/rc6.d/S25save-rtc.sh -> ../init.d/save-rtc.sh
+l 0777 0 0 /etc/rc6.d/S38urandom -> ../init.d/urandom
+l 0777 0 0 /etc/rc6.d/S40umountfs -> ../init.d/umountfs
+l 0777 0 0 /etc/rc6.d/S90reboot -> ../init.d/reboot
+d 0755 0 0 /etc/rcS.d
+l 0777 0 0 /etc/rcS.d/S02banner.sh -> ../init.d/banner.sh
+l 0777 0 0 /etc/rcS.d/S02sysfs.sh -> ../init.d/sysfs.sh
+l 0777 0 0 /etc/rcS.d/S03mountall.sh -> ../init.d/mountall.sh
+l 0777 0 0 /etc/rcS.d/S04udev -> ../init.d/udev
+l 0777 0 0 /etc/rcS.d/S05checkroot.sh -> ../init.d/checkroot.sh
+l 0777 0 0 /etc/rcS.d/S06devpts.sh -> ../init.d/devpts.sh
+l 0777 0 0 /etc/rcS.d/S06modutils.sh -> ../init.d/modutils.sh
+l 0777 0 0 /etc/rcS.d/S07bootlogd -> ../init.d/bootlogd
+l 0777 0 0 /etc/rcS.d/S29read-only-rootfs-hook.sh -> ../init.d/read-only-rootfs-hook.sh
+l 0777 0 0 /etc/rcS.d/S36bootmisc.sh -> ../init.d/bootmisc.sh
+l 0777 0 0 /etc/rcS.d/S37populate-volatile.sh -> ../init.d/populate-volatile.sh
+l 0777 0 0 /etc/rcS.d/S38dmesg.sh -> ../init.d/dmesg.sh
+l 0777 0 0 /etc/rcS.d/S38urandom -> ../init.d/urandom
+l 0777 0 0 /etc/rcS.d/S39hostname.sh -> ../init.d/hostname.sh
+l 0777 0 0 /etc/rcS.d/S40hwclock.sh -> ../init.d/hwclock.sh
+f 0644 0 0 /etc/resolv.conf
+f 0644 0 0 /etc/rpc
+f 0644 0 0 /etc/rpcbind.conf
+d 0755 0 0 /etc/rpm
+f 0644 0 0 /etc/rpm/macros
+f 0644 0 0 /etc/rpm/platform
+f 0644 0 0 /etc/rpmrc
+f 0400 0 0 /etc/securetty
+f 0644 0 0 /etc/services
+f 0400 0 0 /etc/shadow
+f 0400 0 0 /etc/shadow-
+f 0644 0 0 /etc/shells
+d 0755 0 0 /etc/skel
+f 0755 0 0 /etc/skel/.bashrc
+f 0755 0 0 /etc/skel/.profile
+d 0755 0 0 /etc/ssl
+f 0644 0 0 /etc/ssl/openssl.cnf
+f 0644 0 0 /etc/subgid
+f 0644 0 0 /etc/subuid
+f 0644 0 0 /etc/syslog-startup.conf
+f 0644 0 0 /etc/syslog.conf
+d 0755 0 0 /etc/terminfo
+d 0755 0 0 /etc/terminfo/a
+f 0644 0 0 /etc/terminfo/a/ansi
+d 0755 0 0 /etc/terminfo/d
+f 0644 0 0 /etc/terminfo/d/dumb
+d 0755 0 0 /etc/terminfo/l
+f 0644 0 0 /etc/terminfo/l/linux
+d 0755 0 0 /etc/terminfo/r
+f 0644 0 0 /etc/terminfo/r/rxvt
+d 0755 0 0 /etc/terminfo/s
+f 0644 0 0 /etc/terminfo/s/screen
+f 0644 0 0 /etc/terminfo/s/screen-256color
+f 0644 0 0 /etc/terminfo/s/sun
+d 0755 0 0 /etc/terminfo/v
+f 0644 0 0 /etc/terminfo/v/vt100
+f 0644 0 0 /etc/terminfo/v/vt102
+f 0644 0 0 /etc/terminfo/v/vt200
+f 0644 0 0 /etc/terminfo/v/vt220
+f 0644 0 0 /etc/terminfo/v/vt52
+d 0755 0 0 /etc/terminfo/x
+l 0777 0 0 /etc/terminfo/x/xterm -> xterm-color
+f 0644 0 0 /etc/terminfo/x/xterm-256color
+f 0644 0 0 /etc/terminfo/x/xterm-color
+f 0644 0 0 /etc/terminfo/x/xterm-xfree86
+d 0755 0 0 /etc/thttp
+d 0755 0 0 /etc/thttp/certs
+f 0644 0 0 /etc/thttp/certs/isrg-root-x1-cross-signed.pem
+f 0644 0 0 /etc/thttp/certs/isrgrootx1.pem
+d 0755 0 0 /etc/udev
+d 0755 0 0 /etc/udev/rules.d
+f 0644 0 0 /etc/udev/rules.d/80-net-name-slot.rules
+f 0644 0 0 /etc/udev/rules.d/local.rules
+f 0644 0 0 /etc/udev/udev.conf
+d 0755 0 0 /etc/udhcpc.d
+f 0755 0 0 /etc/udhcpc.d/50default
+f 0644 0 0 /etc/version
+f 0644 0 0 /etc/xattr.conf
+d 0755 0 0 /home
+d 0700 0 0 /home/root
+d 0755 0 0 /lib
+d 0755 0 0 /lib/depmod.d
+f 0644 0 0 /lib/depmod.d/exclude.conf
+f 0644 0 0 /lib/depmod.d/search.conf
+f 0755 0 0 /lib/ld-linux-x86-64.so.2
+f 0755 0 0 /lib/libBrokenLocale.so.1
+f 0755 0 0 /lib/libanl.so.1
+l 0777 0 0 /lib/libblkid.so.1 -> libblkid.so.1.1.0
+f 0755 0 0 /lib/libblkid.so.1.1.0
+f 0755 0 0 /lib/libc.so.6
+l 0777 0 0 /lib/libcap-ng.so.0 -> libcap-ng.so.0.0.0
+f 0755 0 0 /lib/libcap-ng.so.0.0.0
+l 0777 0 0 /lib/libcap.so.2 -> libcap.so.2.69
+f 0755 0 0 /lib/libcap.so.2.69
+l 0777 0 0 /lib/libcom_err.so.2 -> libcom_err.so.2.1
+f 0755 0 0 /lib/libcom_err.so.2.1
+f 0755 0 0 /lib/libdl.so.2
+l 0777 0 0 /lib/libe2p.so.2 -> libe2p.so.2.3
+f 0755 0 0 /lib/libe2p.so.2.3
+l 0777 0 0 /lib/libext2fs.so.2 -> libext2fs.so.2.4
+f 0755 0 0 /lib/libext2fs.so.2.4
+l 0777 0 0 /lib/libfdisk.so.1 -> libfdisk.so.1.1.0
+f 0755 0 0 /lib/libfdisk.so.1.1.0
+f 0644 0 0 /lib/libgcc_s.so.1
+f 0755 0 0 /lib/libm.so.6
+l 0777 0 0 /lib/libmount.so.1 -> libmount.so.1.1.0
+f 0755 0 0 /lib/libmount.so.1.1.0
+f 0755 0 0 /lib/libmvec.so.1
+l 0777 0 0 /lib/libncursesw.so.5 -> libncursesw.so.5.9
+f 0755 0 0 /lib/libncursesw.so.5.9
+f 0755 0 0 /lib/libnsl.so.1
+f 0755 0 0 /lib/libnss_compat.so.2
+f 0755 0 0 /lib/libnss_dns.so.2
+f 0755 0 0 /lib/libnss_files.so.2
+f 0755 0 0 /lib/libnss_mdns.so.2
+f 0755 0 0 /lib/libnss_mdns4.so.2
+f 0755 0 0 /lib/libnss_mdns4_minimal.so.2
+f 0755 0 0 /lib/libnss_mdns6.so.2
+f 0755 0 0 /lib/libnss_mdns6_minimal.so.2
+f 0755 0 0 /lib/libnss_mdns_minimal.so.2
+f 0755 0 0 /lib/libpthread.so.0
+f 0755 0 0 /lib/libresolv.so.2
+f 0755 0 0 /lib/librt.so.1
+l 0777 0 0 /lib/libsmartcols.so.1 -> libsmartcols.so.1.1.0
+f 0755 0 0 /lib/libsmartcols.so.1.1.0
+l 0777 0 0 /lib/libtinfo.so.5 -> libtinfo.so.5.9
+f 0755 0 0 /lib/libtinfo.so.5.9
+f 0755 0 0 /lib/libutil.so.1
+d 0755 0 0 /lib/modprobe.d
+d 0755 0 0 /lib/udev
+f 0755 0 0 /lib/udev/ata_id
+f 0755 0 0 /lib/udev/cdrom_id
+f 0755 0 0 /lib/udev/collect
+f 0755 0 0 /lib/udev/dmi_memory_id
+f 0755 0 0 /lib/udev/fido_id
+f 0755 0 0 /lib/udev/mtd_probe
+d 0755 0 0 /lib/udev/rules.d
+f 0644 0 0 /lib/udev/rules.d/50-udev-default.rules
+f 0644 0 0 /lib/udev/rules.d/60-autosuspend.rules
+f 0644 0 0 /lib/udev/rules.d/60-block.rules
+f 0644 0 0 /lib/udev/rules.d/60-cdrom_id.rules
+f 0644 0 0 /lib/udev/rules.d/60-drm.rules
+f 0644 0 0 /lib/udev/rules.d/60-evdev.rules
+f 0644 0 0 /lib/udev/rules.d/60-fido-id.rules
+f 0644 0 0 /lib/udev/rules.d/60-input-id.rules
+f 0644 0 0 /lib/udev/rules.d/60-persistent-alsa.rules
+f 0644 0 0 /lib/udev/rules.d/60-persistent-input.rules
+f 0644 0 0 /lib/udev/rules.d/60-persistent-storage-tape.rules
+f 0644 0 0 /lib/udev/rules.d/60-persistent-storage.rules
+f 0644 0 0 /lib/udev/rules.d/60-persistent-v4l.rules
+f 0644 0 0 /lib/udev/rules.d/60-sensor.rules
+f 0644 0 0 /lib/udev/rules.d/60-serial.rules
+f 0644 0 0 /lib/udev/rules.d/64-btrfs.rules
+f 0644 0 0 /lib/udev/rules.d/70-camera.rules
+f 0644 0 0 /lib/udev/rules.d/70-joystick.rules
+f 0644 0 0 /lib/udev/rules.d/70-memory.rules
+f 0644 0 0 /lib/udev/rules.d/70-mouse.rules
+f 0644 0 0 /lib/udev/rules.d/70-touchpad.rules
+f 0644 0 0 /lib/udev/rules.d/75-net-description.rules
+f 0644 0 0 /lib/udev/rules.d/75-probe_mtd.rules
+f 0644 0 0 /lib/udev/rules.d/78-sound-card.rules
+f 0644 0 0 /lib/udev/rules.d/80-drivers.rules
+f 0644 0 0 /lib/udev/rules.d/80-net-name-slot.rules
+f 0644 0 0 /lib/udev/rules.d/81-net-dhcp.rules
+f 0755 0 0 /lib/udev/scsi_id
+f 0755 0 0 /lib/udev/v4l_id
+d 0755 0 0 /media
+d 0755 0 0 /mnt
+d 0555 0 0 /proc
+d 0755 0 0 /run
+d 0755 0 0 /sbin
+f 0755 0 0 /sbin/agetty
+l 0777 0 0 /sbin/blkid -> /sbin/blkid.util-linux
+f 0755 0 0 /sbin/blkid.util-linux
+l 0777 0 0 /sbin/blockdev -> /sbin/blockdev.util-linux
+f 0755 0 0 /sbin/blockdev.util-linux
+f 0755 0 0 /sbin/bootlogd
+f 0755 0 0 /sbin/cfdisk
+f 0755 0 0 /sbin/ctrlaltdel
+l 0777 0 0 /sbin/depmod -> /sbin/depmod.kmod
+l 0777 0 0 /sbin/depmod.kmod -> ../bin/kmod
+f 0755 0 0 /sbin/e2fsck
+l 0777 0 0 /sbin/fdisk -> /sbin/fdisk.util-linux
+f 0755 0 0 /sbin/fdisk.util-linux
+l 0777 0 0 /sbin/fsck -> /sbin/fsck.util-linux
+f 0755 0 0 /sbin/fsck.ext2
+f 0755 0 0 /sbin/fsck.ext3
+f 0755 0 0 /sbin/fsck.ext4
+f 0755 0 0 /sbin/fsck.util-linux
+f 0755 0 0 /sbin/fstab-decode
+l 0777 0 0 /sbin/fstrim -> /sbin/fstrim.util-linux
+f 0755 0 0 /sbin/fstrim.util-linux
+l 0777 0 0 /sbin/getty -> /sbin/agetty
+f 0755 0 0 /sbin/getty-wrapper
+l 0777 0 0 /sbin/halt -> /sbin/halt.sysvinit
+f 4754 0 70 /sbin/halt.sysvinit
+l 0777 0 0 /sbin/hwclock -> /sbin/hwclock.util-linux
+f 0755 0 0 /sbin/hwclock.util-linux
+l 0777 0 0 /sbin/ifconfig -> /bin/busybox
+l 0777 0 0 /sbin/ifdown -> /bin/busybox
+l 0777 0 0 /sbin/ifup -> /bin/busybox
+l 0777 0 0 /sbin/init -> /sbin/init.sysvinit
+f 0755 0 0 /sbin/init.sysvinit
+l 0777 0 0 /sbin/insmod -> /sbin/insmod.kmod
+l 0777 0 0 /sbin/insmod.kmod -> ../bin/kmod
+l 0777 0 0 /sbin/ip -> /bin/busybox
+f 0755 0 0 /sbin/killall5
+l 0777 0 0 /sbin/klogd -> /bin/busybox
+f 0755 0 0 /sbin/ldconfig
+l 0777 0 0 /sbin/loadkmap -> /bin/busybox
+l 0777 0 0 /sbin/logread -> /bin/busybox
+l 0777 0 0 /sbin/losetup -> /sbin/losetup.util-linux
+f 0755 0 0 /sbin/losetup.util-linux
+l 0777 0 0 /sbin/lsmod -> /bin/lsmod.kmod
+l 0777 0 0 /sbin/mdev -> /bin/busybox
+l 0777 0 0 /sbin/mke2fs -> /sbin/mke2fs.e2fsprogs
+f 0755 0 0 /sbin/mke2fs.e2fsprogs
+l 0777 0 0 /sbin/mkfs.ext2 -> /sbin/mkfs.ext2.e2fsprogs
+f 0755 0 0 /sbin/mkfs.ext2.e2fsprogs
+f 0755 0 0 /sbin/mkfs.ext3
+f 0755 0 0 /sbin/mkfs.ext4
+l 0777 0 0 /sbin/mkswap -> /sbin/mkswap.util-linux
+f 0755 0 0 /sbin/mkswap.util-linux
+l 0777 0 0 /sbin/modinfo -> /sbin/modinfo.kmod
+l 0777 0 0 /sbin/modinfo.kmod -> ../bin/kmod
+l 0777 0 0 /sbin/modprobe -> /sbin/modprobe.kmod
+l 0777 0 0 /sbin/modprobe.kmod -> ../bin/kmod
+l 0777 0 0 /sbin/nologin -> /sbin/nologin.shadow
+f 0755 0 0 /sbin/nologin.shadow
+f 0755 0 0 /sbin/nologin.util-linux
+l 0777 0 0 /sbin/pivot_root -> /sbin/pivot_root.util-linux
+f 0755 0 0 /sbin/pivot_root.util-linux
+l 0777 0 0 /sbin/poweroff -> /sbin/poweroff.sysvinit
+l 0777 0 0 /sbin/poweroff.sysvinit -> halt.sysvinit
+l 0777 0 0 /sbin/reboot -> /sbin/reboot.sysvinit
+l 0777 0 0 /sbin/reboot.sysvinit -> halt.sysvinit
+l 0777 0 0 /sbin/rmmod -> /sbin/rmmod.kmod
+l 0777 0 0 /sbin/rmmod.kmod -> ../bin/kmod
+l 0777 0 0 /sbin/route -> /bin/busybox
+l 0777 0 0 /sbin/runlevel -> /sbin/runlevel.sysvinit
+f 0755 0 0 /sbin/runlevel.sysvinit
+l 0777 0 0 /sbin/setconsole -> /bin/busybox
+l 0777 0 0 /sbin/shutdown -> /sbin/shutdown.sysvinit
+f 4754 0 70 /sbin/shutdown.sysvinit
+l 0777 0 0 /sbin/start-stop-daemon -> /bin/busybox
+l 0777 0 0 /sbin/sulogin -> /sbin/sulogin.util-linux
+f 0755 0 0 /sbin/sulogin.util-linux
+l 0777 0 0 /sbin/swapoff -> /sbin/swapoff.util-linux
+f 0755 0 0 /sbin/swapoff.util-linux
+l 0777 0 0 /sbin/swapon -> /sbin/swapon.util-linux
+f 0755 0 0 /sbin/swapon.util-linux
+l 0777 0 0 /sbin/switch_root -> /sbin/switch_root.util-linux
+f 0755 0 0 /sbin/switch_root.util-linux
+l 0777 0 0 /sbin/sysctl -> /bin/busybox
+l 0777 0 0 /sbin/syslogd -> /bin/busybox
+l 0777 0 0 /sbin/telinit -> init
+l 0777 0 0 /sbin/udevadm -> /usr/bin/udevadm
+f 0755 0 0 /sbin/udevd
+l 0777 0 0 /sbin/udhcpc -> /bin/busybox
+l 0777 0 0 /sbin/vigr -> /sbin/vigr.shadow
+l 0777 0 0 /sbin/vigr.shadow -> vipw.shadow
+l 0777 0 0 /sbin/vipw -> /sbin/vipw.shadow
+f 0755 0 0 /sbin/vipw.shadow
+d 0555 0 0 /sys
+d 1777 0 0 /tmp
+d 0755 0 0 /usr
+d 0755 0 0 /usr/bin
+f 0755 0 0 /usr/bin/JSON.sh
+l 0777 0 0 /usr/bin/[ -> /usr/bin/lbracket.coreutils
+l 0777 0 0 /usr/bin/[[ -> /bin/busybox
+l 0777 0 0 /usr/bin/arch -> /usr/bin/arch.coreutils
+f 0755 0 0 /usr/bin/arch.coreutils
+l 0777 0 0 /usr/bin/ascii -> /bin/busybox
+l 0777 0 0 /usr/bin/awk -> /bin/busybox
+f 0755 0 0 /usr/bin/b2sum
+l 0777 0 0 /usr/bin/base32 -> /usr/bin/base32.coreutils
+f 0755 0 0 /usr/bin/base32.coreutils
+f 0755 0 0 /usr/bin/base64.coreutils
+l 0777 0 0 /usr/bin/basename -> /usr/bin/basename.coreutils
+f 0755 0 0 /usr/bin/basename.coreutils
+f 0755 0 0 /usr/bin/basenc
+l 0777 0 0 /usr/bin/bunzip2 -> /bin/busybox
+l 0777 0 0 /usr/bin/bzcat -> /bin/busybox
+l 0777 0 0 /usr/bin/bzip2 -> /bin/busybox
+l 0777 0 0 /usr/bin/cal -> /usr/bin/cal.util-linux
+f 0755 0 0 /usr/bin/cal.util-linux
+f 4755 0 0 /usr/bin/chage
+l 0777 0 0 /usr/bin/chcon -> /usr/bin/chcon.coreutils
+f 0755 0 0 /usr/bin/chcon.coreutils
+l 0777 0 0 /usr/bin/chfn -> /usr/bin/chfn.shadow
+f 4755 0 0 /usr/bin/chfn.shadow
+f 0755 0 0 /usr/bin/chmem
+f 0755 0 0 /usr/bin/choom
+l 0777 0 0 /usr/bin/chrt -> /usr/bin/chrt.util-linux
+f 0755 0 0 /usr/bin/chrt.util-linux
+l 0777 0 0 /usr/bin/chsh -> /usr/bin/chsh.shadow
+f 4755 0 0 /usr/bin/chsh.shadow
+l 0777 0 0 /usr/bin/chvt -> /bin/busybox
+l 0777 0 0 /usr/bin/cksum -> /usr/bin/cksum.coreutils
+f 0755 0 0 /usr/bin/cksum.coreutils
+l 0777 0 0 /usr/bin/clear -> /bin/busybox
+l 0777 0 0 /usr/bin/cmp -> /bin/busybox
+f 0755 0 0 /usr/bin/col
+f 0755 0 0 /usr/bin/colcrt
+f 0755 0 0 /usr/bin/colrm
+f 0755 0 0 /usr/bin/column
+l 0777 0 0 /usr/bin/comm -> /usr/bin/comm.coreutils
+f 0755 0 0 /usr/bin/comm.coreutils
+l 0777 0 0 /usr/bin/crc32 -> /bin/busybox
+l 0777 0 0 /usr/bin/csplit -> /usr/bin/csplit.coreutils
+f 0755 0 0 /usr/bin/csplit.coreutils
+l 0777 0 0 /usr/bin/cut -> /usr/bin/cut.coreutils
+f 0755 0 0 /usr/bin/cut.coreutils
+f 0755 0 0 /usr/bin/dbus-cleanup-sockets
+f 0755 0 0 /usr/bin/dbus-daemon
+f 0755 0 0 /usr/bin/dbus-launch
+f 0755 0 0 /usr/bin/dbus-monitor
+f 0755 0 0 /usr/bin/dbus-run-session
+f 0755 0 0 /usr/bin/dbus-send
+f 0755 0 0 /usr/bin/dbus-update-activation-environment
+f 0755 0 0 /usr/bin/dbus-uuidgen
+l 0777 0 0 /usr/bin/dc -> /bin/busybox
+f 0755 0 0 /usr/bin/dcp-blob-create
+l 0777 0 0 /usr/bin/deallocvt -> /bin/busybox
+f 0755 0 0 /usr/bin/df.coreutils
+f 0755 0 0 /usr/bin/dhcp_lease_time
+f 0755 0 0 /usr/bin/dhcp_release
+f 0755 0 0 /usr/bin/dhcp_release6
+l 0777 0 0 /usr/bin/diff -> /bin/busybox
+l 0777 0 0 /usr/bin/dir -> /usr/bin/dir.coreutils
+f 0755 0 0 /usr/bin/dir.coreutils
+l 0777 0 0 /usr/bin/dircolors -> /usr/bin/dircolors.coreutils
+f 0755 0 0 /usr/bin/dircolors.coreutils
+l 0777 0 0 /usr/bin/dirname -> /usr/bin/dirname.coreutils
+f 0755 0 0 /usr/bin/dirname.coreutils
+f 0755 0 0 /usr/bin/dnsmasq
+l 0777 0 0 /usr/bin/docker-runc -> runc
+l 0777 0 0 /usr/bin/du -> /usr/bin/du.coreutils
+f 0755 0 0 /usr/bin/du.coreutils
+l 0777 0 0 /usr/bin/dumpleases -> /bin/busybox
+l 0777 0 0 /usr/bin/eject -> /usr/bin/eject.util-linux
+f 0755 0 0 /usr/bin/eject.util-linux
+l 0777 0 0 /usr/bin/env -> /usr/bin/env.coreutils
+f 0755 0 0 /usr/bin/env.coreutils
+l 0777 0 0 /usr/bin/expand -> /usr/bin/expand.coreutils
+f 0755 0 0 /usr/bin/expand.coreutils
+f 4755 0 0 /usr/bin/expiry
+l 0777 0 0 /usr/bin/expr -> /usr/bin/expr.coreutils
+f 0755 0 0 /usr/bin/expr.coreutils
+l 0777 0 0 /usr/bin/factor -> /usr/bin/factor.coreutils
+f 0755 0 0 /usr/bin/factor.coreutils
+f 0755 0 0 /usr/bin/fadvise
+f 0755 0 0 /usr/bin/faillog
+f 0755 0 0 /usr/bin/fallbear-cmd
+l 0777 0 0 /usr/bin/fallocate -> /usr/bin/fallocate.util-linux
+f 0755 0 0 /usr/bin/fallocate.util-linux
+f 0755 0 0 /usr/bin/fcntl-lock
+f 0755 0 0 /usr/bin/fincore
+l 0777 0 0 /usr/bin/find -> /bin/busybox
+f 0755 0 0 /usr/bin/findmnt
+l 0777 0 0 /usr/bin/flock -> /usr/bin/flock.util-linux
+f 0755 0 0 /usr/bin/flock.util-linux
+l 0777 0 0 /usr/bin/fmt -> /usr/bin/fmt.coreutils
+f 0755 0 0 /usr/bin/fmt.coreutils
+l 0777 0 0 /usr/bin/fold -> /usr/bin/fold.coreutils
+f 0755 0 0 /usr/bin/fold.coreutils
+l 0777 0 0 /usr/bin/free -> /bin/busybox
+l 0777 0 0 /usr/bin/fuser -> /bin/busybox
+f 0755 0 0 /usr/bin/getsubids
+f 4755 0 0 /usr/bin/gpasswd
+l 0777 0 0 /usr/bin/groups -> /usr/bin/groups.shadow
+f 0755 0 0 /usr/bin/groups.coreutils
+f 0755 0 0 /usr/bin/groups.shadow
+f 0755 0 0 /usr/bin/hardlink
+l 0777 0 0 /usr/bin/head -> /usr/bin/head.coreutils
+f 0755 0 0 /usr/bin/head.coreutils
+l 0777 0 0 /usr/bin/hexdump -> /usr/bin/hexdump.util-linux
+f 0755 0 0 /usr/bin/hexdump.util-linux
+l 0777 0 0 /usr/bin/hostid -> /usr/bin/hostid.coreutils
+f 0755 0 0 /usr/bin/hostid.coreutils
+l 0777 0 0 /usr/bin/i386 -> setarch
+l 0777 0 0 /usr/bin/id -> /usr/bin/id.coreutils
+f 0755 0 0 /usr/bin/id.coreutils
+l 0777 0 0 /usr/bin/install -> /usr/bin/install.coreutils
+f 0755 0 0 /usr/bin/install.coreutils
+l 0777 0 0 /usr/bin/ionice -> /usr/bin/ionice.util-linux
+f 0755 0 0 /usr/bin/ionice.util-linux
+f 0755 0 0 /usr/bin/ipcmk
+l 0777 0 0 /usr/bin/ipcrm -> /usr/bin/ipcrm.util-linux
+f 0755 0 0 /usr/bin/ipcrm.util-linux
+l 0777 0 0 /usr/bin/ipcs -> /usr/bin/ipcs.util-linux
+f 0755 0 0 /usr/bin/ipcs.util-linux
+f 0755 0 0 /usr/bin/irqtop
+f 0755 0 0 /usr/bin/isosize
+l 0777 0 0 /usr/bin/join -> /usr/bin/join.coreutils
+f 0755 0 0 /usr/bin/join.coreutils
+l 0777 0 0 /usr/bin/killall -> /bin/busybox
+l 0777 0 0 /usr/bin/last -> /usr/bin/last.sysvinit
+f 0755 0 0 /usr/bin/last.sysvinit
+f 0755 0 0 /usr/bin/last.util-linux
+l 0777 0 0 /usr/bin/lastb -> /usr/bin/lastb.sysvinit
+l 0777 0 0 /usr/bin/lastb.sysvinit -> last.sysvinit
+l 0777 0 0 /usr/bin/lastb.util-linux -> last.util-linux
+f 0755 0 0 /usr/bin/lbracket.coreutils
+l 0777 0 0 /usr/bin/less -> /bin/busybox
+l 0777 0 0 /usr/bin/link -> /usr/bin/link.coreutils
+f 0755 0 0 /usr/bin/link.coreutils
+l 0777 0 0 /usr/bin/linux32 -> setarch
+l 0777 0 0 /usr/bin/linux64 -> setarch
+l 0777 0 0 /usr/bin/logger -> /usr/bin/logger.util-linux
+f 0755 0 0 /usr/bin/logger.util-linux
+l 0777 0 0 /usr/bin/logname -> /usr/bin/logname.coreutils
+f 0755 0 0 /usr/bin/logname.coreutils
+f 0755 0 0 /usr/bin/look
+f 0755 0 0 /usr/bin/lsblk
+f 0755 0 0 /usr/bin/lscpu
+f 0755 0 0 /usr/bin/lsfd
+f 0755 0 0 /usr/bin/lsipc
+f 0755 0 0 /usr/bin/lsirq
+f 0755 0 0 /usr/bin/lslocks
+f 0755 0 0 /usr/bin/lslogins
+f 0755 0 0 /usr/bin/lsmem
+f 0755 0 0 /usr/bin/lsns
+l 0777 0 0 /usr/bin/lspci -> /bin/busybox
+l 0777 0 0 /usr/bin/lsusb -> /bin/busybox
+f 0755 0 0 /usr/bin/lxc-console
+f 0755 0 0 /usr/bin/lxc-info
+f 0755 0 0 /usr/bin/lxc-ls
+f 0755 0 0 /usr/bin/lxc-top
+l 0777 0 0 /usr/bin/lzcat -> /bin/busybox
+l 0777 0 0 /usr/bin/mcookie -> /usr/bin/mcookie.util-linux
+f 0755 0 0 /usr/bin/mcookie.util-linux
+l 0777 0 0 /usr/bin/md5sum -> /usr/bin/md5sum.coreutils
+f 0755 0 0 /usr/bin/md5sum.coreutils
+l 0777 0 0 /usr/bin/mesg -> /usr/bin/mesg.sysvinit
+f 0755 0 0 /usr/bin/mesg.sysvinit
+f 0755 0 0 /usr/bin/mesg.util-linux
+l 0777 0 0 /usr/bin/microcom -> /bin/busybox
+l 0777 0 0 /usr/bin/mkfifo -> /usr/bin/mkfifo.coreutils
+f 0755 0 0 /usr/bin/mkfifo.coreutils
+f 0755 0 0 /usr/bin/mktemp.coreutils
+f 0755 0 0 /usr/bin/namei
+l 0777 0 0 /usr/bin/nc -> /usr/bin/nc.netcat-openbsd
+f 0755 0 0 /usr/bin/nc.netcat-openbsd
+f 4755 0 0 /usr/bin/newgidmap
+l 0777 0 0 /usr/bin/newgrp -> /usr/bin/newgrp.shadow
+f 4755 0 0 /usr/bin/newgrp.shadow
+f 4755 0 0 /usr/bin/newuidmap
+f 0755 0 0 /usr/bin/nice.coreutils
+l 0777 0 0 /usr/bin/nl -> /usr/bin/nl.coreutils
+f 0755 0 0 /usr/bin/nl.coreutils
+l 0777 0 0 /usr/bin/nohup -> /usr/bin/nohup.coreutils
+f 0755 0 0 /usr/bin/nohup.coreutils
+l 0777 0 0 /usr/bin/nproc -> /usr/bin/nproc.coreutils
+f 0755 0 0 /usr/bin/nproc.coreutils
+l 0777 0 0 /usr/bin/nsenter -> /usr/bin/nsenter.util-linux
+f 0755 0 0 /usr/bin/nsenter.util-linux
+l 0777 0 0 /usr/bin/nslookup -> /bin/busybox
+f 0755 0 0 /usr/bin/numfmt
+l 0777 0 0 /usr/bin/od -> /usr/bin/od.coreutils
+f 0755 0 0 /usr/bin/od.coreutils
+l 0777 0 0 /usr/bin/openvt -> /bin/busybox
+f 0755 0 0 /usr/bin/pantavisor
+l 0777 0 0 /usr/bin/passwd -> /usr/bin/passwd.shadow
+f 4755 0 0 /usr/bin/passwd.shadow
+l 0777 0 0 /usr/bin/paste -> /usr/bin/paste.coreutils
+f 0755 0 0 /usr/bin/paste.coreutils
+l 0777 0 0 /usr/bin/patch -> /bin/busybox
+l 0777 0 0 /usr/bin/pathchk -> /usr/bin/pathchk.coreutils
+f 0755 0 0 /usr/bin/pathchk.coreutils
+l 0777 0 0 /usr/bin/pgrep -> /bin/busybox
+l 0777 0 0 /usr/bin/pinky -> /usr/bin/pinky.coreutils
+f 0755 0 0 /usr/bin/pinky.coreutils
+f 0755 0 0 /usr/bin/pipesz
+l 0777 0 0 /usr/bin/pr -> /usr/bin/pr.coreutils
+f 0755 0 0 /usr/bin/pr.coreutils
+f 0755 0 0 /usr/bin/printenv.coreutils
+l 0777 0 0 /usr/bin/printf -> /usr/bin/printf.coreutils
+f 0755 0 0 /usr/bin/printf.coreutils
+l 0777 0 0 /usr/bin/prlimit -> /usr/bin/prlimit.util-linux
+f 0755 0 0 /usr/bin/prlimit.util-linux
+l 0777 0 0 /usr/bin/ptx -> /usr/bin/ptx.coreutils
+f 0755 0 0 /usr/bin/ptx.coreutils
+f 0755 0 0 /usr/bin/pv-appengine
+f 0755 0 0 /usr/bin/pv-xconnect
+f 0755 0 0 /usr/bin/pvcontrol
+f 0755 0 0 /usr/bin/pvcurl
+f 0755 0 0 /usr/bin/pventer
+f 0755 0 0 /usr/bin/pvtx
+f 0755 0 0 /usr/bin/readbootlog
+l 0777 0 0 /usr/bin/readlink -> /usr/bin/readlink.coreutils
+f 0755 0 0 /usr/bin/readlink.coreutils
+l 0777 0 0 /usr/bin/realpath -> /usr/bin/realpath.coreutils
+f 0755 0 0 /usr/bin/realpath.coreutils
+f 0755 0 0 /usr/bin/rename
+l 0777 0 0 /usr/bin/renice -> /usr/bin/renice.util-linux
+f 0755 0 0 /usr/bin/renice.util-linux
+l 0777 0 0 /usr/bin/reset -> /bin/busybox
+l 0777 0 0 /usr/bin/resize -> /bin/busybox
+l 0777 0 0 /usr/bin/rev -> /usr/bin/rev.util-linux
+f 0755 0 0 /usr/bin/rev.util-linux
+l 0777 0 0 /usr/bin/rpcinfo -> /usr/bin/rpcinfo.rpcbind
+f 0755 0 0 /usr/bin/rpcinfo.rpcbind
+f 0755 0 0 /usr/bin/runc
+l 0777 0 0 /usr/bin/runcon -> /usr/bin/runcon.coreutils
+f 0755 0 0 /usr/bin/runcon.coreutils
+f 0755 0 0 /usr/bin/script
+f 0755 0 0 /usr/bin/scriptlive
+l 0777 0 0 /usr/bin/scriptreplay -> /usr/bin/scriptreplay.util-linux
+f 0755 0 0 /usr/bin/scriptreplay.util-linux
+l 0777 0 0 /usr/bin/seq -> /usr/bin/seq.coreutils
+f 0755 0 0 /usr/bin/seq.coreutils
+f 0755 0 0 /usr/bin/setarch
+l 0777 0 0 /usr/bin/setpriv -> /usr/bin/setpriv.util-linux
+f 0755 0 0 /usr/bin/setpriv.util-linux
+l 0777 0 0 /usr/bin/setsid -> /usr/bin/setsid.util-linux
+f 0755 0 0 /usr/bin/setsid.util-linux
+f 0755 0 0 /usr/bin/setterm
+l 0777 0 0 /usr/bin/sg -> newgrp.shadow
+l 0777 0 0 /usr/bin/sha1sum -> /usr/bin/sha1sum.coreutils
+f 0755 0 0 /usr/bin/sha1sum.coreutils
+l 0777 0 0 /usr/bin/sha224sum -> /usr/bin/sha224sum.coreutils
+f 0755 0 0 /usr/bin/sha224sum.coreutils
+l 0777 0 0 /usr/bin/sha256sum -> /usr/bin/sha256sum.coreutils
+f 0755 0 0 /usr/bin/sha256sum.coreutils
+l 0777 0 0 /usr/bin/sha384sum -> /usr/bin/sha384sum.coreutils
+f 0755 0 0 /usr/bin/sha384sum.coreutils
+l 0777 0 0 /usr/bin/sha512sum -> /usr/bin/sha512sum.coreutils
+f 0755 0 0 /usr/bin/sha512sum.coreutils
+l 0777 0 0 /usr/bin/shred -> /usr/bin/shred.coreutils
+f 0755 0 0 /usr/bin/shred.coreutils
+l 0777 0 0 /usr/bin/shuf -> /usr/bin/shuf.coreutils
+f 0755 0 0 /usr/bin/shuf.coreutils
+l 0777 0 0 /usr/bin/sort -> /usr/bin/sort.coreutils
+f 0755 0 0 /usr/bin/sort.coreutils
+l 0777 0 0 /usr/bin/split -> /usr/bin/split.coreutils
+f 0755 0 0 /usr/bin/split.coreutils
+f 0755 0 0 /usr/bin/stdbuf
+l 0777 0 0 /usr/bin/strings -> /bin/busybox
+l 0777 0 0 /usr/bin/sum -> /usr/bin/sum.coreutils
+f 0755 0 0 /usr/bin/sum.coreutils
+l 0777 0 0 /usr/bin/tac -> /usr/bin/tac.coreutils
+f 0755 0 0 /usr/bin/tac.coreutils
+l 0777 0 0 /usr/bin/tail -> /usr/bin/tail.coreutils
+f 0755 0 0 /usr/bin/tail.coreutils
+l 0777 0 0 /usr/bin/taskset -> /usr/bin/taskset.util-linux
+f 0755 0 0 /usr/bin/taskset.util-linux
+l 0777 0 0 /usr/bin/tee -> /usr/bin/tee.coreutils
+f 0755 0 0 /usr/bin/tee.coreutils
+l 0777 0 0 /usr/bin/telnet -> /bin/busybox
+l 0777 0 0 /usr/bin/test -> /usr/bin/test.coreutils
+f 0755 0 0 /usr/bin/test.coreutils
+l 0777 0 0 /usr/bin/tftp -> /bin/busybox
+l 0777 0 0 /usr/bin/time -> /bin/busybox
+l 0777 0 0 /usr/bin/timeout -> /usr/bin/timeout.coreutils
+f 0755 0 0 /usr/bin/timeout.coreutils
+l 0777 0 0 /usr/bin/top -> /bin/busybox
+l 0777 0 0 /usr/bin/tr -> /usr/bin/tr.coreutils
+f 0755 0 0 /usr/bin/tr.coreutils
+l 0777 0 0 /usr/bin/traceroute -> /bin/busybox
+l 0777 0 0 /usr/bin/truncate -> /usr/bin/truncate.coreutils
+f 0755 0 0 /usr/bin/truncate.coreutils
+l 0777 0 0 /usr/bin/ts -> /bin/busybox
+l 0777 0 0 /usr/bin/tsort -> /usr/bin/tsort.coreutils
+f 0755 0 0 /usr/bin/tsort.coreutils
+l 0777 0 0 /usr/bin/tty -> /usr/bin/tty.coreutils
+f 0755 0 0 /usr/bin/tty.coreutils
+f 0755 0 0 /usr/bin/uclampset
+f 0755 0 0 /usr/bin/udevadm
+f 0755 0 0 /usr/bin/ul
+l 0777 0 0 /usr/bin/uname26 -> setarch
+l 0777 0 0 /usr/bin/unexpand -> /usr/bin/unexpand.coreutils
+f 0755 0 0 /usr/bin/unexpand.coreutils
+l 0777 0 0 /usr/bin/uniq -> /usr/bin/uniq.coreutils
+f 0755 0 0 /usr/bin/uniq.coreutils
+l 0777 0 0 /usr/bin/unlink -> /usr/bin/unlink.coreutils
+f 0755 0 0 /usr/bin/unlink.coreutils
+l 0777 0 0 /usr/bin/unshare -> /usr/bin/unshare.util-linux
+f 0755 0 0 /usr/bin/unshare.util-linux
+l 0777 0 0 /usr/bin/unzip -> /bin/busybox
+f 0755 0 0 /usr/bin/update-alternatives
+l 0777 0 0 /usr/bin/uptime -> /usr/bin/uptime.coreutils
+f 0755 0 0 /usr/bin/uptime.coreutils
+l 0777 0 0 /usr/bin/users -> /usr/bin/users.coreutils
+f 0755 0 0 /usr/bin/users.coreutils
+l 0777 0 0 /usr/bin/utmpdump -> /usr/bin/utmpdump.sysvinit
+f 0755 0 0 /usr/bin/utmpdump.sysvinit
+f 0755 0 0 /usr/bin/utmpdump.util-linux
+l 0777 0 0 /usr/bin/uuidgen -> /usr/bin/uuidgen.util-linux
+f 0755 0 0 /usr/bin/uuidgen.util-linux
+f 0755 0 0 /usr/bin/uuidparse
+l 0777 0 0 /usr/bin/vdir -> /usr/bin/vdir.coreutils
+f 0755 0 0 /usr/bin/vdir.coreutils
+l 0777 0 0 /usr/bin/vlock -> /bin/busybox
+f 0755 0 0 /usr/bin/waitpid
+l 0777 0 0 /usr/bin/wall -> /usr/bin/wall.sysvinit
+f 0755 0 0 /usr/bin/wall.sysvinit
+f 0755 0 0 /usr/bin/wall.util-linux
+l 0777 0 0 /usr/bin/wc -> /usr/bin/wc.coreutils
+f 0755 0 0 /usr/bin/wc.coreutils
+f 0755 0 0 /usr/bin/wdctl
+l 0777 0 0 /usr/bin/wget -> /bin/busybox
+f 0755 0 0 /usr/bin/whereis
+l 0777 0 0 /usr/bin/which -> /bin/busybox
+l 0777 0 0 /usr/bin/who -> /usr/bin/who.coreutils
+f 0755 0 0 /usr/bin/who.coreutils
+l 0777 0 0 /usr/bin/whoami -> /usr/bin/whoami.coreutils
+f 0755 0 0 /usr/bin/whoami.coreutils
+f 0755 0 0 /usr/bin/write
+l 0777 0 0 /usr/bin/x86_64 -> setarch
+l 0777 0 0 /usr/bin/xargs -> /bin/busybox
+l 0777 0 0 /usr/bin/xzcat -> /bin/busybox
+l 0777 0 0 /usr/bin/yes -> /usr/bin/yes.coreutils
+f 0755 0 0 /usr/bin/yes.coreutils
+d 0755 0 0 /usr/games
+d 0755 0 0 /usr/include
+d 0755 0 0 /usr/lib
+d 0755 0 0 /usr/lib/coreutils
+f 0755 0 0 /usr/lib/coreutils/libstdbuf.so
+f 0755 0 0 /usr/lib/e2initrd_helper
+l 0777 0 0 /usr/lib/libX11.so.6 -> libX11.so.6.4.0
+f 0755 0 0 /usr/lib/libX11.so.6.4.0
+l 0777 0 0 /usr/lib/libXau.so.6 -> libXau.so.6.0.0
+f 0755 0 0 /usr/lib/libXau.so.6.0.0
+l 0777 0 0 /usr/lib/libXdmcp.so.6 -> libXdmcp.so.6.0.0
+f 0755 0 0 /usr/lib/libXdmcp.so.6.0.0
+l 0777 0 0 /usr/lib/libacl.so.1 -> libacl.so.1.1.2302
+f 0755 0 0 /usr/lib/libacl.so.1.1.2302
+l 0777 0 0 /usr/lib/libattr.so.1 -> libattr.so.1.1.2501
+f 0755 0 0 /usr/lib/libattr.so.1.1.2501
+l 0777 0 0 /usr/lib/libavahi-common.so.3 -> libavahi-common.so.3.5.4
+f 0755 0 0 /usr/lib/libavahi-common.so.3.5.4
+l 0777 0 0 /usr/lib/libavahi-core.so.7 -> libavahi-core.so.7.1.0
+f 0755 0 0 /usr/lib/libavahi-core.so.7.1.0
+l 0777 0 0 /usr/lib/libbsd.so.0 -> libbsd.so.0.12.1
+f 0755 0 0 /usr/lib/libbsd.so.0.12.1
+l 0777 0 0 /usr/lib/libcrypt.so.2 -> libcrypt.so.2.0.0
+f 0755 0 0 /usr/lib/libcrypt.so.2.0.0
+f 0755 0 0 /usr/lib/libcrypto.so.3
+l 0777 0 0 /usr/lib/libcryptsetup.so.12 -> libcryptsetup.so.12.10.0
+f 0755 0 0 /usr/lib/libcryptsetup.so.12.10.0
+l 0777 0 0 /usr/lib/libdaemon.so.0 -> libdaemon.so.0.5.0
+f 0755 0 0 /usr/lib/libdaemon.so.0.5.0
+l 0777 0 0 /usr/lib/libdbus-1.so.3 -> libdbus-1.so.3.32.4
+f 0755 0 0 /usr/lib/libdbus-1.so.3.32.4
+f 0555 0 0 /usr/lib/libdevmapper.so.1.02
+l 0777 0 0 /usr/lib/libdrop_ambient.so.0 -> libdrop_ambient.so.0.0.0
+f 0755 0 0 /usr/lib/libdrop_ambient.so.0.0.0
+l 0777 0 0 /usr/lib/libexpat.so.1 -> libexpat.so.1.10.0
+f 0755 0 0 /usr/lib/libexpat.so.1.10.0
+l 0777 0 0 /usr/lib/libgmp.so.10 -> libgmp.so.10.5.0
+f 0755 0 0 /usr/lib/libgmp.so.10.5.0
+l 0777 0 0 /usr/lib/libjson-c.so.5 -> libjson-c.so.5.3.0
+f 0755 0 0 /usr/lib/libjson-c.so.5.3.0
+l 0777 0 0 /usr/lib/libkcapi.so.1 -> libkcapi.so.1.5.0
+f 0755 0 0 /usr/lib/libkcapi.so.1.5.0
+l 0777 0 0 /usr/lib/libkmod.so.2 -> libkmod.so.2.4.1
+f 0755 0 0 /usr/lib/libkmod.so.2.4.1
+l 0777 0 0 /usr/lib/liblxc.so.1 -> liblxc.so.1.8.0
+f 0755 0 0 /usr/lib/liblxc.so.1.8.0
+l 0777 0 0 /usr/lib/liblzma.so.5 -> liblzma.so.5.4.7
+f 0755 0 0 /usr/lib/liblzma.so.5.4.7
+f 0644 0 0 /usr/lib/libmbedcrypto.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedcrypto.so.7 -> libmbedcrypto.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedtls.so.14 -> libmbedtls.so.2.28.10
+f 0644 0 0 /usr/lib/libmbedtls.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedx509.so.1 -> libmbedx509.so.2.28.10
+f 0644 0 0 /usr/lib/libmbedx509.so.2.28.10
+l 0777 0 0 /usr/lib/libmd.so.0 -> libmd.so.0.1.0
+f 0755 0 0 /usr/lib/libmd.so.0.1.0
+l 0777 0 0 /usr/lib/libnl-3.so.200 -> libnl-3.so.200.26.0
+f 0755 0 0 /usr/lib/libnl-3.so.200.26.0
+l 0777 0 0 /usr/lib/libnl-genl-3.so.200 -> libnl-genl-3.so.200.26.0
+f 0755 0 0 /usr/lib/libnl-genl-3.so.200.26.0
+l 0777 0 0 /usr/lib/libpopt.so.0 -> libpopt.so.0.0.2
+f 0755 0 0 /usr/lib/libpopt.so.0.0.2
+l 0777 0 0 /usr/lib/libpsx.so.2 -> libpsx.so.2.69
+f 0755 0 0 /usr/lib/libpsx.so.2.69
+f 0755 0 0 /usr/lib/libssl.so.3
+l 0777 0 0 /usr/lib/libsubid.so.4 -> libsubid.so.4.0.0
+f 0755 0 0 /usr/lib/libsubid.so.4.0.0
+l 0777 0 0 /usr/lib/libtirpc.so.3 -> libtirpc.so.3.0.0
+f 0755 0 0 /usr/lib/libtirpc.so.3.0.0
+l 0777 0 0 /usr/lib/libuuid.so.1 -> libuuid.so.1.3.0
+f 0755 0 0 /usr/lib/libuuid.so.1.3.0
+l 0777 0 0 /usr/lib/libxcb.so.1 -> libxcb.so.1.1.0
+f 0755 0 0 /usr/lib/libxcb.so.1.1.0
+l 0777 0 0 /usr/lib/libz.so.1 -> libz.so.1.3.1
+f 0755 0 0 /usr/lib/libz.so.1.3.1
+d 0755 0 0 /usr/lib/locale
+f 0644 0 0 /usr/lib/locale/locale-archive
+d 0755 0 0 /usr/lib/lxc
+d 0755 0 0 /usr/lib/lxc/rootfs
+f 0644 0 0 /usr/lib/lxc/rootfs/README
+d 0755 0 0 /usr/lib/ossl-modules
+f 0755 0 0 /usr/lib/ossl-modules/legacy.so
+d 0755 0 0 /usr/lib/pantavisor
+d 0755 0 0 /usr/lib/pantavisor/pv
+f 0755 0 0 /usr/lib/pantavisor/pv/JSON.sh
+d 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d
+f 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d/export.sh
+f 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d/remount
+f 0755 0 0 /usr/lib/pantavisor/pv/pvcrash
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount/crypt
+f 0755 0 0 /usr/lib/pantavisor/pv/volmount/crypt/crypt
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount/verity
+f 0755 0 0 /usr/lib/pantavisor/pv/volmount/verity/dm
+f 0755 0 0 /usr/lib/pantavisor/pv_lxc.so
+d 0755 0 0 /usr/lib/pantavisor/skel
+d 0755 0 0 /usr/lib/pantavisor/skel/boot
+d 0755 0 0 /usr/lib/pantavisor/skel/config
+d 0755 0 0 /usr/lib/pantavisor/skel/disks
+d 0755 0 0 /usr/lib/pantavisor/skel/objects
+d 0755 0 0 /usr/lib/pantavisor/skel/trails
+d 0755 0 0 /usr/lib/pantavisor/skel/trails/0
+d 0755 0 0 /usr/lib/pantavisor/skel/trails/0/.pv
+d 0755 0 0 /usr/lib/pantavisor/skel/trails/0/.pvr
+f 0644 0 0 /usr/lib/pantavisor/skel/trails/0/.pvr/json
+d 0755 0 0 /usr/lib/ssl-3
+l 0777 0 0 /usr/lib/ssl-3/openssl.cnf -> ../../../etc/ssl/openssl.cnf
+f 0644 0 0 /usr/lib/ssl-3/openssl.cnf.dist
+d 0755 0 0 /usr/lib/systemd
+d 0755 0 0 /usr/lib/systemd/user
+f 0644 0 0 /usr/lib/systemd/user/dbus.service
+f 0644 0 0 /usr/lib/systemd/user/dbus.socket
+d 0755 0 0 /usr/lib/systemd/user/sockets.target.wants
+l 0777 0 0 /usr/lib/systemd/user/sockets.target.wants/dbus.socket -> ../dbus.socket
+d 0755 0 0 /usr/libexec
+f 4755 0 999 /usr/libexec/dbus-daemon-launch-helper
+d 0755 0 0 /usr/libexec/lxc
+d 0755 0 0 /usr/libexec/lxc/hooks
+f 0755 0 0 /usr/libexec/lxc/hooks/unmount-namespace
+f 0755 0 0 /usr/libexec/lxc/lxc-monitord
+f 4755 0 0 /usr/libexec/lxc/lxc-user-nic
+d 0755 0 0 /usr/sbin
+l 0777 0 0 /usr/sbin/addgroup -> /bin/busybox
+f 0755 0 0 /usr/sbin/addpart
+l 0777 0 0 /usr/sbin/adduser -> /bin/busybox
+f 0755 0 0 /usr/sbin/avahi-daemon
+f 0755 0 0 /usr/sbin/blkdiscard
+f 0755 0 0 /usr/sbin/blkpr
+f 0755 0 0 /usr/sbin/blkzone
+f 0755 0 0 /usr/sbin/chcpu
+f 0755 0 0 /usr/sbin/chgpasswd
+l 0777 0 0 /usr/sbin/chpasswd -> /usr/sbin/chpasswd.shadow
+f 0755 0 0 /usr/sbin/chpasswd.shadow
+l 0777 0 0 /usr/sbin/chroot -> /usr/sbin/chroot.coreutils
+f 0755 0 0 /usr/sbin/chroot.coreutils
+f 0755 0 0 /usr/sbin/cryptsetup
+l 0777 0 0 /usr/sbin/delgroup -> /bin/busybox
+f 0755 0 0 /usr/sbin/delpart
+l 0777 0 0 /usr/sbin/deluser -> /bin/busybox
+f 0555 0 0 /usr/sbin/dmsetup
+l 0777 0 0 /usr/sbin/dmstats -> dmsetup
+l 0777 0 0 /usr/sbin/fbset -> /bin/busybox
+l 0777 0 0 /usr/sbin/findfs -> /usr/sbin/findfs.util-linux
+f 0755 0 0 /usr/sbin/findfs.util-linux
+f 0755 0 0 /usr/sbin/fsck.cramfs
+l 0777 0 0 /usr/sbin/fsfreeze -> /usr/sbin/fsfreeze.util-linux
+f 0755 0 0 /usr/sbin/fsfreeze.util-linux
+f 0755 0 0 /usr/sbin/groupadd
+f 0755 0 0 /usr/sbin/groupdel
+f 0755 0 0 /usr/sbin/groupmems
+f 0755 0 0 /usr/sbin/groupmod
+f 0755 0 0 /usr/sbin/grpck
+f 0755 0 0 /usr/sbin/grpconv
+f 0755 0 0 /usr/sbin/grpunconv
+f 0755 0 0 /usr/sbin/hostapd
+f 0755 0 0 /usr/sbin/hostapd_cli
+f 0755 0 0 /usr/sbin/init.lxc
+f 0755 0 0 /usr/sbin/init.lxc.static
+f 0755 0 0 /usr/sbin/integritysetup
+f 0755 0 0 /usr/sbin/iw
+f 0755 0 0 /usr/sbin/ldattach
+l 0777 0 0 /usr/sbin/loadfont -> /bin/busybox
+f 0755 0 0 /usr/sbin/logoutd
+f 0755 0 0 /usr/sbin/mkfs
+f 0755 0 0 /usr/sbin/mkfs.cramfs
+f 0755 0 0 /usr/sbin/newusers
+f 0755 0 0 /usr/sbin/partx
+f 0755 0 0 /usr/sbin/pwck
+f 0755 0 0 /usr/sbin/pwconv
+f 0755 0 0 /usr/sbin/pwunconv
+l 0777 0 0 /usr/sbin/rdate -> /bin/busybox
+l 0777 0 0 /usr/sbin/readprofile -> /usr/sbin/readprofile.util-linux
+f 0755 0 0 /usr/sbin/readprofile.util-linux
+f 0755 0 0 /usr/sbin/resizepart
+l 0777 0 0 /usr/sbin/rfkill -> /usr/sbin/rfkill.util-linux
+f 0755 0 0 /usr/sbin/rfkill.util-linux
+f 0755 0 0 /usr/sbin/rpcbind
+l 0777 0 0 /usr/sbin/rtcwake -> /usr/sbin/rtcwake.util-linux
+f 0755 0 0 /usr/sbin/rtcwake.util-linux
+f 0755 0 0 /usr/sbin/service
+f 0755 0 0 /usr/sbin/sfdisk
+f 0755 0 0 /usr/sbin/swaplabel
+f 0755 0 0 /usr/sbin/ttyrun
+l 0777 0 0 /usr/sbin/udhcpd -> /bin/busybox
+f 0755 0 0 /usr/sbin/update-rc.d
+f 0755 0 0 /usr/sbin/useradd
+f 0755 0 0 /usr/sbin/userdel
+f 0755 0 0 /usr/sbin/usermod
+f 0755 0 0 /usr/sbin/uuidd
+f 0755 0 0 /usr/sbin/veritysetup
+f 0755 0 0 /usr/sbin/wipefs
+f 0755 0 0 /usr/sbin/zramctl
+d 0755 0 0 /usr/share
+d 0755 0 0 /usr/share/X11
+f 0644 0 0 /usr/share/X11/XErrorDB
+f 0644 0 0 /usr/share/X11/Xcms.txt
+d 0755 0 0 /usr/share/avahi
+f 0644 0 0 /usr/share/avahi/avahi-service.dtd
+d 0755 0 0 /usr/share/dbus-1
+d 0755 0 0 /usr/share/dbus-1/interfaces
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.AddressResolver.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.DomainBrowser.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.EntryGroup.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.HostNameResolver.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.RecordBrowser.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.Server.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.ServiceBrowser.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.ServiceResolver.xml
+f 0644 0 0 /usr/share/dbus-1/interfaces/org.freedesktop.Avahi.ServiceTypeBrowser.xml
+d 0755 0 0 /usr/share/dbus-1/services
+f 0644 0 0 /usr/share/dbus-1/session.conf
+d 0755 0 0 /usr/share/dbus-1/session.d
+d 0755 0 0 /usr/share/dbus-1/system-services
+f 0644 0 0 /usr/share/dbus-1/system.conf
+d 0755 0 0 /usr/share/dbus-1/system.d
+d 0755 0 0 /usr/share/dict
+d 0755 0 0 /usr/share/info
+d 0755 0 0 /usr/share/locale
+d 0755 0 0 /usr/share/locale/en_GB
+d 0755 0 0 /usr/share/locale/en_GB/LC_MESSAGES
+f 0644 0 0 /usr/share/locale/en_GB/LC_MESSAGES/avahi.mo
+d 0755 0 0 /usr/share/lxc
+d 0755 0 0 /usr/share/lxc/config
+f 0644 0 0 /usr/share/lxc/config/common.conf
+d 0755 0 0 /usr/share/lxc/config/common.conf.d
+f 0644 0 0 /usr/share/lxc/config/common.conf.d/README
+f 0644 0 0 /usr/share/lxc/config/common.seccomp
+f 0644 0 0 /usr/share/lxc/config/nesting.conf
+f 0644 0 0 /usr/share/lxc/config/oci.common.conf
+f 0644 0 0 /usr/share/lxc/config/userns.conf
+f 0644 0 0 /usr/share/lxc/lxc-patch.py
+f 0644 0 0 /usr/share/lxc/lxc.functions
+d 0755 0 0 /usr/share/man
+d 0755 0 0 /usr/share/misc
+d 0755 0 0 /usr/share/pantavisor
+f 0644 0 0 /usr/share/pantavisor/set-env
+d 0755 0 0 /usr/share/udhcpc
+f 0755 0 0 /usr/share/udhcpc/default.script
+d 0755 0 0 /usr/src
+d 0755 0 0 /var
+d 0755 0 0 /var/backups
+d 0755 0 0 /var/cache
+d 0755 0 0 /var/lib
+d 0755 999 999 /var/lib/dbus
+d 0755 0 0 /var/lib/misc
+d 0755 0 0 /var/lib/urandom
+d 0755 0 0 /var/local
+l 0777 0 0 /var/lock -> ../run/lock
+l 0777 0 0 /var/log -> volatile/log
+d 0755 0 0 /var/pantavisor
+d 0755 0 0 /var/pantavisor/storage
+d 0755 0 0 /var/pantavisor/storage/boot
+d 0755 0 0 /var/pantavisor/storage/config
+d 0755 0 0 /var/pantavisor/storage/disks
+d 0755 0 0 /var/pantavisor/storage/objects
+d 0755 0 0 /var/pantavisor/storage/trails
+d 0755 0 0 /var/pantavisor/storage/trails/0
+d 0755 0 0 /var/pantavisor/storage/trails/0/.pv
+d 0755 0 0 /var/pantavisor/storage/trails/0/.pvr
+f 0644 0 0 /var/pantavisor/storage/trails/0/.pvr/json
+l 0777 0 0 /var/run -> ../run
+d 0755 0 0 /var/spool
+d 0775 0 8 /var/spool/mail
+l 0777 0 0 /var/tmp -> volatile/tmp
+d 0755 0 0 /var/volatile
+d 0755 0 0 /var/volatile/log
+d 1777 0 0 /var/volatile/tmp

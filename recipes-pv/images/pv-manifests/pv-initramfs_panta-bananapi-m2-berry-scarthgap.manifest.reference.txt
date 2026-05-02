@@ -1,0 +1,346 @@
+# pv-manifest-audit v1
+# format: type mode uid gid path[ -> symlink-target | major,minor]
+# machine: bananapi-m2-berry
+# distro:  panta (scarthgap)
+# prefix:  pv-initramfs
+# exclude: /var/lib/rpm /var/lib/dnf /var/lib/opkg /usr/lib/opkg /var/cache/ldconfig /var/cache/dnf /var/cache/yum
+d 0755 0 0 /bin
+l 0777 0 0 /bin/[ -> /bin/busybox.nosuid
+l 0777 0 0 /bin/[[ -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ascii -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ash -> /bin/busybox.nosuid
+l 0777 0 0 /bin/awk -> /bin/busybox.nosuid
+l 0777 0 0 /bin/base32 -> /bin/busybox.nosuid
+l 0777 0 0 /bin/basename -> /bin/busybox.nosuid
+l 0777 0 0 /bin/bc -> /bin/busybox.nosuid
+l 0777 0 0 /bin/busybox -> busybox.nosuid
+f 0755 0 0 /bin/busybox.nosuid
+f 4755 0 0 /bin/busybox.suid
+l 0777 0 0 /bin/bzcat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/cat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/chmod -> /bin/busybox.nosuid
+l 0777 0 0 /bin/chown -> /bin/busybox.nosuid
+l 0777 0 0 /bin/chvt -> /bin/busybox.nosuid
+l 0777 0 0 /bin/clear -> /bin/busybox.nosuid
+l 0777 0 0 /bin/cp -> /bin/busybox.nosuid
+l 0777 0 0 /bin/crc32 -> /bin/busybox.nosuid
+l 0777 0 0 /bin/cttyhack -> /bin/busybox.nosuid
+l 0777 0 0 /bin/date -> /bin/busybox.nosuid
+l 0777 0 0 /bin/dd -> /bin/busybox.nosuid
+l 0777 0 0 /bin/deallocvt -> /bin/busybox.nosuid
+l 0777 0 0 /bin/df -> /bin/busybox.nosuid
+l 0777 0 0 /bin/diff -> /bin/busybox.nosuid
+l 0777 0 0 /bin/dirname -> /bin/busybox.nosuid
+l 0777 0 0 /bin/dmesg -> /bin/busybox.nosuid
+l 0777 0 0 /bin/dnsdomainname -> /bin/busybox.nosuid
+l 0777 0 0 /bin/du -> /bin/busybox.nosuid
+l 0777 0 0 /bin/egrep -> /bin/busybox.nosuid
+l 0777 0 0 /bin/factor -> /bin/busybox.nosuid
+l 0777 0 0 /bin/fallocate -> /bin/busybox.nosuid
+l 0777 0 0 /bin/fgconsole -> /bin/busybox.nosuid
+l 0777 0 0 /bin/fgrep -> /bin/busybox.nosuid
+l 0777 0 0 /bin/find -> /bin/busybox.nosuid
+l 0777 0 0 /bin/grep -> /bin/busybox.nosuid
+l 0777 0 0 /bin/gzip -> /bin/busybox.nosuid
+l 0777 0 0 /bin/head -> /bin/busybox.nosuid
+l 0777 0 0 /bin/hexdump -> /bin/busybox.nosuid
+l 0777 0 0 /bin/hexedit -> /bin/busybox.nosuid
+l 0777 0 0 /bin/iostat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/kill -> /bin/busybox.nosuid
+l 0777 0 0 /bin/killall -> /bin/busybox.nosuid
+l 0777 0 0 /bin/less -> /bin/busybox.nosuid
+l 0777 0 0 /bin/linux32 -> /bin/busybox.nosuid
+l 0777 0 0 /bin/linux64 -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ln -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ls -> /bin/busybox.nosuid
+l 0777 0 0 /bin/lsscsi -> /bin/busybox.nosuid
+l 0777 0 0 /bin/lzcat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mkdir -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mkfifo -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mknod -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mktemp -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mount -> /bin/busybox.nosuid
+l 0777 0 0 /bin/mv -> /bin/busybox.nosuid
+l 0777 0 0 /bin/nl -> /bin/busybox.nosuid
+l 0777 0 0 /bin/nohup -> /bin/busybox.nosuid
+l 0777 0 0 /bin/nproc -> /bin/busybox.nosuid
+l 0777 0 0 /bin/nsenter -> /bin/busybox.nosuid
+l 0777 0 0 /bin/openvt -> /bin/busybox.nosuid
+l 0777 0 0 /bin/paste -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ping6 -> /bin/busybox.suid
+l 0777 0 0 /bin/printenv -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ps -> /bin/busybox.nosuid
+l 0777 0 0 /bin/pwd -> /bin/busybox.nosuid
+l 0777 0 0 /bin/reset -> /bin/busybox.nosuid
+l 0777 0 0 /bin/resize -> /bin/busybox.nosuid
+l 0777 0 0 /bin/resume -> /bin/busybox.nosuid
+l 0777 0 0 /bin/rm -> /bin/busybox.nosuid
+l 0777 0 0 /bin/sed -> /bin/busybox.nosuid
+l 0777 0 0 /bin/setfattr -> /bin/busybox.nosuid
+l 0777 0 0 /bin/setpriv -> /bin/busybox.nosuid
+l 0777 0 0 /bin/sh -> /bin/busybox.nosuid
+l 0777 0 0 /bin/shred -> /bin/busybox.nosuid
+l 0777 0 0 /bin/sleep -> /bin/busybox.nosuid
+l 0777 0 0 /bin/sort -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ssl_client -> /bin/busybox.nosuid
+l 0777 0 0 /bin/stat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/stty -> /bin/busybox.nosuid
+l 0777 0 0 /bin/svc -> /bin/busybox.nosuid
+l 0777 0 0 /bin/svok -> /bin/busybox.nosuid
+l 0777 0 0 /bin/sync -> /bin/busybox.nosuid
+l 0777 0 0 /bin/tail -> /bin/busybox.nosuid
+l 0777 0 0 /bin/telnet -> /bin/busybox.nosuid
+l 0777 0 0 /bin/top -> /bin/busybox.nosuid
+l 0777 0 0 /bin/touch -> /bin/busybox.nosuid
+l 0777 0 0 /bin/tr -> /bin/busybox.nosuid
+l 0777 0 0 /bin/true -> /bin/busybox.nosuid
+l 0777 0 0 /bin/ts -> /bin/busybox.nosuid
+l 0777 0 0 /bin/tty -> /bin/busybox.nosuid
+l 0777 0 0 /bin/udhcpc6 -> /bin/busybox.nosuid
+l 0777 0 0 /bin/umount -> /bin/busybox.nosuid
+l 0777 0 0 /bin/uname -> /bin/busybox.nosuid
+l 0777 0 0 /bin/unlink -> /bin/busybox.nosuid
+l 0777 0 0 /bin/unshare -> /bin/busybox.nosuid
+l 0777 0 0 /bin/vi -> /bin/busybox.nosuid
+l 0777 0 0 /bin/which -> /bin/busybox.nosuid
+l 0777 0 0 /bin/whoami -> /bin/busybox.nosuid
+l 0777 0 0 /bin/xxd -> /bin/busybox.nosuid
+l 0777 0 0 /bin/xzcat -> /bin/busybox.nosuid
+l 0777 0 0 /bin/zcat -> /bin/busybox.nosuid
+l 0777 0 0 /configs -> run/pantavisor/configs
+d 0755 0 0 /etc
+d 0755 0 0 /etc/bash_completion.d
+f 0644 0 0 /etc/bash_completion.d/lxc
+f 0644 0 0 /etc/busybox.links.nosuid
+f 0644 0 0 /etc/busybox.links.suid
+d 0755 0 0 /etc/default
+f 0644 0 0 /etc/default/lxc
+d 0755 0 0 /etc/dnf
+f 0644 0 0 /etc/dnf/dnf.conf
+d 0755 0 0 /etc/dnf/modules.d
+d 0755 0 0 /etc/dnf/vars
+f 0644 0 0 /etc/dnf/vars/arch
+f 0644 0 0 /etc/dnf/vars/releasever
+d 0755 0 0 /etc/dropbear
+f 0644 0 0 /etc/group
+d 0755 0 0 /etc/init
+d 0755 0 0 /etc/init.d
+f 0755 0 0 /etc/init.d/run-postinsts
+f 0644 0 0 /etc/init/lxc-instance.conf
+f 0644 0 0 /etc/init/lxc-net.conf
+f 0644 0 0 /etc/init/lxc.conf
+f 0644 0 0 /etc/ld-musl-armhf.path
+d 0755 0 0 /etc/lxc
+f 0644 0 0 /etc/lxc/default.conf
+f 0644 0 0 /etc/mke2fs.conf
+d 0755 0 0 /etc/pantavisor
+f 0644 0 0 /etc/pantavisor.config
+d 0755 0 0 /etc/pantavisor/defaults
+f 0644 0 0 /etc/pantavisor/defaults/groups.json
+d 0755 0 0 /etc/pantavisor/policies
+f 0644 0 0 /etc/pantavisor/policies/prod.config
+f 0644 0 0 /etc/pantavisor/policies/test.config
+d 0755 0 0 /etc/pantavisor/pvs
+d 0755 0 0 /etc/pantavisor/pvs/trust
+f 0644 0 0 /etc/pantavisor/pvs/trust/ca-certificates.crt
+f 0644 0 0 /etc/pantavisor/pvs/trust/ca-oem-certificates.crt
+d 0755 0 0 /etc/pantavisor/ssh
+f 0644 0 0 /etc/pantavisor/ssh/README.ssh
+f 0644 0 0 /etc/passwd
+d 0755 0 0 /etc/rcS.d
+l 0777 0 0 /etc/rcS.d/S99run-postinsts -> ../init.d/run-postinsts
+f 0644 0 0 /etc/resolv.conf
+d 0755 0 0 /etc/rpm
+f 0644 0 0 /etc/rpm/macros
+f 0644 0 0 /etc/rpm/platform
+f 0644 0 0 /etc/rpmrc
+d 0755 0 0 /etc/thttp
+d 0755 0 0 /etc/thttp/certs
+f 0644 0 0 /etc/thttp/certs/isrg-root-x1-cross-signed.pem
+f 0644 0 0 /etc/thttp/certs/isrgrootx1.pem
+f 0644 0 0 /etc/version
+d 0755 0 0 /exports
+l 0777 0 0 /init -> usr/bin/pantavisor
+d 0755 0 0 /lib
+l 0777 0 0 /lib/ld-musl-armhf.so.1 -> ../usr/lib/libc.so
+l 0777 0 0 /lib/libblkid.so.1 -> libblkid.so.1.1.0
+f 0755 0 0 /lib/libblkid.so.1.1.0
+l 0777 0 0 /lib/libcap.so.2 -> libcap.so.2.69
+f 0755 0 0 /lib/libcap.so.2.69
+l 0777 0 0 /lib/libcom_err.so.2 -> libcom_err.so.2.1
+f 0755 0 0 /lib/libcom_err.so.2.1
+l 0777 0 0 /lib/libe2p.so.2 -> libe2p.so.2.3
+f 0755 0 0 /lib/libe2p.so.2.3
+l 0777 0 0 /lib/libext2fs.so.2 -> libext2fs.so.2.4
+f 0755 0 0 /lib/libext2fs.so.2.4
+f 0644 0 0 /lib/libgcc_s.so.1
+l 0777 0 0 /media -> run/pantavisor/media
+l 0777 0 0 /pv -> run/pantavisor/pv
+d 0755 0 0 /run
+d 0755 0 0 /run/pantavisor
+d 0755 0 0 /run/pantavisor/pv
+d 0755 0 0 /sbin
+l 0777 0 0 /sbin/blockdev -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/chroot -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/depmod -> /bin/busybox.nosuid
+f 0755 0 0 /sbin/dumpe2fs
+f 0755 0 0 /sbin/e2fsck
+l 0777 0 0 /sbin/fdisk -> /bin/busybox.nosuid
+f 0755 0 0 /sbin/fsck.ext2
+f 0755 0 0 /sbin/fsck.ext3
+f 0755 0 0 /sbin/fsck.ext4
+l 0777 0 0 /sbin/fsfreeze -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/getty -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/halt -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/hdparm -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/i2ctransfer -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ifconfig -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ifdown -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ifup -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/insmod -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/losetup -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/mdev -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/mim -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/mkdosfs -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/mke2fs -> /sbin/mke2fs.e2fsprogs
+f 0755 0 0 /sbin/mke2fs.e2fsprogs
+l 0777 0 0 /sbin/mkfs.ext2 -> /sbin/mkfs.ext2.e2fsprogs
+f 0755 0 0 /sbin/mkfs.ext2.e2fsprogs
+f 0755 0 0 /sbin/mkfs.ext3
+f 0755 0 0 /sbin/mkfs.ext4
+l 0777 0 0 /sbin/mkswap -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/modinfo -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/modprobe -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/nologin -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/partprobe -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/pivot_root -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/poweroff -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/readahead -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/reboot -> /bin/busybox.nosuid
+f 0755 0 0 /sbin/resize2fs
+l 0777 0 0 /sbin/rfkill -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/run-init -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/setconsole -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/setlogcons -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/swapoff -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/swapon -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/tc -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/telnetd -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubiattach -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubidetach -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubimkvol -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubirename -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubirmvol -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubirsvol -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/ubiupdatevol -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/udhcpd -> /bin/busybox.nosuid
+l 0777 0 0 /sbin/uevent -> /bin/busybox.nosuid
+d 0755 0 0 /usr
+d 0755 0 0 /usr/bin
+f 0755 0 0 /usr/bin/JSON.sh
+l 0777 0 0 /usr/bin/arch -> /bin/busybox.nosuid
+f 0755 0 0 /usr/bin/dcp-blob-create
+l 0777 0 0 /usr/bin/docker-runc -> runc
+f 0755 0 0 /usr/bin/fallbear-cmd
+f 0755 0 0 /usr/bin/fcntl-lock
+l 0777 0 0 /usr/bin/ldd -> ../lib/libc.so
+l 0777 0 0 /usr/bin/link -> /bin/busybox.nosuid
+f 0755 0 0 /usr/bin/lxc-console
+f 0755 0 0 /usr/bin/lxc-info
+f 0755 0 0 /usr/bin/lxc-ls
+f 0755 0 0 /usr/bin/lxc-top
+l 0777 0 0 /usr/bin/nc -> /usr/bin/nc.netcat-openbsd
+f 0755 0 0 /usr/bin/nc.netcat-openbsd
+f 0755 0 0 /usr/bin/pantavisor
+f 0755 0 0 /usr/bin/pv-xconnect
+f 0755 0 0 /usr/bin/pvcontrol
+f 0755 0 0 /usr/bin/pvcurl
+f 0755 0 0 /usr/bin/pventer
+f 0755 0 0 /usr/bin/runc
+f 0755 0 0 /usr/bin/update-alternatives
+d 0755 0 0 /usr/lib
+f 0755 0 0 /usr/lib/e2initrd_helper
+l 0777 0 0 /usr/lib/libbsd.so.0 -> libbsd.so.0.12.1
+f 0755 0 0 /usr/lib/libbsd.so.0.12.1
+f 0755 0 0 /usr/lib/libc.so
+f 0755 0 0 /usr/lib/libcrypto.so.3
+l 0777 0 0 /usr/lib/libcryptsetup.so.12 -> libcryptsetup.so.12.10.0
+f 0755 0 0 /usr/lib/libcryptsetup.so.12.10.0
+f 0555 0 0 /usr/lib/libdevmapper.so.1.02
+l 0777 0 0 /usr/lib/libjson-c.so.5 -> libjson-c.so.5.3.0
+f 0755 0 0 /usr/lib/libjson-c.so.5.3.0
+l 0777 0 0 /usr/lib/libkcapi.so.1 -> libkcapi.so.1.5.0
+f 0755 0 0 /usr/lib/libkcapi.so.1.5.0
+l 0777 0 0 /usr/lib/liblxc.so.1 -> liblxc.so.1.4.0
+f 0755 0 0 /usr/lib/liblxc.so.1.4.0
+f 0644 0 0 /usr/lib/libmbedcrypto.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedcrypto.so.7 -> libmbedcrypto.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedtls.so.14 -> libmbedtls.so.2.28.10
+f 0644 0 0 /usr/lib/libmbedtls.so.2.28.10
+l 0777 0 0 /usr/lib/libmbedx509.so.1 -> libmbedx509.so.2.28.10
+f 0644 0 0 /usr/lib/libmbedx509.so.2.28.10
+l 0777 0 0 /usr/lib/libmd.so.0 -> libmd.so.0.1.0
+f 0755 0 0 /usr/lib/libmd.so.0.1.0
+l 0777 0 0 /usr/lib/libpopt.so.0 -> libpopt.so.0.0.2
+f 0755 0 0 /usr/lib/libpopt.so.0.0.2
+l 0777 0 0 /usr/lib/libpsx.so.2 -> libpsx.so.2.69
+f 0755 0 0 /usr/lib/libpsx.so.2.69
+f 0755 0 0 /usr/lib/libssl.so.3
+l 0777 0 0 /usr/lib/libstdc++.so.6 -> libstdc++.so.6.0.32
+f 0755 0 0 /usr/lib/libstdc++.so.6.0.32
+l 0777 0 0 /usr/lib/libuuid.so.1 -> libuuid.so.1.3.0
+f 0755 0 0 /usr/lib/libuuid.so.1.3.0
+l 0777 0 0 /usr/lib/libz.so.1 -> libz.so.1.3.1
+f 0755 0 0 /usr/lib/libz.so.1.3.1
+d 0755 0 0 /usr/lib/lxc
+d 0755 0 0 /usr/lib/lxc/rootfs
+f 0644 0 0 /usr/lib/lxc/rootfs/README
+d 0755 0 0 /usr/lib/pantavisor
+d 0755 0 0 /usr/lib/pantavisor/pv
+f 0755 0 0 /usr/lib/pantavisor/pv/JSON.sh
+d 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d
+f 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d/export.sh
+f 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d/mdev.sh
+f 0755 0 0 /usr/lib/pantavisor/pv/hooks_lxc-mount.d/remount
+f 0755 0 0 /usr/lib/pantavisor/pv/pv_e2fsgrow
+f 0755 0 0 /usr/lib/pantavisor/pv/pvcrash
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount/crypt
+f 0755 0 0 /usr/lib/pantavisor/pv/volmount/crypt/crypt
+d 0755 0 0 /usr/lib/pantavisor/pv/volmount/verity
+f 0755 0 0 /usr/lib/pantavisor/pv/volmount/verity/dm
+f 0755 0 0 /usr/lib/pantavisor/pv_lxc.so
+d 0755 0 0 /usr/libexec
+d 0755 0 0 /usr/libexec/lxc
+d 0755 0 0 /usr/libexec/lxc/hooks
+f 0755 0 0 /usr/libexec/lxc/hooks/unmount-namespace
+f 0755 0 0 /usr/libexec/lxc/lxc-apparmor-load
+f 0755 0 0 /usr/libexec/lxc/lxc-containers
+f 0755 0 0 /usr/libexec/lxc/lxc-monitord
+f 0755 0 0 /usr/libexec/lxc/lxc-net
+f 4755 0 0 /usr/libexec/lxc/lxc-user-nic
+d 0755 0 0 /usr/sbin
+f 0755 0 0 /usr/sbin/cryptsetup
+f 0555 0 0 /usr/sbin/dmsetup
+l 0777 0 0 /usr/sbin/dmstats -> dmsetup
+l 0777 0 0 /usr/sbin/dropbear -> ./dropbearmulti
+f 0755 0 0 /usr/sbin/dropbearmulti
+f 0755 0 0 /usr/sbin/fixparts
+f 0755 0 0 /usr/sbin/gdisk
+f 0755 0 0 /usr/sbin/init.lxc
+f 0755 0 0 /usr/sbin/init.lxc.static
+f 0755 0 0 /usr/sbin/integritysetup
+f 0755 0 0 /usr/sbin/run-postinsts
+f 0755 0 0 /usr/sbin/sgdisk
+f 0755 0 0 /usr/sbin/veritysetup
+d 0755 0 0 /usr/var
+d 0755 0 0 /usr/var/cache
+d 0755 0 0 /usr/var/cache/lxc
+d 0755 0 0 /usr/var/lib
+d 0755 0 0 /usr/var/lib/lxc
+d 0755 0 0 /var
+d 0755 0 0 /var/cache
+d 0755 0 0 /var/lib
+l 0777 0 0 /var/run -> ../run
+d 0755 0 0 /volumes
+d 0755 0 0 /writable

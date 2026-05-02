@@ -6,6 +6,18 @@ inherit ${@bb.utils.contains_any('PANTAVISOR_FEATURES', 'pv-manifest-audit pv-ma
 
 PV_MANIFEST_PREFIX = "pv-appengine"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/pv-manifests:"
+
+# Reference manifests for the upstream-supported MACHINE. The audit
+# class only loads the one whose name matches the current
+# PREFIX/MACHINE/DISTRO/CODENAME; the others sit unused in WORKDIR.
+# Recipes that include this inc and produce a different rootfs (e.g.
+# the tester variant) override PV_MANIFEST_PREFIX and append their own
+# reference to SRC_URI.
+SRC_URI += " \
+    file://pv-appengine_panta-appengine-docker-x86_64-scarthgap.manifest.reference.txt \
+"
+
 DOCKER_IMAGE_NAME = "pantavisor-appengine"
 DOCKER_IMAGE_TAG = "1.0"
 
