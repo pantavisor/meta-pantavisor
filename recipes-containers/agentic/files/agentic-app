@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-# Entrypoint for the agentic-app skeleton. Defers all logic to the
-# `agentic_skeleton` package so we don't drift between this script and the
-# library.
+# Entrypoint for the agentic-app skeleton. The skeleton package lives at
+# /usr/lib/agentic-app/agentic_skeleton/ rather than in Python's
+# site-packages dir (see agentic-app-skeleton_1.0.bb for the rationale).
+# We prepend that path to sys.path before importing so the package
+# resolves regardless of how Python's site config is wired in the image.
+import sys
+sys.path.insert(0, "/usr/lib/agentic-app")
+
 from agentic_skeleton.runtime import main
 
 if __name__ == "__main__":

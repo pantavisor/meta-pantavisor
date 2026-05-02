@@ -1,8 +1,6 @@
 {
-    "model": "local-qwen",
-    "llm": {
-        "uds": "/run/pv/services/pv-llama.sock"
-    },
+    "model": "local-deepseek-r1",
+    "llm_timeout": 240,
     "feeds": [
         {
             "name": "log-feed",

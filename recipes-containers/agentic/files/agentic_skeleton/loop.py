@@ -112,10 +112,72 @@ class AgentLoop:
 def _event_to_user_msg(event: dict) -> str:
     """How an incoming feed event is rendered as the user-turn message.
 
-    We dump it as compact JSON. Agent-app system prompts are expected to
-    explain what fields they expect — that's a product-side concern, not
-    a skeleton concern."""
-    return "event: " + json.dumps(event, separators=(",", ":"))
+    Small models (≤1.5B) parse natural text noticeably better than
+    compact JSON dumps. When the event has the conventional log-feed
+    shape (a `match` line plus optional `pre_context` / `post_context`
+    arrays), we render it as a contextual log block with the match
+    line clearly marked by `>>>`. Anything else falls back to a JSON
+    dump.
+
+    Example output:
+
+        Source:    os/var/log/messages
+        Platform:  os  (line 185)
+
+        Context (3 before, 3 after):
+            Apr 29 06:05:49 ... DNS response to 32: Bad fd
+            Apr 29 06:05:49 ... DNS response to 35: Bad fd
+            Apr 29 06:05:49 ... DNS response to 38: Bad fd
+        >>> Apr 29 06:05:54 ... DNS response to 29: Bad fd
+            Apr 29 06:05:54 ... DNS response to 32: Bad fd
+            Apr 29 06:05:54 ... DNS response to 35: Bad fd
+            Apr 29 06:05:54 ... DNS response to 38: Bad fd
+
+    Other event fields (severity, host metadata, etc.) are appended at
+    the bottom as `key: value` lines so a product-app prompt can refer
+    to them without parsing JSON.
+    """
+    if not isinstance(event, dict) or "match" not in event:
+        return "event: " + json.dumps(event, separators=(",", ":"))
+
+    lines = []
+    src = event.get("source_file") or event.get("source")
+    plat = event.get("platform")
+    line_no = event.get("line_no")
+    if src:
+        lines.append(f"Source:    {src}")
+    if plat:
+        meta = f"Platform:  {plat}"
+        if line_no is not None:
+            meta += f"  (line {line_no})"
+        lines.append(meta)
+
+    pre = event.get("pre_context") or []
+    post = event.get("post_context") or []
+    if pre or post:
+        lines.append("")
+        lines.append(f"Context ({len(pre)} before, {len(post)} after):")
+        for c in pre:
+            lines.append(f"    {c}")
+        lines.append(f">>> {event['match']}")
+        for c in post:
+            lines.append(f"    {c}")
+    else:
+        lines.append("")
+        lines.append(f">>> {event['match']}")
+
+    # Surface any uncommon top-level fields (severity, action, etc.) so
+    # product prompts can rely on them without re-parsing.
+    skip = {"match", "pre_context", "post_context", "source_file", "source",
+            "platform", "line_no", "ts", "event_id"}
+    extras = {k: v for k, v in event.items() if k not in skip}
+    if extras:
+        lines.append("")
+        for k, v in extras.items():
+            v_str = v if isinstance(v, str) else json.dumps(v, separators=(",", ":"))
+            lines.append(f"{k}: {v_str}")
+
+    return "\n".join(lines)
 
 
 def _extract_content(resp: dict):

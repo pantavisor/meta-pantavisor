@@ -1,0 +1,11 @@
+{
+    "model": "local-qwen",
+    "llm_timeout": 120,
+    "llm": {
+        "uds": "/run/pv/services/pv-llama.sock"
+    },
+    "max_iterations": 6,
+    "sink": {
+        "socket": "/run/agentic-app/out.sock"
+    }
+}

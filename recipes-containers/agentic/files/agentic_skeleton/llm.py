@@ -44,20 +44,39 @@ class LlamaClient:
     """
 
     def __init__(self, uds=None, url=None, timeout=120):
-        self._uds = uds if (uds and os.path.exists(uds)) else None
-        self._url = url if not self._uds else None
+        # Don't validate uds existence at init time — xconnect creates the
+        # consumer-side UDS asynchronously, and a fresh container's init
+        # often runs before the wiring is in place. Stash whichever the
+        # config supplied; defer the actual connect to chat() so transient
+        # races become per-call errors the agent loop can retry.
+        self._uds = uds
+        self._url = url
         self._timeout = timeout
         if not (self._uds or self._url):
             raise RuntimeError(
-                f"LlamaClient: neither uds={uds!r} exists nor url={url!r} set"
+                f"LlamaClient: neither uds={uds!r} nor url={url!r} configured"
             )
 
+    def _resolve_uds(self):
+        """Return self._uds if it currently exists, else None — letting
+        callers fall back to the TCP url when both are configured."""
+        if self._uds and os.path.exists(self._uds):
+            return self._uds
+        return None
+
     def _conn(self):
-        if self._uds:
-            return _UnixHTTPConnection(self._uds, timeout=self._timeout)
-        # url like "http://host:port"
-        host = self._url.split("://", 1)[1]
-        return http.client.HTTPConnection(host, timeout=self._timeout)
+        uds = self._resolve_uds()
+        if uds:
+            return _UnixHTTPConnection(uds, timeout=self._timeout)
+        if self._url:
+            # url like "http://host:port"
+            host = self._url.split("://", 1)[1]
+            return http.client.HTTPConnection(host, timeout=self._timeout)
+        # Neither transport ready — surface as a connection error so the
+        # agent loop can decide whether to retry or surface the failure.
+        raise ConnectionError(
+            f"pv-llama unreachable: uds={self._uds!r} not present, no url"
+        )
 
     def chat(self, messages, *, model, tools=None, grammar=None,
              max_tokens=512, temperature=0.0, stop=None):

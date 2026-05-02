@@ -18,3 +18,4 @@ layers
 gha-creds-*.json
 temp.json
 workdir
+recipes-containers/agentic/files/__pycache__/

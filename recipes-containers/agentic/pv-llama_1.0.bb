@@ -92,6 +92,25 @@ python do_unpack:append() {
         yaml.append('        --host 127.0.0.1')
         yaml.append('        --ctx-size %s' % ctx)
         yaml.append('        --threads %s' % threads)
+        # Reuse KV cache across requests with a shared prefix (typically
+        # the system prompt). Without this, llama-server re-prefills
+        # the entire conversation on every chat-completions call —
+        # easily 50 % of wall-time on small-model agentic workloads
+        # where the system prompt is hundreds of tokens and unchanged.
+        # `--cache-reuse N` makes llama-server keep up to N tokens of
+        # the prior session's KV around and skip prefill for any new
+        # request whose first N tokens match. 256 covers a typical
+        # agent-app system prompt with headroom.
+        yaml.append('        --cache-reuse 256')
+        # `--parallel K` gives llama-server K independent KV slots. With
+        # K=1 (the default), two agent-apps with different system prompts
+        # alternating their requests would thrash the single slot —
+        # each request evicting the other's cached prefix. K=2 lets two
+        # distinct prompts coexist warm; llama-server routes each
+        # incoming request to the slot with the longest matching prefix.
+        # Cost: ~200 MB KV per slot at ctx 4096 for a 1.5B model. Bump
+        # this if more concurrent agent-apps are deployed.
+        yaml.append('        --parallel 2')
         yaml.append('    proxy: "http://127.0.0.1:${PORT}"')
         yaml.append('    ttl: %s' % ttl)
     yaml.append("")

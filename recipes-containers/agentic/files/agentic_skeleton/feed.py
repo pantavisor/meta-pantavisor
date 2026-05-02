@@ -133,6 +133,13 @@ class NDJSONPublisher:
             address_family = socket.AF_UNIX
 
             def server_bind(self):
+                # The container's /run is a fresh tmpfs at boot; the agent's
+                # action-sink directory may not exist yet. mkdir -p before
+                # bind so the publisher works on first boot without the
+                # product needing a separate tmpfiles.d entry.
+                parent = os.path.dirname(self.server_address)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
                 if os.path.exists(self.server_address):
                     os.unlink(self.server_address)
                 socket.socket.bind(self.socket, self.server_address)

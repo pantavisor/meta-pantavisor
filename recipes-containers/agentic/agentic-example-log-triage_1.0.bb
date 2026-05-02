@@ -13,7 +13,7 @@ IMAGE_BASENAME = "agentic-example-log-triage"
 SRC_URI += "file://${BPN}.system_prompt.md \
             file://${BPN}.tools.json \
             file://${BPN}.tools.py \
-            file://${BPN}.config.json \
+            file://${BPN}.runtime.json \
             file://${BPN}.services.json \
             file://${BPN}.args.json"
 
