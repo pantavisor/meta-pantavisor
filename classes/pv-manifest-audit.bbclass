@@ -38,10 +38,10 @@
 #
 # Output:
 #   - Manifest is always written to
-#       ${IMGDEPLOYDIR}/${IMAGE_NAME}.manifest.txt
+#       ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.manifest.txt
 #   - On any deviation (missing reference or mismatch) a unified-diff patch
 #     is written next to the manifest as
-#       ${IMGDEPLOYDIR}/${IMAGE_NAME}.manifest.patch
+#       ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.manifest.patch
 #     and printed in full to the bitbake log via bb.plain (CI-visible).
 #     The patch headers use the reference's bare basename, so a maintainer
 #     can apply it with:
@@ -63,7 +63,13 @@ python pv_manifest_audit_run() {
     rootfs = d.getVar('IMAGE_ROOTFS')
     machine = d.getVar('MACHINE')
     image_name = d.getVar('IMAGE_NAME')
-    deploy_dir = d.getVar('IMGDEPLOYDIR') or d.getVar('DEPLOY_DIR_IMAGE')
+    # Write directly to DEPLOY_DIR_IMAGE rather than IMGDEPLOYDIR so the
+    # manifest.txt + manifest.patch survive a bb.fatal in strict mode.
+    # IMGDEPLOYDIR is per-recipe staging that bitbake only rsyncs to
+    # DEPLOY_DIR_IMAGE on successful task completion — a strict-mode
+    # abort during ROOTFS_POSTPROCESS_COMMAND would otherwise leave the
+    # diagnostic artifact stranded in WORKDIR where CI never finds it.
+    deploy_dir = d.getVar('DEPLOY_DIR_IMAGE')
     workdir = d.getVar('WORKDIR') or ''
     ref_name = d.getVar('PV_MANIFEST_REFERENCE_NAME')
     features = (d.getVar('PANTAVISOR_FEATURES') or '').split()
