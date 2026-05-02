@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Agentic Camera Stream</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #111; color: #eee; }
+  header { padding: 12px 20px; background: #1b1b1b; border-bottom: 1px solid #333; }
+  header h1 { margin: 0; font-size: 18px; }
+  #status { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+  main { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel { background: #1b1b1b; border: 1px solid #333; border-radius: 6px; padding: 12px; }
+  h2 { margin: 0 0 8px 0; font-size: 14px; color: #9cf; text-transform: uppercase; letter-spacing: 0.04em; }
+  #events { max-height: 70vh; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 12px; }
+  .event { padding: 6px 8px; border-bottom: 1px solid #262626; }
+  .event .fid { color: #9cf; }
+  .event .objs { color: #cf9; }
+  .event .ocr { color: #fc9; }
+  #latest pre { background: #000; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Agentic Camera Stream</h1>
+  <div id="status">connecting…</div>
+</header>
+<main>
+  <section class="panel">
+    <h2>Latest analysis</h2>
+    <div id="latest"><pre>waiting for first frame…</pre></div>
+  </section>
+  <section class="panel">
+    <h2>Event log</h2>
+    <div id="events"></div>
+  </section>
+</main>
+<script>
+  const status = document.getElementById("status");
+  const latest = document.querySelector("#latest pre");
+  const events = document.getElementById("events");
+
+  async function stream() {
+    status.textContent = "connecting…";
+    try {
+      const resp = await fetch("/stream");
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      status.textContent = "connected";
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl);
+          buf = buf.slice(nl + 1);
+          if (!line.trim()) continue;
+          try {
+            const ev = JSON.parse(line);
+            render(ev);
+          } catch (e) { /* ignore */ }
+        }
+      }
+    } catch (e) {
+      status.textContent = "disconnected (" + e.message + "), retrying…";
+    }
+    setTimeout(stream, 2000);
+  }
+
+  function render(ev) {
+    latest.textContent = JSON.stringify(ev, null, 2);
+    const row = document.createElement("div");
+    row.className = "event";
+    const objs = (ev.objects || []).map(o => `${o.label}:${o.confidence}`).join(", ") || "-";
+    row.innerHTML = `
+      <span class="fid">#${ev.frame_id}</span>
+      <span class="objs">[${objs}]</span>
+      <span class="ocr">OCR: ${ev.ocr || "-"}</span>`;
+    events.prepend(row);
+    while (events.children.length > 100) events.removeChild(events.lastChild);
+  }
+
+  stream();
+</script>
+</body>
+</html>

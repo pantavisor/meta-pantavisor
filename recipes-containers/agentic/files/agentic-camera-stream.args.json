@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "camera-analysis",
+            "target": "/run/pv/services/camera-analysis.sock"
+        }
+    ]
+}

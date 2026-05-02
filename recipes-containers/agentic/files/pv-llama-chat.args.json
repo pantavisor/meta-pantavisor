@@ -1,0 +1,8 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "pv-llama",
+            "target": "/run/pv/services/pv-llama.sock"
+        }
+    ]
+}

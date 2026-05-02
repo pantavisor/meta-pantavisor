@@ -1,0 +1,12 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "log-feed",
+            "target": "/run/pv/services/log-feed.sock"
+        },
+        {
+            "name": "pv-llama",
+            "target": "/run/pv/services/pv-llama.sock"
+        }
+    ]
+}
