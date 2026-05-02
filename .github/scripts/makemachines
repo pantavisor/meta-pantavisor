@@ -2,28 +2,158 @@
 
 set -e
 
+REMAKE=0
+for arg in "$@"; do
+    case "$arg" in
+        --remake)
+            REMAKE=1
+            ;;
+        -h|--help)
+            cat <<EOF
+Usage: $0 [--remake]
+
+  (no flag)   Regenerate kas/build-configs/release/<machine>-<branch>.yaml
+              for every machine in .github/machines.json by running
+              'kas dump --update --resolve-refs'. --update fetches the
+              latest commits from the upstream branches, so each repo
+              entry is bumped to the current head.
+
+  --remake    Recombine the snippet chain for each machine, but PRESERVE
+              the repo commits already pinned in the committed
+              kas/build-configs/release/<machine>-<branch>.yaml. Use
+              this when you have changed the snippet structure (added
+              a layer, changed local_conf_header, etc.) and want the
+              release yamls refreshed without bumping any upstream
+              refs. Repos that did not exist in the prior committed
+              file fall back to the snippet's pinned commit.
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            exit 2
+            ;;
+    esac
+done
+
 yocto_branch=$(jq -r .yocto_branch .github/machines.json)
 
 configs=$(jq -r '.machines[] | .config' .github/machines.json)
 names=$(jq -r '.machines[] | .name' .github/machines.json)
 
-echo "Processing machines for branch: $yocto_branch"
+if [ "$REMAKE" -eq 1 ]; then
+    echo "Processing machines for branch: $yocto_branch (--remake: keeping committed revs)"
+else
+    echo "Processing machines for branch: $yocto_branch"
+fi
 echo ""
-
-rm -f kas/build-configs/release/*-$yocto_branch.yaml*
 
 readarray -t config_array <<< "$configs"
 readarray -t name_array <<< "$names"
 
+merge_commits() {
+    # $1 = old (committed) yaml, $2 = freshly-dumped yaml. Rewrites $2
+    # in place: any repos.<name>.commit present in $1 overrides the
+    # value produced by the fresh kas dump. Repo set, ordering and
+    # everything else from the fresh dump is preserved.
+    local old="$1"
+    local new="$2"
+    python3 - "$old" "$new" <<'PY'
+import sys, re, yaml
+
+old_path, new_path = sys.argv[1], sys.argv[2]
+
+with open(old_path) as f:
+    old = yaml.safe_load(f) or {}
+old_repos = (old.get('repos') or {})
+saved = {}
+for name, spec in old_repos.items():
+    if isinstance(spec, dict) and spec.get('commit'):
+        saved[name] = spec['commit']
+
+with open(new_path) as f:
+    text = f.read()
+
+# Regex-based, line-oriented rewrite so we preserve the kas dump
+# formatting exactly (key order, indentation, quoting). The release
+# yamls indent repo entries 4 spaces under 'repos:' and the commit
+# line is 8 spaces in. We anchor on that structure.
+lines = text.splitlines(keepends=True)
+out = []
+i = 0
+in_repos = False
+current_repo = None
+repo_indent = None
+while i < len(lines):
+    line = lines[i]
+    stripped = line.rstrip('\n')
+    if re.match(r'^repos:\s*$', stripped):
+        in_repos = True
+        out.append(line)
+        i += 1
+        continue
+    if in_repos:
+        # Top-level key (no leading space) ends the repos: block.
+        if stripped and not stripped[0].isspace():
+            in_repos = False
+            current_repo = None
+            out.append(line)
+            i += 1
+            continue
+        m = re.match(r'^(\s+)([A-Za-z0-9_.\-]+):\s*$', stripped)
+        if m and (repo_indent is None or len(m.group(1)) == repo_indent):
+            repo_indent = len(m.group(1))
+            current_repo = m.group(2)
+            out.append(line)
+            i += 1
+            continue
+        if current_repo is not None:
+            cm = re.match(r'^(\s+)commit:\s*(\S+)\s*$', stripped)
+            if cm and len(cm.group(1)) > (repo_indent or 0):
+                if current_repo in saved:
+                    new_commit = saved[current_repo]
+                    line = f"{cm.group(1)}commit: {new_commit}\n"
+                out.append(line)
+                i += 1
+                continue
+    out.append(line)
+    i += 1
+
+with open(new_path, 'w') as f:
+    f.writelines(out)
+PY
+}
+
 for i in "${!config_array[@]}"; do
     cc="${config_array[$i]}"
     m="${name_array[$i]}"
-    
+    out="kas/build-configs/release/$m-$yocto_branch.yaml"
+
     echo "Processing: $m"
     echo "Config: $cc"
-    
-    KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > kas/build-configs/release/$m-$yocto_branch.yaml
-    
+
+    if [ "$REMAKE" -eq 1 ]; then
+        if [ ! -f "$out" ]; then
+            echo "  warning: $out does not exist; falling back to fresh resolve" >&2
+            KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > "$out"
+        else
+            tmp_old=$(mktemp)
+            cp "$out" "$tmp_old"
+            # Recombine without --update so we don't fetch new tips.
+            # --resolve-refs still gives us concrete SHAs for any branch
+            # references in the snippets; commits already pinned in the
+            # snippets pass through unchanged. The merge_commits step
+            # then overrides any matching repo with the prior committed
+            # SHA so this run never bumps a rev.
+            KAS_WORK_DIR=. kas dump --resolve-refs "kas/sourcedir.yaml:$cc" > "$out"
+            merge_commits "$tmp_old" "$out"
+            rm -f "$tmp_old"
+        fi
+    else
+        rm -f "$out" "$out".bak
+        KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > "$out"
+    fi
+
     echo "- Created config for machine: $m"
     echo ""
 done
