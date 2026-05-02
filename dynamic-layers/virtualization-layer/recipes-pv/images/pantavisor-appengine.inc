@@ -2,6 +2,9 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 inherit pantavisor-docker
+inherit ${@bb.utils.contains_any('PANTAVISOR_FEATURES', 'pv-manifest-audit pv-manifest-strict', 'pv-manifest-audit', '', d)}
+
+PV_MANIFEST_PREFIX = "pv-appengine"
 
 DOCKER_IMAGE_NAME = "pantavisor-appengine"
 DOCKER_IMAGE_TAG = "1.0"

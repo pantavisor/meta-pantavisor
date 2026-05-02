@@ -30,6 +30,7 @@ New documents should follow this layout:
 Key documents:
 - [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
 - [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide
+- [docs/how-to-build/manifest-audit.md](docs/how-to-build/manifest-audit.md) — rootfs manifest audit (`pv-manifest-audit` / `pv-manifest-strict`)
 - [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
 - [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, testplans)
 

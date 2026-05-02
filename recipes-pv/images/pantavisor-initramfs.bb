@@ -1,4 +1,7 @@
 inherit image image-buildinfo
+inherit ${@bb.utils.contains_any('PANTAVISOR_FEATURES', 'pv-manifest-audit pv-manifest-strict', 'pv-manifest-audit', '', d)}
+
+PV_MANIFEST_PREFIX = "pv-initramfs"
 
 # Simple initramfs image artifact generation for tiny images.
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
