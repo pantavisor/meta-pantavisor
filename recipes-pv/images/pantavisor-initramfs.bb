@@ -3,6 +3,18 @@ inherit ${@bb.utils.contains_any('PANTAVISOR_FEATURES', 'pv-manifest-audit pv-ma
 
 PV_MANIFEST_PREFIX = "pv-initramfs"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/pv-manifests:"
+
+# Reference manifests for the upstream-supported MACHINEs. The audit
+# class only loads the one whose name matches the current
+# MACHINE/DISTRO/CODENAME; the others sit unused in WORKDIR. Listing
+# them flat here keeps the bbappend pattern simple — no per-machine
+# overrides to keep in sync.
+SRC_URI += " \
+    file://pv-initramfs_panta-raspberrypi-armv8-scarthgap.manifest.reference.txt \
+    file://pv-initramfs_panta-bananapi-m2-berry-scarthgap.manifest.reference.txt \
+"
+
 # Simple initramfs image artifact generation for tiny images.
 DESCRIPTION = "Pantavisor enabled Initramfs image for Pantavisor BSPs"
 

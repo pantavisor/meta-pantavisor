@@ -3,6 +3,11 @@ LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecd
 
 include pantavisor-appengine.inc
 
+# Tester adds significantly more packages on top of base appengine, so
+# it gets its own audit reference under a distinct prefix.
+PV_MANIFEST_PREFIX = "pv-appengine-tester"
+SRC_URI += " file://pv-appengine-tester_panta-appengine-docker-x86_64-scarthgap.manifest.reference.txt"
+
 DOCKER_IMAGE_NAME = "${PN}"
 DOCKER_IMAGE_TAG = "1.0"
 DOCKER_IMAGE_EXTRA_TAGS = "latest"
