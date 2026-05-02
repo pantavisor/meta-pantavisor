@@ -30,10 +30,21 @@ SUMMARY_JOB = [
     '          echo "| Machine | Result |" >> $GITHUB_STEP_SUMMARY',
     '          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY',
     """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
+    "      - name: Upload badges to S3",
+    "        env:",
+    "          GH_TOKEN: ${{ github.token }}",
+    "          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}",
+    "          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}",
+    "        run: |",
+    "          .github/scripts/upload-badges \\",
+    "            ${{ github.repository }} \\",
+    "            ${{ github.run_id }} \\",
+    "            ${{ github.ref_name }} \\",
+    "            ${{ secrets.AWS_S3_BUCKET }}",
 ]
 
 lines = [
-    f'name: "ontag: {branch}"',
+    f'name: "ontag: make release, build all targets"',
     "",
     "on:",
     "  push:",
