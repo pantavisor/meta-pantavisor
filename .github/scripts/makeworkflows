@@ -2,6 +2,33 @@
 
 set -e
 
+# --remake is accepted (and forwarded where meaningful) so callers can
+# run `makemachines --remake && makeworkflows --remake` symmetrically
+# without remembering which step actually consumes the flag. Workflow
+# generation has no notion of revs, so this script behaves the same
+# either way today.
+for arg in "$@"; do
+    case "$arg" in
+        --remake)
+            ;;
+        -h|--help)
+            cat <<EOF
+Usage: $0 [--remake]
+
+Regenerate the manual/tag/onpush workflow yamls under .github/workflows/
+from .github/machines.json. The --remake flag is accepted for symmetry
+with .github/scripts/makemachines but has no effect here — workflow
+generation does not pin any revs.
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            exit 2
+            ;;
+    esac
+done
+
 YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
 
 
