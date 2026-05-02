@@ -64,6 +64,9 @@ jobs:
           find build/${{ env.TMPDIR }}/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
           find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
 
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.txt" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.patch" -exec cp {} . \; 2>/dev/null || true
+
           find build/${{ env.TMPDIR }}/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
           ls -l .
 
@@ -114,4 +117,13 @@ jobs:
         with:
           name: sdk-artifact-${{ inputs.machine_name }}
           path: panta*.sh
+          if-no-files-found: ignore
+
+      - name: Archive manifest audit artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: manifest-audit-${{ inputs.build_target }}-${{ inputs.machine_name }}
+          path: |
+            *.manifest.txt
+            *.manifest.patch
           if-no-files-found: ignore
