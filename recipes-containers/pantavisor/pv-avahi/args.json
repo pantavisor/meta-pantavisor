@@ -10,6 +10,5 @@
         "dac_override",
         "sys_chroot",
         "kill"
-    ],
-    "PV_RESTART_POLICY": "system"
+    ]
 }
