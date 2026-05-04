@@ -13,6 +13,52 @@ git clone https://github.com/pantavisor/meta-pantavisor.git
 cd meta-pantavisor
 ```
 
+## Working on Multiple Branches (Git Worktrees)
+
+To work on several branches in parallel without re-cloning or re-downloading
+sstate/sources, use git worktrees. Two helper scripts are provided:
+
+```bash
+./worktree-create.sh <path> [git worktree add args...]
+./worktree-remove.sh  <path> [git worktree remove args...]
+```
+
+Both are thin wrappers around `git worktree add` / `git worktree remove` —
+all arguments after `<path>` pass through. `worktree-create.sh` additionally
+creates relative symlinks `build/sstate-cache` and `build/downloads` in the
+new worktree pointing back at the main repo's caches, so kas/bitbake reuses
+them across worktrees. Re-running `worktree-create.sh` on an existing path
+just refreshes those symlinks.
+
+### Why this works
+
+Yocto's `SSTATE_DIR` and `DL_DIR` are designed for concurrent access — sstate
+artifacts use per-task hashes and atomic rename, downloads use per-source
+lockfiles. So parallel `kas-container build` runs across worktrees can share
+both safely.
+
+What is **not** safe to share concurrently and stays per-worktree:
+- `build/tmp-*` (TMPDIR, pseudo DB, work dirs)
+- `build/cache/` (PARSE cache)
+- `build/bitbake.lock`, `build/hashserve.sock`
+
+`kas-container` is patched to handle git worktrees: when `${KAS_WORK_DIR}/.git`
+is a worktree pointer file it bind-mounts the main repo at its host path
+(so `git rev-parse --show-toplevel` resolves and kas locates patch files
+correctly) and bind-mounts `KAS_BUILD_DIR` at its host path (so the relative
+cache symlinks resolve through the same parent-dir hierarchy as on the host).
+
+### Typical flow
+
+```bash
+./worktree-create.sh ../meta-pantavisor-foo feature/foo
+cd ../meta-pantavisor-foo
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
+# ... hack, commit, push ...
+cd -
+./worktree-remove.sh ../meta-pantavisor-foo
+```
+
 ## Build Modes
 
 ### Standard Build (release sources)
