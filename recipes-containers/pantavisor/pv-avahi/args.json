@@ -1,5 +1,5 @@
 {
-    "PV_GROUP": "platform",
+    "PV_GROUP": "app",
     "PV_LXC_CAP_KEEP": [
         "net_admin",
         "net_raw",
