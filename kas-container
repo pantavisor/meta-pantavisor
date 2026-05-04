@@ -460,6 +460,42 @@ set -- "$@" -v "${KAS_REPO_DIR}:/repo:${KAS_REPO_MOUNT_OPT}" \
 	-e KAS_BUILD_DIR=/build \
 	-e USER_ID="$(id -u)" -e GROUP_ID="$(id -g)" --rm --init
 
+# If KAS_WORK_DIR is a git worktree (.git is a file, not a directory),
+# bind-mount the main repo's working tree at its host path inside the
+# container. This makes:
+#   1. `git rev-parse --show-toplevel` resolve (the .git pointer file
+#      references the main repo's .git/worktrees/<name>/ by absolute
+#      host path; kas needs this to compute patch base paths).
+#   2. Relative symlinks under the worktree's build/ (e.g. sstate-cache,
+#      downloads pointing at ../../<main>/build/...) resolve in both
+#      host and container filesystems.
+if [ -f "${KAS_WORK_DIR}/.git" ]; then
+	WT_GITDIR="$(sed -n 's/^gitdir: //p' "${KAS_WORK_DIR}/.git")"
+	if [ -n "${WT_GITDIR}" ]; then
+		case "${WT_GITDIR}" in
+			/*) ;;
+			*) WT_GITDIR="${KAS_WORK_DIR}/${WT_GITDIR}" ;;
+		esac
+		WT_COMMONDIR="$(cat "${WT_GITDIR}/commondir" 2>/dev/null)"
+		if [ -n "${WT_COMMONDIR}" ]; then
+			case "${WT_COMMONDIR}" in
+				/*) MAIN_GITDIR="${WT_COMMONDIR}" ;;
+				*) MAIN_GITDIR="$(readlink -fv "${WT_GITDIR}/${WT_COMMONDIR}")" ;;
+			esac
+			MAIN_REPO_DIR="${MAIN_GITDIR%/.git}"
+			if [ -d "${MAIN_REPO_DIR}" ]; then
+				set -- "$@" -v "${MAIN_REPO_DIR}:${MAIN_REPO_DIR}:rw"
+			fi
+		fi
+	fi
+	# Also mount KAS_BUILD_DIR at its host path and tell kas to use it
+	# there (instead of the default /build) — this keeps relative symlinks
+	# under build/ resolvable inside the container, since the parent dir
+	# hierarchy that holds them on the host is preserved in the container.
+	set -- "$@" -v "${KAS_BUILD_DIR}:${KAS_BUILD_DIR}:rw" \
+		-e KAS_BUILD_DIR="${KAS_BUILD_DIR}"
+fi
+
 if [ -n "${KAS_SSH_DIR}" ] ; then
 	if [ ! -d "${KAS_SSH_DIR}" ]; then
 		fatal_error "passed KAS_SSH_DIR '${KAS_SSH_DIR}' is not a directory"
