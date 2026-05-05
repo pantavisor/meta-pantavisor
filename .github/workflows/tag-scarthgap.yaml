@@ -91,11 +91,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Machine | Result |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Build Summary"
+            echo ""
+            echo "| Machine | Result |"
+            echo "| :--- | :--- |"
+            gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"'
+          } | tee notes.md >> $GITHUB_STEP_SUMMARY
       - name: Upload badges to S3
         env:
           GH_TOKEN: ${{ github.token }}
@@ -107,3 +109,11 @@ jobs:
             ${{ github.run_id }} \
             ${{ github.ref_name }} \
             ${{ secrets.AWS_S3_BUCKET }}
+      - name: Append Build Summary to Release
+        uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
+        with:
+          body_path: notes.md
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
