@@ -4,6 +4,8 @@ DEPENDS:append = " pvr-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 "
 
+# Remove the mfgtool image class since it is not compatible with pvrexportit and is not needed for the pvrexportit image type
+IMAGE_CLASSES:remove = "image_populate_mfgtool"
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES:append = " pvrexportit "
 
