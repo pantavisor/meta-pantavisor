@@ -9,7 +9,8 @@ Yocto/OpenEmbedded layer for building Pantavisor-based BSP images for embedded L
 | `kas/` | KAS configuration fragments (machines, platforms, Yocto releases, workspace overlay) |
 | `recipes-pv/pantavisor/` | Core Pantavisor runtime recipe |
 | `recipes-pv/images/` | BSP, initramfs, appengine image recipes |
-| `recipes-containers/pv-examples/` | Example containers for xconnect service mesh testing |
+| `recipes-containers/pv-examples/` | Example containers for xconnect service mesh testing (incl. `pv-example-svc-tcp-{provider,consumer}` for the service-IP layer) |
+| `worktree-create.sh` / `worktree-remove.sh` | **Always use these for new branch worktrees** — they share `build/sstate-cache` + `build/downloads` with the main checkout. Plain `git worktree add` skips cache sharing and forces fresh sstate rebuilds. Idempotent. |
 | `classes/pvbase.bbclass` | Defines `PANTAVISOR_FEATURES` variable and defaults |
 | `classes/container-pvrexport.bbclass` | Container pvrexport packaging |
 | `.github/machines.json` | CI machine configurations — edit before regenerating workflows |
@@ -28,8 +29,11 @@ New documents should follow this layout:
 | `docs/testing/` | Development and automated test workflows; test plans under `testplans/` |
 
 Key documents:
-- [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
-- [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide
+- [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay (**the only sane way** to iterate on Pantavisor source — do NOT create a separate Pantavisor git worktree, devtool manages `build/workspace/sources/pantavisor` and external checkouts aren't reachable from inside `kas-container`)
+- [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide (includes the `worktree-create.sh` parallel-branch workflow)
+- [docs/overview/xconnect-services.md](docs/overview/xconnect-services.md) — service-IP layer (ClusterIPs, `<service>.pv.local`, k8s-Services-style mediation)
+- [docs/how-to-build/xconnect-services.md](docs/how-to-build/xconnect-services.md) — adding a TCP service to a container
+- [docs/testing/testplans/testplan-xconnect-services.md](docs/testing/testplans/testplan-xconnect-services.md) — service-IP test plan
 - [docs/how-to-build/manifest-audit.md](docs/how-to-build/manifest-audit.md) — rootfs manifest audit (`pv-manifest-audit` / `pv-manifest-strict`)
 - [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
 - [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, testplans)
