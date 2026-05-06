@@ -39,7 +39,7 @@ SRCREV = "328025dfad18ab3adb0208034db9ad17d1fd20a8"
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
 
-PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl"
+PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl ${PN}-debug-hooks"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -81,6 +81,11 @@ RPROVIDES:${PN}-pvcurl += "pvcurl"
 RREPLACES:${PN}-pvcurl += "pvcurl"
 RCONFLICTS:${PN}-pvcurl += "pvcurl"
 
+FILES:${PN}-debug-hooks = "${libdir}/pantavisor/pv/hooks/system.d/00-hook-debug \
+                           ${libdir}/pantavisor/pv/hooks/system.d/99-hook-debug \
+                           ${libdir}/pantavisor/pv/hooks-debug-conf/"
+RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '${PN}-debug-hooks', '', d)}"
+
 inherit cmake gitpkgv
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
@@ -95,6 +100,7 @@ EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_PVTEST=ON'
 EXTRA_OECMAKE += "-DPANTAVISOR_PVTX_STATIC=ON -DPANTAVISOR_PVTX=ON -DPANTAVISOR_RUNTIME=ON"
+EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '-DPANTAVISOR_DEBUG_HOOKS=ON', '-DPANTAVISOR_DEBUG_HOOKS=OFF', d)}"
 
 OECMAKE_C_FLAGS += "-Wno-unused-result -ldl -Wno-error=implicit-function-declaration"
 
