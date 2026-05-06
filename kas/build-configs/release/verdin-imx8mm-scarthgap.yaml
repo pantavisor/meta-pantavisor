@@ -1,0 +1,139 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-freescale:
+        commit: 0c27c21cab57876474bb572e5d378b6707e41224
+        path: layers/meta-freescale
+        url: https://github.com/Freescale/meta-freescale.git
+    meta-freescale-3rdparty:
+        commit: ce10c065119c2d4e359235c77aae7e0d843533ef
+        path: layers/meta-freescale-3rdparty
+        url: https://github.com/Freescale/meta-freescale-3rdparty.git
+    meta-freescale-distro:
+        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+        path: layers/meta-freescale-distro
+        url: https://github.com/Freescale/meta-freescale-distro.git
+    meta-toradex-bsp-common:
+        branch: scarthgap-7.x.y
+        commit: 193b6b5fd195abefd81f7e3fa52a6d81ae2594de
+        path: layers/meta-toradex-bsp-common
+        url: https://git.toradex.com/meta-toradex-bsp-common.git
+    meta-toradex-nxp:
+        branch: scarthgap-7.x.y
+        commit: 60b01a180f192796a5c4a47fee4860f6ec6c130c
+        path: layers/meta-toradex-nxp
+        url: https://git.toradex.com/meta-toradex-nxp.git
+    poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: db668121d98162b8ad196ba6d8637f8330a1787d
+    meta-pantavisor:
+    meta-virtualization:
+        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
+        path: layers/meta-virtualization
+        url: https://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-freescale: |
+        ACCEPT_FSL_EULA = "1"
+    platform-toradex: |
+        PV_UBOOT_AUTOFDT = "1"
+    platform-verdin-imx8mm: |
+        PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
+        PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
+        UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
+
+        # Alternative device trees based on carrier board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"    # Development board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-ivy.dtb"     # Ivy board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-mallow.dtb"  # Mallow board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-yavia.dtb"   # Yavia board
+
+        # WiFi variant configuration
+        TORADEX_VARIANT = "wifi"
+
+        # Enable WiFi features
+        MACHINE_FEATURES:append = " wifi"
+
+        # Ensure WiFi firmware is included
+        MACHINE_FIRMWARE:append = " linux-firmware-sd8997"
+
+        # WiFi kernel modules to autoload
+        KERNEL_MODULE_AUTOLOAD:append = " cfg80211 mwifiex_sdio"
+
+        # Zinnia DTBs are listed in meta-toradex-nxp machine conf but absent from the
+        # linux-toradex 6.6 NXP BSP kernel source; machine conf only removes them for mainline BSP.
+        KERNEL_DEVICETREE:remove = "freescale/imx8mm-verdin-nonwifi-zinnia.dtb freescale/imx8mm-verdin-wifi-zinnia.dtb"
+
+        # Required: pantavisor-default-skel adds a dm-crypt-caam disk for mx8m-generic-bsp;
+        # caam-nxp installs keyctl-caam (caam-keygen) in the initramfs to mount it.
+        PANTAVISOR_FEATURES:append = " caam-nxp"
+
+        # Exclude problematic firmware package that causes license manifest issues
+        PACKAGE_EXCLUDE:append = " firmware-nxp-wifi-bcm4359-pcie"
+
+        # Disable SPDX generation to avoid license manifest issues with linux-firmware
+        INHERIT:remove = "create-spdx"
+
+        # Additional WiFi-specific settings
+        # PV_INITIAL_DTB = "imx8mm-verdin-wifi-dev.dtb"
+
+        # Disable auto FDT selection to use PV_INITIAL_DTB
+        # This prevents the first DTB from KERNEL_DEVICETREE from being selected
+        PV_UBOOT_AUTOFDT = "1"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: verdin-imx8mm
+env:
+    TORADEX_VARIANT: wifi
+    MACHINE_FEATURES: wifi
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-starter
+build_system: oe
+distro: panta-distro

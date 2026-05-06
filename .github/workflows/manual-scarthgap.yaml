@@ -18,6 +18,7 @@ on:
           - radxa-rock5a
           - imx8mn-var-som
           - imx8mm-var-dart
+          - verdin-imx8mm
           - docker-x86_64
 
 jobs:
