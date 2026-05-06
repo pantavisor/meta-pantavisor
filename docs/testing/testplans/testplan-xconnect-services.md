@@ -243,3 +243,99 @@ What's wired structurally but **not yet exercised end-to-end** in v1:
 | Platform health gate (`pv_platform_start` queries link status) | not yet wired; needs xconnect→pv-ctrl status push | TC-09 (TBD) |
 
 When those features land, add the corresponding TCs and test container fixtures.
+
+---
+
+## TC-10 — Reject service participant without network anchor
+
+**Purpose**: verify that a container exporting a service via
+`services.json` (or requiring one via `services.required`) and **not**
+declaring a network anchor (no `network.pool`, no `network.mode=host`)
+is refused at platform start. The status-goal must time out and the
+revision must fail to reach READY.
+
+### Setup
+
+Build a fixture variant of `pv-example-svc-tcp-provider` with
+`PV_NETWORK_POOL` *removed* from `args.json` so the rendered `run.json`
+has no `network` block. Stage as the only service container in
+`pvtx.d/`.
+
+### Execute
+
+```bash
+docker run --name pva-test -d --privileged \
+    -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \
+    -v storage-test:/var/pantavisor/storage \
+    --entrypoint /bin/sh pantavisor-appengine:latest -c "sleep infinity"
+docker exec pva-test sh -c 'pv-appengine &'
+sleep 25
+```
+
+### Assertions
+
+```bash
+# Platform must NOT be running
+docker exec pva-test sh -c 'pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/platforms' | jq '.[] | select(.name=="pv-example-svc-tcp-provider") | .status.current'
+# expect: not "STARTED" or "READY"
+
+# Pantavisor logs the refusal
+docker exec pva-test sh -c 'pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl "http://localhost/cgi-bin/logs?source=pantavisor&tail=200"' | grep -i "touches xconnect services but declares no network anchor"
+# expect: one match, naming the platform
+```
+
+### PASS criteria
+
+- Platform start refused with the documented log line.
+- Status goal eventually times out (revision fails to reach READY).
+- No nft DNAT rule installed for the rejected platform's services.
+
+---
+
+## TC-11 — Reject host-net service participant without lxc.net.\*
+
+**Purpose**: verify that a container declaring `network.mode=host` AND
+participating in xconnect services AND lacking any `lxc.net.*` lines in
+its `lxc.container.conf` is refused at platform start.
+
+### Setup
+
+Build a fixture variant of `pv-example-svc-tcp-provider` whose `run.json`
+declares `"network": { "mode": "host" }` and whose `lxc.container.conf`
+contains no `lxc.net.*` entries.
+
+### Execute
+
+Same boot sequence as TC-10.
+
+### Assertions
+
+```bash
+docker exec pva-test sh -c 'pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl "http://localhost/cgi-bin/logs?source=pantavisor&tail=200"' | grep -i "host-net service participants must bring their own network config"
+# expect: one match, naming the platform
+```
+
+### PASS criteria
+
+- Platform start refused with the documented log line.
+- Status goal eventually times out.
+
+---
+
+## TC-12 — Pool participant with baked lxc.net.\* (regression for `99e2fba`)
+
+**Purpose**: regression for the existing rule that a pool participant
+must not bake `lxc.net.*` into its conf, now hit through a service
+participant rather than a plain IPAM-only container.
+
+### Setup
+
+Build a fixture combining `PV_NETWORK_POOL=internal` with a
+`lxc.container.conf` that already contains `lxc.net.0.type = veth`.
+
+### Assertions
+
+```bash
+docker exec pva-test sh -c 'pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl "http://localhost/cgi-bin/logs?source=pantavisor&tail=200"' | grep -i "declares an IPAM pool but its lxc.container.conf already contains lxc.net"
+# expect: one match
+```

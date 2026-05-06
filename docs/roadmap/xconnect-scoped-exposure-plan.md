@@ -9,7 +9,7 @@ Current state of each slice:
 |-------|--------|-------|
 | OUTPUT-chain DNAT in `pvx_services` nft table | **landed** (uncommitted) | `xconnect/services_nft.c`: rule install/delete now mirrors across `prerouting` + `output` (and `PREROUTING` + `OUTPUT` for iptables fallback). Teardown flushes both. |
 | Loopback backend pick for host↔host | **landed** (uncommitted) | `state.c:pvx_provider_ipv4_for` returns `127.0.0.1` when both provider and consumer are host-net. |
-| Network-anchor rejection rules at parse time | **planned, not started** | See "Slice A — network-anchor rejection" below. |
+| Network-anchor rejection rules at parse time | **landed** | `platforms.c:pv_platform_start` (manifest-level) + `plugins/pv_lxc.c:pv_validate_container_config` (host-mode + lxc.net.* sibling check). Helper `pv_platform_is_service_participant`. See "Slice A" below. |
 | LISTEN-probe + candidate set | **planned** | The full Phase-1 design described later in this doc. |
 | `expose:` field + scoped DNAT | **planned** | Phase 2. |
 | `/xconnect-status` → `pv_platform_start` READY gate | **planned** | Phase 3. |
@@ -62,13 +62,17 @@ anchor. Pantavisor never silently rewrites a container's network config.
 
 Add to `docs/testing/testplans/testplan-xconnect-services.md`:
 
-- **TC-09 — Reject service participant without network anchor.** Container
-  with `services.json` + no `lxc.net.*` + no pool: boot must fail at parse,
-  log line must mention the platform name and the rule. Exit cleanly without
-  starting the platform.
-- **TC-10 — Reject pool + lxc.net.\* combo for service participant.**
-  Regression for the existing `99e2fba` rule, now hit through a service
-  participant rather than just the IPAM path.
+- **TC-10 — Reject service participant without network anchor.** Container
+  with `services.json` + no pool + no `mode=host`: boot must fail at platform
+  start, log line `"touches xconnect services but declares no network
+  anchor"` must appear naming the platform.
+- **TC-11 — Reject host-net service participant without `lxc.net.*`.**
+  Container with `services.json` + `mode=host` + no `lxc.net.*` in its
+  `.conf`: refused with `"host-net service participants must bring their
+  own network config"`.
+- **TC-12 — Pool participant with baked `lxc.net.*` (regression for
+  `99e2fba`).** Refused with the existing pool-vs-`lxc.net.*` log line, now
+  via a service participant code path.
 
 ### Documentation
 
