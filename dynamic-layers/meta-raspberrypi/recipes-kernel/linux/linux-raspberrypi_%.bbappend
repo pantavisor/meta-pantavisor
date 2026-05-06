@@ -76,22 +76,27 @@ python __anonymous () {
 }
 
 # Build a shim directory under the kernel's WORKDIR with un-prefixed
-# symlinks (`as`, `ld`, `objcopy`, `objdump`, `gcc`, `cpp`, `nm`, `ar`,
-# `ranlib`, `strip`) pointing at the v6 multiconfig's prefixed cross-
-# binaries. Without this, gcc's internal assembler invocation finds
-# the host /usr/bin/as ("as: unrecognized option '-EL'") because the
-# Yocto cross-gcc package doesn't ship `as` in its libexec — it
-# expects PATH to provide either the prefixed or un-prefixed name,
-# and Kbuild's vdso32 rules end up calling plain `as` directly.
+# symlinks for the binutils tools (`as`, `ld`, `objcopy`, `objdump`,
+# `nm`, `ar`, `ranlib`, `strip`) pointing at the v6 multiconfig's
+# prefixed cross-binaries. Without this, gcc's internal assembler
+# invocation finds the host /usr/bin/as ("as: unrecognized option
+# '-EL'") because the Yocto cross-gcc package doesn't ship `as` in
+# its libexec — it expects PATH to provide either the prefixed or
+# un-prefixed name, and Kbuild's vdso32 rules end up calling plain
+# `as` directly.
+#
+# Compiler frontends (gcc/g++/cpp) are deliberately NOT shimmed
+# un-prefixed: Kbuild always invokes them via CROSS_COMPILE_COMPAT,
+# i.e. as `arm-poky-linux-musleabi-gcc`, which the cross-gcc bin dir
+# (also on PATH) already provides. Adding un-prefixed `gcc`/`cpp`
+# symlinks here would poison HOSTCC for kernel host-tool builds
+# (scripts/dtc, etc.) — `HOSTCC=gcc` would resolve to the arm32
+# cross-gcc and fail with "stdio.h: No such file or directory".
 setup_compat_toolchain_shim () {
     install -d ${COMPAT_SHIM_DIR}
-    for tool in as ld objcopy objdump nm ar ranlib strip cpp; do
+    for tool in as ld objcopy objdump nm ar ranlib strip; do
         ln -sf "${COMPAT_BUTILS_BIN_DIR}/${COMPAT_TRIPLET}-$tool" \
             "${COMPAT_SHIM_DIR}/$tool"
-    done
-    for tool in gcc g++ cpp; do
-        ln -sf "${COMPAT_GCC_BIN_DIR}/${COMPAT_TRIPLET}-$tool" \
-            "${COMPAT_SHIM_DIR}/$tool" 2>/dev/null || true
     done
     export PATH="${COMPAT_SHIM_DIR}:${COMPAT_GCC_BIN_DIR}:${COMPAT_BUTILS_BIN_DIR}:${PATH}"
 }
