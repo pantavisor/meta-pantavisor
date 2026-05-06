@@ -204,7 +204,28 @@ CIP=$(docker exec pva-test sh -c 'curl -s --unix-socket /run/pantavisor/pv/pv-ct
 
 ## Verification log (latest run)
 
-Run on docker-x86_64 appengine, `feat/xconnect-services` branch, build of 2026-05-04.
+Run on docker-x86_64 appengine, `feat/xconnect-services` branch, build of 2026-05-06 (commits up to and including the network-anchor rejection slice).
+
+| Test | Result | Notes |
+|------|--------|-------|
+| TC-01 — Tier-1 happy path | ✓ | `cluster_ip=198.18.208.73`, `provider_ip=10.0.5.3`, OUTPUT-chain rule mirrored alongside PREROUTING, 7 consecutive `ok body=hello-tcp v1` after one establishment-race FAIL. |
+| TC-02 — ClusterIP stability across container restart | ✓ | `CIP_BEFORE=CIP_AFTER=198.18.208.73` after `pvcontrol containers restart pv-example-svc-tcp-provider`. |
+| TC-03 — ClusterIP stability across full reboot | ✓ | `CIP_REBOOT=198.18.208.73` after `docker restart pva-test` + `pv-appengine &`. |
+| TC-04 — IPAM coexistence | ✓ | Both `table ip pvx_services` and `table ip nat` present. After 5 cycles of consumer stop/start: 2 dnat lines under `pvx_services` (one per chain — PREROUTING + OUTPUT — no leak; expected new shape since the OUTPUT chain landed). |
+| TC-05 — `xconnect.services.cidr` config override | ✓ | Setting `PV_XCONNECT_SERVICES_CIDR=10.55.0.0/16` in `/etc/pantavisor-appengine.config` then restart yields `cluster_ip=10.55.208.73`. **Note**: original testplan pointed at `/storage/config/pantahub.config` for this knob — that file is for pantahub credentials only; runtime daemon knobs live in `/etc/pantavisor-appengine.config` (or the equivalent per init-mode config). |
+| TC-10 — Reject service participant without network anchor | ✓ | Log: `platforms.c:pv_platform_start:1206 ... touches xconnect services but declares no network anchor`. Platform never started; cascading `state.c:pv_state_start_platform:644 ... could not be started`. Fixture: `pv-example-svc-tcp-noanchor`. |
+| TC-11 — Reject host-mode + no `lxc.net.*` | ✓ | Log: `plugins/pv_lxc.c:pv_validate_container_config:303 ... declares network.mode=host and participates in xconnect services but its lxc.container.conf has no lxc.net.* entries`. Cascading `pv_platform_start:1217 ... refused by backend pre-start validation`. Fixture: `pv-example-svc-tcp-host-bare`. |
+| TC-12 — Reject pool + baked `lxc.net.*` (regression) | ✓ | Log: `pv_validate_container_config:296 ... declares an IPAM pool but its lxc.container.conf already contains lxc.net.* entries`. Pre-existing `99e2fba` rule, now hit through service-participant code path. Fixture: `pv-example-svc-tcp-pool-baked`. |
+
+### Notable testplan corrections discovered during this run
+
+1. **Container ops syntax**: use `pvcontrol containers <ls|start|stop|restart> <name>` (not `pvcontrol container <op> <name>` as some earlier drafts had).
+2. **API access from inside appengine**: use `pvcurl --unix-socket /run/pantavisor/pv/pv-ctrl <url>`. `curl --unix-socket` is not in the appengine busybox.
+3. **Daemon config file path**: `/etc/pantavisor-appengine.config` for `PV_XCONNECT_SERVICES_CIDR` and similar daemon knobs (not `/storage/config/pantahub.config`, which holds Pantahub credentials).
+4. **nft table family**: `ip pvx_services`, not `inet pvx_services`. The earlier testplan reference to `inet pvx_services` was speculative.
+5. **DNAT rule count after host↔host fix**: each service now installs one rule per chain (PREROUTING + OUTPUT) = 2 dnat lines per established service, not 1. PASS criterion for TC-04 should be "exactly 2 dnat lines per service".
+
+### Earlier verification log (build of 2026-05-04, pre-host↔host fix)
 
 | Assertion | Result |
 |-----------|--------|
