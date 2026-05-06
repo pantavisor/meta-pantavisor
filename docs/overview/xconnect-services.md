@@ -117,7 +117,23 @@ v2 (deferred) will add an explicit `services` block in `device.json`, parallel t
 
 ## DNS — static `/etc/hosts` injection
 
-For each established link with a non-zero ClusterIP, xconnect enters the consumer's mount namespace (via `setns(2)`) and writes `<cluster_ip>\t<service>.pv.local # pvx-services managed` into `/etc/hosts`. The marker comment lets re-injection / removal touch only managed lines, never user-authored ones. Atomic via temp + `rename(2)`.
+For each established link with a non-zero ClusterIP, xconnect enters the consumer's mount namespace (via `setns(2)`) and adds a `<service>.pv.local` entry to `/etc/hosts`. Writes are atomic via temp + `rename(2)`.
+
+Managed entries live inside an explicit fenced block so user-authored content and append-blind tooling (Docker bridge setup, init scripts that do `echo … >> /etc/hosts`) stay clearly outside our territory:
+
+```
+<user content above — preserved verbatim>
+# >>> pvx-services managed BEGIN — DO NOT EDIT INSIDE THIS BLOCK
+# Lines between BEGIN and END are rewritten by pv-xconnect on every
+# service reconcile. Add your own entries ABOVE the BEGIN line or
+# BELOW the END line; both regions are preserved across reconciles.
+198.18.208.73	hello-tcp.pv.local	# pvx-services managed
+198.18.42.42	redis.pv.local	# pvx-services managed
+# <<< pvx-services managed END — safe to append your own lines below
+<user content below — preserved verbatim, including `>>`-appended lines>
+```
+
+The fences carry the user-facing contract (don't edit inside, edit freely outside). The per-line `# pvx-services managed` marker is kept inside the block so multiple services can be updated independently without rewriting siblings. The rewriter is self-healing: a missing BEGIN/END is fixed up on next reconcile; a truncated block (BEGIN without END) is closed cleanly. Anything outside the BEGIN/END pair, including content that arrived via `>> /etc/hosts` from another tool while we weren't looking, is copied through verbatim.
 
 Failure of `/etc/hosts` injection — read-only filesystem, missing file, EPERM, setns fail — is treated as a **hard link establishment failure**: the link is marked unhealthy with `last_error` and stays in the retry queue. A consumer with broken DNS for a wired service is not a working consumer, and the failure is meant to drive pantavisor's standard rollback policy when the link belongs to a freshly-deployed revision. (The `/xconnect-graph/status` endpoint and `pv_platform_start` health gate that complete this loop are deferred to v1.1.)
 
