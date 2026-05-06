@@ -10,6 +10,85 @@ This builds on top of the existing IPAM and xconnect infrastructure:
 
 The model is intentionally close to Kubernetes Services: provider declares "I offer service X", consumer declares "I require service X", the runtime mints a stable virtual IP and DNS name. Backend container restarts don't change either; only the nft DNAT rule's target IP gets recomputed.
 
+## Architecture and topology
+
+```mermaid
+flowchart LR
+    subgraph host["host netns"]
+        direction TB
+        ctrl["pv-ctrl<br/>/xconnect-graph<br/>/xconnect-status"]
+        xcon["pv-xconnect<br/>(daemon)"]
+        nft[("nft ip pvx_services<br/>chain prerouting (dstnat)<br/>chain output (dstnat)")]
+        svcbr(["pv-services bridge<br/>198.18.x.y /32 routes"])
+        intbr(["pvbr-internal<br/>10.0.5.1/24"])
+        extbr(["pvbr-external<br/>10.0.6.1/24"])
+        hostprov["host-net<br/>provider proc<br/>nc -l 0.0.0.0:80"]
+    end
+
+    subgraph poolA["container netns — app-A (pool: internal)"]
+        direction TB
+        vethA["veth0<br/>10.0.5.3"]
+        consA["consumer proc<br/>connect()<br/>hello-tcp.pv.local:80"]
+        hostsA[/"/etc/hosts<br/>198.18.208.73 hello-tcp.pv.local<br/># pvx-services managed"/]
+    end
+
+    subgraph poolB["container netns — app-B (pool: internal)"]
+        direction TB
+        vethB["veth0<br/>10.0.5.4"]
+        provB["provider proc<br/>nc -l 0.0.0.0:80<br/>services.json: hello-tcp tcp/80"]
+    end
+
+    %% control plane
+    ctrl -- "graph: cluster_ip / provider_ip / port" --> xcon
+    xcon -- "ip /32 add" --> svcbr
+    xcon -- "DNAT rules per link" --> nft
+    xcon -- "setns(mnt) + rewrite" --> hostsA
+    xcon -- "POST status" --> ctrl
+
+    %% data plane: pool consumer → pool provider (PREROUTING)
+    consA -. "1. dst=198.18.208.73:80" .-> vethA
+    vethA -. "2. tx via bridge" .-> intbr
+    intbr -. "3. PREROUTING DNAT<br/>→ 10.0.5.4:80" .-> nft
+    nft -. "4. routed" .-> intbr
+    intbr -. "5. delivered" .-> vethB
+    vethB --> provB
+
+    %% link to host providers
+    intbr -. "host gateway 10.0.5.1<br/>used as backend for<br/>host-net providers" .- hostprov
+
+    classDef proc fill:#fef3c7,stroke:#a16207
+    classDef bridge fill:#dbeafe,stroke:#1e40af
+    classDef rule fill:#fee2e2,stroke:#991b1b
+    class ctrl,xcon,consA,provB,hostprov proc
+    class svcbr,intbr,extbr,vethA,vethB bridge
+    class nft rule
+```
+
+**What lives where**
+
+| Element | Lives in | Created by |
+|---------|----------|------------|
+| `pv-services` bridge + ClusterIP `/32`s | host netns | pv-xconnect on link establishment |
+| `pvbr-<pool>` bridges | host netns | IPAM, on bridge setup |
+| nft `ip pvx_services` table (PREROUTING + OUTPUT chains) | host netns | pv-xconnect on init |
+| Per-link DNAT rule (mirrored across both chains) | host netns | pv-xconnect per `on_link_added` |
+| Container veth (consumer / pool provider) | container netns | LXC + IPAM at platform start |
+| `/etc/hosts` `<service>.pv.local` line | consumer mount ns | pv-xconnect via `setns(mnt)` |
+| pv-ctrl `/xconnect-graph` and `/xconnect-status` | host netns | pv-ctrl process |
+
+**Reachability paths (one diagram, four cases)**
+
+The DNAT rule is installed in *both* `prerouting` and `output` chains so packets land on the rewrite regardless of where in the host kernel they originate. Backend resolution differs per quadrant:
+
+| Provider | Consumer | Chain that fires | Backend |
+|----------|----------|------------------|---------|
+| Pool | Pool | `prerouting` (consumer veth → bridge) | provider's IPAM IPv4 |
+| Host | Pool | `prerouting` (consumer veth → bridge) | consumer's pool gateway (10.0.5.1) — host-net provider listens on `0.0.0.0` |
+| Pool | Host | `output` (consumer in host netns issues `connect()`) | provider's IPAM IPv4, routed back out the pool bridge |
+| Host | Host | `output` | `127.0.0.1` (loopback) — host-net provider accepts on `lo` |
+
+Pool consumers and host-net consumers share the same ClusterIP and the same DNS name; the only thing that varies is which nft chain catches the packet and which IPv4 the rule rewrites to.
+
 ## Two tiers
 
 For each established link, xconnect picks one of two data planes:
