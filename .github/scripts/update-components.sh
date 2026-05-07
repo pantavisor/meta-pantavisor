@@ -1,16 +1,11 @@
 #!/bin/bash
 
-# Fixed list of components and their branches as found in recipes
-# Format: "component_name|recipe_glob|branch|repo_org"
-COMPONENTS=(
-    "busybox-pv|recipes-pv/busybox/busybox*.bb|pv/1_35_stable|pantavisor"
-    "dropbear|recipes-pv/dropbear/dropbear-pv*.bb|pv/master|pantacor"
-    "libthttp|recipes-pv/libthttp/libthttp*.bb|master|pantavisor"
-    "lxc-pv|recipes-pv/lxc-pv/lxc-pv*.bb|stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516|pantavisor"
-    "lxc6-pv|recipes-pv/lxc6-pv/lxc6-pv*.bb|stable-6.0-BASE-f9ff9ea2a|pantavisor"
-    "pantavisor|recipes-pv/pantavisor/pantavisor_git.bb|master|pantavisor"
-    "picohttpparser|recipes-pv/picohttpparser/picohttpparser*.bb|pv/master|pantavisor"
-)
+# Component list (recipe glob, branch, repo_org) is shared with
+# .github/scripts/make-changelog.sh; loaded from components.json so additions
+# only need to be made in one place.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPONENTS_JSON="$SCRIPT_DIR/components.json"
+mapfile -t COMPONENTS < <(jq -r '.[] | "\(.name)|\(.recipe_glob)|\(.branch)|\(.repo_org)"' "$COMPONENTS_JSON")
 
 ORIG_PWD=$PWD
 # Use path from environment or fallback to a temp location

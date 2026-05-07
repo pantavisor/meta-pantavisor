@@ -1,0 +1,44 @@
+[
+  {
+    "name": "busybox-pv",
+    "recipe_glob": "recipes-pv/busybox/busybox*.bb",
+    "branch": "pv/1_35_stable",
+    "repo_org": "pantavisor"
+  },
+  {
+    "name": "dropbear",
+    "recipe_glob": "recipes-pv/dropbear/dropbear-pv*.bb",
+    "branch": "pv/master",
+    "repo_org": "pantacor"
+  },
+  {
+    "name": "libthttp",
+    "recipe_glob": "recipes-pv/libthttp/libthttp*.bb",
+    "branch": "master",
+    "repo_org": "pantavisor"
+  },
+  {
+    "name": "lxc-pv",
+    "recipe_glob": "recipes-pv/lxc-pv/lxc-pv*.bb",
+    "branch": "stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516",
+    "repo_org": "pantavisor"
+  },
+  {
+    "name": "lxc6-pv",
+    "recipe_glob": "recipes-pv/lxc6-pv/lxc6-pv*.bb",
+    "branch": "stable-6.0-BASE-f9ff9ea2a",
+    "repo_org": "pantavisor"
+  },
+  {
+    "name": "pantavisor",
+    "recipe_glob": "recipes-pv/pantavisor/pantavisor_git.bb",
+    "branch": "master",
+    "repo_org": "pantavisor"
+  },
+  {
+    "name": "picohttpparser",
+    "recipe_glob": "recipes-pv/picohttpparser/picohttpparser*.bb",
+    "branch": "pv/master",
+    "repo_org": "pantavisor"
+  }
+]
