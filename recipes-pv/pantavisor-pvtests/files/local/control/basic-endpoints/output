@@ -1,0 +1,578 @@
+[
+  {
+    "name": "pvr-sdk",
+    "group": "platform",
+    "status": "STARTED",
+    "status_goal": "STARTED",
+    "restart_policy": "system",
+    "roles": [
+      "mgmt"
+    ]
+  }
+]
+[
+  {
+    "name": "data",
+    "status_goal": "MOUNTED",
+    "restart_policy": "system",
+    "status": "READY"
+  },
+  {
+    "name": "root",
+    "status_goal": "STARTED",
+    "restart_policy": "system",
+    "status": "READY"
+  },
+  {
+    "name": "platform",
+    "status_goal": "STARTED",
+    "restart_policy": "system",
+    "status": "READY"
+  },
+  {
+    "name": "app",
+    "status_goal": "STARTED",
+    "restart_policy": "container",
+    "status": "READY",
+    "auto_recovery": {
+      "max_retries": 5,
+      "stable_timeout": 30,
+      "backoff_policy": "reboot"
+    }
+  }
+]
++ pvcontrol usrmeta ls
++ jq -M
++ tr -d '\r'
+{}
++ pvcontrol devmeta ls
++ jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
++ tr -d '\r'
+{
+  "pantavisor.status": "READY",
+  "pantahub.claimed": "0",
+  "pantahub.online": "0",
+  "pantavisor.mode": "local",
+  "pantavisor.revision": "0",
+  "pantavisor.arch": "x86_64/64/EL"
+}
+++ pvcontrol objects ls
+++ jq -M length
+++ tr -d '\r'
++ echo 'object count: 6'
+object count: 6
++ pvcontrol steps ls
++ jq -M 'map(del(.date))'
++ tr -d '\r'
+[
+  {
+    "name": "0",
+    "commitmsg": "",
+    "progress": {
+      "status": "DONE",
+      "status-msg": "Factory revision",
+      "progress": 100,
+      "retries": 0
+    }
+  }
+]
++ pvcontrol conf ls
++ jq -M
++ tr -d '\r'
+[
+  {
+    "key": "PH_CREDS_HOST",
+    "value": "api.pantahub.com",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_CREDS_ID",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PH_CREDS_PORT",
+    "value": "443",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_CREDS_PROXY_HOST",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PH_CREDS_PROXY_NOPROXYCONNECT",
+    "value": "0",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_CREDS_PROXY_PORT",
+    "value": "3218",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_CREDS_PRN",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PH_CREDS_SECRET",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PH_CREDS_TYPE",
+    "value": "builtin",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_FACTORY_AUTOTOK",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PH_LIBEVENT_HTTP_TIMEOUT",
+    "value": "60",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_LIBEVENT_HTTP_RETRIES",
+    "value": "1",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_METADATA_DEVMETA_INTERVAL",
+    "value": "10",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_METADATA_USRMETA_INTERVAL",
+    "value": "5",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_ONLINE_REQUEST_THRESHOLD",
+    "value": "0",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_UPDATER_INTERVAL",
+    "value": "60",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_UPDATER_NETWORK_TIMEOUT",
+    "value": "120",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PH_UPDATER_TRANSFER_MAX_COUNT",
+    "value": "5",
+    "modified": "ph conf file"
+  },
+  {
+    "key": "PV_BOOTLOADER_FITCONFIG",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_MTD_ENV",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_MTD_ONLY",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_TYPE",
+    "value": "uboot",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_A_NAME",
+    "value": "fitA",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_B_NAME",
+    "value": "fitB",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_ENV_NAME",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_ENV_BAK_NAME",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_ENV_OFFSET",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_BOOTLOADER_UBOOTAB_ENV_SIZE",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_CACHE_DEVMETADIR",
+    "value": "/var/pantavisor/storage/cache/devmeta",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_CACHE_USRMETADIR",
+    "value": "/var/pantavisor/storage/cache/usrmeta",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_CONTROL_REMOTE",
+    "value": "0",
+    "modified": "env"
+  },
+  {
+    "key": "PV_CONTROL_REMOTE_ALWAYS",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_DEBUG_SHELL",
+    "value": "1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_DEBUG_SHELL_AUTOLOGIN",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_DEBUG_SHELL_TIMEOUT",
+    "value": "60",
+    "modified": "default"
+  },
+  {
+    "key": "PV_DEBUG_SSH",
+    "value": "0",
+    "modified": "env"
+  },
+  {
+    "key": "PV_DEBUG_SSH_AUTHORIZED_KEYS",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_DISK_EXPORTSDIR",
+    "value": "/exports",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_DISK_VOLDIR",
+    "value": "/volumes",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_DISK_WRITABLEDIR",
+    "value": "/var/run/pv/writable",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_DROPBEAR_CACHE_DIR",
+    "value": "/var/pantavisor/storage/cache/dropbear",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_LIBEVENT_DEBUG_MODE",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LIBTHTTP_CERTSDIR",
+    "value": "/etc/thttp/certs",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_LIBTHTTP_LOG_LEVEL",
+    "value": "3",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_CAPTURE",
+    "value": "1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_CAPTURE_DMESG",
+    "value": "0",
+    "modified": "env"
+  },
+  {
+    "key": "PV_LOG_BUF_NITEMS",
+    "value": "128",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_DIR",
+    "value": "/var/pantavisor/storage/logs",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_LOG_DIR_MAXSIZE",
+    "value": "2147483647",
+    "modified": "env"
+  },
+  {
+    "key": "PV_LOG_FILETREE_TIMESTAMP_FORMAT",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_HYSTERESIS_FACTOR",
+    "value": "4",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_LEVEL",
+    "value": "4",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_LOG_LOGGERS",
+    "value": "1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_PUSH",
+    "value": "1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_ROTATE_FACTOR",
+    "value": "5",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_SERVER_OUTPUTS",
+    "value": "132",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_LOG_SINGLEFILE_TIMESTAMP_FORMAT",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_STDOUT_TIMESTAMP_FORMAT",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LXC_LOG_LEVEL",
+    "value": "2",
+    "modified": "default"
+  },
+  {
+    "key": "PV_NET_BRADDRESS4",
+    "value": "10.0.3.1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_NET_BRDEV",
+    "value": "lxcbr0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_NET_BRMASK4",
+    "value": "255.255.255.0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_OEM_NAME",
+    "value": "pv-oem-developer-001",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_POLICY",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_REVISION_RETRIES",
+    "value": "10",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SECUREBOOT_CHECKSUM",
+    "value": "1",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SECUREBOOT_HANDLERS",
+    "value": "0",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SECUREBOOT_MODE",
+    "value": "disabled",
+    "modified": "env"
+  },
+  {
+    "key": "PV_SECUREBOOT_OEM_TRUSTSTORE",
+    "value": "ca-oem-certificates",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SECUREBOOT_TRUSTSTORE",
+    "value": "ca-certificates",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_DEVICE",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_FSTYPE",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_GC_KEEP_FACTORY",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_GC_RESERVED",
+    "value": "5",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_GC_THRESHOLD_DEFERTIME",
+    "value": "600",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_GC_THRESHOLD",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_LOGTEMPSIZE",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_MNTPOINT",
+    "value": "/var/pantavisor/storage",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_STORAGE_MNTTYPE",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_PHCONFIG_VOL",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_STORAGE_WAIT",
+    "value": "5",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SYSTEM_APPARMOR_PROFILES",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SYSTEM_CONFDIR",
+    "value": "/run/pantavisor/configs",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_DRIVERS_LOAD_EARLY_AUTO",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SYSTEM_ETCDIR",
+    "value": "/etc",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_ETCPANTAVISORDIR",
+    "value": "/etc/pantavisor",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SYSTEM_INIT_MODE",
+    "value": "appengine",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_LIBDIR",
+    "value": "/usr/lib/pantavisor",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_MEDIADIR",
+    "value": "/run/pantavisor/media",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_MOUNT_SECURITYFS",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_SYSTEM_RUNDIR",
+    "value": "/run/pantavisor/pv",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_DISKSDIR",
+    "value": "/run/pantavisor/disks",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_SYSTEM_USRDIR",
+    "value": "/usr",
+    "modified": "pv conf file"
+  },
+  {
+    "key": "PV_UPDATER_COMMIT_DELAY",
+    "value": "5",
+    "modified": "env"
+  },
+  {
+    "key": "PV_UPDATER_GOALS_TIMEOUT",
+    "value": "10",
+    "modified": "env"
+  },
+  {
+    "key": "PV_UPDATER_USE_TMP_OBJECTS",
+    "value": "0",
+    "modified": "default"
+  },
+  {
+    "key": "PV_VOLMOUNT_DM_EXTRA_ARGS",
+    "value": "(null)",
+    "modified": "default"
+  },
+  {
+    "key": "PV_WDT_MODE",
+    "value": "disabled",
+    "modified": "env"
+  },
+  {
+    "key": "PV_WDT_TIMEOUT",
+    "value": "15",
+    "modified": "default"
+  }
+]

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+source /work/scripts/utils
+. /opt/pantavisor/set_env
+
+# write your test here

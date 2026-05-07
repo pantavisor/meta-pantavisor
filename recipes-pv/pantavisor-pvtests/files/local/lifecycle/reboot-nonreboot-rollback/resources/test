@@ -1,0 +1,44 @@
+#!/bin/sh
+
+source /usr/share/pantavisor/pvtest/utils
+
+# initial setup
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
+cd /home/checkout
+
+# post a new change that triggers a reboot update
+sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pvr-sdk/lxc.container.conf
+pvr add .
+pvr commit > /dev/null 2>&1
+pvr post --rev "locals/reboot" > /dev/null 2>&1
+
+# after posting evaluation
+wait_for_revision_state "pvr-sdk" "locals/reboot" "DONE" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for locals/reboot to reach DONE" >&2; exit 1; }
+pvcontrol steps show-progress locals/reboot
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+
+# post a new change that triggers a non-reboot update
+sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
+pvr add .
+pvr commit > /dev/null 2>&1
+pvr post --rev "locals/nonreboot" > /dev/null 2>&1
+
+# after posting evaluation
+wait_for_revision_state "pvr-sdk" "locals/nonreboot" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for locals/nonreboot to reach UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress locals/nonreboot
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+
+# post a new change that triggers a rollback
+sed -i 's|lxc\.init\.cmd = /sbin/init|lxc.init.cmd = /nonexistingbin|g' pvr-sdk/lxc.container.conf
+pvr add .
+pvr commit > /dev/null 2>&1
+pvr post --rev "locals/error" > /dev/null 2>&1
+
+# after posting evaluation
+wait_for_revision_state "pvr-sdk" "locals/reboot" "DONE" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for rollback to locals/reboot DONE" >&2; exit 1; }
+pvcontrol steps show-progress locals/error | sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'

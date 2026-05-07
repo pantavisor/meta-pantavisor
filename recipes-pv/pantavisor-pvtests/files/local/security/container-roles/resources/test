@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# this should succeed
+pventer -c "pvr-sdk" pvcontrol ls
+# full mounted /pantavisor
+pventer -c "pvr-sdk" find /pantavisor -not -name console.log | sort
+
+# this should fail
+pventer -c "pv-example-norole" pvcontrol ls
+# limited mounted /pantavisor
+pventer -c "pv-example-norole" find /pantavisor -not -name console.log | sort

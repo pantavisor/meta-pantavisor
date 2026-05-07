@@ -1,0 +1,17 @@
+#!/bin/sh
+
+control_container="pvr-sdk"
+
+# configured from pantavisor.config
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["system.init.mode"]'
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["creds.host"]'
+# configured from cmdline
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["policy"]'
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["creds.port"]'
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["metadata.devmeta.interval"]'
+# configured from policies
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["debug.ssh"]'
+# configured from user meta
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["log.level"]'
+pventer -c "$control_container" pvcontrol usrmeta save log.level 5
+pventer -c "$control_container" pvcontrol config ls | jq -M -r '.["log.level"]'

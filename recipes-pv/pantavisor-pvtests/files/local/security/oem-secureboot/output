@@ -1,0 +1,35 @@
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
++ cd /home/checkout
++ pventer -c pvr-sdk pvcontrol conf ls
++ jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
+{
+  "key": "PV_SECUREBOOT_MODE",
+  "value": "strict",
+  "modified": "env"
+}
++ pvr get /work/pvtests-local/common/tarballs/pv-oem-developer-001_oemsigned.tgz
+pv-oem-develope [OK cache]
+
+Imported 1 objects to /home/root/.pvr/objects
+
+
+Run pvr checkout to checkout the changed files into the workspace.
++ pvr checkout
++ pvr post --rev locals/error
+
+Error: Secureboot: Signature validation failed
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pventer -c pvr-sdk pvcontrol conf ls
++ jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
+{
+  "key": "PV_SECUREBOOT_MODE",
+  "value": "strict",
+  "modified": "env"
+}
++ pventer -c pvr-sdk pvcontrol steps show-progress locals/error
+{"Error":"Resource does not exist"}

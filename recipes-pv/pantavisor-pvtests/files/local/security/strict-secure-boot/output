@@ -1,0 +1,62 @@
++ pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
++ cd /home/checkout
++ pvcontrol conf ls
++ jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
+{
+  "key": "PV_SECUREBOOT_MODE",
+  "value": "strict",
+  "modified": "env"
+}
++ cd /storage/trails/0/
++ echo yes
++ pvr sig ls
+Do you want to download the default developer keys that can be validated by pantavisor official developer builds? [yes/no]
+(NOTE: this should be used only for development proposes because they are not secret)
+Downloading certs from: 
+https://gitlab.com/pantacor/pv-developer-ca/-/raw/master/pvs/pvs.defaultkeys.tar.gz?inline=false
+{
+    "protected": [
+        "#spec",
+        "_config/pvr-sdk/etc/pvr-sdk/config.json",
+        "bsp/modules.squashfs",
+        "bsp/pantavisor",
+        "bsp/run.json",
+        "device.json",
+        "pvr-sdk/_dm/root.squashfs.json",
+        "pvr-sdk/lxc.container.conf",
+        "pvr-sdk/pvpkg.json",
+        "pvr-sdk/root.squashfs",
+        "pvr-sdk/root.squashfs.docker-digest",
+        "pvr-sdk/root.squashfs.hash",
+        "pvr-sdk/run.json"
+    ],
+    "excluded": [
+        "_sigs/bsp.json",
+        "_sigs/pvr-sdk.json",
+        "bsp/src.json",
+        "pvr-sdk/src.json"
+    ]
+}
++ cd -
+/home/checkout
++ rm _sigs/pvr-sdk.json
++ pvr add .
++ pvr commit
++ pvr post --rev locals/error
+
+Error: Secureboot: State not fully covered by signatures
++ pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pvcontrol conf ls
++ jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
+{
+  "key": "PV_SECUREBOOT_MODE",
+  "value": "strict",
+  "modified": "env"
+}
++ pvcontrol steps show-progress locals/error
+{"Error":"Resource does not exist"}

@@ -1,0 +1,12 @@
+skipping validation of object named bsp/pantavisor and id=XXX
+skipping validation of object named pvr-sdk/root.squashfs and id=XXX
+validating checksum for /var/pantavisor/storage/objects/XXX and /var/pantavisor/storage/trails/0/bsp/modules.squashfs
+validating checksum for /var/pantavisor/storage/objects/XXX and /var/pantavisor/storage/trails/0/pvr-sdk/lxc.container.conf
+validating checksum for /var/pantavisor/storage/objects/XXX and /var/pantavisor/storage/trails/0/pvr-sdk/root.squashfs.docker-digest
+validating checksum for /var/pantavisor/storage/objects/XXX and /var/pantavisor/storage/trails/0/pvr-sdk/root.squashfs.hash
+validating value for json /var/pantavisor/storage/trails/0/_config/pvr-sdk/etc/pvr-sdk/config.json
+validating value for json /var/pantavisor/storage/trails/0/bsp/run.json
+validating value for json /var/pantavisor/storage/trails/0/device.json
+validating value for json /var/pantavisor/storage/trails/0/pvr-sdk/_dm/root.squashfs.json
+validating value for json /var/pantavisor/storage/trails/0/pvr-sdk/pvpkg.json
+validating value for json /var/pantavisor/storage/trails/0/pvr-sdk/run.json

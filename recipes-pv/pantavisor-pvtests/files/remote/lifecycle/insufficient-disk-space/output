@@ -1,0 +1,45 @@
++ control_container=pvr-sdk
+++ cat /var/run/pantavisor/pv/device-id
++ device_id=69c5ad95c0329e000922cb8a
++ pvr clone https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a /home/checkout
++ cd /home/checkout
++ pvr post -m 'same revision to make rev 0 GC-able'
++ wait_for_revision_state pvr-sdk 1 UPDATED
++ pventer -c pvr-sdk pvcontrol commands reboot
++ wait_for_revision_state pvr-sdk 1 DONE
++ dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=50
++ pvr add pvr-sdk/bigfile.bin
++ pvr commit -m 'add large file to trigger insufficient space'
++ pvr post -m 'trigger insufficient space'
++ cloud_step_url=https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a/steps/2
++ wait_for_path pvr-sdk /storage/trails/0 -d
++ wait_for_value 'pventer -c pvr-sdk pvcontrol steps show-progress 2 | jq -r '\''.status'\''' WONTGO 120
++ local 'cmd=pventer -c pvr-sdk pvcontrol steps show-progress 2 | jq -r '\''.status'\'''
++ local value=WONTGO
++ local timeout=120
++ local counter=0
++ '[' 0 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 2 | jq -r '\''.status'\'''
++ local result=WONTGO
++ '[' WONTGO = WONTGO ']'
++ return 0
++ pventer -c pvr-sdk pvcontrol steps show-progress 2
++ jq -Mc 'del(.logs, .downloads)'
+{"status":"WONTGO","status-msg":"Space required 52428800 B, available 0 B","progress":100,"retries":1}
++ wait_for_value 'pvr stepinfo https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a/steps/2 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\''' WONTGO 60
++ local 'cmd=pvr stepinfo https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a/steps/2 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\'''
++ local value=WONTGO
++ local timeout=60
++ local counter=0
++ '[' 0 -lt 60 ']'
+++ eval 'pvr stepinfo https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a/steps/2 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\'''
++ local result=WONTGO
++ '[' WONTGO = WONTGO ']'
++ return 0
++ pvr stepinfo https://api.pantahub.com/trails/69c5ad95c0329e000922cb8a/steps/2
++ sed -n '/^{/,$p'
++ jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'
+{
+  "status": "WONTGO",
+  "status-msg": "Space required 52428800 B, available 0 B"
+}
