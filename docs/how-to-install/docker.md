@@ -12,50 +12,65 @@ reflashing device storage.
 For full requirements and installation options see:
 **[docs.pantahub.com/requirements-appengine](https://docs.pantahub.com/requirements-appengine/)**
 
-## Building with meta-pantavisor
+To build the tarball yourself, see [how-to-build/get-started.md](../how-to-build/get-started.md) — build target `pantavisor-appengine-distro`.
 
-The `pantavisor-appengine-distro` recipe produces a ready-to-load Docker image
-together with `test.docker.sh`, the test runner script.
+## First-time system setup
+
+On a fresh machine, install all required system dependencies (Docker, QEMU, kernel modules, apt packages) before running any tests:
 
 ```bash
-kas build kas/machines/docker-x86_64.yaml:kas/appengine-base.yaml:kas/build-configs/build-appengine-distro.yaml
+./test.docker.sh install-deps
 ```
 
-The output tarball is at:
-
-```
-build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-distro-docker-x86_64*.tar.gz
-```
+This is interactive and will prompt before making system changes. You only need to run this once per machine.
 
 ## Loading the image
 
-Use `test.docker.sh` to load all required Docker images in one step:
+### From the build directory (no extraction needed)
+
+After building `pantavisor-appengine-distro`, the deploy directory contains an unpacked directory alongside the tarball:
+
+```
+build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-distro-docker-x86_64-<version>/
+```
+
+cd into it and load the Docker images directly — no extraction step needed:
 
 ```bash
-./test.docker.sh load-deps
+cd build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-distro-docker-x86_64-<version>/
+./test.docker.sh install-docker
 ```
+
+### From a tarball
+
+Extract the tarball and load all required Docker images into a working directory:
+
+```bash
+mkdir -p <workdir> && cd <workdir>
+tar -xzf /path/to/pantavisor-appengine-distro-docker-x86_64-*.tar.gz
+chmod +x test.docker.sh
+./test.docker.sh install-docker
+```
+
+Run `install-docker` every time you install from a new tarball — it reloads the appengine, tester, and netsim Docker images.
+
+Both the unpacked directory and the tarball include `local/` and `remote/` test trees with test data — no separate clone step needed.
 
 ## Running tests
 
 Pantavisor AppEngine ships with two separate test suites that validate
 different aspects of the runtime.
 
-### pvtests-local
+### Local tests (`local/`)
 
-[pvtests-local](https://gitlab.com/pantacor/pvtests-local) validates the local
-Pantavisor experience inside a Docker container. It tests core components
-including `pvcontrol`, `pvtx`, and `pvr`.
+Local tests validate the Pantavisor runtime entirely within the appengine
+container. They cover core, lifecycle, runtime, control, security, and
+services functionality.
 
-Clone the repository:
-
-```bash
-git clone https://gitlab.com/pantacor/pvtests-local
-```
-
-Run all tests:
+Run all local tests:
 
 ```bash
-./test.docker.sh run -v pvtests-local
+./test.docker.sh -v run local
 ```
 
 List available tests:
@@ -64,35 +79,34 @@ List available tests:
 ./test.docker.sh ls
 ```
 
-Run a specific test by number:
+Run a specific test:
 
 ```bash
-./test.docker.sh run -v pvtests-local:000
+./test.docker.sh -v run local/core/legacy-config-overload
 ```
 
-### pvtests-remote
+Run all tests in a category:
 
-[pvtests-remote](https://gitlab.com/pantacor/pvtests-remote) validates the
-remote Pantavisor experience — OTA updates, Pantahub connectivity, and remote
-control operations. Pantahub credentials must be configured via environment
+```bash
+./test.docker.sh -v run local/lifecycle
+```
+
+### Remote tests (`remote/`)
+
+Remote tests validate Pantahub connectivity — OTA updates, device claiming,
+and cloud logging. Pantahub credentials must be configured via environment
 variables before running these tests.
 
-Clone the repository:
+Run all remote tests:
 
 ```bash
-git clone https://gitlab.com/pantacor/pvtests-remote
+./test.docker.sh -v run remote
 ```
 
-Run all tests:
+Run a specific test:
 
 ```bash
-./test.docker.sh run -v pvtests-remote
-```
-
-Run a specific test by number:
-
-```bash
-./test.docker.sh run -v pvtests-remote:000
+./test.docker.sh -v run remote/core/encrypted-pantahub-config
 ```
 
 ## Debug commands

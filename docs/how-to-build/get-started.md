@@ -73,7 +73,7 @@ kas menu Kconfig
 kas build .config.yaml
 
 # Or build directly with a release config
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
 ```
 
 ### Workspace Build (local source development)
@@ -81,7 +81,7 @@ kas build .config.yaml
 Adds `kas/with-workspace.yaml` to create a devtool workspace with editable pantavisor source. See [pantavisor-development.md](pantavisor-development.md).
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 ```
 
 **Note on pvr**: When using a custom pvr binary from the workspace, auto-updates are disabled by setting `PVR_DISABLE_SELF_UPGRADE=1`. This is handled automatically by `container-pvrexport.bbclass`.

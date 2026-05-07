@@ -29,8 +29,7 @@ The user may invoke this skill with a hint in their message (e.g. "run test work
 5. **Display the inputs** in a table:
    ```
    Input         Required  Type    Description
-   test_type     YES       string  pvtests-local or pvtests-remote
-   test_number   no        string  Test number to run (e.g., "0" for remote:0)
+   test_path     YES       string  Full test path (e.g. "local/lifecycle" or "local/lifecycle/seq-non-reboot-updates")
    ```
    If an input has a `default:` value, show it too.
 
