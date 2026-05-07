@@ -31,6 +31,7 @@ PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
 
 PVR_APP_ADD_EXTRA_ARGS ??= "  --volume ovl:/var:permanent"
 PVR_APP_ADD_GROUP ??= "root"
+PVR_APP_ADD_ROLES ??= ""
 
 PVRIMAGE_AUTO_MDEV ??= "1"
 
@@ -54,6 +55,15 @@ fakeroot IMAGE_CMD:pvrexportit(){
     fi
     cd ${PVSTATE}
     pvr init
+    if [ -n "${PVR_APP_ADD_ROLES}" ]; then
+        roles_array=$(echo "${PVR_APP_ADD_ROLES}" | tr ' ' '\n' | jq -R . | jq -s .)
+        roles_src="${WORKDIR}/${PN}.args.json"
+        if [ -f "$roles_src" ]; then
+            jq --argjson r "$roles_array" '. + {"PV_ROLES": $r}' "$roles_src" > "${roles_src}.tmp" && mv "${roles_src}.tmp" "$roles_src"
+        else
+            jq -n --argjson r "$roles_array" '{"PV_ROLES": $r}' > "$roles_src"
+        fi
+    fi
     if [ -f ${WORKDIR}/${PN}.args.json ]; then
         args="--arg-json ${WORKDIR}/${PN}.args.json "
     elif [ -f ${WORKDIR}/args.json ]; then
