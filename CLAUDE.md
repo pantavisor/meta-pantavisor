@@ -13,6 +13,7 @@ Yocto/OpenEmbedded layer for building Pantavisor-based BSP images for embedded L
 | `classes/pvbase.bbclass` | Defines `PANTAVISOR_FEATURES` variable and defaults |
 | `classes/container-pvrexport.bbclass` | Container pvrexport packaging |
 | `.github/machines.json` | CI machine configurations — edit before regenerating workflows |
+| `CHANGELOG/` | Per-major-version release notes (`CHANGELOG-NNN.md`); generated from tag pushes |
 
 
 ## Documentation Structure
@@ -26,6 +27,7 @@ New documents should follow this layout:
 | `docs/how-to-install/` | Board-specific flashing guides |
 | `docs/examples/` | xconnect and other feature examples |
 | `docs/testing/` | Development and automated test workflows; test plans under `testplans/` |
+| `docs/ci/` | CI/release automation — workflow design, tag sync, secrets setup |
 
 Key documents:
 - [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
@@ -33,6 +35,8 @@ Key documents:
 - [docs/how-to-build/manifest-audit.md](docs/how-to-build/manifest-audit.md) — rootfs manifest audit (`pv-manifest-audit` / `pv-manifest-strict`)
 - [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
 - [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, testplans)
+- [docs/ci/tag-sync.md](docs/ci/tag-sync.md) — meta-pantavisor → pantavisor tag-sync workflow and PAT setup
+- [docs/ci/changelog.md](docs/ci/changelog.md) — per-release CHANGELOG generator, format, and regen procedure
 
 ## Key Pitfalls
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the tag matrix workflow from machines.json."""
+"""Generate the release workflow from machines.json."""
 
 import json
 
@@ -8,7 +8,25 @@ with open(".github/machines.json") as f:
 
 branch = data["yocto_branch"]
 machines = [m for m in data["machines"] if "tag" in m.get("workflows", [])]
-outfile = f".github/workflows/tag-{branch}.yaml"
+release_outfile = ".github/workflows/release.yaml"
+
+PVTEST_JOBS = [
+    "",
+    "  pvtest-local:",
+    "    needs: build",
+    "    uses: ./.github/workflows/call-pvtests.yaml",
+    "    with:",
+    "      test_path: local",
+    "    secrets: inherit",
+    "",
+    "  pvtest-remote:",
+    "    needs: [build, pvtest-local]",
+    "    if: always()",
+    "    uses: ./.github/workflows/call-pvtests.yaml",
+    "    with:",
+    "      test_path: remote",
+    "    secrets: inherit",
+]
 
 SUMMARY_JOB = [
     "",
@@ -43,20 +61,12 @@ SUMMARY_JOB = [
     "            ${{ secrets.AWS_S3_BUCKET }}",
 ]
 
-lines = [
+# Generate release.yaml: build matrix + pvtests + summary, called via workflow_call
+release_lines = [
     f'name: "ontag: make release, build all targets"',
     "",
     "on:",
-    "  push:",
-    "    paths:",
-    "      - '**'",
-    "      - 'kas/build-configs/**'",
-    f"      - '.github/workflows/tag-{branch}.yaml'",
-    "      - '!.github/scripts/**'",
-    "      - '!.github/templates/**'",
-    "    tags:",
-    "      - 0*",
-    "      - '*-rc*'",
+    "  workflow_call:",
     "",
     "jobs:",
     "  build:",
@@ -72,7 +82,7 @@ for m in machines:
     build_target = m.get("build_target", "pantavisor-starter")
     output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
     sdk = 1 if m.get("sdk") == 1 else 0
-    lines += [
+    release_lines += [
         f"          - machine_name: {name}-{branch}",
         f"            configs: kas/build-configs/release/{name}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
         f"            build_target: {build_target}",
@@ -80,7 +90,7 @@ for m in machines:
         f"            sdk: {sdk}",
     ]
 
-lines += [
+release_lines += [
     "    uses: ./.github/workflows/buildkas-upload.yaml",
     "    with:",
     "      configs: ${{ matrix.configs }}",
@@ -91,9 +101,10 @@ lines += [
     "    secrets: inherit",
 ]
 
-lines += SUMMARY_JOB
+release_lines += PVTEST_JOBS
+release_lines += SUMMARY_JOB
 
-with open(outfile, "w") as f:
-    f.write("\n".join(lines) + "\n")
+with open(release_outfile, "w") as f:
+    f.write("\n".join(release_lines) + "\n")
 
-print(f"new tag matrix workflow: {outfile}")
+print(f"new release workflow: {release_outfile}")

@@ -1,0 +1,19 @@
+name: "ontag: sync tag to pantavisor repo"
+
+on:
+  workflow_call:
+
+jobs:
+  sync:
+    name: "sync tag to pantavisor/pantavisor"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+      - name: Sync tag to pantavisor repo
+        env:
+          GH_TOKEN: ${{ secrets.PANTAVISOR_TAG_SYNC_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: .github/scripts/sync-pantavisor-tag.sh

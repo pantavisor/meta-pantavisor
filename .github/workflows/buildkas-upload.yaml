@@ -131,40 +131,6 @@ jobs:
           path: sdk/panta*.sh
           if-no-files-found: ignore
 
-      - name: Generate Release Notes
-        run: |
-          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
-
-          echo "### Machine: ${{ inputs.machine_name }}" >> notes.md
-          echo "| Artifact | Type | Download |" >> notes.md
-          echo "| :--- | :--- | :--- |" >> notes.md
-
-          for f in images/${{ inputs.output }}; do
-            if [ -e "$f" ]; then
-              FILENAME=$(basename "$f")
-              echo "| $FILENAME | Image | [Download]($BASE_URL/$FILENAME) |" >> notes.md
-            fi
-          done
-
-          for f in pvexports/pantavisor-bsp*; do
-            if [ -e "$f" ]; then
-              FILENAME=$(basename "$f")
-              echo "| $FILENAME | BSP | [Download]($BASE_URL/$FILENAME) |" >> notes.md
-            fi
-          done
-
-      - name: Upload to Release
-        uses: softprops/action-gh-release@v3
-        if: github.ref_type == 'tag'
-        with:
-         body_path: notes.md
-         append_body: true
-         files: |
-            images/${{ inputs.output }}
-            pvexports/pantavisor-bsp*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload to S3
         run: |
           .github/scripts/upload.sh \
