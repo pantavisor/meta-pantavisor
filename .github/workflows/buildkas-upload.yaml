@@ -66,6 +66,12 @@ jobs:
          mkdir -p pvexports
          find "${BUILD_BASE_DIR}" -name "*pvrexport.tgz" -exec cp {} pvexports \; 2>/dev/null || true
 
+         UNPACKED_DIR=$(find "${BUILD_BASE_DIR}" -maxdepth 1 -type d -name "pantavisor-appengine-distro-*" | head -1)
+         if [ -d "$UNPACKED_DIR" ]; then
+           mkdir -p pvtest-distro
+           cp -r "${UNPACKED_DIR}/." ./pvtest-distro/
+         fi
+
 
          BUILD_SDK_DIR=$(ls -d build/${{ env.TMPDIR }}/deploy/sdk/ 2>/dev/null | head -n 1)
 
@@ -78,6 +84,13 @@ jobs:
          else
             echo "Warning: no sdk folder found - ignoring"
          fi
+
+      - name: Archive pvtest distro (unpacked)
+        uses: actions/upload-artifact@v7
+        with:
+          name: pvtest-distro-${{ inputs.machine_name }}
+          path: pvtest-distro/
+          if-no-files-found: ignore
 
       - name: Archive wic artifacts
         uses: actions/upload-artifact@v7

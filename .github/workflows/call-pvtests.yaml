@@ -6,10 +6,7 @@ env:
 on:
   workflow_call:
     inputs:
-      test_type:
-        required: true
-        type: string
-      test_number:
+      test_path:
         required: false
         type: string
 jobs:
@@ -17,45 +14,36 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Validate test_type input
+      - name: Validate test_path input
         id: check
         run: |
-          if [[ "${{ inputs.test_type }}" != "pvtests-local" && "${{ inputs.test_type }}" != "pvtests-remote" ]]; then
-            echo "❌ Invalid test_type: '${{ inputs.test_type }}'"
-            echo "Allowed values: pvtests-local, pvtests-remote"
+          if [[ -z "${{ inputs.test_path }}" ]]; then
+            echo "✅ test_path is empty — running all tests"
+            echo "=== Running: all tests ===" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ inputs.test_path }}" != local* && "${{ inputs.test_path }}" != remote* ]]; then
+            echo "❌ Invalid test_path: '${{ inputs.test_path }}'"
+            echo "Must start with 'local' or 'remote', or be empty to run all"
             exit 1
-          fi
-          echo "✅ test_type is valid: ${{ inputs.test_type }}"
-
-          if [[ -n "${{ inputs.test_number }}" ]]; then
-            echo "test_number was provided: ${{ inputs.test_number }}"
-            echo "=== Running test number: ${{ inputs.test_number }} ==="
           else
-            echo "test_number was not provided"
-            echo "=== Running All tests ==="
-          fi
-
-          if [[ -n "${{ inputs.test_number }}" ]]; then
-            echo "Running ${{ inputs.test_type }}":${{ inputs.test_number }} >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Running all tests for ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
+            echo "✅ test_path is valid: ${{ inputs.test_path }}"
+            echo "=== Running: ${{ inputs.test_path }} ===" >> $GITHUB_STEP_SUMMARY
           fi
 
   tests:
     needs: validate
     runs-on: ["pvtest-runner"]
     steps:
-      - name: Clone ${{ inputs.test_type }} repository
-        run: |
-          mkdir -p $WORKSPACE
-          cd $WORKSPACE
-          git clone https://gitlab.com/pantacor/${{ inputs.test_type }}.git ${{ inputs.test_type }}
-
-      - name: Download AppEngine artifacts
-        uses: actions/download-artifact@v8
+      - name: Download pvtest distro
+        uses: actions/download-artifact@v7
         with:
-          name: appengine-docker-x86_64-scarthgap
+          name: pvtest-distro-docker-x86_64-scarthgap
           path: ${{ env.WORKSPACE }}
+
+      - name: Load Docker images
+        working-directory: ${{ env.WORKSPACE }}
+        run: |
+          chmod +x test.docker.sh
+          CI_MODE=true ./test.docker.sh install-docker
 
       - name: Run pvtests
         working-directory: ${{ env.WORKSPACE }}
@@ -63,47 +51,18 @@ jobs:
           PH_USER: ${{ secrets.PH_USER }}
           PH_PASS: ${{ secrets.PH_PASS }}
         run: |
-          chmod +x test.docker.sh
-
-          for tar in pantavisor-appengine-*-docker.tar pantavisor-appengine-docker.tar; do
-            [ -f "$tar" ] && docker load -i "$tar"
-          done
-
-          TEST_TARGET="${{ inputs.test_type }}"
-          if [ -n "${{ inputs.test_number }}" ]; then
-            TEST_TARGET="${TEST_TARGET}:${{ inputs.test_number }}"
-          fi
+          TEST_TARGET="${{ inputs.test_path }}"
 
           echo "=== AppEngine Test Run started at $(date) ==="
 
           echo "------------------------------------------------------"
-          echo "RUNNING: $TEST_TARGET"
+          echo "RUNNING: ${TEST_TARGET:-all}"
           echo "------------------------------------------------------"
 
-          if [[ "${{ inputs.test_type }}" == "pvtests-remote" ]]; then
-            max_retries=3
-            attempt=1
-            success=0
-
-            while [ $attempt -le $max_retries ]; do
-              echo "Attempt $attempt of $max_retries..."
-              if ./test.docker.sh -v run "$TEST_TARGET"; then
-                success=1
-                break
-              fi
-
-              echo "Attempt $attempt failed."
-              attempt=$((attempt + 1))
-
-              if [ $attempt -le $max_retries ]; then
-                sleep 5 # Brief delay before next retry
-              fi
-            done
-
-            if [ $success -eq 0 ]; then
-              echo "All $max_retries attempts failed."
-              exit 1
-            fi
+          if [[ -z "$TEST_TARGET" ]]; then
+            ./test.docker.sh -v run --retry 3
+          elif [[ "$TEST_TARGET" == remote* ]]; then
+            ./test.docker.sh -v run "$TEST_TARGET" --retry 3
           else
             ./test.docker.sh -v run "$TEST_TARGET"
           fi
