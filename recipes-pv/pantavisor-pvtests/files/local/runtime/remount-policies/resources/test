@@ -1,0 +1,12 @@
+#!/bin/sh
+
+options_to_keep="nosuid|suid|exec|noexec|relatime|noatime|nodev|dev|rw|ro"
+
+# write your test here
+pventer -c pvr-sdk "mount | sort" | \
+	grep -vE "devpts|sysfs|proc|tmpfs|cgroup|mqueue|debugfs" | \
+	sed -E \
+	-e 's|/dev/[^ ]+ |/dev/XXX |g' \
+	-e 's|noatime[^ ]+)|noatime)|g' \
+	-e 's|relatime[^ ]+)|relatime)|g' \
+	-e 's|(/var/run/pantavisor/configs/[^:]+:[^ ]+)|OVERLAY_SRC|g'

@@ -1,0 +1,110 @@
+#!/bin/sh
+
+source /usr/share/pantavisor/pvtest/utils
+
+# initial setup
+pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
+cd /home/checkout
+
+# Function to get PID
+get_pid() {
+    lxc-info -n "$1" -p 2>/dev/null | awk '{print $2}'
+}
+
+# Initial PIDs
+PID_SDK_0=$(get_pid "pvr-sdk")
+PID_WEB_0=$(get_pid "pv-example-app")
+
+if [ -z "$PID_SDK_0" ]; then
+    echo "ERROR: pvr-sdk is not running at initial state"
+    exit 1
+fi
+if [ -z "$PID_WEB_0" ]; then
+    echo "ERROR: pv-example-app is not running at initial state"
+    exit 1
+fi
+
+echo "Initial state: SDK=running WEB=running"
+
+# 1. Update modifies pv-example-app
+sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
+pvr add .
+pvr commit -m "update pv-example-app" > /dev/null 2>&1
+pvr post --rev "locals/update1" > /dev/null 2>&1
+
+wait_for_revision_state "pvr-sdk" "locals/update1" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for locals/update1 to reach UPDATED" >&2; exit 1; }
+
+PID_SDK_1=$(get_pid "pvr-sdk")
+PID_WEB_1=$(get_pid "pv-example-app")
+
+if [ "$PID_SDK_0" != "$PID_SDK_1" ]; then
+    echo "ERROR: pvr-sdk restarted in update 1"
+    exit 1
+fi
+if [ "$PID_WEB_0" = "$PID_WEB_1" ]; then
+    echo "ERROR: pv-example-app did NOT restart in update 1"
+    exit 1
+fi
+
+echo "Update 1: SDK=stable WEB=restarted"
+
+# 2. Update adds a new pv-example-app1
+cp -r pv-example-app/ pv-example-app1/
+# Substitute all appearances of "pv-example-app" in pv-example-app1 dir into "pv-example-app1"
+grep -rl "pv-example-app" pv-example-app1/ | xargs sed -i 's/pv-example-app/pv-example-app1/g'
+# Avoid port conflict by not sharing net namespace
+sed -i 's/\bnet\b//g' pv-example-app1/lxc.container.conf
+pvr add .
+pvr commit -m "add pv-example-app1" > /dev/null 2>&1
+pvr post --rev "locals/update2" > /dev/null 2>&1
+
+wait_for_revision_state "pvr-sdk" "locals/update2" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for locals/update2 to reach UPDATED" >&2; exit 1; }
+
+PID_SDK_2=$(get_pid "pvr-sdk")
+PID_WEB_2=$(get_pid "pv-example-app")
+PID_WEB1_2=$(get_pid "pv-example-app1")
+
+if [ "$PID_SDK_1" != "$PID_SDK_2" ]; then
+    echo "ERROR: pvr-sdk restarted in update 2"
+    exit 1
+fi
+if [ "$PID_WEB_1" != "$PID_WEB_2" ]; then
+    echo "ERROR: pv-example-app restarted in update 2"
+    exit 1
+fi
+if [ -z "$PID_WEB1_2" ]; then
+    echo "ERROR: pv-example-app1 failed to start in update 2"
+    exit 1
+fi
+
+echo "Update 2: SDK=stable WEB=stable WEB1=started"
+
+# 3. Update modifies pv-example-app
+sed -i 's/lxc\.tty\.max = 4/lxc.tty.max = 2/g' pv-example-app/lxc.container.conf
+pvr add .
+pvr commit -m "update pv-example-app again" > /dev/null 2>&1
+pvr post --rev "locals/update3" > /dev/null 2>&1
+
+wait_for_revision_state "pvr-sdk" "locals/update3" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for locals/update3 to reach UPDATED" >&2; exit 1; }
+
+PID_SDK_3=$(get_pid "pvr-sdk")
+PID_WEB_3=$(get_pid "pv-example-app")
+PID_WEB1_3=$(get_pid "pv-example-app1")
+
+if [ "$PID_SDK_2" != "$PID_SDK_3" ]; then
+    echo "ERROR: pvr-sdk restarted in update 3"
+    exit 1
+fi
+if [ "$PID_WEB_2" = "$PID_WEB_3" ]; then
+    echo "ERROR: pv-example-app did NOT restart in update 3"
+    exit 1
+fi
+if [ "$PID_WEB1_2" != "$PID_WEB1_3" ]; then
+    echo "ERROR: pv-example-app1 restarted in update 3"
+    exit 1
+fi
+
+echo "Update 3: SDK=stable WEB=restarted WEB1=stable"

@@ -1,0 +1,26 @@
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["system.init.mode"]'
+2
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["creds.host"]'
+api.pantahub.com
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["policy"]'
+test
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["creds.port"]'
+43
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["metadata.devmeta.interval"]'
+15
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["debug.ssh"]'
+false
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["log.level"]'
+4
++ pventer -c pvr-sdk pvcontrol usrmeta save log.level 5
+
++ pventer -c pvr-sdk pvcontrol config ls
++ jq -M -r '.["log.level"]'
+5

@@ -1,0 +1,79 @@
++ control_container=pvr-sdk
++ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
++ cd /home/checkout
+++ get_pid pvr-sdk
+++ lxc-info -n pvr-sdk -p
+++ awk '{print $2}'
++ PID_SDK_0=326
+++ get_pid webserver
+++ lxc-info -n webserver -p
+++ awk '{print $2}'
++ PID_WEB_0=762
++ '[' -z 326 ']'
++ '[' -z 762 ']'
++ echo 'Initial state: SDK=running WEB=running'
+Initial state: SDK=running WEB=running
++ sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' webserver/lxc.container.conf
++ pvr add .
++ pvr commit -m 'update webserver'
++ pvr post --rev locals/update1
++ wait_for_revision_state pvr-sdk locals/update1 UPDATED
+++ get_pid pvr-sdk
+++ lxc-info -n pvr-sdk -p
+++ awk '{print $2}'
++ PID_SDK_1=326
+++ get_pid webserver
+++ lxc-info -n webserver -p
+++ awk '{print $2}'
++ PID_WEB_1=4368
++ '[' 326 '!=' 326 ']'
++ '[' 762 = 4368 ']'
++ echo 'Update 1: SDK=stable WEB=restarted'
+Update 1: SDK=stable WEB=restarted
++ cp -r webserver/ webserver1/
++ grep -rl webserver webserver1/
++ xargs sed -i s/webserver/webserver1/g
++ sed -i 's/\bnet\b//g' webserver1/lxc.container.conf
++ pvr add .
++ pvr commit -m 'add webserver1'
++ pvr post --rev locals/update2
++ wait_for_revision_state pvr-sdk locals/update2 UPDATED
+++ get_pid pvr-sdk
+++ lxc-info -n pvr-sdk -p
+++ awk '{print $2}'
++ PID_SDK_2=326
+++ get_pid webserver
+++ lxc-info -n webserver -p
+++ awk '{print $2}'
++ PID_WEB_2=4368
+++ get_pid webserver1
+++ lxc-info -n webserver1 -p
+++ awk '{print $2}'
++ PID_WEB1_2=6015
++ '[' 326 '!=' 326 ']'
++ '[' 4368 '!=' 4368 ']'
++ '[' -z 6015 ']'
++ echo 'Update 2: SDK=stable WEB=stable WEB1=started'
+Update 2: SDK=stable WEB=stable WEB1=started
++ sed -i 's/lxc\.tty\.max = 4/lxc.tty.max = 2/g' webserver/lxc.container.conf
++ pvr add .
++ pvr commit -m 'update webserver again'
++ pvr post --rev locals/update3
++ wait_for_revision_state pvr-sdk locals/update3 UPDATED
+++ get_pid pvr-sdk
+++ lxc-info -n pvr-sdk -p
+++ awk '{print $2}'
++ PID_SDK_3=326
+++ get_pid webserver
+++ lxc-info -n webserver -p
+++ awk '{print $2}'
++ PID_WEB_3=7471
+++ get_pid webserver1
+++ lxc-info -n webserver1 -p
+++ awk '{print $2}'
++ PID_WEB1_3=6015
++ '[' 326 '!=' 326 ']'
++ '[' 4368 = 7471 ']'
++ '[' 6015 '!=' 6015 ']'
++ echo 'Update 3: SDK=stable WEB=restarted WEB1=stable'
+Update 3: SDK=stable WEB=restarted WEB1=stable

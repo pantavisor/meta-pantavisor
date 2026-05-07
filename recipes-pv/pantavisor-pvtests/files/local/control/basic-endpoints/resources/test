@@ -1,0 +1,9 @@
+#!/bin/sh
+
+pvcontrol ls | jq -M | tr -d '\r'
+pvcontrol groups ls | jq -M | tr -d '\r'
+pvcontrol usrmeta ls | jq -M | tr -d '\r'
+pvcontrol devmeta ls | jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])' | tr -d '\r'
+echo "object count: $(pvcontrol objects ls | jq -M 'length' | tr -d '\r')"
+pvcontrol steps ls | jq -M 'map(del(.date))' | tr -d '\r'
+pvcontrol conf ls | jq -M | tr -d '\r'

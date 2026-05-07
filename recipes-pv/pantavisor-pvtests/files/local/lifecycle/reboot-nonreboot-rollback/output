@@ -1,0 +1,37 @@
++ control_container=pvr-sdk
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
++ cd /home/checkout
++ sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pvr-sdk/lxc.container.conf
++ pvr add .
++ pvr commit
++ pvr post --rev locals/reboot
++ wait_for_revision_state pvr-sdk locals/reboot DONE
++ pventer -c pvr-sdk pvcontrol steps show-progress locals/reboot
+{"status":"DONE","status-msg":"Update finished, revision set as rollback point","progress":100,"retries":0}
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+locals/reboot
++ sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' webserver/lxc.container.conf
++ pvr add .
++ pvr commit
++ pvr post --rev locals/nonreboot
++ wait_for_revision_state pvr-sdk locals/nonreboot UPDATED
++ pventer -c pvr-sdk pvcontrol steps show-progress locals/nonreboot
+{"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":0}
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+locals/nonreboot
++ sed -i 's|lxc\.init\.cmd = /sbin/init|lxc.init.cmd = /nonexistingbin|g' pvr-sdk/lxc.container.conf
++ pvr add .
++ pvr commit
++ pvr post --rev locals/error
++ wait_for_revision_state pvr-sdk locals/reboot DONE
++ sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
++ pventer -c pvr-sdk pvcontrol steps show-progress locals/error
+{"status":"ERROR","status-msg":"A container could not be started","progress":100,"retries":0,"logs":"{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"state\",\"msg\":\"platform 'pvr-sdk' is not running\"}\n{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"controller\",\"msg\":\"a platform did not work as expected. Tearing down...\"}\n"}
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+locals/reboot

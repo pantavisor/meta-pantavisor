@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# configured from pantavisor.config
+pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SYSTEM_INIT_MODE")'
+# configured from pantahub.config
+pvcontrol conf ls | jq -M '.[] | select(.key == "PH_CREDS_HOST")'
+# configured from env
+pvcontrol conf ls | jq -M '.[] | select(.key == "PV_POLICY")'
+pvcontrol conf ls | jq -M '.[] | select(.key == "PH_CREDS_PORT")'
+pvcontrol conf ls | jq -M '.[] | select(.key == "PH_METADATA_DEVMETA_INTERVAL")'
+# configured from policies
+pvcontrol conf ls | jq -M '.[] | select(.key == "PV_DEBUG_SSH")'
+# configured from OEM
+pvcontrol conf ls | jq -M '.[] | select(.key == "PH_METADATA_USRMETA_INTERVAL")'
+# configured from user meta
+pvcontrol conf ls | jq -M '.[] | select(.key == "PV_LOG_LEVEL")'
+pvcontrol usrmeta save PV_LOG_LEVEL 5
+pvcontrol conf ls | jq -M '.[] | select(.key == "PV_LOG_LEVEL")'

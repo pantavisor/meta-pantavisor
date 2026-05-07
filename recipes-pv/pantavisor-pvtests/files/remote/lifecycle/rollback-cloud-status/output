@@ -1,0 +1,470 @@
++ control_container=pvr-sdk
+++ cat /var/run/pantavisor/pv/device-id
++ device_id=69c69daa007bd5000956a306
++ pvr clone https://api.pantahub.com/trails/69c69daa007bd5000956a306 /home/checkout
++ cd /home/checkout
+++ mktemp
++ tmp=/tmp/tmp.duOk4Hn6SI
++ jq '."status_goal" = "READY"' pvr-sdk/run.json
++ mv /tmp/tmp.duOk4Hn6SI pvr-sdk/run.json
++ pvr add pvr-sdk/run.json
++ pvr commit -m 'change status_goal to READY to trigger goals timeout'
++ pvr post -m 'trigger rollback'
++ wait_for_value 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\''' ERROR 120
++ local 'cmd=pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local value=ERROR
++ local timeout=120
++ local counter=0
++ '[' 0 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=1
++ '[' 1 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=2
++ '[' 2 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=3
++ '[' 3 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=4
++ '[' 4 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=5
++ '[' 5 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=6
++ '[' 6 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=7
++ '[' 7 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=8
++ '[' 8 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=9
++ '[' 9 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=10
++ '[' 10 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=11
++ '[' 11 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=12
++ '[' 12 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=13
++ '[' 13 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=14
++ '[' 14 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=15
++ '[' 15 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=16
++ '[' 16 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=17
++ '[' 17 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=18
++ '[' 18 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=19
++ '[' 19 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=20
++ '[' 20 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=21
++ '[' 21 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = ERROR ']'
++ sleep 1
++ counter=22
++ '[' 22 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=23
++ '[' 23 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=24
++ '[' 24 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=25
++ '[' 25 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=26
++ '[' 26 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=27
++ '[' 27 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=28
++ '[' 28 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=29
++ '[' 29 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=30
++ '[' 30 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=31
++ '[' 31 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=32
++ '[' 32 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=33
++ '[' 33 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=34
++ '[' 34 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=35
++ '[' 35 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=36
++ '[' 36 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=37
++ '[' 37 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=38
++ '[' 38 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=39
++ '[' 39 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=40
++ '[' 40 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=41
++ '[' 41 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=42
++ '[' 42 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=43
++ '[' 43 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = ERROR ']'
++ sleep 1
++ counter=44
++ '[' 44 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=ERROR
++ '[' ERROR = ERROR ']'
++ return 0
++ wait_for_value 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\''' READY 60
++ local 'cmd=pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local value=READY
++ local timeout=60
++ local counter=0
++ '[' 0 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=1
++ '[' 1 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=2
++ '[' 2 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=3
++ '[' 3 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=4
++ '[' 4 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=5
++ '[' 5 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=6
++ '[' 6 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=7
++ '[' 7 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=8
++ '[' 8 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=9
++ '[' 9 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=10
++ '[' 10 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=11
++ '[' 11 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=12
++ '[' 12 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=13
++ '[' 13 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=14
++ '[' 14 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=15
++ '[' 15 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=16
++ '[' 16 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=17
++ '[' 17 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=18
++ '[' 18 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=19
++ '[' 19 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=20
++ '[' 20 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=21
++ '[' 21 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=22
++ '[' 22 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=23
++ '[' 23 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=24
++ '[' 24 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=25
++ '[' 25 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=
++ '[' '' = READY ']'
++ sleep 1
++ counter=26
++ '[' 26 -lt 60 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=READY
++ '[' READY = READY ']'
++ return 0
++ cloud_step_url=https://api.pantahub.com/trails/69c69daa007bd5000956a306/steps/1
++ wait_for_value 'pvr stepinfo "https://api.pantahub.com/trails/69c69daa007bd5000956a306/steps/1" 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\''' ERROR 60
++ local 'cmd=pvr stepinfo "https://api.pantahub.com/trails/69c69daa007bd5000956a306/steps/1" 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\'''
++ local value=ERROR
++ local timeout=60
++ local counter=0
++ '[' 0 -lt 60 ']'
+++ eval 'pvr stepinfo "https://api.pantahub.com/trails/69c69daa007bd5000956a306/steps/1" 2>/dev/null | sed -n '\''/^{/,$p'\'' | jq -r '\''.progress.status // empty'\'''
++ local result=ERROR
++ '[' ERROR = ERROR ']'
++ return 0
++ pvr stepinfo https://api.pantahub.com/trails/69c69daa007bd5000956a306/steps/1
++ sed -n '/^{/,$p'
++ jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'
+{
+  "status": "ERROR",
+  "status-msg": "Status goal not reached"
+}

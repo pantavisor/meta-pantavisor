@@ -1,0 +1,349 @@
++ pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+0
++ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
++ cd /home/checkout
++ sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pvr-sdk/lxc.container.conf
++ pvr add .
++ pvr commit
++ pvr post --rev locals/done
++ wait_for_revision_state pvr-sdk locals/done DONE
++ pvcontrol steps show-progress locals/done
+{"status":"DONE","status-msg":"Update finished, revision set as rollback point","progress":100,"retries":0}
++ pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+locals/done
++ sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
++ pvr add .
++ pvr commit
++ pvr post --rev locals/updated
++ wait_for_revision_state pvr-sdk locals/updated UPDATED
++ pvcontrol steps show-progress locals/updated
+{"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":0}
++ pvcontrol devmeta ls
++ jq -M -r '.["pantavisor.revision"]'
+locals/updated
+++ pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1
+++ wc -l
++ OBJ_COUNT=11
++ pventer -c pvr-sdk find /storage -not -name console.log
++ grep -v '^/storage/objects/[0-9a-f]'
++ sort
+/storage
+/storage/.created
+/storage/.pvmounted
+/storage/.pvtx-done
+/storage/boot
+/storage/boot/uboot.txt
+/storage/cache
+/storage/cache/dropbear
+/storage/config
+/storage/config/pantahub.config
+/storage/disks
+/storage/disks/perm
+/storage/disks/perm/pvr-sdk
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_dss_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_ecdsa_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_rsa_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-volume
+/storage/disks/perm/pvr-sdk/docker--etc-volume/shadow
+/storage/disks/perm/pvr-sdk/docker--home-pantavisor-.ssh
+/storage/disks/perm/pvr-sdk/docker--var-pvr-sdk
+/storage/dm-crypt-files
+/storage/dm-crypt-files/dm-internal-secrets
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img.goodbak
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img.prebak
+/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.init_done
+/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.txt
+/storage/logs
+/storage/logs/0
+/storage/logs/0/pantavisor
+/storage/logs/0/pantavisor/pantavisor.log
+/storage/logs/0/pv-example-app
+/storage/logs/0/pv-example-app/lxc
+/storage/logs/0/pv-example-app/lxc/lxc.log
+/storage/logs/0/pv-example-app/var
+/storage/logs/0/pv-example-app/var/log
+/storage/logs/0/pv-example-app/var/log/messages
+/storage/logs/0/pv-example-app/var/log/syslog
+/storage/logs/0/pvr-sdk
+/storage/logs/0/pvr-sdk/lxc
+/storage/logs/0/pvr-sdk/lxc/lxc.log
+/storage/logs/0/pvr-sdk/var
+/storage/logs/0/pvr-sdk/var/log
+/storage/logs/0/pvr-sdk/var/log/messages
+/storage/logs/0/pvr-sdk/var/log/syslog
+/storage/logs/current
+/storage/logs/locals
+/storage/logs/locals/done
+/storage/logs/locals/done/pantavisor
+/storage/logs/locals/done/pantavisor/pantavisor.log
+/storage/logs/locals/done/pv-example-app
+/storage/logs/locals/done/pv-example-app/lxc
+/storage/logs/locals/done/pv-example-app/lxc/lxc.log
+/storage/logs/locals/done/pv-example-app/var
+/storage/logs/locals/done/pv-example-app/var/log
+/storage/logs/locals/done/pv-example-app/var/log/messages
+/storage/logs/locals/done/pv-example-app/var/log/syslog
+/storage/logs/locals/done/pvr-sdk
+/storage/logs/locals/done/pvr-sdk/lxc
+/storage/logs/locals/done/pvr-sdk/lxc/lxc.log
+/storage/logs/locals/done/pvr-sdk/var
+/storage/logs/locals/done/pvr-sdk/var/log
+/storage/logs/locals/done/pvr-sdk/var/log/messages
+/storage/logs/locals/done/pvr-sdk/var/log/syslog
+/storage/logs/locals/updated
+/storage/logs/locals/updated/pantavisor
+/storage/logs/locals/updated/pantavisor/pantavisor.log
+/storage/logs/locals/updated/pv-example-app
+/storage/logs/locals/updated/pv-example-app/lxc
+/storage/logs/locals/updated/pv-example-app/lxc/lxc.log
+/storage/logs/locals/updated/pv-example-app/var
+/storage/logs/locals/updated/pv-example-app/var/log
+/storage/logs/locals/updated/pv-example-app/var/log/messages
+/storage/logs/locals/updated/pv-example-app/var/log/syslog
+/storage/objects
+/storage/trails
+/storage/trails/0
+/storage/trails/0/.pv
+/storage/trails/0/.pv/done
+/storage/trails/0/.pv/progress
+/storage/trails/0/.pv/pv-initrd.img
+/storage/trails/0/.pvr
+/storage/trails/0/.pvr/config
+/storage/trails/0/.pvr/json
+/storage/trails/0/_config
+/storage/trails/0/_config/pvr-sdk
+/storage/trails/0/_config/pvr-sdk/etc
+/storage/trails/0/_config/pvr-sdk/etc/pvr-sdk
+/storage/trails/0/_config/pvr-sdk/etc/pvr-sdk/config.json
+/storage/trails/0/_sigs
+/storage/trails/0/_sigs/bsp.json
+/storage/trails/0/_sigs/pv-example-app.json
+/storage/trails/0/_sigs/pvr-sdk.json
+/storage/trails/0/bsp
+/storage/trails/0/bsp/modules.squashfs
+/storage/trails/0/bsp/pantavisor
+/storage/trails/0/bsp/run.json
+/storage/trails/0/bsp/src.json
+/storage/trails/0/device.json
+/storage/trails/0/pv-example-app
+/storage/trails/0/pv-example-app/lxc.container.conf
+/storage/trails/0/pv-example-app/root.squashfs
+/storage/trails/0/pv-example-app/root.squashfs.rootfs-digest
+/storage/trails/0/pv-example-app/run.json
+/storage/trails/0/pv-example-app/src.json
+/storage/trails/0/pvr-sdk
+/storage/trails/0/pvr-sdk/_dm
+/storage/trails/0/pvr-sdk/_dm/root.squashfs.json
+/storage/trails/0/pvr-sdk/lxc.container.conf
+/storage/trails/0/pvr-sdk/pvpkg.json
+/storage/trails/0/pvr-sdk/root.squashfs
+/storage/trails/0/pvr-sdk/root.squashfs.docker-digest
+/storage/trails/0/pvr-sdk/root.squashfs.hash
+/storage/trails/0/pvr-sdk/run.json
+/storage/trails/0/pvr-sdk/src.json
+/storage/trails/current
+/storage/trails/locals
+/storage/trails/locals/done
+/storage/trails/locals/done/.pv
+/storage/trails/locals/done/.pv/done
+/storage/trails/locals/done/.pv/progress
+/storage/trails/locals/done/.pvr
+/storage/trails/locals/done/.pvr/config
+/storage/trails/locals/done/.pvr/json
+/storage/trails/locals/done/_config
+/storage/trails/locals/done/_config/pvr-sdk
+/storage/trails/locals/done/_config/pvr-sdk/etc
+/storage/trails/locals/done/_config/pvr-sdk/etc/pvr-sdk
+/storage/trails/locals/done/_config/pvr-sdk/etc/pvr-sdk/config.json
+/storage/trails/locals/done/bsp
+/storage/trails/locals/done/bsp/modules.squashfs
+/storage/trails/locals/done/bsp/pantavisor
+/storage/trails/locals/done/bsp/run.json
+/storage/trails/locals/done/device.json
+/storage/trails/locals/done/pv-example-app
+/storage/trails/locals/done/pv-example-app/lxc.container.conf
+/storage/trails/locals/done/pv-example-app/root.squashfs
+/storage/trails/locals/done/pv-example-app/root.squashfs.rootfs-digest
+/storage/trails/locals/done/pv-example-app/run.json
+/storage/trails/locals/done/pvr-sdk
+/storage/trails/locals/done/pvr-sdk/_dm
+/storage/trails/locals/done/pvr-sdk/_dm/root.squashfs.json
+/storage/trails/locals/done/pvr-sdk/lxc.container.conf
+/storage/trails/locals/done/pvr-sdk/pvpkg.json
+/storage/trails/locals/done/pvr-sdk/root.squashfs
+/storage/trails/locals/done/pvr-sdk/root.squashfs.docker-digest
+/storage/trails/locals/done/pvr-sdk/root.squashfs.hash
+/storage/trails/locals/done/pvr-sdk/run.json
+/storage/trails/locals/updated
+/storage/trails/locals/updated/.pv
+/storage/trails/locals/updated/.pv/progress
+/storage/trails/locals/updated/.pvr
+/storage/trails/locals/updated/.pvr/config
+/storage/trails/locals/updated/.pvr/json
+/storage/trails/locals/updated/_config
+/storage/trails/locals/updated/_config/pvr-sdk
+/storage/trails/locals/updated/_config/pvr-sdk/etc
+/storage/trails/locals/updated/_config/pvr-sdk/etc/pvr-sdk
+/storage/trails/locals/updated/_config/pvr-sdk/etc/pvr-sdk/config.json
+/storage/trails/locals/updated/bsp
+/storage/trails/locals/updated/bsp/modules.squashfs
+/storage/trails/locals/updated/bsp/pantavisor
+/storage/trails/locals/updated/bsp/run.json
+/storage/trails/locals/updated/device.json
+/storage/trails/locals/updated/pv-example-app
+/storage/trails/locals/updated/pv-example-app/lxc.container.conf
+/storage/trails/locals/updated/pv-example-app/root.squashfs
+/storage/trails/locals/updated/pv-example-app/root.squashfs.rootfs-digest
+/storage/trails/locals/updated/pv-example-app/run.json
+/storage/trails/locals/updated/pvr-sdk
+/storage/trails/locals/updated/pvr-sdk/_dm
+/storage/trails/locals/updated/pvr-sdk/_dm/root.squashfs.json
+/storage/trails/locals/updated/pvr-sdk/lxc.container.conf
+/storage/trails/locals/updated/pvr-sdk/pvpkg.json
+/storage/trails/locals/updated/pvr-sdk/root.squashfs
+/storage/trails/locals/updated/pvr-sdk/root.squashfs.docker-digest
+/storage/trails/locals/updated/pvr-sdk/root.squashfs.hash
+/storage/trails/locals/updated/pvr-sdk/run.json
++ echo 'object count: 11'
+object count: 11
++ pvcontrol commands run-gc
+
++ wait_for_path pvr-sdk /storage/logs/0 -d
++ wait_for_path pvr-sdk /storage/trails/0 -d
++ wait_for_path pvr-sdk /storage/objects/e5ee4b76420bf4d317221f081618eba2e68ab97d1b31a5fcfe6ce48b91e8562c -d
++ wait_for_path pvr-sdk /storage/objects/2ef57a87c9044d9c828ed4efc9bff8fd67fa15b00abad6cb607f7ca3d47c1df8 -d
+++ pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1
+++ wc -l
++ OBJ_COUNT=10
++ pventer -c pvr-sdk find /storage -not -name console.log
++ grep -v '^/storage/objects/[0-9a-f]'
++ sort
+/storage
+/storage/.created
+/storage/.pvmounted
+/storage/.pvtx-done
+/storage/boot
+/storage/boot/uboot.txt
+/storage/cache
+/storage/cache/dropbear
+/storage/config
+/storage/config/pantahub.config
+/storage/disks
+/storage/disks/perm
+/storage/disks/perm/pvr-sdk
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_dss_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_ecdsa_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-dropbear/dropbear_rsa_host_key
+/storage/disks/perm/pvr-sdk/docker--etc-volume
+/storage/disks/perm/pvr-sdk/docker--etc-volume/shadow
+/storage/disks/perm/pvr-sdk/docker--home-pantavisor-.ssh
+/storage/disks/perm/pvr-sdk/docker--var-pvr-sdk
+/storage/dm-crypt-files
+/storage/dm-crypt-files/dm-internal-secrets
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img.goodbak
+/storage/dm-crypt-files/dm-internal-secrets/versatile.img.prebak
+/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.init_done
+/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.txt
+/storage/logs
+/storage/logs/current
+/storage/logs/locals
+/storage/logs/locals/done
+/storage/logs/locals/done/pantavisor
+/storage/logs/locals/done/pantavisor/pantavisor.log
+/storage/logs/locals/done/pv-example-app
+/storage/logs/locals/done/pv-example-app/lxc
+/storage/logs/locals/done/pv-example-app/lxc/lxc.log
+/storage/logs/locals/done/pv-example-app/var
+/storage/logs/locals/done/pv-example-app/var/log
+/storage/logs/locals/done/pv-example-app/var/log/messages
+/storage/logs/locals/done/pv-example-app/var/log/syslog
+/storage/logs/locals/done/pvr-sdk
+/storage/logs/locals/done/pvr-sdk/lxc
+/storage/logs/locals/done/pvr-sdk/lxc/lxc.log
+/storage/logs/locals/done/pvr-sdk/var
+/storage/logs/locals/done/pvr-sdk/var/log
+/storage/logs/locals/done/pvr-sdk/var/log/messages
+/storage/logs/locals/done/pvr-sdk/var/log/syslog
+/storage/logs/locals/updated
+/storage/logs/locals/updated/pantavisor
+/storage/logs/locals/updated/pantavisor/pantavisor.log
+/storage/logs/locals/updated/pv-example-app
+/storage/logs/locals/updated/pv-example-app/lxc
+/storage/logs/locals/updated/pv-example-app/lxc/lxc.log
+/storage/logs/locals/updated/pv-example-app/var
+/storage/logs/locals/updated/pv-example-app/var/log
+/storage/logs/locals/updated/pv-example-app/var/log/messages
+/storage/logs/locals/updated/pv-example-app/var/log/syslog
+/storage/objects
+/storage/trails
+/storage/trails/current
+/storage/trails/locals
+/storage/trails/locals/done
+/storage/trails/locals/done/.pv
+/storage/trails/locals/done/.pv/done
+/storage/trails/locals/done/.pv/progress
+/storage/trails/locals/done/.pvr
+/storage/trails/locals/done/.pvr/config
+/storage/trails/locals/done/.pvr/json
+/storage/trails/locals/done/_config
+/storage/trails/locals/done/_config/pvr-sdk
+/storage/trails/locals/done/_config/pvr-sdk/etc
+/storage/trails/locals/done/_config/pvr-sdk/etc/pvr-sdk
+/storage/trails/locals/done/_config/pvr-sdk/etc/pvr-sdk/config.json
+/storage/trails/locals/done/bsp
+/storage/trails/locals/done/bsp/modules.squashfs
+/storage/trails/locals/done/bsp/pantavisor
+/storage/trails/locals/done/bsp/run.json
+/storage/trails/locals/done/device.json
+/storage/trails/locals/done/pv-example-app
+/storage/trails/locals/done/pv-example-app/lxc.container.conf
+/storage/trails/locals/done/pv-example-app/root.squashfs
+/storage/trails/locals/done/pv-example-app/root.squashfs.rootfs-digest
+/storage/trails/locals/done/pv-example-app/run.json
+/storage/trails/locals/done/pvr-sdk
+/storage/trails/locals/done/pvr-sdk/_dm
+/storage/trails/locals/done/pvr-sdk/_dm/root.squashfs.json
+/storage/trails/locals/done/pvr-sdk/lxc.container.conf
+/storage/trails/locals/done/pvr-sdk/pvpkg.json
+/storage/trails/locals/done/pvr-sdk/root.squashfs
+/storage/trails/locals/done/pvr-sdk/root.squashfs.docker-digest
+/storage/trails/locals/done/pvr-sdk/root.squashfs.hash
+/storage/trails/locals/done/pvr-sdk/run.json
+/storage/trails/locals/updated
+/storage/trails/locals/updated/.pv
+/storage/trails/locals/updated/.pv/progress
+/storage/trails/locals/updated/.pvr
+/storage/trails/locals/updated/.pvr/config
+/storage/trails/locals/updated/.pvr/json
+/storage/trails/locals/updated/_config
+/storage/trails/locals/updated/_config/pvr-sdk
+/storage/trails/locals/updated/_config/pvr-sdk/etc
+/storage/trails/locals/updated/_config/pvr-sdk/etc/pvr-sdk
+/storage/trails/locals/updated/_config/pvr-sdk/etc/pvr-sdk/config.json
+/storage/trails/locals/updated/bsp
+/storage/trails/locals/updated/bsp/modules.squashfs
+/storage/trails/locals/updated/bsp/pantavisor
+/storage/trails/locals/updated/bsp/run.json
+/storage/trails/locals/updated/device.json
+/storage/trails/locals/updated/pv-example-app
+/storage/trails/locals/updated/pv-example-app/lxc.container.conf
+/storage/trails/locals/updated/pv-example-app/root.squashfs
+/storage/trails/locals/updated/pv-example-app/root.squashfs.rootfs-digest
+/storage/trails/locals/updated/pv-example-app/run.json
+/storage/trails/locals/updated/pvr-sdk
+/storage/trails/locals/updated/pvr-sdk/_dm
+/storage/trails/locals/updated/pvr-sdk/_dm/root.squashfs.json
+/storage/trails/locals/updated/pvr-sdk/lxc.container.conf
+/storage/trails/locals/updated/pvr-sdk/pvpkg.json
+/storage/trails/locals/updated/pvr-sdk/root.squashfs
+/storage/trails/locals/updated/pvr-sdk/root.squashfs.docker-digest
+/storage/trails/locals/updated/pvr-sdk/root.squashfs.hash
+/storage/trails/locals/updated/pvr-sdk/run.json
++ echo 'object count: 10'
+object count: 10

@@ -1,0 +1,22 @@
+{
+  "#spec": "pv-test@1",
+  "description": "Trigger rollback and verify cloud status",
+  "setup": {
+    "cmdline": "",
+    "env": "PV_CONTROL_REMOTE=1 PV_LOG_CAPTURE_DMESG=0 PV_STORAGE_PHCONFIG_VOL=1 PV_UPDATER_GOALS_TIMEOUT=1 PV_UPDATER_COMMIT_DELAY=5 PV_SECUREBOOT_MODE=disabled PH_METADATA_DEVMETA_INTERVAL=10 PH_METADATA_USRMETA_INTERVAL=10 PH_UPDATER_INTERVAL=5 PV_WDT_MODE=disabled PV_DEBUG_SSH=0 PV_LOG_DIR_MAXSIZE=2147483647 PV_STORAGE_GC_THRESHOLD=100",
+    "pantavisor.config": "",
+    "pvs": "",
+    "containers": {
+      "control": "pvr-sdk",
+      "tarballs": [
+        "../../common/tarballs/bsp.tgz",
+        "../../common/tarballs/pvr-sdk.tgz"
+      ],
+      "urls": []
+    },
+    "ready-script": "",
+    "self-claim": "true"
+  },
+  "test-script": "resources/test",
+  "skip": "false"
+}

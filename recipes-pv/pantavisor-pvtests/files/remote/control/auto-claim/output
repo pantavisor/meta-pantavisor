@@ -1,0 +1,330 @@
++ control_container=pvr-sdk
++ wait_for_pantahub_state pvr-sdk claim
++ local control_container=pvr-sdk
++ local state=claim
++ wait_for_value 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\''' claim 30
++ local 'cmd=pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local value=claim
++ local timeout=30
++ local counter=0
++ '[' 0 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=1
++ '[' 1 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=2
++ '[' 2 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=3
++ '[' 3 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=4
++ '[' 4 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=5
++ '[' 5 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=6
++ '[' 6 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=7
++ '[' 7 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=8
++ '[' 8 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=9
++ '[' 9 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=10
++ '[' 10 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=11
++ '[' 11 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=12
++ '[' 12 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=13
++ '[' 13 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=14
++ '[' 14 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=15
++ '[' 15 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=16
++ '[' 16 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=17
++ '[' 17 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=18
++ '[' 18 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=19
++ '[' 19 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=20
++ '[' 20 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=register
++ '[' register = claim ']'
++ sleep 1
++ counter=21
++ '[' 21 -lt 30 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''.["pantahub.state"]'\'''
++ local result=claim
++ '[' claim = claim ']'
++ return 0
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantahub.state"]'
+claim
+++ cat /var/run/pantavisor/pv/device-id
++ device_id=69c67a993732d300091ca827
+++ cat /home/root/.pvr/auth.json
+++ jq -r 'first(.tokens[]) | .["access-token"] // empty'
++ bearer=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzUwNDcxNDksImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc0NjE1MTQ5LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.TA6O4l_bhmnqY-SLdaQd_bqKg0y24jGQYh_y36uNSULngq0y7pBk0WbR_AAig-5pTN5ruOWJv6KlzCl1uV0FmMJT5_ze2N6UHYUK6pEQoDFqo6iRyeUQgYC4TVBTYphfntCGy5gBlm_tjolaiHdWC-vEd77u3s4PRfWGKzKXXnZLS5BjDXRqjmoPaq1wTH5M-nCifdzi6DKxd7SKQD9hMxbItZl8OO00rmvA9cfDFyWeLbvsJw9Mw0phweO0K0Ps9aVWz5WceAI-KZF_Ia6NcRxdzjUo2hUT_w7UXVVsZMLQiEQTqqgcF8CH-vzeoIilUlDg3bF7IUhjTdZQs08Q7Q
+++ curl -s -X POST -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzUwNDcxNDksImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc0NjE1MTQ5LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.TA6O4l_bhmnqY-SLdaQd_bqKg0y24jGQYh_y36uNSULngq0y7pBk0WbR_AAig-5pTN5ruOWJv6KlzCl1uV0FmMJT5_ze2N6UHYUK6pEQoDFqo6iRyeUQgYC4TVBTYphfntCGy5gBlm_tjolaiHdWC-vEd77u3s4PRfWGKzKXXnZLS5BjDXRqjmoPaq1wTH5M-nCifdzi6DKxd7SKQD9hMxbItZl8OO00rmvA9cfDFyWeLbvsJw9Mw0phweO0K0Ps9aVWz5WceAI-KZF_Ia6NcRxdzjUo2hUT_w7UXVVsZMLQiEQTqqgcF8CH-vzeoIilUlDg3bF7IUhjTdZQs08Q7Q' -H 'Content-Type: application/json' -d '{}' https://api.pantahub.com/devices/tokens
++ autotok_json='{"id":"69c67a9c8ba3de8a9521c936","prn":"prn:::devices-tokens:/69c67a9c8ba3de8a9521c936","nick":"multiply_brief_firefly","owner":"prn:::accounts:/5bf1b84041b2dd0009a89f4a","token":"8D8vW2Z4unlzamRY+dTixcV6yJLGAWZk","default-user-meta":null,"disabled":false,"time-created":"2026-03-27T12:39:56.063206621Z","time-modified":"2026-03-27T12:39:56.063206621Z"}'
+++ echo '{"id":"69c67a9c8ba3de8a9521c936","prn":"prn:::devices-tokens:/69c67a9c8ba3de8a9521c936","nick":"multiply_brief_firefly","owner":"prn:::accounts:/5bf1b84041b2dd0009a89f4a","token":"8D8vW2Z4unlzamRY+dTixcV6yJLGAWZk","default-user-meta":null,"disabled":false,"time-created":"2026-03-27T12:39:56.063206621Z","time-modified":"2026-03-27T12:39:56.063206621Z"}'
+++ jq -r .token
++ autotok=8D8vW2Z4unlzamRY+dTixcV6yJLGAWZk
+++ echo '{"id":"69c67a9c8ba3de8a9521c936","prn":"prn:::devices-tokens:/69c67a9c8ba3de8a9521c936","nick":"multiply_brief_firefly","owner":"prn:::accounts:/5bf1b84041b2dd0009a89f4a","token":"8D8vW2Z4unlzamRY+dTixcV6yJLGAWZk","default-user-meta":null,"disabled":false,"time-created":"2026-03-27T12:39:56.063206621Z","time-modified":"2026-03-27T12:39:56.063206621Z"}'
+++ jq -r .id
++ autotok_id=69c67a9c8ba3de8a9521c936
++ echo PH_FACTORY_AUTOTOK=8D8vW2Z4unlzamRY+dTixcV6yJLGAWZk
++ rm -f /var/run/pantavisor/pv/phconfig/unclaimed.config
++ pventer -c pvr-sdk pvcontrol commands reboot
++ wait_for_value 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\''' READY 120
++ local 'cmd=pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local value=READY
++ local timeout=120
++ local counter=0
++ '[' 0 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\'''
++ local result=READY
++ '[' READY = READY ']'
++ return 0
++ wait_for_value 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\''' idle 120
++ local 'cmd=pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local value=idle
++ local timeout=120
++ local counter=0
++ '[' 0 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=claim
++ '[' claim = idle ']'
++ sleep 1
++ counter=1
++ '[' 1 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=2
++ '[' 2 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=3
++ '[' 3 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=4
++ '[' 4 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=5
++ '[' 5 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=6
++ '[' 6 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=7
++ '[' 7 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=8
++ '[' 8 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=9
++ '[' 9 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=10
++ '[' 10 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=11
++ '[' 11 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=12
++ '[' 12 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=13
++ '[' 13 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=14
++ '[' 14 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=15
++ '[' 15 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=16
++ '[' 16 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=17
++ '[' 17 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=
++ '[' '' = idle ']'
++ sleep 1
++ counter=18
++ '[' 18 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=0
++ '[' 0 = idle ']'
++ sleep 1
++ counter=19
++ '[' 19 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=0
++ '[' 0 = idle ']'
++ sleep 1
++ counter=20
++ '[' 20 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=0
++ '[' 0 = idle ']'
++ sleep 1
++ counter=21
++ '[' 21 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=0
++ '[' 0 = idle ']'
++ sleep 1
++ counter=22
++ '[' 22 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=register
++ '[' register = idle ']'
++ sleep 1
++ counter=23
++ '[' 23 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local 'result=wait Hub'
++ '[' 'wait Hub' = idle ']'
++ sleep 1
++ counter=24
++ '[' 24 -lt 120 ']'
+++ eval 'pventer -c pvr-sdk pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
++ local result=idle
++ '[' idle = idle ']'
++ return 0
++ pventer -c pvr-sdk pvcontrol devmeta ls
++ jq -M -r '.["pantahub.state"]'
+idle
++ '[' -n 69c67a993732d300091ca827 ']'
++ pvr dev delete -y 69c67a993732d300091ca827
++ '[' -n 69c67a9c8ba3de8a9521c936 ']'
++ curl -s -X DELETE -u anibal:pantanib https://api.pantahub.com/devices/tokens/69c67a9c8ba3de8a9521c936
