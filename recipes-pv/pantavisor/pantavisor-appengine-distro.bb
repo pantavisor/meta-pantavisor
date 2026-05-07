@@ -14,6 +14,9 @@ ALLOW_EMPTY:${PN} = "1"
 PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pantavisor-appengine-tester"
 
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
+do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
+do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
+do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
@@ -77,10 +80,49 @@ do_create_tarball() {
     #mkdir -p ${DEPLOY_DIR_IMAGE}/${BUILD_DEPLOY_NAME}
     #cp -rf ${STAGING_DIR}/* ${DEPLOY_DIR_IMAGE}/${BUILD_DEPLOY_NAME}
 
+    # Copy pvtests tree (local/ and remote/) from deploy dir into staging
+    if [ -e "${DEPLOY_DIR_IMAGE}/pvtests" ]; then
+        cp -r "${DEPLOY_DIR_IMAGE}/pvtests/." "${STAGING_DIR}/"
+    fi
+
+    # Populate generated tarballs from the build into local/common/tarballs/
+    mkdir -p "${STAGING_DIR}/local/common/tarballs"
+    for f in ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/bsp.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-pvr-sdk.pvrexport.tgz ${DEPLOY_DIR_IMAGE}/pv-pvr-sdk-*.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pvr-sdk.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-app.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-app.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-norole.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-norole.tgz"
+            break
+        fi
+    done
+
+    # Populate remote/common/tarballs/ (shares bsp and pvr-sdk with local)
+    mkdir -p "${STAGING_DIR}/remote/common/tarballs"
+    cp -v "${STAGING_DIR}/local/common/tarballs/bsp.tgz" \
+        "${STAGING_DIR}/remote/common/tarballs/bsp.tgz"
+    cp -v "${STAGING_DIR}/local/common/tarballs/pvr-sdk.tgz" \
+        "${STAGING_DIR}/remote/common/tarballs/pvr-sdk.tgz"
+
     # Create the tarball
     cd "${STAGING_DIR}"
     tar -czvf "${WORKDIR}/${TARBALL_NAME}" .
-    
+
     # Copy tarball to deploy directory for easy access
     cp -v "${WORKDIR}/${TARBALL_NAME}" "${DEPLOY_DIR_IMAGE}/"
     echo "Tarball available at: ${DEPLOY_DIR_IMAGE}/${TARBALL_NAME}"
@@ -90,7 +132,14 @@ do_create_tarball() {
     rm -f "${TARBALL_LINK_NAME}"
     ln -s "${TARBALL_NAME}" "${TARBALL_LINK_NAME}"
     echo "Stable symlink created: ${DEPLOY_DIR_IMAGE}/${TARBALL_LINK_NAME} -> ${TARBALL_NAME}"
-    
+
+    # Deploy unpacked directory so test.docker.sh can be run without extracting the tarball
+    tarball_link="${TARBALL_LINK_NAME}"
+    unpacked_name="${tarball_link%.tar.gz}"
+    rm -rf "${DEPLOY_DIR_IMAGE}/${unpacked_name}"
+    cp -r "${STAGING_DIR}/." "${DEPLOY_DIR_IMAGE}/${unpacked_name}/"
+    echo "Unpacked directory available at: ${DEPLOY_DIR_IMAGE}/${unpacked_name}"
+
     # Clean up staging directory
     rm -rvf "${STAGING_DIR}"
 }

@@ -12,11 +12,11 @@ usage() {
 	echo "  -d, --dir         Use directory as pvtest source directory (or PVTEST_DIR env)"
 	echo ""
 	echo "Commands:"
-	echo "  add <group>          Create a new test"
-	echo "  install-deps         Install dependencies (and docker)"
-	echo "  install-docker       Install docker"
-	echo "  ls                   List all tests"
-	echo "  run [group[:number]] Run one to many tests"
+	echo "  add <scope/category/name>  Create a new test"
+	echo "  install-deps               Install dependencies (and docker)"
+	echo "  install-docker             Install docker"
+	echo "  ls                         List all tests"
+	echo "  run [path]                 Run one to many tests"
 	echo ""
 	echo "Arguments for 'run' command:"
 	echo "  -i, --interactive Run the test interactively for debugging"
@@ -24,7 +24,14 @@ usage() {
 	echo "  -m, --manual      Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim      Use the network simulator (experimental)"
 	echo "  -o, --overwrite   Create or overwrite the test output"
+	echo "  -r, --retry N     Retry failed tests up to N times (default: 0)"
 	echo "  -V, --valgrind    Run Pantavisor with valgrind"
+	echo ""
+	echo "Path selectors for 'run' command:"
+	echo "  (none)                         Run all tests"
+	echo "  local                          Run all local tests"
+	echo "  local/lifecycle                Run all lifecycle tests"
+	echo "  local/lifecycle/seq-non-reboot-updates  Run a specific test"
 	echo ""
 	echo "Environments:"
 	echo "  NETSIM_PATH      Path to docker load for netsim container"
@@ -35,27 +42,24 @@ usage() {
 }
 
 list_tests() {
-	printf "%-15s %-10s\n" "test" "description"
-	printf "%-15s %-10s\n" "====" "==========="
-	find $test_dir/ -name "test.json" | sort  | while read -r json_path; do
-		IFS="/" 
-		set -- $json_path
-		shifts_needed=$(($# - 5))
-		shift $shifts_needed
+	printf "%-50s %-10s\n" "test" "description"
+	printf "%-50s %-10s\n" "====" "==========="
+	find $test_dir/ -name "test.json" | sort | while read -r json_path; do
+		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
 		description=$(jq -r '.description' "$json_path")
-		printf "%-15s %-10s\n" $2:$4 $description
+		printf "%-50s %-10s\n" "$test_id" "$description"
 	done
 }
 
 add_test() {
-	local group=
+	local test_path=
 
 	if [ -z "$1" ]; then
-		echo "Error: Missing group"
+		echo "Error: Missing test path (scope/category/name)"
 		usage
 		exit 1
 	fi
-	group="$1"
+	test_path="$1"
 	shift
 
 	while [ $# -gt 0 ]; do
@@ -67,34 +71,29 @@ add_test() {
 				;;
 		esac
 	done
-	
-	if [ ! -d "$test_dir/$group" ]; then
-		echo "Error: '$test_dir/$group' directory missing"
+
+	local full_path="$test_dir/$test_path"
+	local scope=$(echo "$test_path" | cut -d'/' -f1)
+
+	if [ -e "$full_path" ]; then
+		echo "Error: '$full_path' already exists"
 		exit 1
 	fi
 
-	test_number=0
-	test_data="$test_dir/$group/data"
-	if [ -d "$test_data" ]; then
-		last_test_number=$(find "$test_data" -maxdepth 1 -type d -name "[0-9]*" | sed 's#.*/##' | sort -n | tail -1)
-		if [ ! -z "$last_test_number" ]; then
-			test_number=$((last_test_number + 1))
-		fi
+	local common_path="$test_dir/$scope/common"
+	if [ ! -d "$common_path" ]; then
+		echo "Error: common directory '$common_path' missing"
+		exit 1
 	fi
 
-	mkdir -p "$test_data"
+	mkdir -p "$full_path/resources"
+	cp "$common_path/templates/template.test.json" "$full_path/test.json"
+	cp "$common_path/templates/template.test" "$full_path/resources/test"
+	chmod +x "$full_path/resources/test"
+	cp "$common_path/templates/template.ready" "$full_path/resources/ready"
+	chmod +x "$full_path/resources/ready"
 
-	test_data="$test_data/$test_number"
-	mkdir "$test_data"
-	cp "$test_data/../../common/templates/template.test.json" "$test_data/test.json"
-
-	mkdir "$test_data/resources"
-	cp "$test_data/../../common/templates/template.test" "$test_data/resources/test"
-	chmod +x "$test_data/resources/test"
-	cp "$test_data/../../common/templates/template.ready" "$test_data/resources/ready"
-	chmod +x "$test_data/resources/ready"
-
-	echo "Info: New test created at: $test_data"
+	echo "Info: New test created at: $full_path"
 }
 
 install_docker() {
@@ -165,7 +164,7 @@ wait_for_status() {
     local cmd="$1"
     local status="$2"
     local timeout="$3"
-    
+
     local counter=0
     while [ $counter -lt $timeout ]; do
         eval "$cmd"
@@ -246,12 +245,12 @@ exec_test() {
 	cd "$test_path"; abs_test_path=$(pwd); cd - > /dev/null
 	cd "$test_path/../../common"; abs_common_path=$(pwd); cd - > /dev/null
 
-	IFS="/" 
-	set -- $json_path
-	mkdir -p "$work_path/storage/$2/$4/"
-	cd "$work_path/storage/$2/$4/"; abs_storage_path=$(pwd); cd - > /dev/null
-	mkdir -p "$work_path/valgrind/$2/$4/"
-	cd "$work_path/valgrind/$2/$4/"; abs_valgrind_path=$(pwd); cd - > /dev/null
+	test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
+
+	mkdir -p "$work_path/storage/$test_id/"
+	cd "$work_path/storage/$test_id/"; abs_storage_path=$(pwd); cd - > /dev/null
+	mkdir -p "$work_path/valgrind/$test_id/"
+	cd "$work_path/valgrind/$test_id/"; abs_valgrind_path=$(pwd); cd - > /dev/null
 
 	sudo -n losetup -D
 	unused_lo=$(losetup -f)
@@ -273,7 +272,7 @@ exec_test() {
 
 		setup_network &
 	fi
- 	# for multiple instsances --name would need to be a name unique per instance
+ 	# for multiple instances --name would need to be a name unique per instance
 	# TEST_PATH results folder would need to be instance namespaced as well to not overwrite each other
 	# for sudo maybe unused_lo creation and assignment can go inside docker with CAPs
 	docker run \
@@ -318,7 +317,7 @@ exec_test() {
 		pantavisor-appengine-tester
 	res=$?
 
-	sudo -n chmod -R a+rx "$work_path/storage/$2/$4/logs"
+	sudo -n chmod -R a+rx "$work_path/storage/$test_id/logs"
 
 	if [ "$netsim" = "true" ]; then
 		docker stop "pantavisor-netsim" > /dev/null 2>&1
@@ -335,27 +334,44 @@ exec_test() {
 	fi
 
 	if [ $res -eq 0 ]; then
-		echo -e "Info: '$2:$4' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+		echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
 		return 0
 	elif [ $res -eq 2 ]; then
-		echo -e "Info: '$2:$4' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+		echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
 		return 2
 	else
-		echo -e "Info: '$2:$4' ${RED}FAILED${NOCOLOR} ($runtime s)"
+		echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
 			return 1
 	fi
+}
+
+run_with_retry() {
+	local json_path=$1
+	local attempt=0
+	local result test_id
+	while true; do
+		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+		result=$?
+		[ $result -eq 0 ] && return 0
+		attempt=$((attempt + 1))
+		if [ $result -ne 1 ] || [ $attempt -gt $max_retries ]; then
+			return 1
+		fi
+		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
+		echo "Retry: '$test_id' attempt $attempt/$max_retries after failure..."
+		sleep 5
+	done
 }
 
 skip_test () {
 	local json_path="$1"
 	local work_path=$2
 
-	IFS="/" 
-	set -- $json_path
+	test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
 
 	skip=$(jq -r '.skip' "$json_path")
 	if [ "$skip" = "true" ]; then
-		echo -e "Info: '$2:$4' ${ORANGE}SKIPPED${NOCOLOR}"
+		echo -e "Info: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
 		return 1
 	fi
 
@@ -363,19 +379,18 @@ skip_test () {
 }
 
 run_test() {
-	local group=
-	local number=
+	local target_path=
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
+	local max_retries=0
 	local failed_flag="$work_path/.failed"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
-		group=$(echo "$1" | awk -F':' '{print $1}')
-		number=$(echo "$1" | awk -F':' '{print $2}')
+		target_path="$1"
 		shift
 	fi
 
@@ -406,6 +421,10 @@ run_test() {
 				valgrind="true"
 				shift
 				;;
+			-r|--retry)
+				max_retries="$2"
+				shift 2
+				;;
 			*)
 				echo "Error: Unknown argument: $1"
 				usage
@@ -413,15 +432,15 @@ run_test() {
 				;;
 		esac
 	done
-	
-	if [ -n "$number" ] && [ -z "$group" ]; then
-		echo "Error: Missing group argument"
+
+	if [ "$interactive" = true ] && [ -z "$target_path" ]; then
+		echo "Error: Interactive mode requires a specific test path"
 		usage
 		exit 1
 	fi
 
-	if [ "$interactive" = true ] && [ -z "$number" ]; then
-		echo "Error: Missing number argument"
+	if [ "$interactive" = true ] && [ ! -f "$test_dir/$target_path/test.json" ]; then
+		echo "Error: '$target_path' is not a leaf test (no test.json found)"
 		usage
 		exit 1
 	fi
@@ -435,25 +454,24 @@ run_test() {
 	echo "Info: test logs can be found at $work_path/test.docker.log"
 	exec > >(tee -a "$work_path/test.docker.log") 2>&1
 
-	common_path="$test_dir/common"
-	if [ -z "$group" ]; then
+	if [ -z "$target_path" ]; then
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+			run_with_retry "$json_path"
 			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 		done
-	elif [ -z "$number" ]; then
-		find "$test_dir/$group" -name "test.json" | sort  | while read -r json_path; do
+	elif [ -f "$test_dir/$target_path/test.json" ]; then
+		json_path="$test_dir/$target_path/test.json"
+		run_with_retry "$json_path"
+		if [ $? -ne 0 ]; then touch "$failed_flag"; fi
+	else
+		find "$test_dir/$target_path" -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
 			if [ $? -ne 0 ]; then continue; fi
-			exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+			run_with_retry "$json_path"
 			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 		done
-	else
-		json_path="$test_dir/$group/data/$number/test.json"
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
-			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
 	fi
 
 	if [ "$verbose" = "true" ]; then
@@ -468,13 +486,13 @@ run_test() {
 		fi
 		echo "Info: Pantavisor storage=$work_path/storage"
 		echo ""
-		grep "^Info: 'pvtests-" "$work_path/test.docker.log"
+		grep "^Info: 'local\|^Info: 'remote" "$work_path/test.docker.log"
 		echo "======================================================="
 		set -h
 	fi
 
 	# make summary available to the run path for the CI
-	mv $work_path/test.docker.log ./test.docker.log
+	cp $work_path/test.docker.log ./test.docker.log
 
 	if [ -f "$failed_flag" ]; then
 		return 1
