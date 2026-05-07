@@ -4,16 +4,8 @@ on:
   workflow_dispatch:
     inputs:
 
-      test_type:
-        description: 'Select the type of the test'
-        required: true
-        type: choice
-        options:
-          - pvtests-local
-          - pvtests-remote
-
-      test_number:
-        description: 'Test number to run (e.g., "0" for remote:0)'
+      test_path:
+        description: 'Test path to run (e.g. "local/lifecycle"); leave empty to run all tests'
         required: false
         type: string
 
@@ -33,5 +25,5 @@ jobs:
     needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
     with:
-      test_type: ${{ inputs.test_type}}
-      test_number: ${{ inputs.test_number }}
+      test_path: ${{ inputs.test_path }}
+    secrets: inherit

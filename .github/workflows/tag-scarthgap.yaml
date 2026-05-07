@@ -78,6 +78,21 @@ jobs:
       sdk: ${{ matrix.sdk }}
     secrets: inherit
 
+  pvtest-local:
+    needs: build
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_path: local
+    secrets: inherit
+
+  pvtest-remote:
+    needs: [build, pvtest-local]
+    if: always()
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_path: remote
+    secrets: inherit
+
   summary:
     needs: build
     if: always()

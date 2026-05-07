@@ -12,6 +12,7 @@ on:
       # itself ARE part of what's built; re-include them so
       # changes to the build pipeline retrigger CI.
       - '.github/workflows/buildkas-target.yaml'
+      - '.github/workflows/call-pvtests.yaml'
       - '.github/workflows/onpush-scarthgap.yaml'
   # NOTE: no 'pull_request:' trigger. Pushes to same-repo branches
   # already emit check runs bound to the head SHA, so PRs show
@@ -49,6 +50,13 @@ jobs:
       build_target: ${{ matrix.build_target }}
       output: ${{ matrix.output }}
       sdk: ${{ matrix.sdk }}
+    secrets: inherit
+
+  pvtest-lifecycle:
+    needs: build
+    uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      test_path: local/lifecycle
     secrets: inherit
 
   summary:

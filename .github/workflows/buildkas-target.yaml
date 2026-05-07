@@ -65,6 +65,12 @@ jobs:
           find build/${{ env.TMPDIR }}/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
           find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
 
+          UNPACKED_DIR=$(find "${BUILD_BASE_DIR}" -maxdepth 1 -type d -name "pantavisor-appengine-distro-*" | head -1)
+          if [ -d "$UNPACKED_DIR" ]; then
+            mkdir -p pvtest-distro
+            cp -r "${UNPACKED_DIR}/." ./pvtest-distro/
+          fi
+
           find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.txt" -exec cp {} . \; 2>/dev/null || true
           find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.patch" -exec cp {} . \; 2>/dev/null || true
 
@@ -80,6 +86,14 @@ jobs:
           path: |
             test.docker.sh
             pantavisor-appengine*-docker.tar
+          if-no-files-found: ignore
+
+      - name: Archive pvtest distro (unpacked)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pvtest-distro-${{ inputs.machine_name }}
+          path: pvtest-distro/
           if-no-files-found: ignore
 
       - name: Archive wic artifacts
