@@ -179,14 +179,53 @@ wait_for_status() {
 }
 
 setup_network0() {
+	# Serialize the inspect/remove/create dance so concurrent callers don't
+	# race on `docker network create` (which fails noisily if the network was
+	# created in the gap between the inspect and the create).
+	local lockfile=/tmp/pv_appengine.network0.lock
+	exec {NET0_FD}>"$lockfile"
+	flock "$NET0_FD"
 
-	if ! test -n "`docker network inspect test-appengine-net >/dev/null 2>&1 | jq -r '.[].Options | select ( .["com.docker.network.container_iface_prefix"] == "lxcbrdock")'`"; then
-		docker network remove test-appengine-net >/dev/null 2>&1
-		docker network create --driver=bridge --opt com.docker.network.container_iface_prefix=lxcbrdock test-appengine-net >/dev/null
+	if ! docker network inspect test-appengine-net >/dev/null 2>&1; then
+		docker network create --driver=bridge --opt com.docker.network.container_iface_prefix=lxcbrdock test-appengine-net >/dev/null 2>&1 || :
 	fi
+
+	eval "exec ${NET0_FD}>&-"
+}
+
+# Allocate the lowest free slot index by holding a per-slot OS file lock for
+# the lifetime of this invocation. Slot N is "free" if no other instance
+# currently holds an exclusive flock on /tmp/pv_appengine.slot.N.lock.
+#
+# The lock fd (SLOT_LOCK_FD) is kept open in the running shell — the kernel
+# drops the lock automatically when the process exits, even on crash, so no
+# stale-reservation bookkeeping is needed. Gaps from shut-down instances are
+# reused naturally because their lock fds are closed.
+#
+# Sets globals: slot, SLOT_LOCK_FD
+allocate_slot() {
+	slot=0
+	while true; do
+		local sf="/tmp/pv_appengine.slot.${slot}.lock"
+		exec {SLOT_LOCK_FD}>"$sf"
+		if flock -nx "$SLOT_LOCK_FD"; then
+			return 0
+		fi
+		eval "exec ${SLOT_LOCK_FD}>&-"
+		SLOT_LOCK_FD=
+		slot=$((slot + 1))
+	done
+}
+
+release_slot() {
+	[ -z "$SLOT_LOCK_FD" ] && return
+	eval "exec ${SLOT_LOCK_FD}>&-"
+	SLOT_LOCK_FD=
 }
 
 setup_network() {
+	local tester_name="${1:-pantavisor-tester}"
+	local netsim_name="${2:-pantavisor-netsim}"
 	sleep 1
 	sudo -n modprobe -r mac80211_hwsim
 
@@ -195,22 +234,22 @@ setup_network() {
 	local after_phy=$(iw dev | grep -oP '(?<=phy#)\d+')
 	local new_phys=$(comm -13 <(echo "$before_phy" | sort) <(echo "$after_phy" | sort))
 
-	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-netsim" 0 5 > /dev/null 2>&1
+	wait_for_status "docker inspect -f '{{.State.Pid}}' $netsim_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: pantavisor-netsim not responding"
+		echo "Error: $netsim_name not responding"
 		exit 1
 	fi
-	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-netsim)
+	local pid=$(docker inspect -f '{{.State.Pid}}' "$netsim_name")
 
 	local ap_phy=$(echo "$new_phys" | sed -n '1p')
 	sudo -n iw phy "phy$ap_phy" set netns "$pid"
 
-	wait_for_status "docker inspect -f '{{.State.Pid}}' pantavisor-tester" 0 5 > /dev/null 2>&1
+	wait_for_status "docker inspect -f '{{.State.Pid}}' $tester_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: pantavisor-tester not responding"
+		echo "Error: $tester_name not responding"
 		exit 1
 	fi
-	local pid=$(docker inspect -f '{{.State.Pid}}' pantavisor-tester)
+	local pid=$(docker inspect -f '{{.State.Pid}}' "$tester_name")
 
 	local cl_phy=$(echo "$new_phys" | sed -n '2p')
 	sudo -n iw phy "phy$cl_phy" set netns "$pid"
@@ -252,7 +291,19 @@ exec_test() {
 	mkdir -p "$work_path/valgrind/$test_id/"
 	cd "$work_path/valgrind/$test_id/"; abs_valgrind_path=$(pwd); cd - > /dev/null
 
-	sudo -n losetup -D
+	# Per-run slot used to disambiguate container names and host ports so
+	# multiple test.docker.sh invocations can run concurrently. Slot 0 keeps
+	# the original 8222 host port for backwards compatibility. allocate_slot
+	# sets `slot` and `SLOT_LOCK_FD` globals; the lock is held until
+	# release_slot or process exit.
+	allocate_slot
+	tester_name="pantavisor-tester-${slot}"
+	netsim_name="pantavisor-netsim-${slot}"
+	host_port=$((8222 + slot))
+	# losetup -D would detach loop devices used by sibling parallel runs.
+	# losetup -f races between concurrent callers but the container also gets
+	# /dev/loop-control + a 'b 7:* rmw' device-cgroup rule, so it can allocate
+	# its own loop devices internally regardless of which one we preview here.
 	unused_lo=$(losetup -f)
 
 	start=$(date +%s)
@@ -262,7 +313,7 @@ exec_test() {
 	if [ "$netsim" = "true" ]; then
 
 		docker run \
-			--name "pantavisor-netsim" \
+			--name "$netsim_name" \
 			--net=test-appengine-net \
 			-d \
 			-e VERBOSE="$verbose" \
@@ -270,14 +321,11 @@ exec_test() {
 			--cap-add NET_ADMIN \
 			pantavisor-appengine-netsim > /dev/null
 
-		setup_network &
+		setup_network "$tester_name" "$netsim_name" &
 	fi
- 	# for multiple instances --name would need to be a name unique per instance
-	# TEST_PATH results folder would need to be instance namespaced as well to not overwrite each other
-	# for sudo maybe unused_lo creation and assignment can go inside docker with CAPs
 	docker run \
 		--net=test-appengine-net \
-		--name "pantavisor-tester" \
+		--name "$tester_name" \
 		-e TEST_PATH="/work/$test_path" \
 		-e INTERACTIVE="$interactive" \
 		-e MANUAL="$manual" \
@@ -309,7 +357,7 @@ exec_test() {
 		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
-		-p 8222:8222 \
+		-p ${host_port}:8222 \
 		-v "$abs_test_path":"/work/$test_path" \
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
@@ -319,12 +367,23 @@ exec_test() {
 
 	sudo -n chmod -R a+rx "$work_path/storage/$test_id/logs"
 
+	# Detach only loop devices whose backing file lives under this run's
+	# storage tree. Targets exactly what we created — leaves sibling parallel
+	# runs (and any unrelated host loop devices) untouched.
+	losetup -nO NAME,BACK-FILE 2>/dev/null \
+		| awk -v p="$abs_storage_path/" '$2 ~ "^"p {print $1}' \
+		| while read -r lo; do
+			[ -n "$lo" ] && sudo -n losetup -d "$lo" 2>/dev/null || :
+		done
+
 	if [ "$netsim" = "true" ]; then
-		docker stop "pantavisor-netsim" > /dev/null 2>&1
-		docker wait "pantavisor-netsim" > /dev/null 2>&1
+		docker stop "$netsim_name" > /dev/null 2>&1
+		docker wait "$netsim_name" > /dev/null 2>&1
 
 		teardown_network
 	fi
+
+	release_slot "$slot"
 
 	end=$(date +%s)
 	runtime=$(echo "$end - $start" | bc)
