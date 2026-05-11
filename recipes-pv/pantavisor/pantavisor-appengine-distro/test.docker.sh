@@ -19,13 +19,13 @@ usage() {
 	echo "  run [path]                 Run one to many tests"
 	echo ""
 	echo "Arguments for 'run' command:"
-	echo "  -i, --interactive Run the test interactively for debugging"
-	echo "  -s, --storage     Set a path for /storage"
-	echo "  -m, --manual      Avoid starting Pantavisor for debugging"
-	echo "  -n, --netsim      Use the network simulator (experimental)"
-	echo "  -o, --overwrite   Create or overwrite the test output"
-	echo "  -r, --retry N     Retry failed tests up to N times (default: 0)"
-	echo "  -V, --valgrind    Run Pantavisor with valgrind"
+	echo "  -i, --interactive     Run the test interactively for debugging"
+	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
+	echo "  -n, --netsim          Use the network simulator (experimental)"
+	echo "  -o, --overwrite       Create or overwrite the test output"
+	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
+	echo "  -V, --valgrind        Run Pantavisor with valgrind"
+	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
 	echo ""
 	echo "Path selectors for 'run' command:"
 	echo "  (none)                         Run all tests"
@@ -36,7 +36,7 @@ usage() {
 	echo "Environments:"
 	echo "  NETSIM_PATH      Path to docker load for netsim container"
 	echo "  TESTER_PATH      Path to docker load for tester container"
-	echo "  APPENGINE_PATH   Path to docker load for tester container"
+	echo "  APPENGINE_PATH   Path to docker load for appengine container"
 	echo "  PVTEST_DIR       Directory to pvtest sources to run"
 	echo ""
 }
@@ -339,6 +339,7 @@ exec_test() {
 		-e PH_USER="$PH_USER" \
 		-e PH_PASS="$PH_PASS" \
 		-e PVR_DISABLE_SELF_UPGRADE=true \
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
 		--env-file <(echo "$env" | tr ' ' '\n') \
 		$docker_it_opt \
 		--rm \
@@ -368,7 +369,7 @@ exec_test() {
 		pantavisor-appengine-tester
 	res=$?
 
-	sudo -n chmod -R a+rx "$work_path/storage/$test_id/logs"
+	sudo -n chmod -R a+rX "$work_path/storage/$test_id/" 2>/dev/null || true
 
 	# Detach only loop devices whose backing file lives under this run's
 	# storage tree. Targets exactly what we created — leaves sibling parallel
@@ -513,6 +514,7 @@ run_test() {
 		exit 1
 	fi
 
+	mkdir -p "$work_path"
 	echo "Info: test logs can be found at $work_path/test.docker.log"
 	exec > >(tee -a "$work_path/test.docker.log") 2>&1
 
