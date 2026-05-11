@@ -78,74 +78,10 @@ jobs:
           ls -l .
 
 ## File distribution
-      - name: Archive AppEngine artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: appengine-${{ inputs.machine_name }}
-          path: |
-            test.docker.sh
-            pantavisor-appengine*-docker.tar
-          if-no-files-found: ignore
-
-      - name: Archive pvtest distro (unpacked)
+      - name: Archive pvtest distro
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: pvtest-distro-${{ inputs.machine_name }}
           path: pvtest-distro/
-          if-no-files-found: ignore
-
-      - name: Archive wic artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
-          path: |
-             ${{ inputs.output }}
-          if-no-files-found: ignore
-
-      - name: Archive all pvrexport artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: pvrexports-${{ inputs.machine_name }}
-          path: |
-            *pvrexport.tgz
-          if-no-files-found: ignore
-
-      - name: Archive bsp pvrexport artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: pantavisor-bsp-${{ inputs.machine_name }}
-          path: |
-            pantavisor-bsp*
-          if-no-files-found: ignore
-
-      - name: Archive tezi tar artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
-          path: |
-            *pv_teziimg.tar.xz
-          if-no-files-found: ignore
-
-      - name: Archive sdk tar artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: sdk-artifact-${{ inputs.machine_name }}
-          path: panta*.sh
-          if-no-files-found: ignore
-
-      - name: Archive manifest audit artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: manifest-audit-${{ inputs.build_target }}-${{ inputs.machine_name }}
-          path: |
-            *.manifest.txt
-            *.manifest.patch
           if-no-files-found: ignore
