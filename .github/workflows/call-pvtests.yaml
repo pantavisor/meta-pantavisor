@@ -61,11 +61,11 @@ jobs:
           echo "------------------------------------------------------"
 
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh -v run --retry 3 -w $PVTEST_WORKSPACE
+            ./test.docker.sh -v run -V --retry 3 -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh -v run "$TEST_TARGET" --retry 3 -w $PVTEST_WORKSPACE
+            ./test.docker.sh -v run -V "$TEST_TARGET" --retry 3 -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh -v run "$TEST_TARGET" -w $PVTEST_WORKSPACE
+            ./test.docker.sh -v run -V "$TEST_TARGET" -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
