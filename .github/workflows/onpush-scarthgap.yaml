@@ -22,7 +22,7 @@ on:
   # to get a build.
 
 jobs:
-  build:
+  build-hw:
     name: "build (${{ matrix.machine_name }})"
     strategy:
       fail-fast: false
@@ -38,11 +38,6 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 1
-          - machine_name: docker-x86_64-scarthgap
-            configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-appengine-distro
-            output: "pantavisor-appengine-distro-*.tar.gz"
-            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}
@@ -52,15 +47,26 @@ jobs:
       sdk: ${{ matrix.sdk }}
     secrets: inherit
 
+  build-docker:
+    name: "build (docker-x86_64-scarthgap)"
+    uses: ./.github/workflows/buildkas-target.yaml
+    with:
+      configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+      machine_name: docker-x86_64-scarthgap
+      build_target: pantavisor-appengine-distro
+      output: "pantavisor-appengine-distro-*.tar.gz"
+      sdk: 0
+    secrets: inherit
+
   pvtest-lifecycle:
-    needs: build
+    needs: build-docker
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: local/lifecycle
     secrets: inherit
 
   summary:
-    needs: build
+    needs: [build-hw, build-docker]
     if: always()
     runs-on: ubuntu-latest
     steps:
