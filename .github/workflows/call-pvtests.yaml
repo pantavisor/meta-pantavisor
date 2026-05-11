@@ -96,7 +96,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ env.PVTEST_ARTIFACT_NAME }}
-          path: ${{ env.PVTEST_WORKSPACE }}
+          path: |
+            ${{ env.PVTEST_WORKSPACE }}/test.docker.log
+            ${{ env.PVTEST_WORKSPACE }}/storage/**/logs
+            ${{ env.PVTEST_WORKSPACE }}/valgrind
           if-no-files-found: ignore
 
       - name: Clean up
@@ -113,4 +116,4 @@ jobs:
           | xargs -r docker rmi -f
 
           rm -rf $WORKSPACE
-          rm -rf $PVTEST_WORKSPACE
+          sudo rm -rf $PVTEST_WORKSPACE
