@@ -538,11 +538,11 @@ run_test() {
 		done
 	fi
 
+	set +x
+	echo "======================================================="
+	echo "======================= SUMMARY ======================="
+	echo "======================================================="
 	if [ "$verbose" = "true" ]; then
-		set +x
-		echo "======================================================="
-		echo "======================= SUMMARY ======================="
-		echo "======================================================="
 		echo "Info: workspace=$work_path"
 		echo "Info: logs=$work_path/test.docker.log"
 		if [ "$valgrind" = "true" ]; then
@@ -550,10 +550,20 @@ run_test() {
 		fi
 		echo "Info: Pantavisor storage=$work_path/storage"
 		echo ""
-		grep "^Info: 'local\|^Info: 'remote" "$work_path/test.docker.log"
-		echo "======================================================="
-		set -h
 	fi
+	grep "^Info: 'local\|^Info: 'remote" "$work_path/test.docker.log"
+	grep "^Info: '.*FAILED" "$work_path/test.docker.log" \
+		| sed "s/^Info: '//; s/'[[:space:]].*//" \
+		| sort -u \
+		| while read -r test_id; do
+			diff_file="$work_path/storage/$test_id/diff"
+			[ -s "$diff_file" ] || continue
+			printf "\n--- diff: %s ---\n" "$test_id"
+			cat "$diff_file"
+			printf "--- end diff ---\n"
+		done
+	echo "======================================================="
+	set -h
 
 	# make summary available to the run path for the CI
 	cp $work_path/test.docker.log ./test.docker.log
