@@ -2,6 +2,7 @@ name: "run pvtests"
 
 env:
   WORKSPACE: /tmp/workspace-${{ github.run_id }}
+  PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}
 
 on:
   workflow_call:
@@ -60,11 +61,11 @@ jobs:
           echo "------------------------------------------------------"
 
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh -v run --retry 3
+            ./test.docker.sh -v run --retry 3 -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh -v run "$TEST_TARGET" --retry 3
+            ./test.docker.sh -v run "$TEST_TARGET" --retry 3 -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh -v run "$TEST_TARGET"
+            ./test.docker.sh -v run "$TEST_TARGET" -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
@@ -81,19 +82,22 @@ jobs:
             echo "Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload workspace on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: pvtests-workspace
-          path: ${{ env.WORKSPACE }}
+      - name: Prepare pvtest workspace
+        if: always()
+        run: |
+          suffix="${{ inputs.test_path }}"
+          suffix="${suffix//\//-}"
+          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${suffix:-all}" >> $GITHUB_ENV
 
-      - name: Upload log on success
-        if: success()
+          sudo chown -R $(id -u):$(id -g) $PVTEST_WORKSPACE || true
+
+      - name: Upload pvtest workspace
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: test.docker.log
-          path: ${{ env.WORKSPACE }}/test.docker.log
+          name: ${{ env.PVTEST_ARTIFACT_NAME }}
+          path: ${{ env.PVTEST_WORKSPACE }}
+          if-no-files-found: ignore
 
       - name: Clean up
         if: always()
@@ -109,3 +113,4 @@ jobs:
           | xargs -r docker rmi -f
 
           rm -rf $WORKSPACE
+          rm -rf $PVTEST_WORKSPACE
