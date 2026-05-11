@@ -300,11 +300,14 @@ exec_test() {
 	tester_name="pantavisor-tester-${slot}"
 	netsim_name="pantavisor-netsim-${slot}"
 	host_port=$((8222 + slot))
-	# losetup -D would detach loop devices used by sibling parallel runs.
-	# losetup -f races between concurrent callers but the container also gets
-	# /dev/loop-control + a 'b 7:* rmw' device-cgroup rule, so it can allocate
-	# its own loop devices internally regardless of which one we preview here.
-	unused_lo=$(losetup -f)
+	# losetup -D would detach loop devices used by sibling parallel runs, so
+	# we no longer call it. losetup -f needs root on CI runners where
+	# /dev/loop* is not world-readable — match the privilege the previous
+	# `sudo -n losetup -D` line ran with. The race between concurrent callers
+	# is benign: the container also gets /dev/loop-control + a 'b 7:* rmw'
+	# device-cgroup rule, so it can allocate its own loop devices internally
+	# regardless of which one we preview here.
+	unused_lo=$(sudo -n losetup -f)
 
 	start=$(date +%s)
 
@@ -370,7 +373,7 @@ exec_test() {
 	# Detach only loop devices whose backing file lives under this run's
 	# storage tree. Targets exactly what we created — leaves sibling parallel
 	# runs (and any unrelated host loop devices) untouched.
-	losetup -nO NAME,BACK-FILE 2>/dev/null \
+	sudo -n losetup -nO NAME,BACK-FILE 2>/dev/null \
 		| awk -v p="$abs_storage_path/" '$2 ~ "^"p {print $1}' \
 		| while read -r lo; do
 			[ -n "$lo" ] && sudo -n losetup -d "$lo" 2>/dev/null || :
