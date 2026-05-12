@@ -1,0 +1,6 @@
+{
+  "#spec": "service-manifest-xconnect@2",
+  "services": [
+    {"name": "hello-tcp-noanchor", "type": "tcp", "port": 80}
+  ]
+}
