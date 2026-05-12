@@ -1,16 +1,26 @@
 From: Pantacor <dev@pantacor.com>
-Subject: [PATCH] evhttp: guard read/write/error callbacks against NULL evcon
+Subject: [PATCH] evhttp: guard callbacks against NULL evcon; demote replacefd assert
 
-When evhttp_connection_free() is called while a deferred bufferevent
-callback is still queued, the cbarg is zeroed before the callback fires.
-All three evhttp bufferevent callbacks dereference evcon immediately,
-causing a NULL+16 SIGSEGV.  Add a NULL guard at the top of each callback
-so that stale deferred events are silently ignored.
+Two fixes for evhttp used with SSL (mbedTLS) bufferevents:
+
+1. When evhttp_connection_free() is called while a deferred bufferevent
+   callback is still queued, the cbarg is zeroed before the callback fires.
+   All three evhttp bufferevent callbacks dereference evcon immediately,
+   causing a NULL+16 SIGSEGV.  Add a NULL guard at the top of each callback
+   so that stale deferred events are silently ignored.
+
+2. evhttp_connection_reset_hard_ calls bufferevent_replacefd(bev, -1) to
+   detach the fd before reconnecting.  SSL bufferevents (mbedTLS) do not
+   support replacefd and return an error, triggering the fatal
+   EVUTIL_ASSERT(!err && "setfd") and crashing the process.  The libevent
+   authors left a FIXME comment on that line.  Demote the assertion to a
+   debug log so the process survives — the SSL bufferevent cleans up the
+   underlying fd correctly on its own when freed.
 
 Signed-off-by: Pantacor <dev@pantacor.com>
 ---
- http.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ http.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
 --- a/http.c
 +++ b/http.c
@@ -32,7 +42,18 @@ Signed-off-by: Pantacor <dev@pantacor.com>
  	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
 
  	/* Cancel if it's pending. */
-@@ -1592,6 +1596,8 @@ static void
+@@ -1445,7 +1449,8 @@ evhttp_connection_reset_hard_(struct evhttp_connection *evcon)
+ 	/* inform interested parties about connection close */
+ 	if (evhttp_connected(evcon) && evcon->closecb != NULL)
+ 		(*evcon->closecb)(evcon, evcon->closecb_arg);
+
+ 	/** FIXME: manipulating with fd is unwanted */
+ 	err = bufferevent_replacefd(evcon->bufev, -1);
+-	EVUTIL_ASSERT(!err && "setfd");
++	if (err)
++		event_debug(("%s: bufferevent_replacefd failed (SSL bufferevent?)", __func__));
+
+@@ -1592,6 +1597,8 @@ static void
  evhttp_error_cb(struct bufferevent *bufev, short what, void *arg)
  {
  	struct evhttp_connection *evcon = arg;
