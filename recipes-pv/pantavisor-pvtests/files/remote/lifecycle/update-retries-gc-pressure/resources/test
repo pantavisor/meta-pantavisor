@@ -34,8 +34,8 @@ counter=0
 progress2=""
 while [ $counter -lt 120 ]; do
     progress2=$(pvcontrol steps show-progress 1 2>/dev/null)
-    retries2=$(echo "$progress2" | jq -r '.retries // 0')
-    status2=$(echo "$progress2" | jq -r '.status // ""')
+    retries2=$(echo "$progress2" | jq -r '.retries // 0' 2>/dev/null)
+    status2=$(echo "$progress2" | jq -r '.status // ""' 2>/dev/null)
     case "$status2" in
         DOWNLOADING|INPROGRESS)
             [ "$retries2" = "2" ] && break
