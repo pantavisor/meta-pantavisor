@@ -518,6 +518,8 @@ run_test() {
 	echo "Info: test logs can be found at $work_path/test.docker.log"
 	exec > >(tee -a "$work_path/test.docker.log") 2>&1
 
+	echo "Info: ulimit -n (open files) = $(ulimit -n)"
+
 	if [ -z "$target_path" ]; then
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
 			skip_test "$json_path" "$work_path"
