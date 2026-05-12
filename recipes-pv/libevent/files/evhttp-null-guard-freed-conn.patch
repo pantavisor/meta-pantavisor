@@ -19,12 +19,12 @@ Two fixes for evhttp used with SSL (mbedTLS) bufferevents:
 
 Signed-off-by: Pantacor <dev@pantacor.com>
 ---
- http.c | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ http.c | 9 +++++++++
+ 1 file changed, 9 insertions(+), 0 deletions(-)
 
 --- a/http.c
 +++ b/http.c
-@@ -907,6 +907,8 @@ static void
+@@ -907,6 +907,8 @@
  evhttp_write_cb(struct bufferevent *bufev, void *arg)
  {
  	struct evhttp_connection *evcon = arg;
@@ -33,7 +33,7 @@ Signed-off-by: Pantacor <dev@pantacor.com>
 
  	/* Activate our call back */
  	if (evcon->cb != NULL)
-@@ -1232,6 +1234,8 @@ static void
+@@ -1232,6 +1234,8 @@
  evhttp_read_cb(struct bufferevent *bufev, void *arg)
  {
  	struct evhttp_connection *evcon = arg;
@@ -42,17 +42,17 @@ Signed-off-by: Pantacor <dev@pantacor.com>
  	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
 
  	/* Cancel if it's pending. */
-@@ -1445,7 +1449,8 @@ evhttp_connection_reset_hard_(struct evhttp_connection *evcon)
- 	/* inform interested parties about connection close */
- 	if (evhttp_connected(evcon) && evcon->closecb != NULL)
- 		(*evcon->closecb)(evcon, evcon->closecb_arg);
+@@ -1448,7 +1452,8 @@
 
  	/** FIXME: manipulating with fd is unwanted */
  	err = bufferevent_replacefd(evcon->bufev, -1);
 -	EVUTIL_ASSERT(!err && "setfd");
 +	if (err)
 +		event_debug(("%s: bufferevent_replacefd failed (SSL bufferevent?)", __func__));
-@@ -1592,6 +1597,8 @@ static void
+
+ 	/* we need to clean up any buffered data */
+ 	tmp = bufferevent_get_output(evcon->bufev);
+@@ -1592,6 +1597,8 @@
  evhttp_error_cb(struct bufferevent *bufev, short what, void *arg)
  {
  	struct evhttp_connection *evcon = arg;
