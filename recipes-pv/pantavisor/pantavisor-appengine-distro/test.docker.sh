@@ -562,7 +562,7 @@ run_test() {
 			[ -s "$diff_file" ] || continue
 			printf "\n--- diff: %s ---\n" "$test_id"
 			cat "$diff_file"
-			printf "--- end diff ---\n"
+			printf '%s\n' "--- end diff ---"
 		done
 	echo "======================================================="
 	set -h
