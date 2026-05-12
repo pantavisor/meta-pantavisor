@@ -28,13 +28,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 S = "${WORKDIR}/git"
 
 # TODO: restore "master" + update SRCREV once pantavisor#680 is merged
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "fix/valgrind-all"
 
 SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "112169fa466bc086e2c43703d4264f3e571c968a"
+SRCREV = "5e51bb1b45f121e147b02b887ae13e06285b656c"
 
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
