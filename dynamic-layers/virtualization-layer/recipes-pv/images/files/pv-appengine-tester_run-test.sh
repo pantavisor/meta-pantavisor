@@ -26,7 +26,20 @@ parse_test() {
 }
 
 cleanup_cryptdisk() {
-	cryptsetup close versatile > /dev/null 2>&1
+	# Unmount filesystems on dm-crypt devices, close devices, detach loop backing.
+	# This handles the case where PV was killed ungracefully (e.g. during UPDATED),
+	# leaving the filesystem still mounted on the mapper device so cryptsetup close
+	# would otherwise fail silently and the next boot would fail to re-open it.
+	for dev in $(ls /dev/mapper/ 2>/dev/null); do
+		[ "$dev" = "control" ] && continue
+		awk -v d="/dev/mapper/$dev" '$1 == d {print $2}' /proc/mounts 2>/dev/null \
+			| xargs -r umount -l > /dev/null 2>&1
+		cryptsetup close "$dev" > /dev/null 2>&1
+		dmsetup remove "$dev" > /dev/null 2>&1
+	done
+	# Detach any loop devices still backing storage crypt image files
+	losetup -a 2>/dev/null | grep "dm-crypt-files" | cut -d: -f1 \
+		| xargs -r losetup -d > /dev/null 2>&1
 }
 
 cleanup_cgroup() {
