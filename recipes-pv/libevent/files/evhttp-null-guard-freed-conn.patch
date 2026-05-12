@@ -1,0 +1,43 @@
+From: Pantacor <dev@pantacor.com>
+Subject: [PATCH] evhttp: guard read/write/error callbacks against NULL evcon
+
+When evhttp_connection_free() is called while a deferred bufferevent
+callback is still queued, the cbarg is zeroed before the callback fires.
+All three evhttp bufferevent callbacks dereference evcon immediately,
+causing a NULL+16 SIGSEGV.  Add a NULL guard at the top of each callback
+so that stale deferred events are silently ignored.
+
+Signed-off-by: Pantacor <dev@pantacor.com>
+---
+ http.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+--- a/http.c
++++ b/http.c
+@@ -907,6 +907,8 @@ static void
+ evhttp_write_cb(struct bufferevent *bufev, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+
+ 	/* Activate our call back */
+ 	if (evcon->cb != NULL)
+@@ -1232,6 +1234,8 @@ static void
+ evhttp_read_cb(struct bufferevent *bufev, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+ 	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
+
+ 	/* Cancel if it's pending. */
+@@ -1592,6 +1596,8 @@ static void
+ evhttp_error_cb(struct bufferevent *bufev, short what, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+ 	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
+
+ 	switch (evcon->state) {
