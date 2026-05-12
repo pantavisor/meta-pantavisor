@@ -18,7 +18,7 @@ cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/1"
 wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "DOWNLOADING" 120 \
     || { echo "ERROR: timeout waiting for revision 1 to start DOWNLOADING" >&2; exit 1; }
 
-# Show local step progress after first resume (expect retries:1; strip volatile download details)
+# Show local step progress after first start (expect status:DOWNLOADING; strip volatile download details)
 pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
 
 # Kill PV — simulates crash during download (retries++)
@@ -28,14 +28,28 @@ killall pantavisor
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 120 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (1)" >&2; exit 1; }
 
-# Wait for PV to be DOWNLOADING again (retry 2)
-wait_for_value "pvcontrol steps show-progress 1 | jq -r '.retries'" "2" 120 \
-    || { echo "ERROR: timeout waiting for revision 1 retries to reach 2" >&2; exit 1; }
+# Kill PV as soon as retry 2 begins (DOWNLOADING or INPROGRESS) — capture progress
+# during detection and kill immediately to avoid the commit window (PV_UPDATER_COMMIT_DELAY).
+counter=0
+progress2=""
+while [ $counter -lt 120 ]; do
+    progress2=$(pvcontrol steps show-progress 1 2>/dev/null)
+    retries2=$(echo "$progress2" | jq -r '.retries // 0')
+    status2=$(echo "$progress2" | jq -r '.status // ""')
+    case "$status2" in
+        DOWNLOADING|INPROGRESS)
+            [ "$retries2" = "2" ] && break
+            ;;
+    esac
+    sleep 1
+    counter=$((counter + 1))
+done
+[ $counter -lt 120 ] || { echo "ERROR: timeout waiting for revision 1 retry 2 to begin" >&2; exit 1; }
 
-# Show local step progress after first resume (expect retries:2; strip volatile download details)
-pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
+# Show local step progress after second start (expect retries:2; strip volatile download details)
+echo "$progress2" | jq -Mc 'del(.logs, .downloads)'
 
-# Kill PV — simulates crash during download (retries++)
+# Kill PV — simulates second crash (retries++)
 killall pantavisor
 
 # Wait for PV to be READY again
