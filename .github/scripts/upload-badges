@@ -10,7 +10,7 @@ AWS_S3_BUCKET=$4
 mkdir -p badges
 
 gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/jobs" | \
-  jq -r '.jobs[] | select(.name | startswith("build (")) | {
+  jq -r '.jobs[] | select(.name | contains("build (")) | {
     machine: (.name | capture("build \\((?<m>[^)]+)\\)").m),
     conclusion: .conclusion
   } | @base64' | \
@@ -54,10 +54,10 @@ fi
 for f in badges/*.json; do
   machine=$(basename "$f" .json)
   # Upload to tag-specific path for historical reference
-  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/${TAG}/badges/${machine}.json" \
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${TAG}/badges/${machine}.json" \
     --cache-control "no-cache" --content-type "application/json"
   # Upload to release-type latest/ path so README badges always reflect the most recent run
-  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/${RELEASE_TYPE}/badges/${machine}.json" \
+  aws s3 cp "$f" "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/${machine}.json" \
     --cache-control "no-cache" --content-type "application/json"
 done
 
@@ -65,5 +65,5 @@ done
 jq -n --arg label "$TAG_LABEL" --arg tag "$TAG" --arg color "$TAG_COLOR" \
   '{schemaVersion: 1, label: $label, message: $tag, color: $color}' \
   > badges/tag.json
-aws s3 cp badges/tag.json "s3://${AWS_S3_BUCKET}/${RELEASE_TYPE}/badges/tag.json" \
+aws s3 cp badges/tag.json "s3://${AWS_S3_BUCKET}/meta-pantavisor/${RELEASE_TYPE}/badges/tag.json" \
   --cache-control "no-cache" --content-type "application/json"
