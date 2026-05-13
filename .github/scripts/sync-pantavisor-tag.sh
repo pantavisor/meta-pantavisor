@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Push the meta-pantavisor tag to the upstream pantavisor repo at the SRCREV
-# pinned in recipes-pv/pantavisor/pantavisor_git.bb.
+# pinned in recipes-pv/pantavisor/pantavisor.inc (PANTAVISOR_SRCREV).
 #
 # Inputs (env):
 #   TAG_NAME  meta-pantavisor tag name (e.g. 030-rc1)
@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-RECIPE="recipes-pv/pantavisor/pantavisor_git.bb"
+RECIPE="recipes-pv/pantavisor/pantavisor.inc"
 UPSTREAM="pantavisor/pantavisor"
 
 if [ -z "${TAG_NAME:-}" ]; then
