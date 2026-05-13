@@ -47,7 +47,7 @@ SUMMARY_JOB = [
     '          echo "" >> $GITHUB_STEP_SUMMARY',
     '          echo "| Machine | Result |" >> $GITHUB_STEP_SUMMARY',
     '          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY',
-    """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
+    """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | contains("build (")) | "| " + (.name | capture("build \\\\((?<m>[^)]+)\\\\)").m) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
     "      - name: Upload badges to S3",
     "        env:",
     "          GH_TOKEN: ${{ github.token }}",
