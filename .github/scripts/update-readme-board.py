@@ -12,7 +12,7 @@ SHIELDS = "https://img.shields.io/github/actions/workflow/status"
 GH_ACTIONS = f"https://github.com/{REPO}/actions/workflows"
 
 # Workflows that are internal/reusable and should not appear in the table
-EXCLUDE_PREFIXES = ("buildkas-", "call-")
+EXCLUDE_PREFIXES = ("buildkas-", "call-", "sync-", "release")
 
 BADGE_STYLE = "flat-square"
 BADGE_LOGO = "github-actions"
@@ -58,7 +58,7 @@ for wf in workflows:
 
 table = "\n".join(rows)
 
-with open("README.md") as f:
+with open("docs/ci/status.md") as f:
     content = f.read()
 
 content = re.sub(
@@ -68,7 +68,7 @@ content = re.sub(
     flags=re.DOTALL,
 )
 
-with open("README.md", "w") as f:
+with open("docs/ci/status.md", "w") as f:
     f.write(content)
 
-print("README.md table updated!")
+print("docs/ci/status.md workflow table updated!")
