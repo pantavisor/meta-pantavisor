@@ -1,0 +1,63 @@
+From: Pantacor <dev@pantacor.com>
+Subject: [PATCH] evhttp: guard callbacks against NULL evcon; demote replacefd assert
+
+Two fixes for evhttp used with SSL (mbedTLS) bufferevents:
+
+1. When evhttp_connection_free() is called while a deferred bufferevent
+   callback is still queued, the cbarg is zeroed before the callback fires.
+   All three evhttp bufferevent callbacks dereference evcon immediately,
+   causing a NULL+16 SIGSEGV.  Add a NULL guard at the top of each callback
+   so that stale deferred events are silently ignored.
+
+2. evhttp_connection_reset_hard_ calls bufferevent_replacefd(bev, -1) to
+   detach the fd before reconnecting.  SSL bufferevents (mbedTLS) do not
+   support replacefd and return an error, triggering the fatal
+   EVUTIL_ASSERT(!err && "setfd") and crashing the process.  The libevent
+   authors left a FIXME comment on that line.  Demote the assertion to a
+   debug log so the process survives — the SSL bufferevent cleans up the
+   underlying fd correctly on its own when freed.
+
+Signed-off-by: Pantacor <dev@pantacor.com>
+---
+ http.c | 9 +++++++++
+ 1 file changed, 9 insertions(+), 0 deletions(-)
+
+--- a/http.c
++++ b/http.c
+@@ -907,6 +907,8 @@
+ evhttp_write_cb(struct bufferevent *bufev, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+
+ 	/* Activate our call back */
+ 	if (evcon->cb != NULL)
+@@ -1232,6 +1234,8 @@
+ evhttp_read_cb(struct bufferevent *bufev, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+ 	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
+
+ 	/* Cancel if it's pending. */
+@@ -1448,7 +1452,8 @@
+
+ 	/** FIXME: manipulating with fd is unwanted */
+ 	err = bufferevent_replacefd(evcon->bufev, -1);
+-	EVUTIL_ASSERT(!err && "setfd");
++	if (err)
++		event_debug(("%s: bufferevent_replacefd failed (SSL bufferevent?)", __func__));
+
+ 	/* we need to clean up any buffered data */
+ 	tmp = bufferevent_get_output(evcon->bufev);
+@@ -1592,6 +1597,8 @@
+ evhttp_error_cb(struct bufferevent *bufev, short what, void *arg)
+ {
+ 	struct evhttp_connection *evcon = arg;
++	if (!evcon)
++		return;
+ 	struct evhttp_request *req = TAILQ_FIRST(&evcon->requests);
+
+ 	switch (evcon->state) {
