@@ -267,6 +267,7 @@ exec_test() {
 	local work_path=$5
 	local netsim=$6
 	local valgrind=$7
+	local retry_index=${8:-0}
 
 	if [ ! -f "$json_path" ]; then
 		echo "Error: '$json_path' missing"
@@ -285,6 +286,9 @@ exec_test() {
 	cd "$test_path/../../common"; abs_common_path=$(pwd); cd - > /dev/null
 
 	test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
+	if [ "$retry_index" -gt 0 ]; then
+		test_id="${test_id}.${retry_index}"
+	fi
 
 	mkdir -p "$work_path/storage/$test_id/"
 	cd "$work_path/storage/$test_id/"; abs_storage_path=$(pwd); cd - > /dev/null
@@ -413,7 +417,7 @@ run_with_retry() {
 	local attempt=0
 	local result test_id
 	while true; do
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind"
+		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind" "$attempt"
 		result=$?
 		[ $result -eq 0 ] && return 0
 		attempt=$((attempt + 1))
