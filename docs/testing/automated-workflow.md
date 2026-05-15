@@ -58,107 +58,92 @@ The runner uses `sudo -n` (non-interactive) for several commands during test exe
 ./test.docker.sh -v run -V
 ```
 
-Logs land in `./test.docker.log`. Pantavisor storage is preserved at `<tmpdir>/storage/<scope>/<category>/<name>/` for post-run inspection.
+The workspace is a temporary directory. Location info (workspace path, log paths) is printed at the start of the run and written to `run.log`. A copy of `run.log` is also saved to `./run.log` in the current directory for CI consumption.
+
+## Workspace layout
+
+```
+<workspace>/
+  run.log                           <- location info, one result line per test + inline diffs, SUMMARY
+  README.md
+  <scope>/<category>/<name>/        <- first attempt
+    test.log                        <- full bash-traced output + docker output for this test
+    diff                            <- diff (expected vs actual), present only when test failed
+    valgrind/
+      valgrind.log.<pid>            <- present only when run with -V
+  <scope>/<category>/<name>.1/      <- retry attempt 1 (same structure)
+  <scope>/<category>/<name>.2/      <- retry attempt 2 (same structure)
+  storage/                          <- full Pantavisor on-device storage per test (same naming convention)
+    <scope>/<category>/<name>/
+      trails/ objects/ disks/ dm-crypt-files/ cache/ boot/ config/ logs/
+```
+
+> **Note:** `storage/` is kept on disk for local debugging but is **not** uploaded to CI artifacts. `local/` and `remote/` (with per-test logs, diffs, and valgrind results) are uploaded.
 
 ## Interpreting test results
 
-With `-v`, the run ends with a summary block:
+The run prints location info at the start, then one result line per test (with inline diffs for failures), and ends with a SUMMARY listing every test:
 
 ```
+Info: workspace=/tmp/pv_appengine.jBZqVz
+Info: readme=/tmp/pv_appengine.jBZqVz/README.md
+Info: run log=/tmp/pv_appengine.jBZqVz/run.log
+Info: test log=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/test.log
+Info: valgrind log=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>
+Info: diff=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/diff
+
+Info: 'local/core/legacy-config-overload' PASSED (23 s)
+Info: 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
+--- diff: local/lifecycle/reboot-nonreboot-rollback ---
+-expected line
++actual line
+--- end diff ---
+Info: 'local/runtime/remount-policies' SKIPPED
 =======================================================
 ======================= SUMMARY =======================
 =======================================================
-Info: workspace=/tmp/pv_appengine.jBZqVz
-Info: logs=/tmp/pv_appengine.jBZqVz/test.docker.log
-Info: valgrind results=/tmp/pv_appengine.jBZqVz/valgrind
-Info: Pantavisor storage=/tmp/pv_appengine.jBZqVz/storage
-
 Info: 'local/core/legacy-config-overload' PASSED (23 s)
 Info: 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
 Info: 'local/runtime/remount-policies' SKIPPED
 =======================================================
 ```
 
-Each test runs a script (`resources/test`) and diffs its stdout against the stored `output` file. A failure means the actual output diverged from the expected output. The diff is embedded in the framework log (see below).
+A failure means actual test output diverged from expected. Lines prefixed with `-` are expected; lines prefixed with `+` are what the test produced.
 
-### Framework log
+For failing tests, the diff is printed in `run.log` immediately after the FAILED line, and also saved to `<scope>/<category>/<name>/diff`. Retry attempts get their own directory (`<name>.1/`, `<name>.2/`).
 
-`<workspace>/test.docker.log` contains the full bash-traced output of `test.docker.sh`. To find what went wrong for a specific failing test, search for its diff block:
+### test.log
 
-```bash
-grep -A40 "--- /dev/fd" /tmp/pv_appengine.<id>/test.docker.log
-```
+`test.log` is a single interleaved stream of everything that happened during a test attempt. It mixes output from four sources:
 
-Lines prefixed with `-` are what was expected; lines prefixed with `+` are what the test produced.
+**`test.docker.sh` (`set -x` traces)**
+The host-side orchestrator running on the CI runner or developer machine. Visible as `++ docker run ...`, `++ allocate_slot`, etc. Covers container startup, loop device allocation, and concurrent slot management.
 
-### Storage
+**`pvtest-run` (`set -x` traces) + `resources/test` output**
+`pvtest-run` is the inner test runner inside the tester container. It parses `test.json`, initialises storage, starts Pantavisor via `pv-appengine`, waits for it to reach READY, then runs `resources/test` (the actual test script, with `set -x` injected at the top). The test script's stdout is captured and diffed against the stored `output` file; the diff is written to `storage/<test_id>/diff` and copied to `<test_id>/diff` in the workspace.
 
-The workspace keeps the full Pantavisor storage directory for every test that ran, under `<workspace>/storage/<scope>/<category>/<name>/`. This mirrors the on-device storage layout and is the primary place to inspect what the runtime actually did.
+**`pv-appengine` (Pantavisor runtime launcher)**
+Runs inside the tester container. Sets up cgroups, loop devices, and storage mounts, then launches the `pantavisor` binary in a restart loop to simulate device reboots between update steps.
 
-```
-<workspace>/storage/<scope>/<category>/<name>/
-  trails/         <- revision snapshots (objects, configs, per-container dirs)
-  objects/        <- content-addressed object store
-  disks/          <- persistent disk images
-  dm-crypt-files/ <- dm-crypt key material
-  cache/
-  boot/
-  config/
-  logs/           <- see below
-```
+**Pantavisor logs (`stdout_direct`)**
+Pantavisor is started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The `stdout_direct` output mode streams Pantavisor's internal log directly to stdout as each event happens, without buffering. These lines carry the `[pantavisor] TIMESTAMP LEVEL -- [module]: message` format and are interleaved in real time with the shell traces above. The same log content is also written to `storage/<scope>/<category>/<name>/logs/` (kept on disk, not in CI artifacts).
 
-#### Logs
-
-```
-logs/
-  current/              <- live log snapshot at test end
-    pantavisor/
-      pantavisor.log    <- main Pantavisor log
-    <container>/
-      lxc/
-        lxc.log         <- LXC internals
-        console.log     <- container console output
-      var/log/
-        messages        <- syslog inside the container
-  0/                    <- rotated snapshot (first boot cycle)
-  locals/               <- per-local-revision log snapshots
-    <local-name>/
-      pantavisor/
-        pantavisor.log
-```
-
-The main log to check first is always `logs/current/pantavisor/pantavisor.log`. For tests that exercise local revisions, each revision also has its own snapshot under `logs/locals/<local-name>/`.
-
-Useful greps:
+Useful greps on a `test.log`:
 
 ```bash
-# Show only errors and warnings
-grep " ERROR\b\| WARN\b" logs/current/pantavisor/pantavisor.log
+# Pantavisor errors and warnings only
+grep " ERROR\b\| WARN\b" test.log
 
-# Exclude noisy disk-crypt stderr (routed through the WARN channel)
-grep " WARN\b" pantavisor.log | grep -v "\[disk-crypt-err\]"
+# Just the test script execution (resources/test set -x traces)
+grep "^+ \|^++ " test.log | tail -50
 ```
 
-Expected recurring WARNs that are normal in the appengine environment:
+### Valgrind logs
 
-| Source | Message | Reason |
-|--------|---------|--------|
-| `[ipam]` | `failed to enable IP forwarding` | No network namespace in appengine |
-| `[pv-xconnect-err]` | `Error connecting to pv-ctrl: Connection reset by peer` | Normal on shutdown |
-| `[platforms]` | `sent SIGKILL to logger '...'` | Loggers that don't self-exit on teardown |
-| `[network]` | `unable to create bridge dev lxcbr0: File exists` | Bridge already exists from prior test |
-
-### Valgrind results
-
-With `-V`, each process gets its own `valgrind.log.<pid>` file under `<workspace>/valgrind/<group>/<num>/`. Pantavisor forks heavily via LXC, so there will be many files. The main Pantavisor worker is typically the largest:
+With `-V`, each process gets its own `valgrind.log.<pid>` file under `<scope>/<category>/<name>/valgrind/` (and `<name>.1/valgrind/` for retries). Pantavisor forks heavily via LXC, so there will be many files. The main Pantavisor worker is typically the largest:
 
 ```bash
-ls -S /tmp/pv_appengine.<id>/valgrind/local/lifecycle/reboot-nonreboot-rollback/ | head -3
-```
-
-Each file ends with a LEAK SUMMARY and ERROR SUMMARY:
-
-```bash
+ls -S <workspace>/local/lifecycle/reboot-nonreboot-rollback/valgrind/ | head -3
 grep -E "definitely lost|possibly lost|ERROR SUMMARY" valgrind.log.<largest-pid>
 ```
 
