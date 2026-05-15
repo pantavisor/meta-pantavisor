@@ -110,10 +110,11 @@ docker exec pva-test pvcontrol graph ls
 
 ### Bumping pantavisor SRCREV
 
-When updating `SRCREV` in `recipes-pv/pantavisor/pantavisor_git.bb`:
+When bumping the pantavisor commit:
 
-1. **Verify the hash against the actual remote** — squash merges rewrite hashes, so a branch SHA won't match the merged master SHA
-2. **Update `PKGV`** to match the latest tag reachable from the new SRCREV (e.g. if latest tag is `026`, set `PKGV = "026+git0+${GITPKGV}"`)
+1. **Update `PANTAVISOR_SRCREV`** in `recipes-pv/pantavisor/pantavisor.inc` — the actual hash lives there; `pantavisor_git.bb` just forwards it via `SRCREV = "${PANTAVISOR_SRCREV}"`
+2. **Verify the hash against the actual remote** — squash merges rewrite hashes, so a branch SHA won't match the merged master SHA
+3. **Update `PKGV`** in `pantavisor_git.bb` to match the latest tag reachable from the new SRCREV (e.g. if latest tag is `026`, set `PKGV = "026+git0+${GITPKGV}"`)
 
 ## Adding Workspace Packages
 

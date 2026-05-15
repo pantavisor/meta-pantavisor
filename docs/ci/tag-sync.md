@@ -3,7 +3,7 @@
 When a release tag is pushed to `meta-pantavisor`, a workflow mirrors that tag
 to the upstream [pantavisor/pantavisor](https://github.com/pantavisor/pantavisor)
 repo, pointing at the exact `SRCREV` recorded in
-`recipes-pv/pantavisor/pantavisor_git.bb`.
+`recipes-pv/pantavisor/pantavisor.inc` (`PANTAVISOR_SRCREV`).
 
 This gives upstream a marker linking each pantavisor commit back to the BSP
 release that shipped it.
@@ -24,7 +24,7 @@ failures do not block tag sync.
 
 ## What the script does
 
-1. Parses `SRCREV` from `recipes-pv/pantavisor/pantavisor_git.bb`.
+1. Parses `PANTAVISOR_SRCREV` from `recipes-pv/pantavisor/pantavisor.inc`.
 2. Verifies the SHA is reachable on `pantavisor/pantavisor` (fails if the
    recipe is pinned to an unpublished commit).
 3. Checks whether the tag already exists upstream:
@@ -71,12 +71,12 @@ the secret at run time — there is no caching to invalidate.
 If the upstream tag already exists at a different SHA, the workflow exits
 non-zero with both SHAs in the log. Common causes:
 
-- The recipe `SRCREV` was bumped after the upstream tag was created manually.
+- `PANTAVISOR_SRCREV` in `pantavisor.inc` was bumped after the upstream tag was created manually.
 - An earlier sync ran with a recipe that pointed at a different commit.
 
 To recover, decide which SHA is correct:
 
-- **Upstream tag is correct** — bump `SRCREV` in the recipe to match, retag
+- **Upstream tag is correct** — bump `PANTAVISOR_SRCREV` in `pantavisor.inc` to match, retag
   meta-pantavisor.
 - **Recipe is correct** — delete the upstream tag, then re-run the workflow:
 
