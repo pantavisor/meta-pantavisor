@@ -21,3 +21,4 @@ local_conf_header:
         IMAGE_FSTYPES:remove  = "teziimg"
         IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
         IMAGE_FSTYPES:append = " pv_teziimg"
+        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"

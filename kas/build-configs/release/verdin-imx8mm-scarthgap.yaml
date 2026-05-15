@@ -24,6 +24,16 @@ repos:
         commit: 60b01a180f192796a5c4a47fee4860f6ec6c130c
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
+    meta-toradex-tezi:
+        branch: scarthgap-7.x.y
+        commit: 09d7800fcec48cd4880df14f1391a198b5867ad1
+        path: layers/meta-toradex-tezi
+        url: https://github.com/toradex/meta-toradex-tezi.git
+    meta-qt5:
+        branch: scarthgap
+        commit: 227cf5e7b64c93dfc1a45f235c466db8c3fd8707
+        path: layers/meta-qt5
+        url: https://github.com/meta-qt5/meta-qt5/
     poky:
         patches:
             fit-image-multiconfig:
@@ -57,6 +67,18 @@ local_conf_header:
         ACCEPT_FSL_EULA = "1"
     platform-toradex: |
         PV_UBOOT_AUTOFDT = "1"
+    tezi-recovery-multiconfig: "BBMULTICONFIG:append = \" tezi-recovery\"\n# meta-toradex-tezi\
+        \ recipes outside recipes-bsp/ require DISTRO = \"tezi\" to\n# parse cleanly\
+        \ (TDX_VERSION undefined, tezirunimg IMAGE_CMD missing, Qt/Wayland\n# version\
+        \ pins incompatible with panta-distro). Mask them globally; the only\n# tezi\
+        \ artifacts we need are the u-boot and imx-boot bbappends in recipes-bsp/.\n\
+        # meta-toradex-bsp-common ships its own u-boot-distro-boot.bb which conflicts\n\
+        # with the tezi-specific 1.1 version \u2014 mask that too.\nBBMASK:append\
+        \ = \" \\\n    meta-toradex-tezi/recipes-tezi/ \\\n    meta-toradex-tezi/recipes-graphics/\
+        \ \\\n    meta-toradex-tezi/recipes-qt/ \\\n    meta-toradex-tezi/recipes-connectivity/\
+        \ \\\n    meta-toradex-tezi/recipes-core/ \\\n    meta-toradex-tezi/recipes-kernel/\
+        \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
+        \ \\\n    \"\n"
     platform-verdin-imx8mm: |
         PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
         PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
@@ -100,6 +122,11 @@ local_conf_header:
         # Disable auto FDT selection to use PV_INITIAL_DTB
         # This prevents the first DTB from KERNEL_DEVICETREE from being selected
         PV_UBOOT_AUTOFDT = "1"
+
+        # Required when meta-toradex-tezi is in BBLAYERS: its u-boot-toradex bbappend
+        # derives the recovery defconfig name from this variable. Without it the
+        # do_configure:prepend shell task fails trying to copy "_defconfig".
+        UBOOT_CONFIG_BASENAME:verdin-imx8mm = "verdin-imx8mm"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
@@ -135,5 +162,6 @@ defaults:
         branch: scarthgap
 target:
 - pantavisor-starter
+- mc:tezi-recovery:imx-boot
 build_system: oe
 distro: panta-distro

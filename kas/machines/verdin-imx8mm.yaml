@@ -56,6 +56,11 @@ local_conf_header:
   # This prevents the first DTB from KERNEL_DEVICETREE from being selected
   PV_UBOOT_AUTOFDT = "1"
 
+  # Required when meta-toradex-tezi is in BBLAYERS: its u-boot-toradex bbappend
+  # derives the recovery defconfig name from this variable. Without it the
+  # do_configure:prepend shell task fails trying to copy "_defconfig".
+  UBOOT_CONFIG_BASENAME:verdin-imx8mm = "verdin-imx8mm"
+
 env:
   TORADEX_VARIANT: wifi
   MACHINE_FEATURES: wifi
