@@ -22,6 +22,34 @@ repos:
     url: "https://git.toradex.com/meta-toradex-nxp.git"
     branch: scarthgap-7.x.y
 
+  meta-toradex-tezi:
+    path: layers/meta-toradex-tezi
+    url: "https://github.com/toradex/meta-toradex-tezi.git"
+    branch: scarthgap-7.x.y
+
+  meta-qt5:
+    path: layers/meta-qt5
+    url: "https://github.com/meta-qt5/meta-qt5/"
+    branch: scarthgap
+
 local_conf_header:
   platform-toradex: |
     PV_UBOOT_AUTOFDT = "1"
+  tezi-recovery-multiconfig: |
+    BBMULTICONFIG:append = " tezi-recovery"
+    # meta-toradex-tezi recipes outside recipes-bsp/ require DISTRO = "tezi" to
+    # parse cleanly (TDX_VERSION undefined, tezirunimg IMAGE_CMD missing, Qt/Wayland
+    # version pins incompatible with panta-distro). Mask them globally; the only
+    # tezi artifacts we need are the u-boot and imx-boot bbappends in recipes-bsp/.
+    # meta-toradex-bsp-common ships its own u-boot-distro-boot.bb which conflicts
+    # with the tezi-specific 1.1 version — mask that too.
+    BBMASK:append = " \
+        meta-toradex-tezi/recipes-tezi/ \
+        meta-toradex-tezi/recipes-graphics/ \
+        meta-toradex-tezi/recipes-qt/ \
+        meta-toradex-tezi/recipes-connectivity/ \
+        meta-toradex-tezi/recipes-core/ \
+        meta-toradex-tezi/recipes-kernel/ \
+        meta-toradex-tezi/recipes-devtools/ \
+        meta-toradex-tezi/recipes-support/ \
+        "

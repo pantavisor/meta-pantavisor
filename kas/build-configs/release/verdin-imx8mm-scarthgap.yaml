@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 902dde8c5bd29bb507ac8d37772565a6c9ab77cd
+        commit: 0c27c21cab57876474bb572e5d378b6707e41224
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -16,12 +16,12 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: 159b1b42c4c527a39ac0b41faad408d74299e2d6
+        commit: 193b6b5fd195abefd81f7e3fa52a6d81ae2594de
         path: layers/meta-toradex-bsp-common
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: bb068d03a6e91a8b57f0e3a51b4e614ffb4ba28e
+        commit: 60b01a180f192796a5c4a47fee4860f6ec6c130c
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
     meta-toradex-tezi:
@@ -47,14 +47,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 8643f911602949518c5c5474726b49f943e36b83
+        commit: db668121d98162b8ad196ba6d8637f8330a1787d
     meta-pantavisor:
     meta-virtualization:
-        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
+        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 1ad0d777d1de1769e5995eb806f7ae5c15d0be54
+        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
         layers:
             meta-filesystems:
             meta-networking:
@@ -79,15 +79,54 @@ local_conf_header:
         \ \\\n    meta-toradex-tezi/recipes-core/ \\\n    meta-toradex-tezi/recipes-kernel/\
         \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
         \ \\\n    \"\n"
-    platform-colibri-imx6ull: |
-        PV_FLASH_README = "docs/flashing/boards/colibri-imx6ull.md"
+    platform-verdin-imx8mm: |
+        PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
         PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
-        include conf/machine/include/colibri-imx6ull.inc
-        IMAGE_CLASSES:remove = " image_type_tezi"
-        IMAGE_FSTYPES:remove  = "teziimg"
-        IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
-        IMAGE_FSTYPES:append = " pv_teziimg"
-        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
+        UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
+
+        # Alternative device trees based on carrier board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"    # Development board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-ivy.dtb"     # Ivy board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-mallow.dtb"  # Mallow board
+        # UBOOT_DTB_NAME = "imx8mm-verdin-wifi-yavia.dtb"   # Yavia board
+
+        # WiFi variant configuration
+        TORADEX_VARIANT = "wifi"
+
+        # Enable WiFi features
+        MACHINE_FEATURES:append = " wifi"
+
+        # Ensure WiFi firmware is included
+        MACHINE_FIRMWARE:append = " linux-firmware-sd8997"
+
+        # WiFi kernel modules to autoload
+        KERNEL_MODULE_AUTOLOAD:append = " cfg80211 mwifiex_sdio"
+
+        # Zinnia DTBs are listed in meta-toradex-nxp machine conf but absent from the
+        # linux-toradex 6.6 NXP BSP kernel source; machine conf only removes them for mainline BSP.
+        KERNEL_DEVICETREE:remove = "freescale/imx8mm-verdin-nonwifi-zinnia.dtb freescale/imx8mm-verdin-wifi-zinnia.dtb"
+
+        # Required: pantavisor-default-skel adds a dm-crypt-caam disk for mx8m-generic-bsp;
+        # caam-nxp installs keyctl-caam (caam-keygen) in the initramfs to mount it.
+        PANTAVISOR_FEATURES:append = " caam-nxp"
+
+        # Exclude problematic firmware package that causes license manifest issues
+        PACKAGE_EXCLUDE:append = " firmware-nxp-wifi-bcm4359-pcie"
+
+        # Disable SPDX generation to avoid license manifest issues with linux-firmware
+        INHERIT:remove = "create-spdx"
+
+        # Additional WiFi-specific settings
+        # PV_INITIAL_DTB = "imx8mm-verdin-wifi-dev.dtb"
+
+        # Disable auto FDT selection to use PV_INITIAL_DTB
+        # This prevents the first DTB from KERNEL_DEVICETREE from being selected
+        PV_UBOOT_AUTOFDT = "1"
+
+        # Required when meta-toradex-tezi is in BBLAYERS: its u-boot-toradex bbappend
+        # derives the recovery defconfig name from this variable. Without it the
+        # do_configure:prepend shell task fails trying to copy "_defconfig".
+        UBOOT_CONFIG_BASENAME:verdin-imx8mm = "verdin-imx8mm"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
@@ -112,7 +151,12 @@ local_conf_header:
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: colibri-imx6ull
+machine: verdin-imx8mm
+env:
+    TORADEX_VARIANT: wifi
+    MACHINE_FEATURES: wifi
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
 defaults:
     repos:
         branch: scarthgap
@@ -121,6 +165,3 @@ target:
 - mc:tezi-recovery:u-boot-toradex
 build_system: oe
 distro: panta-distro
-env:
-    PVROOT_IMAGE_BSP:
-    PV_BOOT_OEMARGS:
