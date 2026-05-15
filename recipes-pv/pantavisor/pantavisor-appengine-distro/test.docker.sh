@@ -292,8 +292,14 @@ exec_test() {
 
 	mkdir -p "$work_path/storage/$test_id/"
 	cd "$work_path/storage/$test_id/"; abs_storage_path=$(pwd); cd - > /dev/null
-	mkdir -p "$work_path/valgrind/$test_id/"
-	cd "$work_path/valgrind/$test_id/"; abs_valgrind_path=$(pwd); cd - > /dev/null
+	mkdir -p "$work_path/${test_id}/valgrind/"
+	cd "$work_path/${test_id}/valgrind/"; abs_valgrind_path=$(pwd); cd - > /dev/null
+
+	if [ "$interactive" = "false" ] && [ "$manual" = "false" ]; then
+		mkdir -p "$work_path/$test_id"
+		exec 3>&1 4>&2
+		exec >> "$work_path/${test_id}/test.log" 2>&1
+	fi
 
 	# Per-run slot used to disambiguate container names and host ports so
 	# multiple test.docker.sh invocations can run concurrently. Slot 0 keeps
@@ -400,15 +406,34 @@ exec_test() {
 		return
 	fi
 
+	# Copy diff to the per-test dir so it lands in the GHA artifact (storage/ stays on disk)
+	diff_src="$work_path/storage/$test_id/diff"
+	if [ -s "$diff_src" ]; then
+		cp "$diff_src" "$work_path/${test_id}/diff"
+	fi
+
+	exec 1>&3 3>&- 2>&4 4>&-
+
 	if [ $res -eq 0 ]; then
 		echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+		echo "Info: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
 		return 0
 	elif [ $res -eq 2 ]; then
 		echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+		echo "Info: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
 		return 2
 	else
 		echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-			return 1
+		echo "Info: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
+		diff_file="$work_path/${test_id}/diff"
+		if [ -s "$diff_file" ]; then
+			{
+			printf "\n--- diff: %s ---\n" "$test_id"
+			cat "$diff_file"
+			printf '%s\n' "--- end diff ---"
+			} | tee -a "$work_path/run.log"
+		fi
+		return 1
 	fi
 }
 
@@ -425,7 +450,8 @@ run_with_retry() {
 			return 1
 		fi
 		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-		echo "Retry: '$test_id' attempt $attempt/$max_retries after failure..."
+		echo -e "Retry: '$test_id' attempt $attempt/$max_retries after failure..."
+		echo "Retry: '$test_id' attempt $attempt/$max_retries after failure..." >> "$work_path/run.log"
 		sleep 5
 	done
 }
@@ -439,6 +465,7 @@ skip_test () {
 	skip=$(jq -r '.skip' "$json_path")
 	if [ "$skip" = "true" ]; then
 		echo -e "Info: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
+		echo "Info: '$test_id' SKIPPED" >> "$work_path/run.log"
 		return 1
 	fi
 
@@ -519,8 +546,16 @@ run_test() {
 	fi
 
 	mkdir -p "$work_path"
-	echo "Info: test logs can be found at $work_path/test.docker.log"
-	exec > >(tee -a "$work_path/test.docker.log") 2>&1
+	{
+	echo "Info: workspace=$work_path"
+	echo "Info: readme=$work_path/README.md"
+	echo "Info: run log=$work_path/run.log"
+	echo "Info: test log=$work_path/<scope>/<category>/<name>/test.log"
+	if [ "$valgrind" = "true" ]; then
+		echo "Info: valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
+	fi
+	echo "Info: diff=$work_path/<scope>/<category>/<name>/diff"
+	} | tee -a "$work_path/run.log"
 
 	if [ -z "$target_path" ]; then
 		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
@@ -543,34 +578,85 @@ run_test() {
 	fi
 
 	set +x
+	{
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
-	if [ "$verbose" = "true" ]; then
-		echo "Info: workspace=$work_path"
-		echo "Info: logs=$work_path/test.docker.log"
-		if [ "$valgrind" = "true" ]; then
-			echo "Info: valgrind results=$work_path/valgrind"
-		fi
-		echo "Info: Pantavisor storage=$work_path/storage"
-		echo ""
-	fi
-	grep "^Info: 'local\|^Info: 'remote" "$work_path/test.docker.log"
-	grep "^Info: '.*FAILED" "$work_path/test.docker.log" \
-		| sed "s/^Info: '//; s/'[[:space:]].*//" \
-		| sort -u \
-		| while read -r test_id; do
-			diff_file="$work_path/storage/$test_id/diff"
-			[ -s "$diff_file" ] || continue
-			printf "\n--- diff: %s ---\n" "$test_id"
-			cat "$diff_file"
-			printf '%s\n' "--- end diff ---"
-		done
+	grep "^Info: '.*\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log"
 	echo "======================================================="
+	} | tee -a "$work_path/run.log"
 	set -h
 
 	# make summary available to the run path for the CI
-	cp $work_path/test.docker.log ./test.docker.log
+	cp $work_path/run.log ./run.log
+
+	cat > "$work_path/README.md" << 'EOF'
+# Test Run Results
+
+## Workspace Layout
+
+```
+<workspace>/
+  run.log                           <- location info, one result line per test + inline diffs, SUMMARY
+  README.md
+  <scope>/<category>/<name>/
+    test.log                        <- full verbose output (see below)
+    diff                            <- diff (expected vs actual), present only when test failed
+    valgrind/
+      valgrind.log.<pid>            <- present only when run with -V
+  storage/                          <- kept on disk, not uploaded to CI artifacts
+    <scope>/<category>/<name>/
+      trails/ objects/ logs/ ...
+```
+
+## Interpreting Results
+
+A failure means actual test output diverged from expected. Lines prefixed with `-` are
+expected; lines prefixed with `+` are what the test produced.
+
+When a test fails, the diff is printed inline in `run.log` right after the FAILED line, and
+also saved to `<scope>/<category>/<name>/diff`. Retry attempts get their own directory
+(`<name>.1/`, `<name>.2/`).
+
+### test.log
+
+`test.log` is a single interleaved stream of everything that happened during a test run.
+It mixes output from four sources:
+
+**1. `test.docker.sh` (`set -x` traces)**
+The host-side orchestrator. Visible as `++ docker run ...`, `++ allocate_slot`, etc.
+Covers container startup, loop device allocation, and network setup.
+
+**2. `pvtest-run` (`set -x` traces) + `resources/test` output**
+`pvtest-run` is the inner test runner inside the tester container. It parses `test.json`,
+initialises storage, starts Pantavisor via `pv-appengine`, then runs `resources/test`
+(the actual test script, with `set -x` injected at the top). The test script's stdout
+is captured and diffed against the stored `output` file; the diff appears at the end of
+the log.
+
+**3. `pv-appengine` (Pantavisor runtime launcher)**
+Runs inside the tester container. Sets up cgroups, loop devices, and storage mounts,
+then launches the `pantavisor` binary in a restart loop (simulating device reboots).
+
+**4. Pantavisor logs (`stdout_direct`)**
+Pantavisor is started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The
+`stdout_direct` output mode streams Pantavisor's internal log directly to stdout as
+each event happens, without buffering. These lines carry the familiar
+`[pantavisor] TIMESTAMP LEVEL -- [module]: message` format and are interleaved
+in real time with the shell traces above.
+
+### Valgrind Logs
+
+Each test's valgrind output is under `<scope>/<category>/<name>/valgrind/valgrind.log.<pid>`.
+The main Pantavisor worker is typically the largest file:
+
+    ls -S <scope>/<category>/<name>/valgrind/ | head -3
+    grep -E "definitely lost|possibly lost|ERROR SUMMARY" valgrind.log.<largest-pid>
+
+- `definitely lost` — real leaks, investigate
+- `possibly lost` — typically PV buffer pools; consistent at ~3.7 MB, not a regression
+- `ERROR SUMMARY` — mostly `Syscall param` warnings from liblxc, not pantavisor code
+EOF
 
 	if [ -f "$failed_flag" ]; then
 		return 1
