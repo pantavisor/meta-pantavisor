@@ -72,10 +72,10 @@ jobs:
         working-directory: ${{ env.WORKSPACE }}
         if: always()
         run: |
-          if [ -f test.docker.log ]; then
+          if [ -f run.log ]; then
             {
               echo '```'
-              sed -n '/SUMMARY/,$p' test.docker.log
+              sed -n '/SUMMARY/,$p' run.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           else
@@ -87,7 +87,9 @@ jobs:
         run: |
           suffix="${{ inputs.test_path }}"
           suffix="${suffix//\//-}"
-          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${suffix:-all}" >> $GITHUB_ENV
+          sha="${{ github.sha }}"
+          sha="${sha:0:7}"
+          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}" >> $GITHUB_ENV
 
           sudo chown -R $(id -u):$(id -g) $PVTEST_WORKSPACE || true
 
@@ -97,9 +99,10 @@ jobs:
         with:
           name: ${{ env.PVTEST_ARTIFACT_NAME }}
           path: |
-            ${{ env.PVTEST_WORKSPACE }}/test.docker.log
-            ${{ env.PVTEST_WORKSPACE }}/storage/**/logs
-            ${{ env.PVTEST_WORKSPACE }}/valgrind
+            ${{ env.PVTEST_WORKSPACE }}/README.md
+            ${{ env.PVTEST_WORKSPACE }}/run.log
+            ${{ env.PVTEST_WORKSPACE }}/local
+            ${{ env.PVTEST_WORKSPACE }}/remote
           if-no-files-found: ignore
 
       - name: Clean up
