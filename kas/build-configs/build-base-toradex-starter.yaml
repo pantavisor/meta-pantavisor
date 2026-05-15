@@ -6,4 +6,4 @@ header:
 
 target:
 - pantavisor-starter
-- mc:tezi-recovery:imx-boot
+- mc:tezi-recovery:u-boot-toradex

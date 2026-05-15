@@ -162,6 +162,6 @@ defaults:
         branch: scarthgap
 target:
 - pantavisor-starter
-- mc:tezi-recovery:imx-boot
+- mc:tezi-recovery:u-boot-toradex
 build_system: oe
 distro: panta-distro
