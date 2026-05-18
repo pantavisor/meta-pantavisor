@@ -12,6 +12,8 @@ PVPKG_DESCRIPTION ?= "Manages Wi-Fi connections on Pantacor-enabled devices."
 PVPKG_PACKAGE_URL ?= "https://gitlab.com/pantacor/pvwificonnect"
 PVPKG_URL ?= "${PVPKG_PACKAGE_URL}"
 
+PV_DOCKER_NAME ?= "registry.gitlab.com/pantacor/pvwificonnect"
+
 PVRIMAGE_AUTO_MDEV = "1"
 
 IMAGE_FSTYPES = "pvrexportit"
@@ -64,6 +66,14 @@ do_image_pvrexportit:append() {
             '. + { src_extra: { args: $args[0] } }' > ${PN}/pvpkg.json
     else
         echo "$base" | jq '.' > ${PN}/pvpkg.json
+    fi
+
+    # Add docker image metadata to src.json so hub.pantacor.com can display
+    # the image name and version for this container.
+    if [ -f ${PN}/src.json ]; then
+        jq --arg name "${PV_DOCKER_NAME}" --arg tag "${PV}" \
+            '. + { docker_name: $name, docker_tag: $tag }' \
+            ${PN}/src.json > ${PN}/src.json.tmp && mv ${PN}/src.json.tmp ${PN}/src.json
     fi
 
     pvr add

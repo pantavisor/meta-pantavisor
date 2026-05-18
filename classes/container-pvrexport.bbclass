@@ -84,6 +84,12 @@ fakeroot IMAGE_CMD:pvrexportit(){
         $args ${PVR_APP_ADD_EXTRA_ARGS} \
         --format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
         ${PN}
+    # Flag local Yocto-built container so hub.pantacor.com can distinguish from
+    # upstream docker-pulled builds (which set docker_source: "remote,local").
+    if [ -f ${PN}/src.json ]; then
+        jq '. + { pv_build_origin: "yocto" }' \
+            ${PN}/src.json > ${PN}/src.json.tmp && mv ${PN}/src.json.tmp ${PN}/src.json
+    fi
     pvr add
     pvr commit
     if [ -f ${WORKDIR}/${PN}.mdev.json ]; then
