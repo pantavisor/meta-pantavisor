@@ -27,7 +27,7 @@ meta-pantavisor/
 
 | Recipe | Description |
 |--------|-------------|
-| `recipes-pv/pantavisor/pantavisor_git.bb` | Core Pantavisor runtime (C, cmake-based) |
+| `recipes-pv/pantavisor/pantavisor_git.bb` | Core Pantavisor runtime (C, cmake-based); `SRCREV` forwarded from `pantavisor.inc` |
 | `recipes-pv/images/pantavisor-initramfs.bb` | Initramfs image |
 | `recipes-pv/images/pantavisor-bsp.bb` | BSP image (generates pvrexport bundles) |
 | `recipes-pv/pvr/pvr_*.bb` | PVR CLI tool (Go-based) |

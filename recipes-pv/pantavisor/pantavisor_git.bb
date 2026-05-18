@@ -27,14 +27,13 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 S = "${WORKDIR}/git"
 
-# TODO: restore "master" + update SRCREV once pantavisor#680 is merged
-PANTAVISOR_BRANCH ??= "master"
+require recipes-pv/pantavisor/pantavisor.inc
 
-SRC_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https;branch=${PANTAVISOR_BRANCH} \
+SRC_URI = "${PANTAVISOR_URI};branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "cfe4807018bde49eaa8902ee074e2d4f88c17d34"
+SRCREV = "${PANTAVISOR_SRCREV}"
 
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"

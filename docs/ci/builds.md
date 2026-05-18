@@ -59,6 +59,7 @@ Every build produces some subset of the following:
 s3://<BUCKET>/meta-pantavisor/
   <tag>/
     <machine>/          ← bundle for this specific tag + machine
+    docs/               ← pantavisor-docs tarball for this tag
   latest/
     stable/
       badges/           ← per-machine badge JSON, updated after every stable tag build
@@ -74,6 +75,60 @@ s3://<BUCKET>/meta-pantavisor/
 |---|---|---|
 | `028`, `029` | stable | `latest/stable/` |
 | `028-rc1`, `028-rc9` | release-candidate | `latest/release-candidate/` |
+
+## Documentation Tarball (tag-docs-scarthgap.yaml)
+
+`tag-docs-scarthgap.yaml` runs via `workflow_run` after the `ontag: sync and
+release` workflow (`tag-scarthgap.yaml`) completes successfully. It is
+independent of the per-machine build matrix.
+
+The job:
+
+1. Checks out the tagged commit (`workflow_run.head_sha`) so the docs match
+   the release.
+2. Builds the `pantavisor-docs` target with `kas` inside the KAS container —
+   the `pantavisor-docs` recipe bundles `docs/` from this layer plus docs
+   pulled from the `pantavisor`, `pantacor/docs`, and `pvr` repos into a
+   single `pantavisor-docs-<ver>.tar.gz`.
+3. Collects the tarball from `build/tmp-scarthgap/deploy/images/` and uploads
+   it as a GitHub artifact.
+4. Calls `upload-docs.sh` to push the tarball to S3.
+
+`upload-docs.sh` uploads the tarball to:
+
+```
+s3://<BUCKET>/meta-pantavisor/<TAG>/docs/pantavisor-docs-<ver>.tar.gz
+```
+
+It then upserts a `docs` entry into the existing `releases.json` under the
+tag's array, alongside the per-machine entries already written by `upload.sh`:
+
+```json
+{
+  "release-candidate": {
+    "028-rc10": [
+      { "name": "sunxi-orange-pi-3lts-scarthgap", "full_image": {}, ... },
+      ...
+      { "docs": {
+          "name": "pantavisor-docs-028-rc10.tar.gz",
+          "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc10/docs/pantavisor-docs-028-rc10.tar.gz",
+          "sha256": "<sha256>"
+        }
+      },
+      { "timestamp": "2026-05-13T21:27+00:00" }
+    ]
+  }
+}
+```
+
+The script downloads `releases.json`, finds the item with a `docs` key and
+replaces it (or appends one if absent), then writes the file back. All other
+entries — machine bundles and the timestamp — are left intact.
+
+The tag is taken from `workflow_run.head_branch` (the tag that triggered
+`tag-scarthgap.yaml`). Because `workflow_run` only fires for workflow files
+present on the default branch, this workflow takes effect once it is on
+`master`.
 
 ## CI Badges (upload-badges)
 
