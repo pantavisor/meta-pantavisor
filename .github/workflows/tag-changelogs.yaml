@@ -16,7 +16,7 @@ name: "ontag: generate changelog and release notes"
 
 on:
   workflow_run:
-    workflows: ["ontag: make release, build all targets"]
+    workflows: ["ontag: sync and release"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -30,8 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.event == 'push' &&
-       startsWith(github.event.workflow_run.head_branch, '0'))
+      startsWith(github.event.workflow_run.head_branch, '0')
     permissions:
       contents: write
       pull-requests: write
