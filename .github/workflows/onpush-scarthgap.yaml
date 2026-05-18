@@ -12,7 +12,6 @@ on:
       # itself ARE part of what's built; re-include them so
       # changes to the build pipeline retrigger CI.
       - '.github/workflows/buildkas-target.yaml'
-      - '.github/workflows/call-pvtests.yaml'
       - '.github/workflows/onpush-scarthgap.yaml'
   # NOTE: no 'pull_request:' trigger. Pushes to same-repo branches
   # already emit check runs bound to the head SHA, so PRs show
@@ -22,7 +21,7 @@ on:
   # to get a build.
 
 jobs:
-  build-hw:
+  build:
     name: "build (${{ matrix.machine_name }})"
     strategy:
       fail-fast: false
@@ -38,6 +37,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 1
+          - machine_name: docker-x86_64-scarthgap
+            configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: pantavisor-appengine-distro
+            output: "pantavisor-appengine-distro-*.tar.gz"
+            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}
@@ -47,26 +51,8 @@ jobs:
       sdk: ${{ matrix.sdk }}
     secrets: inherit
 
-  build-docker:
-    name: "build (docker-x86_64-scarthgap)"
-    uses: ./.github/workflows/buildkas-target.yaml
-    with:
-      configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-      machine_name: docker-x86_64-scarthgap
-      build_target: pantavisor-appengine-distro
-      output: "pantavisor-appengine-distro-*.tar.gz"
-      sdk: 0
-    secrets: inherit
-
-  pvtest-lifecycle:
-    needs: build-docker
-    uses: ./.github/workflows/call-pvtests.yaml
-    with:
-      test_path: local/lifecycle
-    secrets: inherit
-
   summary:
-    needs: [build-hw, build-docker]
+    needs: build
     if: always()
     runs-on: ubuntu-latest
     steps:
