@@ -48,6 +48,8 @@ FILES:${PN} += " /init"
 
 # pvtx packages
 FILES:${PN}-pvtx += " ${bindir}/pvtx"
+FILES:${PN}-pvtx += " ${libdir}/libpvtx.so.*"
+RPROVIDES:${PN}-pvtx += "libpvtx.so"
 RPROVIDES:${PN}-pvtx += "pvcontrol-pvtx"
 RREPLACES:${PN}-pvtx += "pvcontrol-pvtx"
 RCONFLICTS:${PN}-pvtx += "pvcontrol-pvtx"
