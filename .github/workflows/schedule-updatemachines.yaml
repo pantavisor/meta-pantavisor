@@ -1,5 +1,9 @@
 name: 'schedule: update machines'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   workflow_dispatch:
   schedule:
@@ -7,7 +11,7 @@ on:
   push:
     paths:
       - .github/scripts/**
-      - .github/workflows/updatemachines.yaml
+      - .github/workflows/schedule-updatemachines.yaml
     branches:
       - master
 
@@ -30,6 +34,10 @@ jobs:
       - run: git checkout -b autopr/machine-update-$GITHUB_REF_NAME-next
       - name: make PR
         if: github.ref_name == 'master'
-        run: .github/scripts/makecommit && git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next && gh pr create --base $GITHUB_REF_NAME --fill 2>&1 | grep github.com.*pull || true
+        run: |
+          .github/scripts/makecommit && \
+          git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next && \
+          gh pr create --base $GITHUB_REF_NAME --fill || \
+          gh pr edit autopr/machine-update-$GITHUB_REF_NAME-next --title "AutoPR: update kas meta layers to latest branch commits"
         env:
           GH_TOKEN: ${{ github.token }}
