@@ -1,0 +1,66 @@
+name: "ontag: build and upload docs"
+
+# Runs after "ontag: sync and release" (tag-scarthgap.yaml) completes.
+# Builds the pantavisor-docs tarball and uploads it to S3 under the same
+# tag name used by the release, e.g.:
+#   s3://<bucket>/<tag>/docs/pantavisor-docs-<ver>.tar.gz
+on:
+  workflow_run:
+    workflows: ["ontag: sync and release"]
+    types:
+      - completed
+
+jobs:
+  build-docs:
+    # tag-scarthgap.yaml only triggers on tag pushes, so head_branch is the tag.
+    if: github.event.workflow_run.conclusion == 'success'
+    env:
+      TMPDIR: "tmp-scarthgap"
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Fetch tags
+        run: |
+          git config --global --add safe.directory '*'
+          git fetch --tags --force
+      - name: setup workspace
+        run: |
+          chown -R builder:builder $RUNNER_WORKSPACE
+          chown -R builder:builder /__w
+          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x"
+          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      - name: build docs
+        run: |
+          su - builder -c "cd $GITHUB_WORKSPACE && env && kas build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml --target pantavisor-docs"
+
+      - name: collect docs tarball
+        run: |
+          chmod -R 777 $GITHUB_WORKSPACE
+          mkdir -p docs-out
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-docs-*.tar.gz" -exec cp {} docs-out/ \;
+          ls -l docs-out
+
+      - name: Archive docs tarball
+        uses: actions/upload-artifact@v7
+        with:
+          name: pantavisor-docs
+          path: docs-out/
+          if-no-files-found: ignore
+
+      - name: Upload to S3
+        run: |
+          .github/scripts/upload-docs.sh \
+            ${{ secrets.AWS_ACCESS_KEY_ID }} \
+            ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            ${{ secrets.AWS_S3_BUCKET }} \
+            ${{ github.event.workflow_run.head_branch }} \
+            docs-out
