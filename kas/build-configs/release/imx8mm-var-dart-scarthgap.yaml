@@ -5,7 +5,7 @@ repos:
     meta-freescale:
         url: https://github.com/Freescale/meta-freescale.git
         path: layers/meta-freescale
-        commit: 902dde8c5bd29bb507ac8d37772565a6c9ab77cd
+        commit: 0c27c21cab57876474bb572e5d378b6707e41224
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
@@ -18,17 +18,17 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 098cb26cdbddcbc5906cbd82488ef56fee5e8979
+        commit: 39e97efd71ac97c1d984e11cf6db6151bc546dfd
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 572bc2d9b477ac0f757a26671a20354e26c22656
+        commit: e9ba2f5099939df9bcbdf540192f21ecbea3de08
     meta-variscite-sdk:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 5eaa6197ed188830bb44697f3f79ceca88132a3c
+        commit: 85fd9db8392b706c6bd9a842a02d80c7aeffc39f
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
@@ -38,7 +38,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 9505b68ffbc5065c9397ee16084b030aba9a769c
+        commit: 7b45393620f4496b4dfac1b5a71245377a8ccbde
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -62,11 +62,11 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: 1ad0d777d1de1769e5995eb806f7ae5c15d0be54
+        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
-        commit: 81f4faa406e70dfa514e2f7642f97df33d3b84ae
+        commit: 8c08983e9c4b47779bfe0f730b210366965afb9d
     meta-security:
         url: https://git.yoctoproject.org/meta-security
         path: layers/meta-security
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 8643f911602949518c5c5474726b49f943e36b83
+        commit: 44dcf08572ce391d7c0df4f8c7510af5e096baca
     meta-pantavisor:
     meta-virtualization:
-        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
+        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:

@@ -30,14 +30,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 8643f911602949518c5c5474726b49f943e36b83
+        commit: 44dcf08572ce391d7c0df4f8c7510af5e096baca
     meta-pantavisor:
     meta-virtualization:
-        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
+        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 1ad0d777d1de1769e5995eb806f7ae5c15d0be54
+        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
         layers:
             meta-filesystems:
             meta-networking:
