@@ -12,6 +12,7 @@
 | **schedule-updatemachines** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updatemachines.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updatemachines.yaml) |
 | **schedule-updates** | [![SCHEDULE](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/schedule-updates.yaml?style=flat-square&logo=github-actions&logoColor=white&label=SCHEDULE)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/schedule-updates.yaml) |
 | **tag-changelogs** | [![TAG](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/tag-changelogs.yaml?style=flat-square&logo=github-actions&logoColor=white&label=TAG)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-changelogs.yaml) |
+| **tag-docs-scarthgap** | [![TAG](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/tag-docs-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=TAG)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-docs-scarthgap.yaml) |
 | **tag-scarthgap** | [![TAG](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/tag-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=TAG)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 <!-- WORKFLOW_TABLE_END -->
 
