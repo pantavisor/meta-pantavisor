@@ -8,25 +8,13 @@ with open(".github/machines.json") as f:
 
 branch = data["yocto_branch"]
 machines = [m for m in data["machines"] if "onpush" in m.get("workflows", [])]
-outfile = f".github/workflows/onpush-{branch}.yaml"
 
-SUMMARY_JOB = [
-    "",
-    "  summary:",
-    "    needs: build",
-    "    if: always()",
-    "    runs-on: ubuntu-latest",
-    "    steps:",
-    "      - name: Build Summary",
-    "        env:",
-    "          GH_TOKEN: ${{ github.token }}",
-    "        run: |",
-    '          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY',
-    '          echo "" >> $GITHUB_STEP_SUMMARY',
-    '          echo "| Machine | Result |" >> $GITHUB_STEP_SUMMARY',
-    '          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY',
-    """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
-]
+# Machines with "pvtest" get a dedicated named job so pvtest steps can depend
+# on them; all others go into the build-hw matrix.
+hw_machines = [m for m in machines if not m.get("pvtest")]
+pvtest_machines = [m for m in machines if m.get("pvtest")]
+
+outfile = f".github/workflows/onpush-{branch}.yaml"
 
 lines = [
     f'name: "onpush: {branch}"',
@@ -43,6 +31,12 @@ lines = [
     "      # itself ARE part of what's built; re-include them so",
     "      # changes to the build pipeline retrigger CI.",
     "      - '.github/workflows/buildkas-target.yaml'",
+]
+
+if pvtest_machines:
+    lines.append("      - '.github/workflows/call-pvtests.yaml'")
+
+lines += [
     f"      - '.github/workflows/onpush-{branch}.yaml'",
     "  # NOTE: no 'pull_request:' trigger. Pushes to same-repo branches",
     "  # already emit check runs bound to the head SHA, so PRs show",
@@ -52,7 +46,7 @@ lines = [
     "  # to get a build.",
     "",
     "jobs:",
-    "  build:",
+    "  build-hw:",
     '    name: "build (${{ matrix.machine_name }})"',
     "    strategy:",
     "      fail-fast: false",
@@ -60,7 +54,7 @@ lines = [
     "        include:",
 ]
 
-for m in machines:
+for m in hw_machines:
     name = m["name"]
     build_target = m.get("build_target", "pantavisor-starter")
     output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
@@ -84,7 +78,67 @@ lines += [
     "    secrets: inherit",
 ]
 
-lines += SUMMARY_JOB
+# Dedicated named build job + pvtest jobs for each pvtest machine.
+# Job ID is "build-<first-segment-of-machine-name>" (e.g. docker-x86_64 → build-docker).
+pvtest_build_job_ids = []
+for m in pvtest_machines:
+    name = m["name"]
+    build_target = m.get("build_target", "pantavisor-starter")
+    output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
+    sdk = 1 if m.get("sdk") == 1 else 0
+    job_id = "build-" + name.split("-")[0]
+    pvtest_build_job_ids.append(job_id)
+
+    lines += [
+        "",
+        f"  {job_id}:",
+        f'    name: "build ({name}-{branch})"',
+        "    uses: ./.github/workflows/buildkas-target.yaml",
+        "    with:",
+        f"      configs: kas/build-configs/release/{name}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
+        f"      machine_name: {name}-{branch}",
+        f"      build_target: {build_target}",
+        f'      output: "{output}"',
+        f"      sdk: {sdk}",
+        "    secrets: inherit",
+    ]
+
+    for test_path in m.get("pvtest", []):
+        test_name = test_path.split("/")[-1]
+        lines += [
+            "",
+            f"  pvtest-{test_name}:",
+            f"    needs: {job_id}",
+            "    uses: ./.github/workflows/call-pvtests.yaml",
+            "    with:",
+            f"      test_path: {test_path}",
+            "    secrets: inherit",
+        ]
+
+all_build_job_ids = ["build-hw"] + pvtest_build_job_ids
+needs_str = (
+    all_build_job_ids[0]
+    if len(all_build_job_ids) == 1
+    else f"[{', '.join(all_build_job_ids)}]"
+)
+
+lines += [
+    "",
+    "  summary:",
+    f"    needs: {needs_str}",
+    "    if: always()",
+    "    runs-on: ubuntu-latest",
+    "    steps:",
+    "      - name: Build Summary",
+    "        env:",
+    "          GH_TOKEN: ${{ github.token }}",
+    "        run: |",
+    '          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY',
+    '          echo "" >> $GITHUB_STEP_SUMMARY',
+    '          echo "| Machine | Result |" >> $GITHUB_STEP_SUMMARY',
+    '          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY',
+    """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | startswith("build (")) | "| " + (.name | ltrimstr("build (") | rtrimstr(")")) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
+]
 
 with open(outfile, "w") as f:
     f.write("\n".join(lines) + "\n")
