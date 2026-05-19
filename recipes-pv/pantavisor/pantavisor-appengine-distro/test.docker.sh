@@ -259,6 +259,35 @@ teardown_network() {
 	sudo -n modprobe -r mac80211_hwsim
 }
 
+# Remove orphan dm-crypt devices whose backing loop file has been deleted.
+# These are left over from a previously crashed test container: the storage
+# tmpfs was torn down (deleting the image file) but the dm-crypt mapping and
+# its loop device were never closed.  Active containers always have a live
+# backing file, so matching on '(deleted)' is safe even with parallel runs.
+cleanup_orphan_dmcrypt() {
+	echo "cleanup_orphan_dmcrypt: scanning /dev/mapper ..."
+	sudo -n dmsetup ls --noheadings 2>&1 | awk '{print $1}' \
+		| while IFS= read -r _dm_dev; do
+			_backing=$(sudo -n dmsetup table "$_dm_dev" 2>&1 | awk '{print $7}')
+			echo "cleanup_orphan_dmcrypt: dev=$_dm_dev backing=$_backing"
+			echo "$_backing" | grep -qE '^7:[0-9]+$' || { echo "cleanup_orphan_dmcrypt: skip $_dm_dev (not loop-backed)"; continue; }
+			_lo="/dev/loop${_backing#7:}"
+			_back_file=$(sudo -n losetup -nO BACK-FILE "$_lo" 2>&1 || true)
+			echo "cleanup_orphan_dmcrypt: lo=$_lo back_file=$_back_file"
+			case "$_back_file" in
+				*"(deleted)"*)
+					echo "cleanup_orphan_dmcrypt: removing orphan $_dm_dev (backing file deleted)"
+					sudo -n dmsetup remove --force "$_dm_dev" 2>&1 || true
+					sudo -n losetup -d "$_lo" 2>&1 || true
+					;;
+				*)
+					echo "cleanup_orphan_dmcrypt: skip $_dm_dev (backing file still live)"
+					;;
+			esac
+		done
+	echo "cleanup_orphan_dmcrypt: done"
+}
+
 exec_test() {
 	local json_path=$1
 	local interactive=$2
@@ -320,6 +349,8 @@ exec_test() {
 	unused_lo=$(sudo -n losetup -f)
 
 	start=$(date +%s)
+
+	cleanup_orphan_dmcrypt
 
 	setup_network0
 
