@@ -37,7 +37,9 @@ jobs:
         run: |
           .github/scripts/makecommit && \
           git push origin -f autopr/machine-update-$GITHUB_REF_NAME-next && \
-          gh pr create --base $GITHUB_REF_NAME --fill || \
+          gh pr create --base $GITHUB_REF_NAME \
+            --title "AutoPR: update kas meta layers to latest branch commits" \
+            --body "Automated update of kas meta layers to latest branch commits. See the commit message for the full per-repo changelog." || \
           gh pr edit autopr/machine-update-$GITHUB_REF_NAME-next --title "AutoPR: update kas meta layers to latest branch commits"
         env:
           GH_TOKEN: ${{ github.token }}
