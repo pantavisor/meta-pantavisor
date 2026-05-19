@@ -9,6 +9,61 @@ which runs both automatically in CI (via
 after the tag build completes) and on demand locally; see
 [`docs/ci/changelog.md`](../docs/ci/changelog.md).
 
+## v028-rc11
+
+Released: 2026-05-18
+
+### Downloads
+
+| Machine | Image | PV Exports | BSP | SDK |
+|---|---|---|---|---|
+| sunxi-orange-pi-3lts-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-3lts-scarthgap/sunxi-orange-pi-3lts-scarthgap-028-rc11.tar.gz)<br>`1c3a4b96ba47…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-3lts-scarthgap/pvexports-sunxi-orange-pi-3lts-scarthgap-028-rc11.tar.gz)<br>`831b4f57ad02…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-3lts-scarthgap/pantavisor-bsp-orange-pi-3lts.pvrexport.tgz)<br>`c1bb8e6f4cd3…` | — |
+| imx8qxp-b0-mek-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8qxp-b0-mek-scarthgap/imx8qxp-b0-mek-scarthgap-028-rc11.tar.gz)<br>`179078d4489e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8qxp-b0-mek-scarthgap/pvexports-imx8qxp-b0-mek-scarthgap-028-rc11.tar.gz)<br>`4bdcc6813cad…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8qxp-b0-mek-scarthgap/pantavisor-bsp-imx8qxp-b0-mek.pvrexport.tgz)<br>`234a66d72d4b…` | — |
+| docker-x86_64-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/docker-x86_64-scarthgap/docker-x86_64-scarthgap-028-rc11.tar.gz)<br>`41ceb058107b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/docker-x86_64-scarthgap/pvexports-docker-x86_64-scarthgap-028-rc11.tar.gz)<br>`fbd5c8d3de36…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/docker-x86_64-scarthgap/pantavisor-bsp-docker-x86_64.pvrexport.tgz)<br>`f450b030c82b…` | — |
+| imx8mn-var-som-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mn-var-som-scarthgap/imx8mn-var-som-scarthgap-028-rc11.tar.gz)<br>`40ce42f1ccb2…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mn-var-som-scarthgap/pvexports-imx8mn-var-som-scarthgap-028-rc11.tar.gz)<br>`418c9fdda0ab…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mn-var-som-scarthgap/pantavisor-bsp-imx8mn-var-som.pvrexport.tgz)<br>`e5e07a20435e…` | — |
+| sunxi-bananapi-m2-berry-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-bananapi-m2-berry-scarthgap/sunxi-bananapi-m2-berry-scarthgap-028-rc11.tar.gz)<br>`c325730b4f51…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-bananapi-m2-berry-scarthgap/pvexports-sunxi-bananapi-m2-berry-scarthgap-028-rc11.tar.gz)<br>`d249281108e0…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-bananapi-m2-berry-scarthgap/pantavisor-bsp-bananapi-m2-berry.pvrexport.tgz)<br>`52336bc13fbb…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-bananapi-m2-berry-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa7t2hf-neon-bananapi-m2-berry-toolchain-027-rc3.sh)<br>`4e70d346c540…` |
+| sunxi-orange-pi-r1-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-r1-scarthgap/sunxi-orange-pi-r1-scarthgap-028-rc11.tar.gz)<br>`a9f80e83be9e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-r1-scarthgap/pvexports-sunxi-orange-pi-r1-scarthgap-028-rc11.tar.gz)<br>`3f648f00bdcf…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/sunxi-orange-pi-r1-scarthgap/pantavisor-bsp-orange-pi-r1.pvrexport.tgz)<br>`410d0985a728…` | — |
+| rpi-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/rpi-scarthgap/rpi-scarthgap-028-rc11.tar.gz)<br>`dda6a4ba57dd…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/rpi-scarthgap/pvexports-rpi-scarthgap-028-rc11.tar.gz)<br>`9f776e48bae4…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/rpi-scarthgap/pantavisor-bsp-raspberrypi.pvrexport.tgz)<br>`46545289eb52…` | — |
+| raspberrypi-armv8-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-028-rc11.tar.gz)<br>`f2f6477f93e2…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/raspberrypi-armv8-scarthgap/pvexports-raspberrypi-armv8-scarthgap-028-rc11.tar.gz)<br>`063c03ef4b36…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/raspberrypi-armv8-scarthgap/pantavisor-bsp-raspberrypi-armv8.pvrexport.tgz)<br>`e763b80f166b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/raspberrypi-armv8-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa53-raspberrypi-armv8-toolchain-027-rc3.sh)<br>`48195b56f47c…` |
+| radxa-rock5a-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/radxa-rock5a-scarthgap/radxa-rock5a-scarthgap-028-rc11.tar.gz)<br>`f2c3e520aeeb…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/radxa-rock5a-scarthgap/pvexports-radxa-rock5a-scarthgap-028-rc11.tar.gz)<br>`10d2fe7a9741…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/radxa-rock5a-scarthgap/pantavisor-bsp-rock-5a.pvrexport.tgz)<br>`8bf26c34d0fb…` | — |
+| imx8mm-var-dart-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mm-var-dart-scarthgap/imx8mm-var-dart-scarthgap-028-rc11.tar.gz)<br>`7e1dfa1ffab7…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mm-var-dart-scarthgap/pvexports-imx8mm-var-dart-scarthgap-028-rc11.tar.gz)<br>`a082b03d9168…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc11/imx8mm-var-dart-scarthgap/pantavisor-bsp-imx8mm-var-dart.pvrexport.tgz)<br>`e9085d0b1ac5…` | — |
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`release-candidate` → `028-rc11`).
+
+### Component versions
+
+| Component | Previous (028-rc10) | Current (028-rc11) | Compare |
+|---|---|---|---|
+| busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
+| dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
+| libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | — | `cfe4807` | _new_ |
+| picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
+
+### Changes
+
+Changes since [`028-rc10`](https://github.com/pantavisor/meta-pantavisor/releases/tag/028-rc10):
+
+#### Features
+- **pantavisor-docs**: add docs tarball recipe, CI workflow, and S3 upload
+- add image information to the src.json
+- **ci**: per-test artifact upload with build SHA in pvtest artifact names
+- **pvtest**: reorganize workspace, per-retry dirs, split logs, inline diffs, reformat summary
+
+#### Fixes
+- **ci**: restore PR creation in schedule-updatemachines
+- **pvtest**: use per-retry test_id suffix for clean retry isolation
+
+#### CI
+- decouple changelog and docs from pvtest failures
+
+#### Docs
+- **pvtest**: automated-workflow - workspace layout, test.log sources, SUMMARY format, valgrind section
+
+#### Other
+- **(uncategorized)**: recipes-pv: automated srcrev update
+
 ## v028-rc10
 
 Released: 2026-05-13
