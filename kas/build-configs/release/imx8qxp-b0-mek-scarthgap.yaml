@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 902dde8c5bd29bb507ac8d37772565a6c9ab77cd
+        commit: 0c27c21cab57876474bb572e5d378b6707e41224
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: 1ad0d777d1de1769e5995eb806f7ae5c15d0be54
+        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -57,10 +57,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 8643f911602949518c5c5474726b49f943e36b83
+        commit: 44dcf08572ce391d7c0df4f8c7510af5e096baca
     meta-pantavisor:
     meta-virtualization:
-        commit: 3dd635f613f7299d986a8ab6bc9f584370f8ed1d
+        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:
