@@ -1,0 +1,15 @@
+#!/bin/sh
+
+source /usr/share/pantavisor/pvtest/utils
+
+device_id=$(cat /var/run/pantavisor/pv/device-id)
+pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
+cd /home/checkout
+
+dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=50 2>/dev/null
+pvr add pvr-sdk/bigfile.bin > /dev/null 2>&1
+pvr commit -m "add large file to exercise download phase" > /dev/null 2>&1
+pvr post -m "trigger observe-download test" > /dev/null 2>&1
+
+wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "DONE" 180 \
+    || { echo "ERROR: timeout waiting for revision 1 to reach DONE" >&2; exit 1; }
