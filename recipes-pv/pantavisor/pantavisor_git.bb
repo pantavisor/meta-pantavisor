@@ -29,13 +29,13 @@ S = "${WORKDIR}/git"
 
 require recipes-pv/pantavisor/pantavisor.inc
 
-PANTAVISOR_BRANCH = "fix/updater-download-read-watermark"
+PANTAVISOR_BRANCH = "dev/test-no-fix"
 
 SRC_URI = "${PANTAVISOR_URI};branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "0cd92f4dd7f2ed6ef8c58227ee107fb8269c1b76"
+SRCREV = "49f4a16d175548071a7bcb768186e8d94501a447"
 
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
