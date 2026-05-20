@@ -1,0 +1,342 @@
+++ cat /var/run/pantavisor/pv/device-id
++ device_id=6a0de4d5e1c46200097c1475
++ pvr clone https://api.pantahub.com/trails/6a0de4d5e1c46200097c1475 /home/checkout
++ cd /home/checkout
++ dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=50
++ pvr add pvr-sdk/bigfile.bin
++ pvr commit -m 'add large file to exercise download phase'
++ pvr post -m 'trigger observe-download test'
++ wait_for_value 'pvcontrol steps show-progress 1 | jq -r '\''.status'\''' DONE 180
++ local 'cmd=pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local value=DONE
++ local timeout=180
++ local counter=0
++ '[' 0 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=1
++ '[' 1 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=2
++ '[' 2 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=3
++ '[' 3 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=4
++ '[' 4 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=5
++ '[' 5 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=QUEUED
++ '[' QUEUED = DONE ']'
++ sleep 1
++ counter=6
++ '[' 6 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=7
++ '[' 7 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=8
++ '[' 8 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=9
++ '[' 9 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=10
++ '[' 10 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=11
++ '[' 11 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=12
++ '[' 12 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=13
++ '[' 13 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=14
++ '[' 14 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=15
++ '[' 15 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=16
++ '[' 16 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=17
++ '[' 17 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=18
++ '[' 18 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=19
++ '[' 19 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=20
++ '[' 20 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=21
++ '[' 21 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=22
++ '[' 22 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=23
++ '[' 23 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=24
++ '[' 24 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=25
++ '[' 25 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=26
++ '[' 26 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=27
++ '[' 27 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=28
++ '[' 28 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=29
++ '[' 29 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=30
++ '[' 30 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=31
++ '[' 31 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=32
++ '[' 32 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=33
++ '[' 33 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=34
++ '[' 34 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=35
++ '[' 35 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=36
++ '[' 36 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=37
++ '[' 37 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=38
++ '[' 38 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=39
++ '[' 39 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=40
++ '[' 40 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DOWNLOADING
++ '[' DOWNLOADING = DONE ']'
++ sleep 1
++ counter=41
++ '[' 41 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=42
++ '[' 42 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=
++ '[' '' = DONE ']'
++ sleep 1
++ counter=43
++ '[' 43 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = DONE ']'
++ sleep 1
++ counter=44
++ '[' 44 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = DONE ']'
++ sleep 1
++ counter=45
++ '[' 45 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = DONE ']'
++ sleep 1
++ counter=46
++ '[' 46 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = DONE ']'
++ sleep 1
++ counter=47
++ '[' 47 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=INPROGRESS
++ '[' INPROGRESS = DONE ']'
++ sleep 1
++ counter=48
++ '[' 48 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=49
++ '[' 49 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=50
++ '[' 50 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=51
++ '[' 51 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=52
++ '[' 52 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=53
++ '[' 53 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=TESTING
++ '[' TESTING = DONE ']'
++ sleep 1
++ counter=54
++ '[' 54 -lt 180 ']'
+++ eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
++ local result=DONE
++ '[' DONE = DONE ']'
++ return 0
