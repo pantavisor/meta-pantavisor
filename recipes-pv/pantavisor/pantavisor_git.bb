@@ -35,7 +35,7 @@ SRC_URI = "${PANTAVISOR_URI};branch=${PANTAVISOR_BRANCH} \
            file://rev0json \
            "
 
-SRCREV = "49f4a16d175548071a7bcb768186e8d94501a447"
+SRCREV = "ec221eafd4e5f3e5ab57307efc1d10fba7cd1ec5"
 
 PE = "1"
 PKGV = "026+git0+${GITPKGV}"
