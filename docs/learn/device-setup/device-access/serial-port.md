@@ -26,28 +26,27 @@ sitemap_changefreq: "monthly"
 canonical_url: "https://www.pantavisor.io/learn/device-setup/network-setup/"
 ---
 
-## Accessing Your Pantavisor Device via Serial Port
+The serial console is the most direct access path to a Pantavisor device — it works without any network configuration and shows the full boot sequence from bootloader to Pantavisor startup.
 
-The most reliable way to get started with a new Pantavisor device is by using a serial port for initial access. This direct, hardware-based connection lets you configure network settings and troubleshoot issues before you connect over a network.
+## Hardware Setup
 
-This method requires a USB-to-TTY converter cable to connect your computer to the device's serial pins.
-
-## Step 1: Connect the Hardware
-
-First, connect the serial cable to your computer and the corresponding pins on your device (TX/RX/GND).
-
-Next, you'll need a terminal emulator on your computer to open the serial console. `Minicom` is a common tool for this on Linux. To open the console, use the following command:
-
-```
-sudo minicom -D /dev/ttyUSB0
-```
-
-Make sure to replace /dev/ttyUSB0 with the correct serial device name for your board.
-
-## Step 2: Boot and Access the Debug Shell
-When you power on your device, you'll see a stream of boot messages from the bootloader and kernel. Eventually, you will see the Pantavisor banner.
+Connect a USB-to-TTY adapter to the device's TX/RX/GND serial pins. Open a terminal emulator on your computer:
 
 ```bash
+# Linux — adjust device node as needed (ttyUSB0, ttyUSB1, ttyACM0, …)
+sudo minicom -D /dev/ttyUSB0
+
+# Alternative
+screen /dev/ttyUSB0 115200
+```
+
+Refer to your board's hardware manual for the correct UART pins and baud rate. Most Pantavisor images default to **115200 8N1**.
+
+## Boot Sequence and Debug Shell
+
+When the device powers on you will see bootloader output followed by the Linux kernel log, then the Pantavisor banner:
+
+```
 _____           _              _
 | ___ \         | |            (_)
 | |_/ /_ _ _ __ | |_ __ ___   ___ ___  ___  _ __
@@ -55,20 +54,61 @@ _____           _              _
 | | | (_| | | | | || (_| |\ V /| \__ \ (_) | |
 \_|  \__,_|_| |_|\__\__,_| \_/ |_|___/\___/|_|
 
-Pantavisor (TM) (devtool-base-23-gf0694b9-250820 | Pantavisor Remix Distro (019)) - pantavisor.io
-cmdline: earlyprintk panic=3 root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor console=ttymxc0,115200 pv_try= pv_rev=0 panic=2 pv_quickboot
+Pantavisor (TM) — pantavisor.io
 
 To access the debug shell, press <ENTER>.
 To exit the shell, type 'exit' or press CTRL+d.
-Press <ENTER> again to reopen the shell.
 Useful commands:
-    * lxc-ls                 :list available containers.
-    * pventer -c <CONTAINER> :to access the shell of a container.
-
+    * lxc-ls                 list available containers
+    * pventer -c <CONTAINER> access a container's shell
 ```
 
-At this point, you can access the Debug Shell by pressing Enter. This gives you immediate access to a low-level command line on the device.
+Press **Enter** to open the debug shell. This is a root shell running in the Pantavisor initramfs — it gives you access to the device before or while containers are starting.
 
-## Debug Shell
+## What You Can Do from the Debug Shell
 
-The Debug Shell is a core feature that provides early access to your device's console, bypassing the need for a network. It is enabled by default in all official Pantavisor starter images, allowing you to begin troubleshooting or configuring your device as soon as you boot it.
+### List containers
+
+```bash
+lxc-ls -f
+```
+
+Shows all containers and their LXC state (RUNNING, STOPPED, etc.).
+
+### Enter a container's namespace
+
+```bash
+pventer -c sensor-app
+```
+
+Drops you into the container's filesystem, process, and network namespaces. Exit with `exit` or `Ctrl-D`.
+
+### Query device status
+
+```bash
+pvcontrol ls                  # full device status, auto-recovery counters
+pvcontrol container ls        # container list
+pvcontrol daemons ls          # daemon containers
+pvcontrol graph ls            # pv-xconnect service mesh
+pvcontrol buildinfo           # Pantavisor build info and current revision
+```
+
+### View logs
+
+```bash
+tail -f /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+tail -f /run/pantavisor/pv/logs/0/<container>/lxc/console.log
+```
+
+### Find credentials for Pantahub claiming
+
+```bash
+cat /pv/device-id       # unique device ID
+cat /pv/challenge       # one-time claim token
+```
+
+Use these when claiming the device on [hub.pantacor.com](https://hub.pantacor.com).
+
+## Exiting the Debug Shell
+
+Type `exit` or press `Ctrl-D`. Pantavisor continues starting containers normally after the shell exits. Pressing **Enter** again reopens the shell at any time.

@@ -26,34 +26,75 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/view-installed-applications/"
 +++
 
-You can check which applications (containers) are running on your Pantavisor-enabled device using two primary methods: the command-line interface or the local web UI.
+You can inspect running containers, their health state, and their logs from the device console, the `pvcontrol` CLI, or the pvtx local web UI.
 
-## Using the Command-Line Interface (CLI)
+## Quick Container List
 
-This is the most direct way to see your running containers.
-
-Access the serial console of your target device.
-
-Run the following command:
+On the device console (serial or SSH), `lxc-ls -f` shows all containers and their LXC state:
 
 ```bash
-lxc-ls
+lxc-ls -f
 ```
 
-This command will display a list of all currently running containers. For example:
+Example output:
 
 ```
-os
-pvr-sdk
-pvwificonnect
+NAME            STATE   AUTOSTART GROUPS IPV4 IPV6 UNPRIVILEGED
+bsp             RUNNING 0         -      -    -    false
+network         RUNNING 0         -      -    -    false
+sensor-app      RUNNING 0         -      -    -    false
 ```
 
-## Using the Web User Interface (pvtx)
+## Full Device Status with pvcontrol
 
-You can also view the running applications from the device's local web UI, known as pvtx.
+`pvcontrol ls` shows the Pantavisor view of each container, including auto-recovery counters and group membership:
 
-Open a web browser and navigate to `http://<device-ip>:12368/app`, replacing `<device-ip>` with your device's actual IP address.
+```bash
+pvcontrol ls
+```
 
-On the homepage, locate the collapsible table which lists all running applications on the device.
+More targeted sub-commands:
+
+```bash
+pvcontrol container ls          # containers and their Pantavisor status
+pvcontrol daemons ls            # long-running daemon containers
+pvcontrol groups ls             # container groups and their restart policy
+pvcontrol graph ls              # active pv-xconnect service mesh links
+pvcontrol buildinfo             # Pantavisor build and revision info
+```
+
+`pvcontrol container stop <name>` and `pvcontrol container start <name>` let you stop or restart individual containers without deploying a new revision — useful during development.
+
+## Viewing Logs
+
+Pantavisor writes container console output and LXC logs to the storage partition. On a running device the paths are:
+
+| Log | Path |
+|-----|------|
+| Pantavisor runtime | `/run/pantavisor/pv/logs/0/pantavisor/pantavisor.log` |
+| Container console | `/run/pantavisor/pv/logs/0/<container>/lxc/console.log` |
+| LXC internal log | `/run/pantavisor/pv/logs/0/<container>/lxc/lxc.log` |
+
+Tail a container's console log in real time:
+
+```bash
+tail -f /run/pantavisor/pv/logs/0/sensor-app/lxc/console.log
+```
+
+Check the Pantavisor runtime log for OTA update progress or auto-recovery events:
+
+```bash
+tail -f /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+```
+
+## Using the pvtx Web UI
+
+The pvtx UI is served directly from the device on port **12368**. Open a browser and navigate to:
+
+```
+http://<device-ip>:12368/app
+```
+
+The homepage shows all running containers and the current revision state. You can also view the revision history and initiate configuration transitions from this interface.
 
 ![list of containers](/images/pvtx-ui-containers.png)

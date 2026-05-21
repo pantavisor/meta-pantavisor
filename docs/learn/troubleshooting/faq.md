@@ -26,98 +26,127 @@ sitemap_changefreq: "monthly"
 canonical_url: "https://www.pantavisor.io/learn/troubleshooting/faq/"
 ---
 
-Find answers to commonly asked questions about the Pantavisor Linux container framework.
-
 ## App Management
 
-### How do I delete apps from my device?
+### How do I remove an app from my device?
 
-To uninstall an app, use the PVR CLI in edit mode:
+Clone the device, remove the container with `pvr app rm`, commit, and deploy:
 
-1. **Start an edit session**
+```bash
+pvr clone http://<device-ip>:12368/cgi-bin/pvr my-device
+cd my-device
+pvr app rm my-old-app
+pvr add .
+pvr commit -m "remove my-old-app"
+pvr deploy trails/0 .
+```
 
-   ```bash
-   pvr checkout
-   ```
+Pantavisor stops the container and removes it from the trail on the next boot.
 
-2. **Remove the app files and its config overlays**
+### How do I edit an application's configuration?
 
-   ```bash
-   rm -rf container_folder
-   rm -rf _config/container_folder
-   ```
+Container rootfs images (`root.squashfs`) are read-only. To overlay files on top of them, add files to `_config/<container-name>/` in your pvr checkout. The directory structure mirrors where those files live inside the container.
 
-3. **Commit and apply the changes**
+```bash
+pvr clone http://<device-ip>:12368/cgi-bin/pvr my-device
+cd my-device
+mkdir -p _config/my-app/etc/myapp
+# edit _config/my-app/etc/myapp/config.json
+pvr add .
+pvr commit -m "update my-app config"
+pvr deploy trails/0 .
+```
 
-   ```bash
-   pvr add .
-   pvr commit
-   pvr post -a
-   ```
+To change Pantavisor-level behaviour (restart policy, auto-recovery, environment variables), edit the container's `run.json` directly in the checkout directory. See [Configure Applications](../../device-setup/application/configure/).
 
-### How do I edit application configurations?
+### How do I update a container to a newer image version?
 
-Pantavisor provides configuration editing through the PVR CLI:
+```bash
+pvr app update my-app --from myorg/myapp:v2.0.0
+pvr add .
+pvr commit -m "update my-app to v2.0.0"
+pvr deploy trails/0 .
+```
 
-- **Edit mode** — Start a session with `pvr checkout`, make your changes, and commit with `pvr commit`
-- **Container metadata** — Modify container `.json` files within the checked-out state
-- **Configuration overlays** — Manage overlay configurations in the `_config` directory outside containers
+### What happens if an OTA update fails?
 
-After editing, commit and post the new revision so the device picks up the changes on the next reboot.
+Pantavisor automatically rolls back to the previous revision if the new one fails to boot or any container does not reach its health goal within the configured timeout. No manual intervention is needed. The previous revision is kept in `/trails/` and restored on the next boot.
+
+---
 
 ## Connectivity Issues
 
-### My device is not connecting. How do I fix it?
+### My device is not showing up on the network.
 
-Common connectivity troubleshooting steps:
+1. Check the Ethernet cable or Wi-Fi credentials.
+2. From the serial console, verify the device has an IP: `ip addr show eth0`
+3. Scan from your workstation: `pvr device scan`
+4. Check the Pantavisor log for DHCP or network container errors:
+   ```bash
+   tail /run/pantavisor/pv/logs/0/pantavisor/pantavisor.log
+   ```
 
-1. **Check network connection**
-   - Verify ethernet cable connection
-   - Ensure WiFi credentials are correct
-   - Test network connectivity from another device
+### pvr clone fails with "connection refused".
 
-2. **Verify device boot**
-   - Check that the device boots properly
-   - Look for the Pantavisor Linux logo
-   - Confirm login prompt appears
+Pantavisor serves the state API on port **12368**. Confirm:
 
-3. **Network configuration**
-   - Use `pvr device scan` to discover device IP
-   - Check router DHCP assignments
-   - Try connecting via ethernet if WiFi fails
+- The device has a network address: `ip addr show`
+- The pvr-sdk (or network) container is running: `lxc-ls -f`
+- You are using the full URL: `pvr clone http://<device-ip>:12368/cgi-bin/pvr <dir>`
+
+---
 
 ## Technical Questions
 
-### How are Docker containers handled by Pantavisor Linux?
+### How does Pantavisor run Docker images?
 
-Pantavisor doesn't run Docker containers natively. Instead:
+Pantavisor does not use the Docker runtime. `pvr app add --from <image>` pulls a Docker Hub image and converts it into an LXC container:
 
-- Docker images serve as root file systems
-- Containers run using LXC (Linux Containers)
-- Images are converted automatically during installation
-- Configuration overlays provide customization outside the container
+1. The image layers are merged into a single SquashFS rootfs (`root.squashfs`)
+2. An `lxc.container.conf` is generated with appropriate mount and namespace settings
+3. An optional `run.json` is created for Pantavisor-level metadata
 
-### What is the `_config` directory?
+The container runs under LXC, not Docker. There is no Docker daemon on the device.
 
-The `_config` directory contains overlay configurations that:
+### What is the `_config/` directory?
 
-- Override container-internal configurations
-- Provide persistent customization across updates
-- Map directly to paths inside containers
-- Take precedence over internal container configs
+`_config/<container-name>/` in a pvr checkout is a writable file overlay. Files placed there are layered on top of the container's read-only `root.squashfs` at runtime — analogous to a bind-mount overlay. The path inside `_config/<container-name>/` mirrors the path inside the container.
 
-### What is the pvr command line interface?
+This lets you add SSH keys, config files, or scripts to a container without rebuilding its SquashFS image.
 
-PVR (Pantavisor Revision) is a git-like CLI tool for:
+### What is `pvr`?
 
-- Managing device states and revisions
-- Committing configuration changes
-- Scanning and discovering devices
-- Synchronizing with remote repositories
-- Handling rollbacks and state management
+`pvr` (Pantavisor Revision) is a Git-like CLI for managing device state. Core operations:
 
-For detailed PVR documentation, see the [Official PVR Reference Guide](https://docs.pantahub.com/pvr/).
+| Command | What it does |
+|---------|-------------|
+| `pvr clone <url> <dir>` | Clone a device's current revision to a local directory |
+| `pvr app add --from <image>` | Convert a Docker image to a Pantavisor container |
+| `pvr app rm <name>` | Remove a container from the local state |
+| `pvr add .` | Stage all changes |
+| `pvr commit -m "..."` | Record a new local revision |
+| `pvr deploy trails/0 .` | Push the revision to the device |
+| `pvr device scan` | Discover Pantavisor devices on the local network |
+| `pvr sig add --part <name>` | Sign a container with an X.509 key |
+
+Full reference: [pvr CLI](../../cli-tools/pvr-cli/).
+
+### Why are `xconnect`, `pvcontrol`, or `rngdaemon` missing from my image?
+
+This is almost always caused by using `+=` instead of `:append` when setting `PANTAVISOR_FEATURES` in a distro include file. The `??=` weak default in `pvbase.bbclass` is silently overwritten by `+=`:
+
+```bitbake
+# WRONG — drops all defaults including xconnect, pvcontrol, rngdaemon
+PANTAVISOR_FEATURES += "appengine"
+
+# CORRECT — preserves defaults and appends
+PANTAVISOR_FEATURES:append = " appengine"
+```
+
+---
 
 ## Getting Help
 
-Having issues not covered here? Join our community forum at [Pantavisor Community Forum](https://community.pantavisor.io) for additional support and discussion.
+- [Pantavisor Community Forum](https://community.pantavisor.io)
+- [Official pvr Reference](https://docs.pantahub.com/pvr/)
+- [Pantahub Documentation](https://docs.pantahub.com/)

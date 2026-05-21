@@ -26,121 +26,134 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/configure-applications/"
 +++
 
-Let's now modify files and configurations within a container running on a Pantavisor-managed device.
+Each container's root filesystem is a read-only SquashFS image (`root.squashfs`). To change files inside a running container you do not edit the device directly. Instead you make changes in a local `pvr` checkout of the device state, then deploy a new revision. Pantavisor applies the overlay on the next boot.
 
-Because each container's root filesystem (**rootfs**) is a read-only **SquashFS** image, you cannot directly edit files on a running device. Instead, Pantavisor uses an overlay system. You make changes in a local copy of your device's configuration repository, and then you "post" a new revision to the device. The `_config/<container-name>/` directory in your repository serves as a staging area for these overlays.
+The `_config/<container-name>/` directory in a pvr checkout acts as a writable overlay tree: files placed there are layered on top of the container's read-only rootfs at startup.
 
-***
+---
 
-### Step 1: Clone the Device Repository
+## Step 1 — Clone the Device
 
-First, clone the device's current state to your local machine using the `pvr clone` command. This will create a directory containing your device's configuration.
+Clone the device's current state to your workstation. The device must be reachable on the local network.
 
 ```bash
-pvr clone <device_ip> my-device
+pvr clone http://<device-ip>:12368/cgi-bin/pvr my-device
 cd my-device
 ```
 
-### Step 2: Make Your Changes
+After cloning, the directory mirrors the device's revision:
 
-All file modifications (adding, editing, or removing) for a specific container must be made within the `_config/<container-name>/` directory. The directory structure you create here will be overlaid onto the container's rootfs.
+```
+my-device/
+├── bsp/                        ← BSP component (squashfs files, DTBs)
+├── network/                    ← network container (root.squashfs, run.json, lxc.container.conf)
+├── sensor-app/                 ← application container
+├── _config/                    ← per-container file overlays
+├── device.json                 ← device-level config (groups, auto-recovery policy)
+└── _sigs/                      ← optional container signatures
+```
 
-**Example A: Edit a Configuration File**
+---
 
-Let's change the default port for the embedded web server in the pvr-sdk container from 12368 to 12369.
+## Step 2 — Make Your Changes
 
-Open the configuration file located at `_config/pvr-sdk/etc/pvr-sdk/config.json`.
+### Edit a configuration file (overlay)
 
-Change the port value to `"12369"`.
+Files under `_config/<container-name>/` are overlaid onto that container's rootfs at runtime. Create the path that matches where the file lives inside the container.
 
-The updated file should look like this:
+Example — add your SSH public key to the `sensor-app` container:
 
 ```bash
+mkdir -p _config/sensor-app/home/root/.ssh
+cat ~/.ssh/id_ed25519.pub >> _config/sensor-app/home/root/.ssh/authorized_keys
+```
+
+### Edit a container's run manifest
+
+Each container directory contains a `run.json` (or `args.json`) that controls Pantavisor-level behaviour: restart policy, auto-recovery, environment variables, and pv-xconnect wiring. Edit it directly in the checked-out directory.
+
+Example — set an environment variable in `sensor-app/run.json`:
+
+```json
 {
-    "httpd": {
-        "listen": "0.0.0.0",
-        "port": "12369"
-    }
+  "Env": ["SENSOR_INTERVAL=10", "LOG_LEVEL=info"],
+  "auto_recovery": {
+    "policy": "on-failure",
+    "max_retries": 5,
+    "retry_delay": 5,
+    "backoff_factor": 2.0,
+    "backoff_policy": "10min"
+  }
 }
 ```
 
-**Example B: Add a New File**
+### Replace the container image
 
-Now, let's add your public SSH key to the container to enable passwordless login.
-
-Create the necessary directory structure. If the directories don't exist, create them:
+To update the container rootfs itself, use `pvr app update`:
 
 ```bash
-mkdir -p _config/pvr-sdk/home/root/.ssh
+pvr app update sensor-app --from registry.example.com/sensor-app:v1.2.0
 ```
 
-Append your public key to the authorized_keys file:
+This re-pulls the image and replaces `sensor-app/root.squashfs`.
 
-```bash
-cat ~/.ssh/id_rsa.pub >> _config/pvr-sdk/home/root/.ssh/authorized_keys
-```
+---
 
-Note: Replace id_rsa.pub with the name of your public key file if it's different.
+## Step 3 — Stage and Commit
 
-### Step 3: Stage and Commit Changes
-
-Now that you've made your changes, you need to commit them to your local repository.
-
-Check the status of your repository. This shows which files have been modified or added.
+Check what changed:
 
 ```bash
 pvr status
 ```
 
-The output will look similar to this, showing one modified (C) file and one untracked (?) file:
+Example output:
 
-```bash
-C _config/pvr-sdk/etc/pvr-sdk/config.json
-? _config/pvr-sdk/home/root/.ssh/authorized_keys
+```
+A _config/sensor-app/home/root/.ssh/authorized_keys
+C sensor-app/run.json
 ```
 
-Add (stage) your changes to be included in the next commit.
+Stage and commit:
 
 ```bash
 pvr add .
+pvr commit -m "add SSH key and configure auto-recovery for sensor-app"
 ```
 
-Check the status again. The files are now staged for the commit (A means added).
+If the container is cryptographically signed, update its signature before committing:
 
 ```bash
-pvr status
-
-A _config/pvr-sdk/home/root/.ssh/authorized_keys
-C _config/pvr-sdk/etc/pvr-sdk/config.json
-```
-
-**Update Container Signature**: If the container you modified is digitally signed (like pvr-sdk), you must update its signature to reflect the changes. This ensures the integrity of the container.
-
-```bash
-pvr sig update
+pvr sig add --part sensor-app
 pvr add .
-
-pvr commit -m "Change web server port and add SSH key for pvr-sdk"
+pvr commit -m "add SSH key and configure auto-recovery for sensor-app"
 ```
 
-## Step 4: Deploy to the Device
+---
 
-Post the new revision to your device. Pantavisor will automatically apply the update, which typically involves a system reboot.
+## Step 4 — Deploy to the Device
+
+Push the new revision to the device:
 
 ```bash
-pvr post
+pvr deploy trails/0 .
 ```
 
-Upon receiving the new revision, the device will apply the changes and restart.
+Pantavisor downloads the changed objects, writes them to a pending revision, and reboots. If the new revision boots cleanly and all containers reach their health goal, it is committed as the new permanent state. If it fails, the previous revision is restored automatically.
 
-## Step 5: Verify the Changes
+---
 
-After the device reboots, you can verify that your changes were applied successfully.
+## Step 5 — Verify
 
-Test your SSH access:
+After the device reboots, confirm the changes are live:
 
 ```bash
-ssh root@<device_ip>
-```
+# Check the container is running
+pvcontrol container ls
 
-Check the web UI by navigating to the new port in your browser: `http://<device_ip>:12369/app`
+# Inspect logs
+tail -f /run/pantavisor/pv/logs/0/sensor-app/lxc/console.log
+
+# SSH into the device if you added a key
+ssh root@<device-ip>
+```

@@ -238,28 +238,28 @@ Choose your path based on your role and experience level:
     <p>Understand the fundamentals of Pantavisor, containerization in embedded systems, and DevOps principles for IoT.</p>
     <a href="/learn/concepts/" class="btn-learn">Explore Concepts →</a>
   </div>
-  
+
   <div class="path-card">
     <div class="icon"><i class="fas fa-rocket"></i></div>
     <h3>Quick Start</h3>
     <p>Get your device up and running with Pantavisor. Flash, connect, and deploy your first application in minutes.</p>
     <a href="/learn/device-setup/" class="btn-learn">Start Setup →</a>
   </div>
-  
+
   <div class="path-card">
     <div class="icon"><i class="fas fa-hammer"></i></div>
     <h3>Build Pantavisor</h3>
     <p>Build custom Pantavisor images for your specific hardware. Learn about build systems and target configuration.</p>
     <a href="/learn/build/" class="btn-learn">View Build Guide →</a>
   </div>
-  
+
   <div class="path-card">
     <div class="icon"><i class="fas fa-microchip"></i></div>
     <h3>Porting Guide</h3>
     <p>Port Pantavisor to new hardware platforms. Understand machine configurations and platform requirements.</p>
     <a href="/learn/port/" class="btn-learn">Learn Porting →</a>
   </div>
-  
+
   <div class="path-card">
     <div class="icon"><i class="fas fa-wrench"></i></div>
     <h3>Troubleshooting</h3>
@@ -272,7 +272,7 @@ Choose your path based on your role and experience level:
 
 <div class="features-grid">
   <h2>What You'll Master</h2>
-  
+
   <div class="features-list">
   <div class="feature-item">
     <div class="icon"><i class="fas fa-sd-card"></i></div>

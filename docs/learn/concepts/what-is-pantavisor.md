@@ -32,121 +32,173 @@ sitemap_changefreq: "monthly"
 canonical_url: "https://www.pantavisor.io/learn/concepts/what-is-pantavisor/"
 ---
 
-## The Problem Pantavisor Solves
+## What Pantavisor Is
 
-Traditional embedded Linux development faces several challenges:
+**Pantavisor** is an open-source, container-based embedded Linux system runtime. It boots from a minimal initramfs — there is no conventional root filesystem — and manages the entire device lifecycle: starting LXC containers in dependency order, delivering OTA updates atomically, and exposing a local REST API for control. Every piece of user space (applications, OS services, BSP components like kernel modules and firmware) lives in its own LXC container. The host initramfs contains only Pantavisor itself.
 
-- **Monolithic Updates**: Entire system images must be replaced for any change
-- **Dependency Hell**: Complex interdependencies between system components
-- **Testing Complexity**: Difficult to test individual components in isolation
-- **Deployment Risk**: Single failure can brick entire device
-- **Development Silos**: Hardware, OS, and application teams work independently
+## The Problem It Solves
 
-## How Pantavisor Works
+Traditional embedded Linux development is built around monolithic images: a single firmware artifact contains the kernel, BSP drivers, OS, and all applications. Every change — even a one-line config fix — means rebuilding the whole image, re-flashing the device, and risking a brick if anything goes wrong mid-update. Teams working on the BSP, the OS, and the application layer step on each other because their work ships as one indivisible unit.
 
-Pantavisor transforms embedded systems into **modular, containerized architectures** where each component runs in its own lightweight container.
+Pantavisor breaks that monolith apart:
 
-### Key Components
+- Each component is an independent LXC container that can be built, tested, and updated in isolation
+- OTA updates target only the changed containers, not the full image
+- Failed updates roll back automatically to the last known-good revision
+- Container isolation means a crashed application cannot destabilize the BSP or OS layers
+
+## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│              Applications               │ ← Your containerized apps
-├─────────────────────────────────────────┤
-│             Middleware                  │ ← Services, databases, etc.
-├─────────────────────────────────────────┤
-│               OS/Userland               │ ← Linux distribution
-├─────────────────────────────────────────┤
-│              Pantavisor                 │ ← Container orchestrator
-├─────────────────────────────────────────┤
-│               Kernel                    │ ← Linux kernel
-├─────────────────────────────────────────┤
-│                BSP                      │ ← Board support package
-└─────────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│  Applications (LXC containers)                │ ← your app, Home Assistant, etc.
+├───────────────────────────────────────────────┤
+│  System services (LXC containers)             │ ← networking, daemons, middleware
+├───────────────────────────────────────────────┤
+│  BSP (LXC container)                          │ ← kernel modules, firmware squashfs
+├───────────────────────────────────────────────┤
+│  Pantavisor runtime  (~1 MB)                  │ ← container orchestrator + OTA agent
+├───────────────────────────────────────────────┤
+│  Minimal initramfs                            │ ← contains only Pantavisor itself
+├───────────────────────────────────────────────┤
+│  Linux kernel                                 │
+├───────────────────────────────────────────────┤
+│  Board Support Package (bootloader, DTBs)     │
+└───────────────────────────────────────────────┘
 ```
 
-### The Pantavisor Advantage
+Pantavisor sits between the kernel and all user space. It replaces the init system and owns everything above it.
 
-**<i class="fas fa-tools"></i> Modular Updates**
-- Update individual components without touching others
-- Rollback problematic updates instantly
-- A/B testing of different component versions
+## Device State Model
 
-**<i class="fas fa-bolt"></i> Lightweight**
-- Only 1MB footprint
-- Designed for resource-constrained devices
-- No performance overhead compared to native execution
+A Pantavisor device maintains a versioned trail of *revisions* in `/trails/`. Each revision is a complete snapshot of the running system:
 
-**<i class="fas fa-rocket"></i> DevOps Ready**
-- Container-based CI/CD pipelines
-- Automated testing and deployment
-- GitOps workflows for embedded systems
+```
+/trails/
+└── 0/              ← current revision
+    ├── bsp/        ← kernel image, modules.squashfs, firmware.squashfs, DTBs
+    ├── network/    ← network container rootfs and metadata
+    ├── app/        ← application container rootfs and metadata
+    ├── device.json ← device-level configuration (groups, auto-recovery policy)
+    └── #spec       ← format version marker used by pvr
+```
 
-**<i class="fas fa-lock"></i> Secure by Design**
-- Isolated component execution
-- Cryptographically signed updates
-- Secure boot integration
+When an OTA update arrives, Pantavisor writes the incoming objects to a *pending* revision, reboots into it, and — if the new revision reports healthy — promotes it to current. If not, it rolls back to the previous revision automatically, without operator intervention.
 
-## Real-World Example
+## Key Components
 
-Consider a smart sensor device:
+### Pantavisor Runtime
 
-### Traditional Approach
+The core daemon runs in the initramfs and is responsible for:
+
+- Mounting the storage partition and reading device state from `/trails/`
+- Starting and supervising LXC containers in declared dependency order
+- Polling [Pantahub](https://pantahub.com) for OTA updates and delivering logs
+- Exposing the local control socket (`pvcontrol`)
+
+### pvr — Device State CLI
+
+`pvr` is the developer-facing tool for Pantavisor state. It is modelled on Git: you `clone` a device, `add` containers (from Docker Hub images or local pvrexport bundles), `commit` changes, and `push` to Pantahub to deliver an OTA update. The pvr workflow works from a developer workstation and integrates naturally into CI/CD pipelines.
+
 ```bash
-# Single monolithic image
-smart-sensor-v1.2.3.img (500MB)
-├── Linux kernel
-├── Device drivers
-├── System libraries
-├── Application logic
-├── Web interface
-└── Configuration
+pvr clone http://192.168.1.122:12368/cgi-bin/pvr my-device
+cd my-device
+pvr app add --from nginx:stable-alpine webserver
+pvr add . && pvr commit -m "add nginx"
+pvr deploy trails/0 .
 ```
 
-**Problem**: Updating the web interface requires rebuilding and deploying the entire 500MB image.
+### pvcontrol — Local REST API
 
-### Pantavisor Approach
+The `pvcontrol` socket exposes a REST API for querying and controlling the running device state without cloud connectivity:
+
 ```bash
-# Modular containers
-├── bsp.pv          ← Kernel + Drivers + Firmware + Pantavisor
-├── network         ← Network configuration
-├── sensor-app      ← Application logic
-└── web-ui  (15MB)  ← Web Interface
+pvcontrol daemons ls    # list running containers
+pvcontrol graph ls      # inspect the xconnect service mesh
+pvcontrol ls            # full device status including auto-recovery counters
 ```
 
-**Solution**: Update only the web-ui container (15MB) while everything else keeps running.
+### pv-xconnect — Container Service Mesh
+
+`pv-xconnect` mediates communication between containers without requiring a shared network namespace. It injects sockets, device nodes, and service endpoints directly into each container's namespace:
+
+| Type | What it connects |
+|------|-----------------|
+| `unix` | Raw Unix domain socket proxy |
+| `rest` | HTTP-over-UDS with caller-identity headers (`X-PV-Client`, `X-PV-Role`) |
+| `dbus` | Policy-aware D-Bus proxy with interface filtering |
+| `drm` | DRM device node injection (`card0`, `renderD128`) |
+| `wayland` | Wayland compositor access for isolated UI containers |
+
+### Pantahub — Cloud Backend
+
+[Pantahub](https://pantahub.com) is the cloud service that devices register with. It stores device state, delivers OTA updates as object diffs, and aggregates logs. The `pvr` CLI authenticates to Pantahub so developers can manage a fleet of devices remotely from their workstation.
+
+## OTA Updates
+
+Updates are delivered as diffs, not full images. Only the objects (container rootfs, modules squashfs, config files) that changed are transferred. The update flow is:
+
+1. Developer commits and pushes new state with `pvr`
+2. Device polls Pantahub and downloads the diff
+3. Pantavisor writes the new objects to a pending revision
+4. Device reboots into the pending revision
+5. If the revision boots cleanly and all containers reach their health goal, it is committed as the new current state
+6. If any step fails, Pantavisor restores the previous revision and reboots
+
+## Auto-Recovery
+
+Each container (or container group) can declare a recovery policy in `device.json` or `run.json`:
+
+| Policy | Behaviour |
+|--------|-----------|
+| `on-failure` | Restart on non-zero exit only |
+| `always` | Restart on any exit |
+| Exponential backoff | Configurable `retry_delay` and `backoff_factor` |
+| `backoff_policy: "reboot"` | Reboot device after max retries |
+| `backoff_policy: "10min"` | Wait 10 minutes, then reset retry counter and try again |
+| `backoff_policy: "never"` | Leave container stopped; do not reboot |
+
+Containers with a `stable_timeout` hold the OTA commit until they have run cleanly for the configured window, preventing a bad update from being permanently committed.
+
+## Security Features
+
+| Feature | Description |
+|---------|-------------|
+| dm-crypt | Full storage encryption for the trails partition |
+| dm-verity | Per-container rootfs integrity verification at mount time |
+| Signed state | PVR state signing with X.509 keys (`pvr sig`) |
+| Secure boot | U-Boot verified boot / FIT image signing (platform-dependent) |
 
 ## Comparison with Traditional Embedded Linux
 
 | Aspect | Traditional | Pantavisor |
 |--------|-------------|------------|
-| **Update Size** | Full image (100-500MB) | Individual containers (1-50MB) |
-| **Update Time** | 5-30 minutes | 30 seconds - 5 minutes |
-| **Rollback** | Complete reflash | Instant container switch |
-| **Testing** | Full system testing required | Component-level testing |
-| **Development** | Monolithic builds | Independent container builds |
-| **Risk** | High (full system) | Low (isolated components) |
+| **Update unit** | Full image (100–500 MB) | Changed containers only (1–50 MB) |
+| **Update time** | 5–30 minutes | 30 seconds – 5 minutes |
+| **Rollback** | Complete reflash | Automatic on next boot |
+| **Component isolation** | Monolithic process tree | Separate LXC namespace per container |
+| **Failed-update recovery** | Manual intervention | Automatic rollback to previous revision |
+| **Build model** | Single monolithic build | Independent container builds |
 
-## Who Uses Pantavisor?
+## Real-World Example
 
-### Embedded Linux Developers
-- Faster development cycles
-- Better debugging capabilities
-- Simplified dependency management
+A connected sensor device running Pantavisor:
 
-### IoT Product Teams
-- Reduced update costs
-- Improved reliability
-- Faster time-to-market
+```
+/trails/0/
+├── bsp/
+│   ├── kernel.img
+│   ├── modules_6.1.77.squashfs   ← kernel modules
+│   └── firmware.squashfs         ← WiFi/BT firmware blobs
+├── network/                      ← NetworkManager container (~8 MB)
+├── sensor-app/                   ← sensor logic container (~12 MB)
+└── web-ui/                       ← dashboard container (~15 MB)
+```
 
-### DevOps Engineers
-- Container-native workflows
-- Automated deployment pipelines
-- Infrastructure as code for embedded
+Updating the dashboard means transferring only the changed `web-ui` objects. The BSP, network stack, and sensor app keep running through the update — no full reflash, no downtime for unrelated components.
 
 ## Next Steps
 
-Ready to get started?
-
-- **Get Started**: Follow our [Quick Start Guide](../device-setup/) to flash your first Pantavisor image.
-- **Download Images**: Visit our [Downloads page](/downloads/) to get pre-built images for your device.
-- **Technical Deep Dive**: Learn more about [embedded containerization](https://docs.pantahub.com/) and how it transforms IoT development.
+- **Get Started**: Follow the [Quick Start Guide](../device-setup/) to flash your first Pantavisor image.
+- **pvr CLI**: See the [pvr CLI reference](../../cli-tools/pvr-cli/) for the full command set.
+- **Deep Dive**: The [Pantahub documentation](https://docs.pantahub.com/) covers the API, container authoring, and BSP integration in detail.

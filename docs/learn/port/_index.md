@@ -29,32 +29,55 @@ canonical_url = "https://www.pantavisor.io/learn/troubleshooting/"
   menuPre = '<i class="fa-fw fas fa-layer-group"></i> '
 +++
 
-## Development and Porting Guide
+This section covers how to add support for a new device or hardware platform to `meta-pantavisor`.
 
-### Our Development Setup
+## Build System Overview
 
-Our build system is based on the Yocto Project. We use several key tools to create flashable images and system components for Pantavisor.
+`meta-pantavisor` uses **Yocto/OpenEmbedded** as its build system with **KAS** as the configuration and orchestration layer. KAS fetches the required layers, assembles `local.conf`, and launches BitBake — you do not need to manage Yocto layer paths manually.
 
-- **meta-pantavisor**: This is our custom Yocto layer that contains the core recipes, configurations, and logic required to build Pantavisor-enabled systems.
+All builds run through `kas-container`, a Docker-wrapped KAS that guarantees a reproducible build environment:
 
-- **KAS**: We use [KAS](https://github.com/siemens/kas) to manage the build environment. It handles fetching the correct layers, setting up the configuration, and launching the build process.
+```bash
+./kas-container build <config.yaml>
+```
 
-- **Bitbake**: This is the core build engine for the Yocto Project. KAS provides a simplified interface for configuring and running bitbake.
+Supported Yocto releases: **scarthgap** (current) and **kirkstone** (LTS).
 
-For a deeper dive into our Yocto configuration and build settings, please refer to the main [Yocto Session](/content/learn/build/).
+## Configuration Hierarchy
 
-### Porting a New Device
+KAS configuration is composed by layering YAML fragments:
 
-This guide will walk you through the process of adding support for a new device, enabling it to run Pantavisor and its related software.
+```
+kas/bsp-base.yaml           ← base settings for all BSP builds
+kas/scarthgap.yaml          ← Yocto release-specific patches
+kas/platforms/<family>.yaml ← vendor BSP layers for a device family
+kas/machines/<device>.yaml  ← machine-specific settings (includes platform)
+```
 
-### Porting Process Overview
+## Porting Process
 
-The process for porting a new device generally follows these three main steps:
+Adding a new device involves three steps, each covered in its own page:
 
-- **Add Platform Layers**: Integrate the necessary BSP (Board Support Package) layers for your specific hardware.
+1. **[Platform](./platform/)** — Create `kas/platforms/<family>.yaml` to declare the vendor BSP layers for a new hardware family. Skip this step if a suitable platform file already exists (check `kas/platforms/`).
 
-- **Add Machine Configuration**: Define a new machine configuration file (.conf) that specifies the device's architecture, kernel, bootloader, and other hardware-specific details.
+2. **[Machine](./machine/)** — Create `kas/machines/<device>.yaml` to bind the platform to a specific Yocto `MACHINE` name and set any device-specific BitBake variables.
 
-- **Tweak KAS Configuration**: Adjust the meta-pantavisor KAS configuration files to include your new machine and any required layer modifications for that target.
+3. **[Building](./kas/)** — Run the build, locate the output artifacts, and flash the image to the board.
 
-In general, this process is straightforward. Many platforms available on the market are already supported in `meta-pantavisor`. The bulk of the work is typically in adding the specific machine (device) configuration and making the necessary tweaks for your target.
+## Registering a Machine for CI
+
+After creating a machine file, add an entry to `.github/machines.json` so the machine appears in CI workflows, then regenerate the workflow files:
+
+```bash
+# Edit .github/machines.json, then:
+.github/scripts/makeworkflows
+```
+
+Commit `machines.json` and the generated workflow files together.
+
+## Existing Platforms and Machines
+
+Before starting, check whether your hardware is already supported:
+
+- Platforms: `kas/platforms/` — includes `freescale.yaml`, `toradex.yaml`, `raspberrypi.yaml`, `rockchip.yaml`, `sunxi.yaml`, `ti.yaml`, `variscite.yaml`, and more
+- Machines: `kas/machines/` — includes Raspberry Pi, Variscite, Toradex Verdin/Colibri, NXP MEK, Rockchip, RISC-V VisionFive2, and QEMU targets
