@@ -26,80 +26,87 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/install-first-application/"
 +++
 
-### **Installing an App with the `pvr` CLI**
+The `pvr` CLI lets you add a Docker Hub image as a Pantavisor container, commit the change locally, and deploy it to the device over the local network — all without touching the device directly.
 
-The `pvr` Command Line Interface (CLI) is the **fastest** and **easiest** way to manage changes on a Pantavisor-powered device. This guide will walk you through adding a new containerized app, specifically Tailscale, to your device.
+**Prerequisites**: `pvr` installed on your workstation ([install guide](../../../cli-tools/pvr-cli/)) and the device reachable on the local network.
 
 ---
 
-#### **1. Cloning the Device**
+## 1 — Clone the Device
 
-First, you need to clone the device's current state to your local machine. This process requires that your device is on the same local network and that you know its IP address.
-
-To clone the device, use the following command:
+Clone the device's current revision to your workstation. Pantavisor exposes its state over HTTP on port 12368.
 
 ```bash
-pvr clone <DEVICE_IP> mydevice
+pvr clone <device-ip> mydevice
+cd mydevice
 ```
 
-This command clones the device's entire state, including all running containers, their configurations, and any associated files. The device's Board Support Package (BSP) component is also cloned, ensuring a complete and accurate replica of your device's software environment.
+The checkout mirrors the live device state — all containers, their rootfs images, LXC configs, and manifests.
 
+## 2 — Add the New Container
 
-#### 2. Adding the New Container
-
-Now that you have a local copy of the device's state, you can add the new container. This example adds the Tailscale container.
-
-Use the `pvr app add` command to add the container from its source image:
+Use `pvr app add` to pull a Docker Hub image and convert it to a Pantavisor container. Specify `--platform` to match your device architecture.
 
 ```bash
+# ARM64 device (e.g. Raspberry Pi 4, iMX8)
 pvr app add tailscale --from tailscale/tailscale --platform linux/arm64
+
+# ARM32 device (e.g. iMX6)
+pvr app add tailscale --from tailscale/tailscale --platform linux/arm/v7
 ```
 
-Next, stage the newly added files to prepare them for a commit:
+`pvr app add` pulls the image, converts it to a SquashFS rootfs, and creates the container's directory with:
 
-```bash
-pvr add .
+```
+tailscale/
+├── root.squashfs               ← container filesystem
+├── root.squashfs.docker-digest ← image digest for update tracking
+└── lxc.container.conf          ← LXC runtime configuration
 ```
 
-#### 3. Committing the Changes
+## 3 — Stage and Commit
 
-To verify that your changes have been staged correctly, you can use the `pvr status` command:
+Check what was added:
 
 ```bash
 pvr status
 ```
 
-The output will look similar to this, showing the new files for the Tailscale app staged for a commit:
+Expected output:
 
-```bash
+```
 A tailscale/lxc.container.conf
 A tailscale/root.squashfs
 A tailscale/root.squashfs.docker-digest
 ```
-Once you've confirmed the status, commit the changes with a descriptive message:
+
+Stage and commit the new revision:
 
 ```bash
-pvr commit -m "Add Tailscale container"
+pvr add .
+pvr commit -m "add Tailscale container"
 ```
 
-This command creates a new **revision** of your device's configuration on your local machine.
+## 4 — Deploy to the Device
 
-#### 4. Deploying to the Device
-
-To deploy the new revision to your device, use the `pvr post` command:
+Push the new revision to the device:
 
 ```bash
-pvr post
+pvr deploy trails/0 .
 ```
 
-This command pushes the new revision to the target device. The device will automatically download the new container and trigger a reboot to apply the changes.
+Pantavisor downloads the new container objects, writes them as a pending revision, and reboots. If the revision boots cleanly, it becomes the new permanent state.
 
-### 5. Verifying the Installation
+## 5 — Verify
 
-After the device reboots, you can verify that the new container is running. If you have a serial console connected to the device, you can use the following command to list all running containers:
+After the device reboots, confirm the container is running:
 
 ```bash
-lxc-ls
+# From the device console (serial or SSH)
+lxc-ls -f
+
+# Or via pvcontrol
+pvcontrol container ls
 ```
 
-This command will display a list of all containers, including your newly installed Tailscale app, confirming that the installation was successful. You can also check the running containers on local pvtx UI that on `http:<DEVICE IP>:12368/app`
+The new container should show as `RUNNING`. You can also check from the pvtx web UI at `http://<device-ip>:12368/app`.

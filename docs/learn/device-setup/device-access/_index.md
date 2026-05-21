@@ -26,21 +26,23 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/"
 +++
 
-### Accessing a Pantavisor-enabled Device
+A Pantavisor device exposes several access points depending on your connectivity and what you need to do.
 
-You have several flexible options for accessing and interacting with a device running Pantavisor. These methods allow you to choose the best way to connect, whether for initial setup or ongoing interaction.
+| Method | When to use |
+|--------|-------------|
+| [Serial console](./serial-port/) | First boot, network not yet configured, low-level debugging, debug shell |
+| [Local network — SSH](./local-network/) | Day-to-day management once the device is on a network |
+| [pvtx web UI](./pvtx-ui/) | Browse container status, view logs, upload container packages without the CLI |
+| [Pantahub — remote](./remote-pantahub/) | OTA updates, log streaming, and device management from anywhere |
 
-### Initial Access
+### Serial Console
 
-For initial device access, a **serial port** provides the most direct and reliable connection. This low-level method allows you to see boot messages, troubleshoot issues, and perform initial configuration, such as setting up network connectivity.
+The serial console is the lowest-level access path and works without any network configuration. Pantavisor prints a debug shell prompt shortly after boot — pressing **Enter** drops you into a root shell where you can run `lxc-ls`, `pventer`, and `pvcontrol` directly on the device.
 
-Once the device is configured, you can connect via a local network using **Ethernet** or **Wi-Fi**. This enables more convenient access, such as through **SSH**, for local management from your computer.
+### Local Network
 
-### Ongoing Management and Access
+Once the device has an IP address (via Ethernet or Wi-Fi), you can reach it over SSH and via `pvr` on your workstation. The `pvr` CLI clones the device state, lets you add or modify containers, and deploys the new revision back over the network. The pvtx web UI is also reachable on port **12368**.
 
-For ongoing device access and management, Pantavisor provides two primary paths:
+### Pantahub
 
-* **Local Experience:** You can directly manage your devices from your host computer using tools like **pvtx**, which provides a web UI stored on the device itself, and the **PVR CLI** for command-line management.
-* **Remote Experience:** For remote access and management, you can use **Pantacor Hub**. This platform allows you to manage your devices and their software from a cloud-based interface.
-
-Note that you can easily switch between local and remote access modes on the fly, giving you the flexibility to use the method that best suits your needs at any given moment.
+Devices that are claimed on [Pantahub](https://pantahub.com) can be managed from anywhere. The `pvr` CLI authenticates to Pantahub and lets you clone, modify, and push device state remotely — the device polls for updates and applies them as OTA revisions. Logs are streamed to Pantahub in real time.

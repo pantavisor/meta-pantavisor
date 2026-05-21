@@ -26,46 +26,80 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/port/machine/"
 +++
 
-## How to Add a New `kas` Machine to `meta-pantavisor`
+A **machine file** in `kas/machines/` binds a platform (its set of BSP layers) to a specific Yocto `MACHINE` name and adds any device-specific BitBake configuration.
 
-After defining a `kas` platform, the next step is to create a **machine** file. This file is the most specific configuration, connecting the general platform (which contains all the layers) to a single, specific device.
+> **Before creating a new machine file**, check whether your board already has one: [`kas/machines/`](https://github.com/pantavisor/meta-pantavisor/tree/master/kas/machines). Existing machines include Raspberry Pi variants, Variscite iMX8, Toradex Verdin/Colibri, NXP MEK, Rockchip, RISC-V VisionFive2, and QEMU targets.
 
-This file tells `kas` two primary things:
-1.  Which platform (and all its layers) to use.
-2.  What to set the Yocto `MACHINE` variable to.
+---
 
-> **Before You Start:** We already have many machines defined in `meta-pantavisor`. Before creating a new one, please check if a file for your device already exists:
->
-> * [**View Existing Machines**](https://github.com/pantavisor/meta-pantavisor/tree/master/kas/machines)
+## Example: Adding the Verdin i.MX 8M Mini
 
+### 1 — Find the Vendor Machine Name
 
-### Example: Adding the Verdin i.MX 8MM machine
+The Yocto `MACHINE` variable must match a `.conf` file in the vendor's BSP layer. In the Toradex layers (`meta-toradex-nxp`), machine configs live under `conf/machine/`. The file `verdin-imx8mm.conf` gives us the machine name `verdin-imx8mm`.
 
-Let's continue our example by creating a machine file for the **Verdin i.MX 8M Mini**, which uses the `toradex-nxp` platform we defined in the previous tutorial.
+### 2 — Create the Machine YAML File
 
-#### 1. Find the Official Machine Name
-
-Before creating the file, you must find the exact `machine` name defined by the vendor's BSP. This name typically corresponds to a `.conf` file in the vendor's Yocto layer.
-
-For example, in the Toradex BSP layers (like `meta-toradex-nxp`), you can find machine configurations under `conf/machine/`. The file we are looking for is `verdin-imx8mm.conf`.
-
-Therefore, the machine name is: **`verdin-imx8mm`**
-
-#### 2. Create the Machine YAML File
-
-Now, we create a new file in the `kas/machines/` directory, named after our machine: `verdin-imx8mm.yaml`.
-
-This file will be very simple. Its main jobs are to include the correct platform and state the machine name.
-
-Add the following content to `kas/machines/verdin-imx8mm.yaml`:
+Create `kas/machines/verdin-imx8mm.yaml`:
 
 ```yaml
 header:
   version: 16
   includes:
-    # 1. Include the platform we created in the previous tutorial
-    - kas/platforms/toradex-nxp.yaml
+    - kas/platforms/toradex.yaml   # the platform that provides the BSP layers
 
-# 2. Specify the exact machine name from the BSP layer
 machine: "verdin-imx8mm"
 ```
+
+### 3 — Add Device-Specific Variables (if needed)
+
+Use `local_conf_header` to override BitBake variables for this specific board variant. For example, the Verdin iMX8MM Wi-Fi variant needs a specific device tree:
+
+```yaml
+header:
+  version: 16
+  includes:
+    - kas/platforms/toradex.yaml
+
+machine: "verdin-imx8mm"
+
+local_conf_header:
+  platform-verdin-imx8mm: |
+    UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
+    PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
+```
+
+---
+
+## Register the Machine for CI
+
+After creating the machine YAML, add an entry to `.github/machines.json` so it appears in CI workflows:
+
+```json
+{
+  "config": "kas/machines/verdin-imx8mm.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+  "name": "verdin-imx8mm",
+  "workflows": ["manual", "tag"]
+}
+```
+
+Then regenerate the GitHub Actions workflow files and commit both files together:
+
+```bash
+.github/scripts/makeworkflows
+git add .github/machines.json .github/workflows/
+git commit -m "feat: add verdin-imx8mm machine"
+```
+
+---
+
+## Machine File Structure
+
+| Key | Purpose |
+|-----|---------|
+| `header.version` | KAS format version (use `16`) |
+| `header.includes` | Platform YAML to pull in (provides BSP layers) |
+| `machine` | Yocto `MACHINE` name matching the vendor's `.conf` file |
+| `local_conf_header` | Device-specific BitBake variables |
+
+Once the machine file is in place, proceed to [Building](../kas/) to run the build and flash the image.

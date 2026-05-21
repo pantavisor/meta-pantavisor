@@ -26,56 +26,35 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/port/platform/"
 +++
 
-## How to Add a New `kas` Platform to `meta-pantavisor`
+A **platform file** in `kas/platforms/` declares the set of Yocto/OE layers required for a family of devices. Platform files are shared across multiple machine configurations — for example, `freescale.yaml` is included by both `nxp.yaml` and `toradex.yaml`.
 
-In the `meta-pantavisor` project, a **`kas` platform** file is a YAML configuration that defines a complete set of Yocto layers required for a specific family of devices. This typically includes vendor-provided Board Support Package (BSP) layers, as well as any other custom or required layers.
-
-This system simplifies build configurations by grouping all necessary layers into a single, reusable file.
-
-> **Before You Start:** We already have a substantial number of platforms defined in `meta-pantavisor`. Before creating a new one, please check if a suitable platform already exists:
->
-> * [**View Existing Platforms**](https://github.com/pantavisor/meta-pantavisor/tree/master/kas/platforms)
+> **Before creating a new platform file**, check whether a suitable one already exists: [`kas/platforms/`](https://github.com/pantavisor/meta-pantavisor/tree/master/kas/platforms). Existing platforms include `freescale.yaml`, `toradex.yaml`, `raspberrypi.yaml`, `rockchip.yaml`, `sunxi.yaml`, `ti.yaml`, and `variscite.yaml`.
 
 ---
 
-### Example: Adding the Toradex NXP Platform
+## Example: Adding a Toradex NXP Platform
 
-For this guide, we'll walk through adding support for the vendor **Toradex** and their **NXP-based** boards.
+### 1 — Identify the Vendor Layers
 
-#### 1. Identify Vendor Layers
+Consult the vendor's documentation or BSP manifest to find the required Yocto layers. For Toradex NXP boards the required layers are:
 
-First, you must identify all the Yocto layers the vendor requires for the target boards. A good place to start is the vendor's official documentation.
+- `meta-toradex-bsp-common`
+- `meta-toradex-nxp`
+- `meta-freescale`, `meta-freescale-distro`, `meta-freescale-3rdparty` (already in `freescale.yaml`)
 
-In this case, Toradex provides this information in their [developer documentation](https://developer.toradex.com/linux-bsp/os-development/reference-documentation/#manifests). From their `repo` manifest, we can see the required layers for NXP boards are:
+### 2 — Create the Platform YAML
 
-* `meta-toradex-bsp-common`
-* `meta-toradex-nxp`
-* `meta-freescale`
-* `meta-freescale-distro`
-* `meta-freescale-3rdparty`
-
-#### 2. Create the Platform YAML File
-
-With the layer information, we can create our new platform file.
-
-1.  Create a new file in the `kas/platforms/` directory. We will name it `toradex-nxp.yaml`.
-2.  A key feature of `kas` is reusability. Looking at the required layers, we see that the Freescale layers are already defined in the existing `freescale.yaml` platform file. We can **include** this file to avoid duplicating definitions.
-3.  Add the new, Toradex-specific layers under the `repo:` key.
-
-Add the following content to `toradex-nxp.yaml`:
+Create `kas/platforms/toradex-nxp.yaml`. Use `header.includes` to reuse the existing `freescale.yaml` rather than duplicating the Freescale layer definitions:
 
 ```yaml
 header:
   version: 16
   includes:
-    # Include the existing freescale layers to avoid duplication
-    - kas/platforms/freescale.yaml
+    - kas/platforms/freescale.yaml   # reuse existing Freescale layers
 
-# Add the new Toradex-specific layers
-repo:
+repos:
   meta-toradex-bsp-common:
     path: layers/meta-toradex-bsp-common
-    # Note: URLs are just plain strings, do not use Markdown
     url: "https://git.toradex.com/meta-toradex-bsp-common.git"
     branch: scarthgap-7.x.y
 
@@ -85,21 +64,11 @@ repo:
     branch: scarthgap-7.x.y
 ```
 
-> **Important**: Always make sure the path, url, and branch are correct. The branches should match the Yocto release you are targeting (e.g., scarthgap).
+Branches must match the Yocto release you are targeting (`scarthgap` or `kirkstone`).
 
-#### 3. Add Platform-Specific Configuration (Optional)
+### 3 — Add Platform-Level BitBake Variables (if needed)
 
-Some platforms require specific variables to be set in the Yocto `build/conf/local.conf` file. You can inject these settings directly from your platform file using the `local_conf_header` key.
-
-For example, the raspberrypi.yaml platform needs to add several configuration flags:
-
-```
-LICENSE_FLAGS_ACCEPTED += "synaptics-killswitch"
-RPI_USE_U_BOOT = "1"
-ENABLE_UART = "1"
-```
-
-This is done by adding the following to the `raspberrypi.yaml` file:
+Use `local_conf_header` to inject variables into `build/conf/local.conf` for all machines that include this platform. For example, the `raspberrypi.yaml` platform enables U-Boot and UART:
 
 ```yaml
 local_conf_header:
@@ -108,4 +77,18 @@ local_conf_header:
     RPI_USE_U_BOOT = "1"
     ENABLE_UART = "1"
 ```
-If your new platform (like the Toradex NXP) requires similar default settings, you can add a `local_conf_header` block to your `toradex-nxp.yaml` file in the same way.
+
+Add a `local_conf_header` block to your platform file if your vendor BSP requires default configuration flags.
+
+---
+
+## Platform File Structure
+
+| Key | Purpose |
+|-----|---------|
+| `header.version` | KAS format version (use `16` for current releases) |
+| `header.includes` | Other platform YAML files to include (for layer reuse) |
+| `repos` | Git repositories for the vendor BSP layers |
+| `local_conf_header` | Variables to append to `build/conf/local.conf` |
+
+Once the platform file exists, create a [machine file](../machine/) to target a specific board.

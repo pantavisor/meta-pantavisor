@@ -26,14 +26,14 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/application/"
 +++
 
-In Pantavisor, all user-space software and services are managed as containerized **Applications**. By isolating applications within their own containers (such as LXC or Docker-compatible environments), Pantavisor ensures that services run securely, manage their own dependencies, and can be updated independently of the core host system.
+In Pantavisor, every piece of user space — applications, system services, even OS components — runs as an isolated **LXC container**. Each container has its own read-only root filesystem (a SquashFS image), its own LXC configuration, and an optional `run.json` manifest that controls restart policy, auto-recovery, and service-mesh wiring.
 
-This section covers the complete lifecycle of managing applications on your Pantavisor device. You will learn how to:
+Containers are versioned as part of the device's **revision trail** (`/trails/`). Any change — adding an app, updating a config file, removing a service — produces a new revision that Pantavisor applies atomically. If anything goes wrong, it rolls back to the previous good revision automatically.
 
-*   **[Install Applications](./install/)**: Discover the different methods for deploying new containerized services to your device, whether locally using `pvr` or `pvtx`, or remotely via Pantahub.
-*   **[Configure Applications](./configure/)**: Customize application behavior by modifying their `run.json` manifests, mounting storage volumes, setting up networking, and managing environment variables.
-*   **[Access Applications](./access-applications/)**: Learn how to interact with running applications, expose container ports to the host network, and communicate between services.
-*   **[View Applications](./view/)**: Monitor the status of your deployed applications, inspect container health, and stream application logs.
-*   **[Remove Applications](./remove/)**: Clean up your device state by securely stopping and removing applications you no longer need.
+This section covers the complete lifecycle of managing applications on a Pantavisor device:
 
-By understanding how to manage applications, you unlock the true potential of Pantavisor as a flexible, modular platform for embedded edge devices.
+*   **[Install Applications](./install/)**: Add containerized services to your device using the `pvr` CLI directly, through the pvtx local web UI, or remotely via Pantahub.
+*   **[Configure Applications](./configure/)**: Customize container behaviour by editing the `_config/<container>/` overlay tree in your local `pvr` repository, then deploying the new revision.
+*   **[View Applications](./view/)**: Monitor running containers, inspect health and auto-recovery state, and stream logs — on-device with `pvcontrol` and `lxc-ls`, or through the pvtx web UI.
+*   **[Access Applications](./access-applications/)**: Enter a running container's namespace with `pventer`, reach its network ports, or wire services together with the pv-xconnect service mesh.
+*   **[Remove Applications](./remove/)**: Remove a container from the device state with `pvr app rm`, commit, and deploy — Pantavisor stops and discards the container on the next revision.

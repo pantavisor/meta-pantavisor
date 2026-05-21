@@ -26,69 +26,58 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/view-installed-applications/"
 +++
 
-You can remove an app or container from a Pantavisor-enabled device using the `pvr` command-line interface (CLI). The process involves cloning the device's current state, removing the app's directory locally, and then posting the new revision back to the device.
+Removing an application follows the same revision workflow as adding one: remove the container from your local `pvr` checkout, commit, and deploy. Pantavisor stops the container and removes it from the trail on the next boot.
 
 ---
 
-## Step 1: Clone the Device State
+## Step 1 — Clone the Device State
 
-First, if you haven't already, clone the device's configuration to your local machine. This creates a directory that mirrors the device's software components.
-
-Run the `pvr clone` command, replacing `<device-ip>` with your device's address and `my-device` with your preferred local directory name.
+If you do not already have a local checkout, clone the device:
 
 ```bash
-pvr clone <device-ip> my-device
-```
-
-Navigate into the newly created directory:
-
-```bash
+pvr clone http://<device-ip>:12368/cgi-bin/pvr my-device
 cd my-device
 ```
 
-Inside, you will find a file structure representing your device's components, which should look similar to this:
+The directory mirrors the device's current revision:
 
-```bash
-.
+```
+my-device/
 ├── bsp/
+├── network/
+├── sensor-app/
+├── my-old-app/           ← the container you want to remove
 ├── _config/
 ├── device.json
-├── os/
-├── pvr-sdk/
-├── pvwificonnect/
 └── _sigs/
 ```
 
-## Step 2: Remove the App's Directory
+## Step 2 — Remove the Container
 
-To remove an app, simply use `pvr app` utility. For this example, we'll remove the pvwificonnect app.
+Use `pvr app rm` to remove the container from the local state:
 
-pvr app rm pvwificonnect
+```bash
+pvr app rm my-old-app
+```
 
-This action tells Pantavisor that this component should no longer be part of the device's state.
+This deletes the container's directory from your checkout and stages the removal.
 
-## Step 3: Commit and Post the New Revision
+## Step 3 — Commit and Deploy
 
-Next, you need to stage and commit this change. This process is similar to using Git.
-
-1. Stage the change (the deletion of the directory):
+Stage any remaining changes, commit, and deploy to the device:
 
 ```bash
 pvr add .
+pvr commit -m "remove my-old-app"
+pvr deploy trails/0 .
 ```
 
-2. Commit the change with a descriptive message:
+## Step 4 — What Happens on the Device
 
-```bash
-pvr commit -m "Removed the pvwificonnect app"
-```
+When Pantavisor receives the new revision it:
 
-3. Finally, post the new revision to the device. This uploads your local changes and instructs the device to update itself.
+1. Stops the removed container
+2. Writes the new revision to `/trails/`
+3. Reboots into the new state
 
-```bash
-pvr post
-```
-
-## Step 4: Finalizing the Update
-
-After you run `pvr post`, the Pantavisor agent on the device will download and apply the new revision. It will stop and remove the container you deleted. Once the update is successfully applied, the device will reboot with the new configuration, and the app will be gone.
+After the reboot, `pvcontrol container ls` and `lxc-ls -f` will no longer show the removed container. The previous revision (with the container) is kept in the trail and can be restored by rolling back if needed.

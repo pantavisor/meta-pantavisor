@@ -26,86 +26,100 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/access-applications/"
 +++
 
-## Open Web Interface
+Pantavisor containers are isolated LXC namespaces. There are three ways to interact with a running application: enter its namespace directly, reach it over the host network, or wire it to other containers through the pv-xconnect service mesh.
 
-1. Find your device IP address (shown in upper-right corner)
-2. Open a web browser
-3. Navigate to `http://[device-ip]:8123` for Home Assistant
+## Enter a Container with pventer
 
-![Home Assistant Login](/images/home-assistant-login.png?width=400px)
+`pventer` drops you into a running container's namespace — the embedded equivalent of `docker exec`:
 
-**Note:** The default port for Home Assistant is 8123, but check the application manifest if you need to confirm the port.
-
-## Finding Application URLs
-
-**Check Port Numbers:**
 ```bash
-pvr app ls
-# View port mappings for each app
+pventer -c sensor-app
 ```
 
-**Common Application Ports:**
-- **Home Assistant**: http://[device-ip]:8123
-- **Node-RED**: http://[device-ip]:1880
-- **Grafana**: http://[device-ip]:3000
-- **Portainer**: http://[device-ip]:9000
+Once inside you have a shell in the container's filesystem, process, and network namespaces. Exit with `exit` or `Ctrl-D` to return to the host.
 
-## Accessing from Different Networks
+To inspect the container's filesystem without entering:
 
-**Local Network Access:**
-- Use the device IP address directly
-- Access from any device on the same network
+```bash
+# Get the container's init PID
+lxc-info -n sensor-app -p
 
-**Remote Access (Advanced):**
-- Configure port forwarding on your router
-- Use VPN for secure remote access
-- Consider cloud-based access solutions
+# Browse the rootfs through /proc
+ls -la /proc/<PID>/root/
+```
 
-## Web Interface Tips
+## Reach a Container over the Host Network
 
-**Browser Compatibility:**
-- Use modern browsers (Chrome, Firefox, Safari)
-- Enable JavaScript for full functionality
-- Clear cache if pages don't load properly
+If a container binds to a port, it is directly reachable on the device's IP address — no port mapping or NAT is needed. The host and containers share the default network namespace unless the container's `lxc.container.conf` explicitly isolates networking.
 
-**Mobile Access:**
-- Most applications work on mobile browsers
-- Some apps offer dedicated mobile interfaces
-- Consider bookmarking frequently used apps
+Example: a container running an HTTP server on port 8080:
 
-## Troubleshooting Access
+```bash
+curl http://<device-ip>:8080/
+```
 
-**Can't Access Application:**
-- Verify application is running with `pvr app ls`
-- Check firewall settings on your computer
-- Confirm you're using the correct IP and port
-- Try accessing from the device itself first
+To confirm which port a container is listening on, enter its namespace and inspect:
 
-**Page Won't Load:**
-- Wait for application to fully start (can take 1-2 minutes)
-- Check network connectivity
-- Verify the application started without errors
-- Try refreshing the page or clearing browser cache
+```bash
+pventer -c my-app
+ss -tlnp
+```
 
-**Connection Refused:**
-- Application may still be starting up
-- Check if port is already in use by another service
-- Verify port mapping in application configuration
+## Container-to-Container Communication with pv-xconnect
 
-## Security Considerations
+When containers need to communicate with each other without sharing a network namespace, use the **pv-xconnect** service mesh. It injects sockets or device nodes directly into a consumer container's namespace.
 
-**Default Credentials:**
-- Many applications have default usernames/passwords
-- Change default credentials immediately
-- Use strong, unique passwords
+The provider declares what it exports in `services.json`:
 
-**Network Security:**
-- Consider which applications should be accessible externally
-- Use HTTPS when available
-- Regularly update applications for security patches
+```json
+[
+  {"name": "api", "type": "rest", "socket": "/run/myapp/api.sock"}
+]
+```
 
-## Next Steps
+The consumer declares what it requires in `args.json`:
 
-- Try [installing additional apps from Docker Hub](../../install-apps/docker-hub/)
-- Learn about [managing updates](../../managing-updates/) for your system
-- Join the [Community Forum](https://community.pantavisor.io) for support and tips
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    {"name": "api", "target": "/run/pv/services/api.sock"}
+  ]
+}
+```
+
+Pantavisor's `pv-xconnect` daemon proxies the connection and injects the socket into the consumer's namespace at `/run/pv/services/api.sock`. No shared network namespace or port exposure is needed.
+
+To inspect the active service mesh:
+
+```bash
+pvcontrol graph ls
+```
+
+Supported service types:
+
+| Type | Use case |
+|------|----------|
+| `unix` | Raw Unix domain socket |
+| `rest` | HTTP-over-UDS with caller-identity headers |
+| `dbus` | Policy-aware D-Bus proxy |
+| `drm` | DRM device node injection (`card0`, `renderD128`) |
+| `wayland` | Wayland compositor access |
+
+## Remote Access via Tailscale
+
+If the Tailscale container is installed on the device, every container that uses the host network namespace is reachable over the Tailscale mesh network — no router port-forwarding required. Install Tailscale as a regular pvr application:
+
+```bash
+pvr app add tailscale --from tailscale/tailscale --platform linux/arm64
+pvr add . && pvr commit -m "add Tailscale"
+pvr deploy trails/0 .
+```
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|-------|
+| Container not responding | `pvcontrol container ls` — verify state is RUNNING |
+| Port unreachable from host | `pventer -c <app>` then `ss -tlnp` to confirm the port is bound |
+| xconnect socket missing | `pvcontrol graph ls` — check link is present; `pvcontrol daemons ls` — confirm pv-xconnect is running |
+| Container crashed | `tail /run/pantavisor/pv/logs/0/<app>/lxc/console.log` for the exit reason |

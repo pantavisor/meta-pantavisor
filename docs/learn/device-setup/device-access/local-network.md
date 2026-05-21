@@ -26,45 +26,76 @@ sitemap_changefreq: "monthly"
 canonical_url: "https://www.pantavisor.io/learn/device-setup/network-setup/"
 ---
 
-## Accessing Your Device Over a Network
-Once you've used the serial port for initial setup, you can configure your device to connect to a network for more convenient access. This will enable remote login via SSH or management through Pantahub.
+Once the device has an IP address, you can reach it over SSH, interact with it via `pvr` from your workstation, and browse its pvtx web UI.
 
 ## Connect to a Network
-The simplest way to connect to a network is by plugging an Ethernet cable directly from your device to your router. The device will automatically get an IP address via DHCP.
 
-After connecting, you can find the device's IP address from the serial console by running a command like `ifconfig`. Look for the `inet addr` field to find the IP address.
+**Ethernet**: Plug an Ethernet cable into the device and your router. The device obtains an IP via DHCP automatically.
 
-For example:
+**Wi-Fi**: Configure the wireless network from the serial console or by pre-configuring the network container before flashing.
+
+## Find the Device IP
+
+From the serial console debug shell:
+
 ```bash
-eth0      Link encap:Ethernet  HWaddr B8:27:EB:CA:26:F3
-          inet addr:192.168.1.102  Bcast:192.168.1.255  Mask:255.255.255.0
+ip addr show eth0
+# or
+ifconfig eth0
 ```
 
-## Local Network Access via SSH
-With the device's IP address, you can connect to it via SSH from any computer on the same local network. The default credentials are:
+Look for the `inet` line — for example `inet 192.168.1.102/24`.
 
-Username: `root`
-
-Password: `pantavisor`
-
-To connect, simply run:
+From your workstation, scan for Pantavisor devices on the local network:
 
 ```bash
-ssh root@[device-ip]
+pvr device scan
 ```
 
-When you connect via SSH, you are accessing the pvr-sdk container running on the device.
+## SSH Access
 
-## Security Notice
-Before deploying your device, it's crucial to secure it. You should change the default password and set up SSH keys to protect against unauthorized access.
+SSH is served by the pvr-sdk container running on the device. The default credentials for starter images are:
 
-Change the Default Password: Use the `chpasswd` command from the terminal to set a new password for the root user.
-
-Add Your Public SSH Key: For secure, password-less login, add your public key to the authorized_keys file.
+- **Username**: `root`
+- **Password**: `pantavisor`
 
 ```bash
+ssh root@<device-ip>
+```
+
+Once connected you have a shell inside the pvr-sdk container. From there you can reach the Pantavisor host commands via `pvcontrol`, check container state with `lxc-ls -f`, or enter other containers with `pventer`.
+
+## pvr CLI Access
+
+With the device's IP, your workstation can clone and manage the device state directly:
+
+```bash
+pvr clone http://<device-ip>:12368/cgi-bin/pvr my-device
+```
+
+Pantavisor exposes the revision management endpoint on port **12368**. All `pvr` operations — adding containers, deploying revisions — communicate through this port.
+
+## pvtx Web UI
+
+Open a browser to:
+
+```
+http://<device-ip>:12368/app
+```
+
+The pvtx UI shows the current revision state, running containers, logs, and device configuration. You can also upload container packages and commit transitions from here.
+
+## Security
+
+The default `pantavisor` password should be changed before production use. Add your SSH public key to avoid password-based login:
+
+```bash
+# Inside the pvr-sdk container (via SSH or pventer)
 mkdir -p ~/.ssh
-echo "your-public-key-here" >> ~/.ssh/authorized_keys
+cat >> ~/.ssh/authorized_keys <<'EOF'
+<paste your public key here>
+EOF
 chmod 600 ~/.ssh/authorized_keys
 ```
-After setting up SSH keys, you can connect securely without needing a password.
+
+To make the change persistent across updates, add the key through the `_config/pvr-sdk/` overlay in your `pvr` checkout (see [Configure Applications](../../application/configure/)).

@@ -26,57 +26,64 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/device-access/pvtx-ui/"
 +++
 
-# Pantavisor Web UI: A Quick Guide
+The pvtx UI is a web interface served directly from the device on port **12368**. It gives you a browser-based view of the device's running containers, revision state, system resources, configuration, and logs — without needing the `pvr` CLI or SSH.
 
-This guide explains how to use the web UI for a Pantavisor-enabled device, which lets you view and manage device information.
+Open a browser and navigate to:
 
-To access the UI, you'll first need to find your device's local IP address (see our previous guide on [how to find the device's IP address](https://example.com/previous-tutorial-link)). Once you have the IP, open a web browser and navigate to `http://<IP>:12368/app`.
+```
+http://<device-ip>:12368/app
+```
 
 ---
 
-## Transaction
+## Home — Revision State and Transactions
 
-The **Home** page is where you can view the current state of your device's software and manage transactions.
+The **Home** page shows the device's current revision and lets you manage software transitions.
 
 ![Home Page of Pantavisor UI](/images/pvtx-ui-home.png)
 
-On this page, you'll see:
+Key indicators:
 
-* **Status, Progress, and Revision:** These indicate the device's current state. A `Status: DONE` and `Progress: 100` with `Rev: 0` mean the device is in a stable, initial state.
-* **Begin new transaction:** This button starts a new transaction, which is how you manage updates and changes to the device's software.
-* **BSP, OS, and SDK sections:** These expandable sections display details about the Base System Platform (BSP), Operating System (OS), and Pantavisor SDK, allowing you to see the components that make up your device's firmware.
+- **Status**: `DONE` means the current revision is committed and stable. `TESTING` means a new revision is being evaluated.
+- **Progress**: Percentage completion of the current update or boot sequence.
+- **Rev**: The current revision number in the device's trail.
 
+**Containers list**: Expandable rows show each container (BSP, OS, applications) with its name and component details.
 
-More information of the transaction on []
+### Uploading a Container (Transaction)
+
+To install or update a container without the `pvr` CLI:
+
+1. Click **Begin Transition** to open the update panel.
+2. Drag and drop a `.tar.gz` container package (built with `pvr export`) into the upload area.
+3. Click **Commit Transaction**.
+
+![Transaction upload](/images/pvtx-ui-transaction.png)
+
+Pantavisor writes the uploaded container as a new pending revision and reboots. The status updates to `DONE` once the revision is committed, or rolls back if the boot fails.
+
 ---
 
 ## Stats & Config
 
-The **Stats & Config** page provides a detailed overview of your device's hardware resources and its configuration settings.
-This page is divided into two main sections:
+The **Stats & Config** page shows live resource usage and device identity.
 
 ### Device Stats
 
-This section shows real-time resource usage:
-
-* **Ram:** Shows the amount of used and total RAM.
-* **Swap:** Displays swap space usage.
-* **Disk usage:** Shows the used and total disk space.
-* **Reserved:** This is disk space reserved by Pantavisor for system operations.
+| Field | Description |
+|-------|-------------|
+| RAM | Used / total memory |
+| Swap | Swap space usage |
+| Disk usage | Storage partition used / total |
+| Reserved | Space reserved by Pantavisor for revision objects |
 
 ![Stats Page of Pantavisor UI](/images/pvtx-ui-stats.png)
 
 ### Device Meta & Config
 
-This section displays key configuration information:
-
-* **IP Addresses:** Lists the IPv4 and IPv6 addresses for each network interface, such as `eth0` and `lo` (loopback).
-* **Pantahub Status:** `pantahub.claimed` and `pantahub.online` show whether the device is connected to and claimed on the Pantahub platform. `pantahub.state` indicates the device's current connection state (e.g., `claim`).
-* **Device Configuration:** The **Device Config** table lists various key-value pairs that define the device's behavior. These include:
-    * `creds.host` and `creds.port`: The host and port used for connecting to the Pantahub API.
-    * `creds.id`: The unique ID of the device.
-    * `creds.prn` and `creds.secret`: The device's **P**antahub **R**esource **N**ame and secret key for authentication.
-
+- **IP Addresses**: IPv4/IPv6 per network interface (`eth0`, `wlan0`, `lo`)
+- **Pantahub status**: `pantahub.claimed` and `pantahub.online` show cloud connectivity; `pantahub.state` shows the current handshake state (`claim`, `connected`, etc.)
+- **Device Config**: Key-value pairs including `creds.id` (device ID), `creds.host`/`creds.port` (Pantahub API endpoint), and `creds.prn` (Pantahub Resource Name)
 
 ![Config Page of Pantavisor UI](/images/pvtx-ui-config.png)
 
@@ -84,9 +91,11 @@ This section displays key configuration information:
 
 ## Logs
 
-The **Logs** page is where you can view and troubleshoot system activity.
+The **Logs** page streams container and Pantavisor runtime logs directly in the browser.
 
-* **Log Fragments:** On the left, you can select different log files or fragments to view. These logs are often categorized by component, such as `pvwifi` (Pantavisor Wi-Fi), `pvr-sdk`, and the core `pantavisor` logs.
-* **Log Output:** The main window displays the content of the selected log file. Log entries are timestamped and categorized by severity level, such as `DEBUG`, `INFO`, and `WARN`, making it easier to identify issues. For example, `[pantahub] DEBUG` entries provide detailed information on the device's communication with Pantahub. You can see the device's connection status, configuration settings being loaded, and network operations.
+- **Log selector** (left panel): Choose a container or system component. Common sources include `pantavisor` (runtime log), `pvr-sdk`, and each application container.
+- **Log output** (main panel): Timestamped entries with severity levels (`DEBUG`, `INFO`, `WARN`, `ERROR`).
 
 ![Logs Page of Pantavisor UI](/images/pvtx-ui-logs.png)
+
+This view mirrors the on-device log files at `/run/pantavisor/pv/logs/0/<container>/lxc/console.log`.

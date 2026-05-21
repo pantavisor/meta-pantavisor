@@ -26,67 +26,69 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/install-first-application/"
 +++
 
-To add a new container or app to a Pantavisor-enabled system, you can use the **pvr CLI** in conjunction with the **Pantavisor UI (pvtx)**. This guide demonstrates how to download a Docker container from Docker Hub, prepare it for a Pantavisor device, and then upload it using the local network.
+The pvtx web UI lets you upload a container package to a device using only a browser — no `pvr deploy` or direct network access to the pvr endpoint required. You still use the `pvr` CLI on your workstation to build the package, then transfer it via the browser.
 
-### 1. Prerequisites
+**Prerequisites**: `pvr` installed on your workstation ([install guide](../../../cli-tools/pvr-cli/)) and the device reachable on the local network.
 
-You'll need a few things set up on your development machine before you get started:
-* **Pantavisor pvr CLI**: This command-line tool is essential for managing Pantavisor-enabled devices and their applications. You can install it with the following command:
-  ```bash
-  # Install Pantavisor CLI (PVR)
-  curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh | bash
-  ```
-* **Docker**: You'll also need Docker installed and running on your development machine to pull and manage container images.
+---
 
-### 2. Creating a New Pantavisor App
+## 1 — Build the Container Package
 
-Here's how to create the app package using the **pvr CLI**:
+On your workstation, create a fresh `pvr` project and add the container you want to install.
 
-1.  **Create a working directory** for your new app and navigate into it:
-    ```bash
-    mkdir device-apps
-    cd device-apps
-    ```
+```bash
+mkdir myapp-pkg
+cd myapp-pkg
+pvr init
+```
 
-2.  **Initialize a new Pantavisor project** in this directory:
-    ```bash
-    pvr init
-    ```
+Add the container from Docker Hub, setting `--platform` to match your device:
 
-3.  **Add your app** from Docker Hub. In this example, we'll use the **'hello-world'** container:
-    ```bash
-    pvr app add helloworld --from hello-world --platform linux/arm64
-    ```
-    This command pulls the **'hello-world'** image from Docker Hub and prepares the necessary files for Pantavisor.
+```bash
+pvr app add myapp --from myorg/myapp:latest --platform linux/arm64
+pvr add .
+pvr commit -m "add myapp"
+```
 
-4.  **Add the new files** to your project's revision history:
-    ```bash
-    pvr add .
-    ```
+Export the project as a `.tar.gz` bundle that pvtx can consume:
 
-5.  **Commit the changes** with a descriptive message:
-    ```bash
-    pvr commit -m "added helloworld app"
-    ```
+```bash
+pvr export myapp.tar.gz
+```
 
-6.  **Export the app** as a `.tar.gz` file. This file contains the container's filesystem and the default configuration policies:
-    ```bash
-    pvr export helloworld.tar.gz
-    ```
-    This command creates a compressed archive named `helloworld.tar.gz`.
+This archive contains the container's SquashFS rootfs, its LXC config, and the revision metadata.
 
-### 3. Uploading the App to the Device
+---
 
-Now that you have your app package, you can upload it to your Pantavisor-enabled device using the local network and the **pvtx UI**.
+## 2 — Upload via pvtx
 
-1.  **Access the Pantavisor UI**. Open a web browser and navigate to `http://<DEVICE_IP>:12368/app`, replacing `<DEVICE_IP>` with the actual IP address of your device on the local network. This will bring you to the app management page.
+Open a browser and navigate to the device's local web UI:
 
-2.  **Begin a transition**. On the web page, click on **"begin transition"**. This initiates the process of updating the device's configuration.
+```
+http://<device-ip>:12368/app
+```
 
-3.  **Upload the `.tar.gz` file**. Simply drag and drop the `helloworld.tar.gz` file you created earlier into the designated upload area.
+1. Click **"Begin Transition"** to open the update panel.
+2. Drag and drop `myapp.tar.gz` into the upload area, or use the file picker.
 
-![transction](/images/pvtx-ui-transaction.png)
+![pvtx transaction upload](/images/pvtx-ui-transaction.png)
 
-4.  **Commit the transaction**. Follow the on-screen prompts to commit the changes. The Pantavisor system will handle the rest. Check the serial console for logs, if a reboot is issue and an a debug shell is running a timeout will start before the reboot. Follow the instructions of the console to reboot the device.
+3. Click **"Commit Transaction"** to apply the change.
 
-5.  **Verify the update**. You can check the device's status and revision history in the **pvtx UI** to confirm the update has been successfully applied. You can also check the running apps on using the serial console with `lxc-ls`.
+Pantavisor writes the uploaded container as a new pending revision and reboots. If the revision boots cleanly, it becomes the new permanent state.
+
+---
+
+## 3 — Verify
+
+After the device reboots, check from the serial console or SSH:
+
+```bash
+lxc-ls -f
+```
+
+The new container should appear as `RUNNING`. You can also confirm in the pvtx UI revision history at `http://<device-ip>:12368/app`.
+
+---
+
+**Note**: If a debug shell appears on the serial console after the reboot, the device is waiting for confirmation before committing. Follow the on-screen instructions to proceed or roll back..

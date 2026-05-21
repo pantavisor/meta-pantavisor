@@ -27,86 +27,100 @@ canonical_url = "https://www.pantavisor.io/learn/port/kas/"
 +++
 
 
-### Running the Build
+With a [platform](../platform/) and [machine](../machine/) file in place, you can build the Pantavisor image and flash it to the board.
 
-Once you have saved your changes to the `Kconfig` file, you can launch the interactive build menu.
+## Running the Build
 
-From the root of your `meta-pantavisor` directory, run:
+All builds run through `kas-container`, a Docker wrapper that provides a reproducible Yocto environment without requiring a local Yocto toolchain install.
 
-```bash
-kas menu
-```
+### Option A — Interactive Menu
 
-This command opens the Kconfig menu interface. You will need to select the components for your build.
-
-1. **Select Build Type**: Choose `singleconfig`.
-
-2. **Select Codename**: Select the Yocto branch you are targeting. For our example, this is scarthgap.
-
-3. **Select Build Target**: This defines the type of Pantavisor image to build.
-
-- `pantavisor-remix`: Allows you to customize and select which containers will be pre-installed on the image.
-
-- `pantavisor-starter`: A pre-configured image that includes a base set of containers for network, Wi-Fi, and the `pvr-sdk`.
-
-For this example, let's select `pantavisor-starter`.
-
-4. **Select Machine**: Navigate to the "Machine" menu and select your target. You should now see verdin-imx8mm in the list.
-
-After making your selections, you can exit the menu. You will be prompted to save the configuration and can then choose to start the build process immediately.
-
-### Flashing the Image
-
-When the build is finished, you can find the flashable images in the output directory.
-
-**Image Location**: `build/tmp-scarthgap/deploy/images/verdin-imx8mm/`
-
-(Note: The path contains your selected codename (`scarthgap`) and machine name (`verdin-imx8mm`)).
-
-### Understanding the Output Directory
-
-In this directory, you will find many files. This is the standard output from a Yocto build. The most important files typically include:
-
-- `.wic.bz2` / `.wic.gz`: A compressed, "writeable image" file. This is usually the final, flashable image for SD cards or eMMC.
-
-- **Root Filesystem** (`.tar.gz`, `.ext4`, etc.): The raw root filesystem, often used for other deployment methods.
-
-- **Kernel Image**: (`zImage`, `bzImage`, `fitImage`, etc.) The compiled Linux kernel.
-
-- **Device Tree Blobs** (`.dtb`): Hardware configuration files for the kernel.
-
-- **Bootloader Files**: (`u-boot.img`, etc.)
-
-- **Manifest Files** (`.manifest`): A text file listing every package and version installed in the image.
-
-### Flashing with bmaptool
-
-For most boards that boot from an SD card, the easiest way to flash the image is with `bmaptool`. It's a tool that intelligently copies large sparse files (like `.wic` images) much faster than traditional tools like `dd`.
-
-1. **Identify the Image**: For our example, the file will be named something like `pantavisor-starter-verdin-imx8mm.wic.bz2`.
-
-2. **Find Your Target Device**: Insert your SD card and find its device name. You can use a command like `lsblk` to list block devices. It will likely be `/dev/sdX` (e.g., `/dev/sdb`, `/dev/sdc`).
-
-> **Warning**: Be absolutely certain you have the correct device name. Flashing to the wrong device (like your computer's main drive) will destroy all data on it.
-
-3. **Flash the Image**: Run the `bmaptool` command. It will decompress the image on the fly.
-
+`kas menu Kconfig` opens a menu-driven configuration interface:
 
 ```bash
-# Replace 'pantavisor-starter-...' with your image name
-# Replace '/dev/sdX' with your target device
-
-bmaptool copy pantavisor-starter-verdin-imx8mm.wic.bz2 /dev/sdX
+./kas-container menu Kconfig
 ```
 
-### Important Flashing Note
+Walk through the prompts:
 
-The method for flashing an image varies greatly between devices.
+1. **Build Type**: Choose `singleconfig` (or `multiconfig` for separate initramfs and container builds).
+2. **Codename**: Select the Yocto release — `scarthgap` (current) or `kirkstone` (LTS).
+3. **Build Target**:
+   - `pantavisor-starter` — Minimal image with networking, Wi-Fi, and the pvr-sdk container pre-installed.
+   - `pantavisor-remix` — Same base, but lets you choose which containers to pre-install.
+   - `pantavisor-bsp` — BSP-only image (no pre-installed containers).
+4. **Machine**: Select your target from the list — your new machine file should appear here.
 
-Some targets (like the Raspberry Pi) are flashed using an SD card.
+After saving the configuration, the build starts automatically, or run it manually:
 
-Other targets (like many Toradex or Variscite boards) may require a special utility or process to flash the image onto internal eMMC or raw NAND memory.
+```bash
+./kas-container build .config.yaml
+```
 
-Always refer to the manufacturer's documentation for the correct flashing procedure for your specific board.
+### Option B — Direct Config
 
-For instructions on targets officially supported by `meta-pantavisor`, you can also check the [Pantavisor documentation](https://docs.pantahub.com/).
+Build directly with a known config without the menu:
+
+```bash
+./kas-container build kas/machines/verdin-imx8mm.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml
+```
+
+The colon-separated fragments are merged by KAS in order. This is the same format used in `.github/machines.json`.
+
+## Build Output
+
+Artifacts land in:
+
+```
+build/tmp-scarthgap/deploy/images/<machine>/
+```
+
+Key files:
+
+| Artifact | Description |
+|----------|-------------|
+| `*.wic` / `*.wic.bz2` | Flashable disk image (SD card or eMMC) |
+| `pantavisor-initramfs-*.cpio.gz` | Pantavisor initramfs |
+| `*.pvrexport.tgz` | Pantavisor container export bundles |
+| `*.manifest` | Package list for the image |
+
+## Flashing the Image
+
+### pvflasher (recommended)
+
+[pvflasher](https://github.com/pantavisor/pvflasher) is Pantacor's cross-platform flashing tool. It handles `.wic` and `.wic.bz2` images without manual decompression and verifies the write with SHA256.
+
+```bash
+# Install
+bash <(curl -fsSL https://github.com/pantavisor/pvflasher/releases/latest/download/install.sh)
+
+# Flash
+pvflasher flash --image pantavisor-starter-verdin-imx8mm.wic.bz2 --target /dev/sdX
+```
+
+Replace `/dev/sdX` with your SD card or eMMC device.
+
+### dd (alternative)
+
+```bash
+# Decompress first
+bunzip2 pantavisor-starter-verdin-imx8mm.wic.bz2
+
+# Write — double-check of= before running
+sudo dd if=pantavisor-starter-verdin-imx8mm.wic of=/dev/sdX bs=4M conv=fsync status=progress
+```
+
+> **Warning:** `dd` overwrites the target without confirmation. Verify your device path with `lsblk` first.
+
+### Board-Specific Flashing
+
+Some boards use special flashing utilities instead of SD card:
+
+| Board family | Tool / method |
+|---|---|
+| Toradex Verdin / Colibri | Toradex Easy Installer (TEZI) — `pv_teziimg.tar.xz` |
+| NXP i.MX | `uuu` (Universal Update Utility) |
+| Rockchip | `rkdeveloptool` or SD card in Maskrom mode |
+| Raspberry Pi | SD card always; all RPi variants supported by `rpi.yaml` multi-kernel build |
+
+See the board-specific flashing guides in `docs/how-to-install/` and the [Pantavisor documentation](https://docs.pantahub.com/) for details.

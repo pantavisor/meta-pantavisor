@@ -26,52 +26,65 @@ sitemap_changefreq = "monthly"
 canonical_url = "https://www.pantavisor.io/learn/device-setup/install-first-application/"
 +++
 
-This guide explains how to install an application on your device using the Pantahub web interface.
+Pantahub is the cloud backend for Pantavisor. Once a device is claimed, you can push application updates to it from anywhere — the device polls Pantahub and applies the new revision automatically.
 
-## 1. Claim Your Device
+---
 
-Before you can manage a device, you must first claim it in your Pantahub account. Claiming associates the physical device with your account, allowing you to manage it remotely.
+## 1 — Claim Your Device
 
-To do this, you'll need the device's unique Device ID and Challenge token. The easiest way to retrieve these is directly from the device's serial console.
+Before remote management is possible, the device must be registered in your Pantahub account. The device prints a one-time challenge token and its device ID on boot.
 
-Connect to your device's serial console.
-
-Run the following commands to display the required values:
+Read them from the device console (serial or SSH):
 
 ```bash
-# Get the challenge token
 cat /pv/challenge
-pleasantly-finer-unicorn
+# pleasantly-finer-unicorn
 
-# Get the device ID
 cat /pv/device-id
-5b582638c67920b9de2
+# 5b582638c67920b9de2
 ```
 
-Log in to your account at `hub.pantacor.com` and navigate to the Claim Devices page.
+Log in to [hub.pantacor.com](https://hub.pantacor.com), go to **Claim Device**, and enter the device ID and challenge. Once claimed, the device appears in your device list and its status updates in real time.
 
-Enter the `device-id` and `challenge` you just retrieved to claim the device.
+---
 
-Once claimed, your device will appear in your device list. For more detailed information on claiming, please refer to the official documentation.
+## 2 — Build the Container Package
 
-## 2. Deploy an Application
+On your workstation, build the container you want to install using `pvr`. If you have not done this yet, follow the steps in the [pvtx install guide](../local-pvtx/) to create a `myapp.tar.gz` bundle.
 
-With the device successfully claimed, you can now deploy a new application.
+---
 
-From your device list, click on the device name to open its dashboard.
+## 3 — Deploy via Pantahub
 
-Navigate to the Manage tab.
+From the device dashboard on hub.pantacor.com:
 
-Click the Begin Transaction button. A transaction is a set of changes that will be applied to your device.
+1. Click the device name to open its detail view.
+2. Go to the **Manage** tab.
+3. Click **Begin Transaction**.
+4. Click **Upload New Part** and select your `myapp.tar.gz` file.
+5. Enter a commit message and click **Commit Transaction**.
 
-To add your application, click Upload New Part.
+Pantahub queues the update. The device polls for new revisions periodically and downloads the changed container objects as a diff (only the objects that changed are transferred). It then reboots and applies the new revision.
 
-Select and upload your application's container file, use the `helloworld.tar.gz` created with `pvr` in this [section](local-pvtx).
+---
 
-Once the file is uploaded, add a commit message describing your changes and click Commit Transaction.
+## 4 — Monitor the Update
 
-## 3. Monitor the Update
+The device dashboard shows the update progress in real time:
 
-After you commit the transaction, Pantahub will automatically push the update to your device. You can monitor the deployment progress in real-time from the device dashboard.
+| Status | Meaning |
+|--------|---------|
+| `WAITING` | Update queued, device has not yet acknowledged |
+| `INPROGRESS` | Device is downloading objects |
+| `TESTING` | Device rebooted into the new revision, running stability checks |
+| `DONE` | Revision committed — update successful |
+| `FAILED` | Device rolled back to the previous revision |
 
-The device will download the update, reboot, and apply the new revision. When the process is complete, the new revision will be marked as `DONE` in the dashboard, confirming your application was successfully installed.
+If the status reaches `DONE`, the new container is running. If it shows `FAILED`, Pantavisor automatically restored the previous revision — no manual intervention needed.
+
+---
+
+## Next Steps
+
+- [View running applications](../../view/) — check container status and logs on the device
+- [Configure applications](../../configure/) — push configuration changes through the same revision workflow
