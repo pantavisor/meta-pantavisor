@@ -33,6 +33,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	nftables \
 	util-linux \
 	pantavisor-pvtx \
+	strace \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \
 	${VIRTUAL-RUNTIME_pantavisor_config} \
 "
