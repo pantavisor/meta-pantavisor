@@ -9,6 +9,11 @@ on:
         required: false
         type: string
 
+      commit:
+        description: 'Specific commit SHA to build from; defaults to the dispatched branch/tag tip'
+        required: false
+        type: string
+
 jobs:
 
   build-docker-x86_64-scarthgap:
@@ -19,6 +24,7 @@ jobs:
       build_target: pantavisor-appengine-distro
       output: pantavisor-appengine-distro-*.tar.gz
       sdk: 0
+      ref: ${{ inputs.commit }}
     secrets: inherit
 
   start-pvtest:
@@ -26,4 +32,5 @@ jobs:
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: ${{ inputs.test_path }}
+      commit: ${{ inputs.commit }}
     secrets: inherit

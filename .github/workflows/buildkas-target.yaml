@@ -18,6 +18,10 @@ on:
       sdk:
         required: false
         type: number
+      ref:
+        description: 'Specific git ref (commit SHA, branch, tag) to build; defaults to the triggering SHA'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -31,16 +35,20 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
           git fetch --tags --force --depth=${{ inputs.fetch-depth || 1 }}
       - name: setup workspace
+        env:
+          EFFECTIVE_REF: ${{ inputs.ref || github.sha }}
         run: |
           chown -R builder:builder $RUNNER_WORKSPACE
           chown -R builder:builder /__w
           mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
-          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $EFFECTIVE_REF && git reset --hard $EFFECTIVE_REF && rm -rf build/ && git clean -f -f -d -x "
           git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
 
       - name: build
