@@ -10,6 +10,10 @@ on:
       test_path:
         required: false
         type: string
+      commit:
+        description: 'Commit SHA that was built; used to name the artifact. Defaults to github.sha.'
+        required: false
+        type: string
 jobs:
 
   validate:
@@ -87,7 +91,7 @@ jobs:
         run: |
           suffix="${{ inputs.test_path }}"
           suffix="${suffix//\//-}"
-          sha="${{ github.sha }}"
+          sha="${{ inputs.commit || github.sha }}"
           sha="${sha:0:7}"
           echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}" >> $GITHUB_ENV
 
