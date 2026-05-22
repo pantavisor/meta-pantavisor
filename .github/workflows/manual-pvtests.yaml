@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
     inputs:
 
+      commit:
+        description: 'Specific commit SHA to build from; defaults to the dispatched branch/tag tip'
+        required: false
+        type: string
+
       test_path:
         description: 'Test path to run (e.g. "local/lifecycle"); leave empty to run all tests'
         required: false
@@ -25,12 +30,14 @@ jobs:
       build_target: pantavisor-appengine-distro
       output: pantavisor-appengine-distro-*.tar.gz
       sdk: 0
+      ref: ${{ inputs.commit }}
     secrets: inherit
 
   start-pvtest:
     needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
     with:
+      commit: ${{ inputs.commit }}
       test_path: ${{ inputs.test_path }}
       parallel: ${{ inputs.parallel }}
     secrets: inherit
