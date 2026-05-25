@@ -23,6 +23,9 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v6
+      - name: Install latest GitHub CLI
+        run: |
+          curl -sSL https://github.com/cli/cli/releases/download/v2.92.0/gh_2.92.0_linux_amd64.tar.gz | tar -xz -C /usr/bin --strip-components=2 gh_2.92.0_linux_amd64/bin/gh
       - run: ls .github/scripts
       - run: pwd
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE
