@@ -1,0 +1,63 @@
++ SOCK=/run/pantavisor/pv/pv-ctrl
++ PIDNORM='sort_by(.name) | map(.pid = (if (.pid // 0) > 0 then "POS" else .pid end))'
++ echo '== daemons initial =='
+== daemons initial ==
++ pvcontrol daemons ls
++ jq -M 'sort_by(.name) | map(.pid = (if (.pid // 0) > 0 then "POS" else .pid end))'
++ tr -d '\r'
+[
+  {
+    "name": "hwrngd",
+    "pid": 0,
+    "respawn": true
+  },
+  {
+    "name": "pv-xconnect",
+    "pid": "POS",
+    "respawn": true
+  }
+]
++ echo '== stop pv-xconnect =='
+== stop pv-xconnect ==
++ pvcontrol daemons stop pv-xconnect
+
++ sleep 2
++ pvcontrol daemons ls
++ jq -M 'sort_by(.name) | map(.pid = (if (.pid // 0) > 0 then "POS" else .pid end))'
++ tr -d '\r'
+[
+  {
+    "name": "hwrngd",
+    "pid": 0,
+    "respawn": true
+  },
+  {
+    "name": "pv-xconnect",
+    "pid": -1,
+    "respawn": false
+  }
+]
++ echo '== start pv-xconnect =='
+== start pv-xconnect ==
++ pvcontrol daemons start pv-xconnect
+
++ sleep 2
++ pvcontrol daemons ls
++ jq -M 'sort_by(.name) | map(.pid = (if (.pid // 0) > 0 then "POS" else .pid end))'
++ tr -d '\r'
+[
+  {
+    "name": "hwrngd",
+    "pid": 0,
+    "respawn": true
+  },
+  {
+    "name": "pv-xconnect",
+    "pid": "POS",
+    "respawn": true
+  }
+]
++ echo '== stop non-existent daemon (expect 404) =='
+== stop non-existent daemon (expect 404) ==
++ pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X PUT --data '{"action":"stop"}' http://localhost/daemons/nonexistent-daemon
+404
