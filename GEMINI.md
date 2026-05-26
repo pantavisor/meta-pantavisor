@@ -30,7 +30,7 @@ Key documents:
 - [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
 - [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide
 - [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
-- [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, testplans)
+- [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, todo list)
 
 ## Key Pitfalls
 
@@ -53,3 +53,4 @@ PANTAVISOR_FEATURES:append = " appengine"
 - **Storage state**: Use fresh storage volumes when testing pvtx.d changes (`docker volume rm storage-test`)
 - **API testing**: Use `pvcurl`/`pvcontrol` (not `curl`) inside appengine containers
 - **Formatting**: Run `clang-format -i` on modified `.c`/`.h` pantavisor files before committing
+- **pvtest todo list**: Update the todo list in `docs/testing/automated-workflow.md` whenever a pvtest is added, modified, or removed — mark it `✓` when complete.

@@ -349,13 +349,18 @@ done
 
 ---
 
-## Test plan
+## Todo list
 
 Tests are organized by scope (`local` / `remote`) and category. The table below tracks implementation status.
 
-### local — tests running entirely within the appengine container
+### local — local experience tests
+
+Local experience tests exercise Pantavisor features that operate without any cloud connectivity. These tests cover the ctrl server's unix socket API, container lifecycle, runtime behavior, security policies, and local services.
 
 #### core
+
+*Core Pantavisor initialization: config loading, config validation, namespace setup.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/core/legacy-config-overload` | Legacy configuration overload | ✓ |
@@ -364,6 +369,9 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/core/rootfs-namespace` | Rootfs namespace (mounts, symlinks, etc.) | |
 
 #### lifecycle
+
+*Container and revision lifecycle: updates (reboot/non-reboot), rollback, auto-recovery, power-loss safety.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/lifecycle/reboot-nonreboot-rollback` | Reboot, non-reboot and rollback updates | ✓ |
@@ -381,6 +389,9 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/lifecycle/auto-recovery-backoff-duration` | Backoff duration resets retry cycle after exhaustion | |
 
 #### runtime
+
+*Container runtime behavior: state JSON handling, groups, storage persistence, exports, remount policies.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/runtime/invalid-state-json` | Invalid State JSON | |
@@ -394,20 +405,22 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | ✓ |
 | `local/runtime/objects-crud` | Object store put/get/verify (pv-ctrl) | ✓ |
 | `local/runtime/steps-rw` | Step read + local revision put (pv-ctrl) | ✓ |
+| `local/runtime/invalid-signal-handling` | Invalid Signal Handling | |
 
 #### control
+
+*Tests that target the pv-ctrl unix socket API in a general way. Other categories may also use pv-ctrl, but for a specific subsystem rather than the API surface itself.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/control/basic-endpoints` | Basic Endpoints (Containers, Objects, etc.) | ✓ |
+| `local/control/basic-endpoints-curl` | Basic Endpoints via cURL | ✓ |
 | `local/control/status-codes` | HTTP status-code contract (commands, signals, drivers, buildinfo) | ✓ |
-| `local/control/invalid-signal-handling` | Invalid Signal Handling | |
-| `local/control/local-run-command` | Local Run Command | |
-| `local/control/ssh-override` | SSH Override | |
-| `local/control/object-step-management` | Object & Step Management | |
-| `local/control/metadata-manipulation` | Metadata Manipulation | |
-| `local/control/pvcontrol-pvcurl` | pvcontrol & pvcurl tool verification | |
 
 #### xconnect
+
+*xconnect service mesh: proxying, identity headers, D-Bus mediation, DRM, and Wayland isolation.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/xconnect/unix-sockets` | Unix Sockets (UDS proxying) | |
@@ -417,6 +430,9 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/xconnect/wayland` | Wayland (Isolated UI rendering) | |
 
 #### security
+
+*Security policies: secure boot, OEM key validation, container roles, object checksum verification, encrypted storage.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/security/strict-secure-boot` | Strict Secure Boot (Unsigned rejection) | ✓ |
@@ -428,6 +444,9 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/security/secureboot-sig-0x30` | Secure Boot when signature starts with 0x30 | |
 
 #### services
+
+*On-device services: garbage collection, logging, SSH, metadata manipulation, tsh daemon, IPAM, and other auxiliary features.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `local/services/log-output-formats` | Log Output Formats (filetree/singlefile) | |
@@ -436,6 +455,8 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/services/metadata-crud` | Device/user metadata CRUD (pv-ctrl) | ✓ |
 | `local/services/tsh-daemon` | tsh daemon management & log capture | |
 | `local/services/log-rotation` | Log rotation functionality | |
+| `local/services/ssh-override` | SSH Override | |
+| `local/services/metadata-manipulation` | Metadata Manipulation | |
 | `local/services/ipam-single-pool` | Single IPAM pool — container gets IP from pool | |
 | `local/services/ipam-multi-pool` | Two IPAM pools — correct address assignment | |
 | `local/services/ipam-collision` | Conflicting pool addresses detected and rejected | |
@@ -444,15 +465,23 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 
 ---
 
-### remote — tests requiring Pantahub connectivity
+### remote — remote experience tests
+
+Remote experience tests require an active Pantacor Hub connection and exercise the device-cloud communication layer: initial claiming, revision delivery, cloud status reporting, and remote services.
 
 #### core
+
+*Core remote initialization: pantahub.config parsing (encrypted and unencrypted).*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/core/encrypted-pantahub-config` | Encrypted `pantahub.config` handling | ✓ |
 | `remote/core/unencrypted-pantahub-config` | Unencrypted `pantahub.config` handling | ✓ |
 
 #### lifecycle
+
+*Cloud-driven revision lifecycle: simultaneous updates, disk-space handling, cloud rollback status, retry logic.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/lifecycle/simultaneous-updates` | Successful Multiple Simultaneous Remote Updates | ✓ |
@@ -463,16 +492,22 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `remote/lifecycle/claim-after-local-updates` | Claim after local updates with random artifacts | |
 
 #### control
+
+*Tests that target Pantacor Hub communication in a general way. Other categories also use hub communication, but for their specific purpose (revision delivery, log push, etc.).*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/control/manual-claim` | Manual Device Claim | ✓ |
 | `remote/control/auto-claim` | Automatic Device Claim | ✓ |
 | `remote/control/always-remote-disabled` | Always Remote Disabled | |
 | `remote/control/always-remote-enabled` | Always Remote Enabled | ✓ |
-| `remote/control/device-user-metadata` | Device/User Metadata Exchange | |
 
 #### services
+
+*Cloud-integrated services: log push, metadata exchange, and other hub-backed features.*
+
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/services/ph-logger-cloud-push` | `ph-logger` cloud push | ✓ |
+| `remote/services/device-user-metadata` | Device/User Metadata Exchange | |
 
