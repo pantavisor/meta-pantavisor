@@ -1,0 +1,56 @@
++ echo '== steps get 0 (top-level keys) =='
+== steps get 0 (top-level keys) ==
++ pvcontrol steps get 0
++ jq -M keys
++ tr -d '\r'
+[
+  "#spec",
+  "_config/pvr-sdk/etc/pvr-sdk/config.json",
+  "_sigs/bsp.json",
+  "_sigs/pvr-sdk.json",
+  "bsp/modules.squashfs",
+  "bsp/pantavisor",
+  "bsp/run.json",
+  "bsp/src.json",
+  "device.json",
+  "pvr-sdk/_dm/root.squashfs.json",
+  "pvr-sdk/lxc.container.conf",
+  "pvr-sdk/pvpkg.json",
+  "pvr-sdk/root.squashfs",
+  "pvr-sdk/root.squashfs.docker-digest",
+  "pvr-sdk/root.squashfs.hash",
+  "pvr-sdk/run.json",
+  "pvr-sdk/src.json"
+]
++ echo '== steps show-progress 0 =='
+== steps show-progress 0 ==
++ pvcontrol steps show-progress 0
++ jq -M
++ tr -d '\r'
+{
+  "status": "DONE",
+  "status-msg": "Factory revision",
+  "progress": 100,
+  "retries": 0
+}
++ echo '== steps get current -> file =='
+== steps get current -> file ==
++ pvcontrol -f /tmp/state.json steps get current
+++ '[' -s /tmp/state.json ']'
+++ echo yes
++ echo 'current state saved non-empty: yes'
+current state saved non-empty: yes
++ echo '== steps put new local revision =='
+== steps put new local revision ==
++ pvcontrol -m 'test put' steps put /tmp/state.json locals/test-put-rev
++ echo 'steps put exit: 0'
+steps put exit: 0
++ echo '== steps ls names =='
+== steps ls names ==
++ pvcontrol steps ls
++ jq -M 'map(.name) | sort'
++ tr -d '\r'
+[
+  "0",
+  "locals/test-put-rev"
+]

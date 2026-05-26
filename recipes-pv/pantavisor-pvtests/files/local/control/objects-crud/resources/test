@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# pv-ctrl object store.
+# Covers testplan-pvctrl.md Tests 11 (list), 12 (put small),
+# 13 (put large / chunked), 14 (get + integrity), 15 (bad checksum -> 422),
+# 16 (duplicate put idempotency).
+#
+# Object content is fixed (never random) so SHA256 hashes are stable; we
+# assert booleans/counts/codes rather than the hashes themselves.
+
+SOCK=/run/pantavisor/pv/pv-ctrl
+
+present() {
+	# present <sha> -> "true"/"false" whether sha is in objects ls
+	# (objects ls returns [{"sha256":..,"size":..}, ...])
+	pvcontrol objects ls | jq -r --arg s "$1" 'any(.[]; .sha256 == $s)' | tr -d '\r'
+}
+
+echo "== initial object count =="
+pvcontrol objects ls | jq -M 'length' | tr -d '\r'
+
+echo "== put small object (fixed content) =="
+printf 'hello pvctrl object test\n' > /tmp/small.txt
+SHA_SMALL=$(sha256sum /tmp/small.txt | awk '{print $1}')
+pvcontrol objects put /tmp/small.txt "$SHA_SMALL"
+echo "small object present: $(present "$SHA_SMALL")"
+
+echo "== put large object (2MB, chunked upload) =="
+head -c 2097152 /dev/zero | tr '\0' 'x' > /tmp/large.bin
+SHA_LARGE=$(sha256sum /tmp/large.bin | awk '{print $1}')
+pvcontrol objects put /tmp/large.bin "$SHA_LARGE"
+echo "large object present: $(present "$SHA_LARGE")"
+
+echo "== get large object + verify integrity =="
+pvcontrol -f /tmp/large-dl.bin objects get "$SHA_LARGE"
+SHA_DL=$(sha256sum /tmp/large-dl.bin | awk '{print $1}')
+echo "download integrity ok: $([ "$SHA_DL" = "$SHA_LARGE" ] && echo yes || echo no)"
+
+echo "== put with wrong checksum (expect 422) =="
+printf 'checksum mismatch payload\n' > /tmp/bad.txt
+pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket "$SOCK" \
+	-X PUT -T /tmp/bad.txt \
+	http://localhost/objects/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+echo "== duplicate put is idempotent =="
+CNT_BEFORE=$(pvcontrol objects ls | jq 'length' | tr -d '\r')
+pvcontrol objects put /tmp/small.txt "$SHA_SMALL"
+CNT_AFTER=$(pvcontrol objects ls | jq 'length' | tr -d '\r')
+echo "object count unchanged on duplicate: $([ "$CNT_BEFORE" = "$CNT_AFTER" ] && echo yes || echo no)"

@@ -8,6 +8,47 @@ For xconnect container-to-container tests (unix, dbus, drm), see [testplan-xconn
 
 ---
 
+## Automated Coverage
+
+Most of this plan is now reproducible in the `pvtests` harness under
+`recipes-pv/pantavisor-pvtests/files/local/control/`. Each test boots an
+appengine (bsp + pvr-sdk) and diffs stdout against a golden `output` file.
+
+```bash
+# run the whole automated control suite
+./recipes-pv/pantavisor/pantavisor-appengine-distro/test.docker.sh \
+    -d recipes-pv/pantavisor-pvtests/files run local/control
+
+# regenerate one test's golden output after a change
+./recipes-pv/pantavisor/pantavisor-appengine-distro/test.docker.sh \
+    -d recipes-pv/pantavisor-pvtests/files run local/control/<name> --overwrite
+```
+
+| Tests | Automated test |
+|-------|----------------|
+| 2, 3, 4, 7, 11 (count) | `basic-endpoints` (pvcurl) / `basic-endpoints-curl` (real curl) |
+| 8, 9, 10 | `metadata-crud` |
+| 11–16 | `objects-crud` |
+| 17–20 | `daemons` |
+| 5, 6, 30 | `steps-rw` |
+| 1, 22, 23, 24, 25, 27, 31 | `commands` |
+
+Not automated (kept manual):
+- **Test 21** (xconnect graph): meaningful graph needs the unix example
+  containers, which live with [testplan-xconnect.md](testplan-xconnect.md).
+- **Test 26** (poweroff): destructive; the harness already issues poweroff at
+  teardown.
+- **Test 28** (container start/stop/restart): overlaps
+  [testplan-container-control.md](testplan-container-control.md).
+- **Test 29** (steps install): needs a valid pvrexport step tarball fixture.
+
+> HTTP status codes are asserted with raw `pvcurl -w '%{http_code}'` (and the
+> fast nc `-N` path), since `pvcontrol` surfaces errors only via its exit code.
+> Signals issued from a platform container (pvr-sdk) return **500** for both
+> `ready` and `alive` — see the note on Tests 24/25 below.
+
+---
+
 ## Prerequisites
 
 ### Build Appengine Image
@@ -857,11 +898,11 @@ Tests executed against appengine with workspace overlay (pantavisor feature/xcon
 | Test 21: XConnect Graph | PASS | Shows unix link between containers |
 | Test 22: Drivers List | PASS | Returns `{}` (no BSP/drivers in appengine) |
 | Test 23: Drivers Load/Unload | PASS | Returns 200 OK (no-op without drivers) |
-| Test 24: Signal Ready | EXPECTED | 500 "Signal not expected" - signals are container-only, not from `_pv_` |
-| Test 25: Signal Alive | EXPECTED | 500 "Signal not expected" - same as T24 |
+| Test 24: Signal Ready | EXPECTED | 500 from a platform caller (pvr-sdk is not ready-gated). Automated in `commands` |
+| Test 25: Signal Alive | EXPECTED | 500 — `alive` is not a supported signal. Automated in `commands` |
 | Test 26: Poweroff | SKIP | Destructive - shuts down appengine |
 | Test 27: Run GC | PASS | Garbage collector runs successfully |
-| Test 28: Container Stop/Start | N/A | `/containers/{}` PUT endpoint not implemented |
+| Test 28: Container Stop/Start | PASS | `/containers/{}` PUT now implemented; automation deferred to testplan-container-control |
 | Test 29: Steps Install | EXPECTED | Needs valid pvrexport tarball structure, not bare state.json |
 | Test 30: Steps Put State | PASS | New local revision created with commitmsg |
 | Test 31: Enable/Disable SSH | PASS | Both commands succeed |
