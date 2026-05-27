@@ -392,11 +392,14 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 | `local/runtime/status-goal-success-failure` | Status Goal Success and Failure | ✓ |
 | `local/runtime/container-exports` | Container Exports to Host | ✓ |
 | `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | ✓ |
+| `local/runtime/objects-crud` | Object store put/get/verify (pv-ctrl) | ✓ |
+| `local/runtime/steps-rw` | Step read + local revision put (pv-ctrl) | ✓ |
 
 #### control
 | Test | Description | Done |
 |------|-------------|------|
 | `local/control/basic-endpoints` | Basic Endpoints (Containers, Objects, etc.) | ✓ |
+| `local/control/status-codes` | HTTP status-code contract (commands, signals, drivers, buildinfo) | ✓ |
 | `local/control/invalid-signal-handling` | Invalid Signal Handling | |
 | `local/control/local-run-command` | Local Run Command | |
 | `local/control/ssh-override` | SSH Override | |
@@ -429,6 +432,8 @@ Tests are organized by scope (`local` / `remote`) and category. The table below 
 |------|-------------|------|
 | `local/services/log-output-formats` | Log Output Formats (filetree/singlefile) | |
 | `local/services/on-demand-gc` | On-Demand Garbage Collection | ✓ |
+| `local/services/daemons` | Daemon list/stop/start (pv-ctrl) | ✓ |
+| `local/services/metadata-crud` | Device/user metadata CRUD (pv-ctrl) | ✓ |
 | `local/services/tsh-daemon` | tsh daemon management & log capture | |
 | `local/services/log-rotation` | Log rotation functionality | |
 | `local/services/ipam-single-pool` | Single IPAM pool — container gets IP from pool | |
