@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# pv-ctrl commands, signals, drivers and buildinfo (HTTP status contract).
+# pv-ctrl HTTP status-code contract for commands, signals, drivers, buildinfo.
 # Covers testplan-pvctrl.md Tests 1 (buildinfo), 22 (drivers list),
 # 23 (drivers load/unload), 24 (signal ready), 25 (signal alive),
 # 27 (run-gc), 31 (enable/disable-ssh).
@@ -34,6 +34,8 @@ post_cmd() {
 		sleep 1
 		i=$((i + 1))
 	done
+	[ "$c" = "503" ] &&
+		echo "ERROR: timeout waiting for /commands slot to free (still 503 after ${i}s)" >&2
 	echo "$c"
 }
 

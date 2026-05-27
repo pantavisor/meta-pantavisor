@@ -10,28 +10,36 @@ For xconnect container-to-container tests (unix, dbus, drm), see [testplan-xconn
 
 ## Automated Coverage
 
-Most of this plan is now reproducible in the `pvtests` harness under
-`recipes-pv/pantavisor-pvtests/files/local/control/`. Each test boots an
-appengine (bsp + pvr-sdk) and diffs stdout against a golden `output` file.
+Most of this plan is now reproducible in the `pvtests` harness. Each test
+boots an appengine (bsp + pvr-sdk) and diffs stdout against a golden `output`
+file. The tests live under the category that matches the feature they exercise
+(`local/control/` is reserved for general-purpose pv-ctrl checks; deeper
+feature coverage sits under `local/services/` and `local/runtime/`).
+
+Run the harness from the unpacked distro the build deploys (it already
+contains the generated `bsp.tgz`/`pvr-sdk.tgz` under `common/tarballs/`) — see
+[automated-workflow.md](../automated-workflow.md). Never point `-d` at the
+git-tracked `recipes-pv/pantavisor-pvtests/files` source tree: the heavy
+container tarballs only exist in the build output, so running against the
+source forces them into a tracked directory where they get committed by
+accident.
 
 ```bash
-# run the whole automated control suite
-./recipes-pv/pantavisor/pantavisor-appengine-distro/test.docker.sh \
-    -d recipes-pv/pantavisor-pvtests/files run local/control
+# cd into the unpacked distro deployed by the build, e.g.
+cd build/tmp-*/deploy/images/<machine>/pantavisor-appengine-distro-<machine>-<ver>/
 
-# regenerate one test's golden output after a change
-./recipes-pv/pantavisor/pantavisor-appengine-distro/test.docker.sh \
-    -d recipes-pv/pantavisor-pvtests/files run local/control/<name> --overwrite
+# run one test, regenerating its golden output after a change
+./test.docker.sh run <test-path> --overwrite
 ```
 
 | Tests | Automated test |
 |-------|----------------|
-| 2, 3, 4, 7, 11 (count) | `basic-endpoints` (pvcurl) / `basic-endpoints-curl` (real curl) |
-| 8, 9, 10 | `metadata-crud` |
-| 11–16 | `objects-crud` |
-| 17–20 | `daemons` |
-| 5, 6, 30 | `steps-rw` |
-| 1, 22, 23, 24, 25, 27, 31 | `commands` |
+| 2, 3, 4, 7, 11 (count) | `local/control/basic-endpoints` (pvcurl) / `local/control/basic-endpoints-curl` (real curl) |
+| 1, 22, 23, 24, 25, 27, 31 | `local/control/status-codes` |
+| 8, 9, 10 | `local/services/metadata-crud` |
+| 17–20 | `local/services/daemons` |
+| 11–16 | `local/runtime/objects-crud` |
+| 5, 6, 30 | `local/runtime/steps-rw` |
 
 Not automated (kept manual):
 - **Test 21** (xconnect graph): meaningful graph needs the unix example
@@ -898,8 +906,8 @@ Tests executed against appengine with workspace overlay (pantavisor feature/xcon
 | Test 21: XConnect Graph | PASS | Shows unix link between containers |
 | Test 22: Drivers List | PASS | Returns `{}` (no BSP/drivers in appengine) |
 | Test 23: Drivers Load/Unload | PASS | Returns 200 OK (no-op without drivers) |
-| Test 24: Signal Ready | EXPECTED | 500 from a platform caller (pvr-sdk is not ready-gated). Automated in `commands` |
-| Test 25: Signal Alive | EXPECTED | 500 — `alive` is not a supported signal. Automated in `commands` |
+| Test 24: Signal Ready | EXPECTED | 500 from a platform caller (pvr-sdk is not ready-gated). Automated in `status-codes` |
+| Test 25: Signal Alive | EXPECTED | 500 — `alive` is not a supported signal. Automated in `status-codes` |
 | Test 26: Poweroff | SKIP | Destructive - shuts down appengine |
 | Test 27: Run GC | PASS | Garbage collector runs successfully |
 | Test 28: Container Stop/Start | PASS | `/containers/{}` PUT now implemented; automation deferred to testplan-container-control |
