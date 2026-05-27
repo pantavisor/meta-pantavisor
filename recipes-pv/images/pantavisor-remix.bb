@@ -1,7 +1,7 @@
 SUMMARY = "A small image just capable of allowing a device to boot."
 LICENSE = "MIT"
 
-inherit image pvroot-image
+inherit image pvroot-image pantavisor-docs
 
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
