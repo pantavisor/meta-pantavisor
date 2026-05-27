@@ -18,7 +18,7 @@ TAG PUSH  (0*  or  *-rc*)
     └── changelog       render CHANGELOG-NNN.md, update GitHub Release, open PR to master
 
   tag-docs-scarthgap.yaml  (workflow_run, fires after tag-scarthgap completes)
-    └── build-docs      kas build pantavisor-docs → upload tarball to S3
+    └── build-docs      kas build -c create_pantacor_docs pantavisor-appengine → upload tarball to S3
 
 
 ON PUSH  (master)
@@ -55,7 +55,7 @@ SCHEDULED
 | `tag-scarthgap.yaml` | tag push | Orchestrator: sync → release |
 | `release.yaml` | `workflow_call` | Build matrix + pvtests + badge upload |
 | `tag-changelogs.yaml` | `workflow_run` after tag-scarthgap | Changelog generation and GitHub Release |
-| `tag-docs-scarthgap.yaml` | `workflow_run` after tag-scarthgap | Build `pantavisor-docs` tarball, upload to S3 |
+| `tag-docs-scarthgap.yaml` | `workflow_run` after tag-scarthgap | Build combined docs tarball via `pantavisor-docs` class, upload to S3 |
 | `sync-pantavisor.yaml` | `workflow_call` | Mirror tag to pantavisor/pantavisor |
 | `onpush-scarthgap.yaml` | push to master | Build matrix for onpush machines |
 | `manual-scarthgap.yaml` | `workflow_dispatch` | Build any machine on demand |
@@ -79,7 +79,7 @@ SCHEDULED
 | `makecommit` | Audit layer changes and draft PR description |
 | `update-components.sh` | Fetch latest SRCREVs for tracked components |
 | `upload.sh` | Push build artifacts and update `releases.json` on S3 |
-| `upload-docs.sh` | Push the `pantavisor-docs` tarball to S3 and upsert its metadata into `releases.json` |
+| `upload-docs.sh` | Push the combined docs tarball (`*.rootfs.docs.tar.zst`) to S3 and upsert its metadata into `releases.json` |
 | `upload-badges` | Write per-machine badge JSON to S3 after a tag build |
 | `sync-pantavisor-tag.sh` | Push the tag to `pantavisor/pantavisor` via PAT |
 | `make-changelog.sh` | Render a CHANGELOG section for a given tag |
