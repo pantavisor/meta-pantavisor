@@ -18,9 +18,9 @@ if [ ! -d "$DOCS_DIR" ]; then
     exit 1
 fi
 
-FILES_DOCS=( "$DOCS_DIR"/pantavisor-docs-*.tar.gz )
+FILES_DOCS=( "$DOCS_DIR"/*.rootfs.docs.tar.zst )
 if [ ! -e "${FILES_DOCS[0]}" ]; then
-    echo "error: no pantavisor-docs tarball found in '$DOCS_DIR'" >&2
+    echo "error: no docs tarball found in '$DOCS_DIR'" >&2
     exit 1
 fi
 

@@ -87,7 +87,7 @@ FILES:${PN}-debug-hooks = "${libdir}/pantavisor/pv/hooks/system.d/00-hook-debug 
                            ${libdir}/pantavisor/pv/hooks-debug-conf/"
 RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '${PN}-debug-hooks', '', d)}"
 
-inherit cmake gitpkgv
+inherit cmake gitpkgv pantacor-component-docs
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"

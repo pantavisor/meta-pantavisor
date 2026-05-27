@@ -1,9 +1,9 @@
 name: "ontag: build and upload docs"
 
 # Runs after "ontag: sync and release" (tag-scarthgap.yaml) completes.
-# Builds the pantavisor-docs tarball and uploads it to S3 under the same
-# tag name used by the release, e.g.:
-#   s3://<bucket>/<tag>/docs/pantavisor-docs-<ver>.tar.gz
+# Builds the docs tarball via pantavisor-docs.bbclass and uploads it to S3
+# under the same tag name used by the release, e.g.:
+#   s3://<bucket>/<tag>/docs/<image>.rootfs.docs.tar.zst
 on:
   workflow_run:
     workflows: ["ontag: sync and release"]
@@ -40,13 +40,13 @@ jobs:
 
       - name: build docs
         run: |
-          su - builder -c "cd $GITHUB_WORKSPACE && env && kas build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml --target pantavisor-docs"
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-appengine"
 
       - name: collect docs tarball
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
           mkdir -p docs-out
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-docs-*.tar.gz" -exec cp {} docs-out/ \;
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
           ls -l docs-out
 
       - name: Archive docs tarball
