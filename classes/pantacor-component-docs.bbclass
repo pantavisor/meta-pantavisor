@@ -12,10 +12,12 @@ DOCS_SRC_DIR ?= "${S}/docs"
 DOCS_FILES ?= ""
 DOCS_COMPONENT_NAME ?= "${BPN}"
 
-do_create_component_docs[dirs] = "${WORKDIR}/pantacor-docs-staging ${DEPLOY_DIR_IMAGE}"
-do_create_component_docs[cleandirs] = "${WORKDIR}/pantacor-docs-staging"
+do_create_component_docs[dirs] = "${WORKDIR}/pantacor-docs-staging ${WORKDIR}/pantacor-docs-deploy"
+do_create_component_docs[cleandirs] = "${WORKDIR}/pantacor-docs-staging ${WORKDIR}/pantacor-docs-deploy"
 do_create_component_docs[depends] += "zstd-native:do_populate_sysroot"
 do_create_component_docs[stamp-extra-info] = "${MACHINE_ARCH}"
+do_create_component_docs[sstate-inputdirs] = "${WORKDIR}/pantacor-docs-deploy"
+do_create_component_docs[sstate-outputdirs] = "${DEPLOY_DIR_IMAGE}"
 
 do_create_component_docs() {
     staging="${WORKDIR}/pantacor-docs-staging/${DOCS_COMPONENT_NAME}"
@@ -36,9 +38,14 @@ do_create_component_docs() {
         return 0
     fi
 
+    if [ -z "$(find "$staging" -mindepth 1 -print -quit)" ]; then
+        bbwarn "${PN}: no documentation content found, skipping"
+        return 0
+    fi
+
     tar -C "${WORKDIR}/pantacor-docs-staging" \
         --use-compress-program=zstd \
-        -cf "${DEPLOY_DIR_IMAGE}/${BPN}-component-docs.tar.zst" \
+        -cf "${WORKDIR}/pantacor-docs-deploy/${BPN}-component-docs.tar.zst" \
         "${DOCS_COMPONENT_NAME}"
 }
 

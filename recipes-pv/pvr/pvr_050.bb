@@ -2,10 +2,7 @@ DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program.
 SECTION = "pantacor"
 HOMEPAGE = "https://golang.org/"
 
-inherit pvgo_mod deploy pantacor-component-docs
-
-DOCS_FILES = "${S}/src/${GO_IMPORT}/README.md"
-DOCS_COMPONENT_NAME = "pvr"
+inherit pvgo_mod deploy
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
