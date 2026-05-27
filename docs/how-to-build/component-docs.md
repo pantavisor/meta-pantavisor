@@ -124,7 +124,7 @@ To generate only the docs tarball without a full image build:
 ```sh
 bitbake -c create_pantacor_docs <image-recipe>
 # e.g.
-bitbake -c create_pantacor_docs pantavisor-appengine
+bitbake -c create_pantacor_docs pantavisor-starter
 ```
 
 Because `do_create_pantacor_docs` uses
@@ -136,7 +136,7 @@ needed.
 To force regeneration after a class or docs change:
 
 ```sh
-bitbake -f -c create_pantacor_docs <image-recipe>
+bitbake -f -c create_pantacor_docs pantavisor-starter
 ```
 
 ---
@@ -161,7 +161,7 @@ bitbake -f -c create_pantacor_docs <image-recipe>
 2. Rebuild the image docs tarball:
 
    ```sh
-   bitbake -f -c create_pantacor_docs <image-recipe>
+   bitbake -f -c create_pantacor_docs pantavisor-starter
    ```
 
 No changes to the image recipe are needed — the image class discovers all
