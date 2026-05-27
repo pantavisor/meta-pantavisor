@@ -91,8 +91,11 @@ The job:
 
 1. Checks out the tagged commit (`workflow_run.head_sha`) so the docs match
    the release.
-2. Runs `kas build ... -- -c create_pantacor_docs pantavisor-appengine` inside
-   the KAS container. The `pantavisor-docs` image class triggers
+2. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml -- -c create_pantacor_docs pantavisor-starter`
+   inside the KAS container. `raspberrypi-armv8-scarthgap.yaml` was chosen
+   because `pantavisor-starter` is its primary target and it pulls in the full
+   set of components — including `pvr` (used by the pantabox container) — that
+   need documentation. The `pantavisor-docs` image class triggers
    `do_create_component_docs` for every package in the image's dependency tree
    (via `[recrdeptask]`), collects the resulting per-component tarballs, adds
    `meta-pantavisor/docs/`, and packages everything into a single
@@ -118,8 +121,8 @@ tag's array, alongside the per-machine entries already written by `upload.sh`:
       { "name": "sunxi-orange-pi-3lts-scarthgap", "full_image": {}, ... },
       ...
       { "docs": {
-          "name": "pantavisor-appengine-docker-x86_64.rootfs.docs.tar.zst",
-          "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc10/docs/pantavisor-appengine-docker-x86_64.rootfs.docs.tar.zst",
+          "name": "pantavisor-starter-raspberrypi-armv8.rootfs.docs.tar.zst",
+          "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc10/docs/pantavisor-starter-raspberrypi-armv8.rootfs.docs.tar.zst",
           "sha256": "<sha256>"
         }
       },

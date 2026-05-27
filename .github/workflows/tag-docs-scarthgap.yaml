@@ -40,7 +40,7 @@ jobs:
 
       - name: build docs
         run: |
-          su - builder -c "cd $GITHUB_WORKSPACE && kas build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-appengine"
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-starter"
 
       - name: collect docs tarball
         run: |
