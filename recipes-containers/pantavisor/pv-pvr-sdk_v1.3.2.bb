@@ -1,7 +1,13 @@
 SUMMARY = "Pantahub Apps hosted packages"
 LICENSE = "CLOSED"
 
-inherit pvrexport
+inherit pvrexport pantacor-component-docs
+
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+DOCS_FILES = "${WORKDIR}/pv-pvr-sdk/README.md"
+DOCS_COMPONENT_NAME = "pvr-sdk"
+
+SRC_URI += "file://pv-pvr-sdk/README.md"
 
 BB_STRICT_CHECKSUM = "0"
 

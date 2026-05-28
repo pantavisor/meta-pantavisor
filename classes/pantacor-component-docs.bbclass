@@ -12,12 +12,29 @@ DOCS_SRC_DIR ?= "${S}/docs"
 DOCS_FILES ?= ""
 DOCS_COMPONENT_NAME ?= "${BPN}"
 
+SSTATETASKS += "do_create_component_docs"
+
+python __anonymous() {
+    classoverride = d.getVar('CLASSOVERRIDE') or ''
+    if classoverride in ('class-native', 'class-nativesdk'):
+        bb.build.deltask('do_create_component_docs', d)
+        bb.build.deltask('do_create_component_docs_setscene', d)
+        sstatetasks = (d.getVar('SSTATETASKS') or '').split()
+        if 'do_create_component_docs' in sstatetasks:
+            sstatetasks.remove('do_create_component_docs')
+            d.setVar('SSTATETASKS', ' '.join(sstatetasks))
+}
+
 do_create_component_docs[dirs] = "${WORKDIR}/pantacor-docs-staging ${WORKDIR}/pantacor-docs-deploy"
 do_create_component_docs[cleandirs] = "${WORKDIR}/pantacor-docs-staging ${WORKDIR}/pantacor-docs-deploy"
 do_create_component_docs[depends] += "zstd-native:do_populate_sysroot"
 do_create_component_docs[stamp-extra-info] = "${MACHINE_ARCH}"
 do_create_component_docs[sstate-inputdirs] = "${WORKDIR}/pantacor-docs-deploy"
 do_create_component_docs[sstate-outputdirs] = "${DEPLOY_DIR_IMAGE}"
+
+python do_create_component_docs_setscene () {
+    sstate_setscene(d)
+}
 
 do_create_component_docs() {
     staging="${WORKDIR}/pantacor-docs-staging/${DOCS_COMPONENT_NAME}"
@@ -49,4 +66,4 @@ do_create_component_docs() {
         "${DOCS_COMPONENT_NAME}"
 }
 
-addtask do_create_component_docs after do_install before do_build
+addtask do_create_component_docs after do_install before do_deploy do_build
