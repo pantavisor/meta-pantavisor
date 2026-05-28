@@ -1,6 +1,8 @@
+diff --git a/cmd/app/appadd.go b/cmd/app/appadd.go
+index 337af6a..8515dc2 100644
 --- a/cmd/app/appadd.go
 +++ b/cmd/app/appadd.go
-@@ -126,19 +126,20 @@
+@@ -126,19 +126,20 @@ func CommandAppAdd() cli.Command {
  			}
  
  			app := &libpvr.AppData{
@@ -34,7 +36,7 @@
  			}
  
  			if c.IsSet("group") && c.IsSet("runlevel") {
-@@ -202,10 +203,11 @@
+@@ -202,10 +203,11 @@ func CommandAppAdd() cli.Command {
  		cli.StringFlag{
  			Name: "type, t",
  			Usage: fmt.Sprintf(
@@ -47,7 +49,7 @@
  			),
  			EnvVar: "PVR_SOURCE_TYPE",
  			Value:  models.SourceTypeDocker,
-@@ -275,6 +277,11 @@
+@@ -275,6 +277,11 @@ func CommandAppAdd() cli.Command {
  			Usage:  "Force App Add even if it exists already",
  			EnvVar: "PVR_APP_ADD_FORCE",
  		},
@@ -59,7 +61,10 @@
  	}
  
  	return cmd
---- a/libpvr/appimagelib.go
+diff --git a/libpvr/appimagelib.go b/libpvr/appimagelib.go
+new file mode 100644
+index 0000000..3932798
+--- /dev/null
 +++ b/libpvr/appimagelib.go
 @@ -0,0 +1,139 @@
 +//
@@ -201,9 +206,11 @@
 +
 +	return nil
 +}
+diff --git a/libpvr/applib.go b/libpvr/applib.go
+index 5df8dfe..23e9f0a 100644
 --- a/libpvr/applib.go
 +++ b/libpvr/applib.go
-@@ -39,6 +39,7 @@
+@@ -39,6 +39,7 @@ const (
  	PVPKG_FILE                  = "pvpkg.json"
  	SRC_SPEC                    = "service-manifest-src@1"
  	TEMPLATE_BUILTIN_LXC_DOCKER = "builtin-lxc-docker"
@@ -211,7 +218,7 @@
  )
  
  var (
-@@ -142,6 +143,8 @@
+@@ -155,6 +156,8 @@ func (p *Pvr) InstallApplication(app *AppData) (err error) {
  		err = InstallPVApp(p, &targetApp, targetManifest)
  	case models.SourceTypeGitLabPkg:
  		err = InstallGitLabPkgApp(p, &targetApp, targetManifest)
@@ -220,7 +227,7 @@
  	default:
  		return fmt.Errorf("type %s not supported yet", targetApp.SourceType)
  	}
-@@ -271,6 +274,8 @@
+@@ -294,6 +297,8 @@ func (p *Pvr) AddApplication(app *AppData, addonly bool) (err error) {
  		err = AddRootFsApp(p, app)
  	case models.SourceTypePvr:
  		err = AddPvApp(p, app)
@@ -229,137 +236,11 @@
  	default:
  		err = fmt.Errorf("type %s not supported yet", app.SourceType)
  	}
+diff --git a/libpvr/dockerlib.go b/libpvr/dockerlib.go
+index ea8797a..e380d69 100644
 --- a/libpvr/dockerlib.go
 +++ b/libpvr/dockerlib.go
-@@ -345,6 +345,10 @@
- 	var dockerPlatform string
- 	var platforms []interface{}
- 
-+	if strings.HasPrefix(image.Reference(), "sha256:") {
-+		repoDigest = image.Reference()
-+	}
-+
- 	if app.Platform == "" {
- 		dockerJsonI, ok := p.PristineJsonMap["_hostconfig/pvr/docker.json"]
- 
-@@ -357,48 +361,90 @@
- 		}
- 	} else {
- 		platforms = append(platforms, app.Platform)
-+		if repoDigest != "" {
-+			dockerPlatform = app.Platform
-+		}
- 	}
- 
- 	// we go down the multiarch path if we have seen a platform
- 	// restriction in pvr-docker.json
--	if platforms != nil {
--		manifestList, err := dockerRegistry.ManifestList(context.Background(),
--			image.Path, image.Reference())
--
-+	if repoDigest == "" && platforms != nil {
-+		// Custom manifest list retrieval to support OCI index
-+		uri := fmt.Sprintf("%s/v2/%s/manifests/%s", dockerRegistry.URL, image.Path, image.Reference())
-+		req, err := http.NewRequest("GET", uri, nil)
- 		if err != nil {
- 			return err
- 		}
-+		req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-+		req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
- 
--		for _, v := range manifestList.Manifests {
--			for _, v1 := range platforms {
--				v1S := v1.(string)
--				p := strings.SplitN(v1S, "/", 3)
--				if v.Platform.Architecture == p[1] &&
--					(len(p) < 3 || p[2] == v.Platform.Variant) {
--					repoDigest = v.Digest.String()
--					app.ManifestType = v.MediaType
--					dockerPlatform = v1S
--					break
-+		resp, err := dockerRegistry.Client.Do(req.WithContext(context.Background()))
-+		if err == nil {
-+			defer resp.Body.Close()
-+			if resp.StatusCode == http.StatusOK {
-+				var manifestList struct {
-+					Manifests []distribution.Descriptor `json:"manifests"`
- 				}
--			}
--			if repoDigest != "" {
--				dm, err := p.GetDockerManifest(image, auth, repoDigest, app.ManifestType)
--				if err != nil {
--					return err
-+				body, _ := io.ReadAll(resp.Body)
-+				err = json.Unmarshal(body, &manifestList)
-+				if err == nil {
-+					for _, v := range manifestList.Manifests {
-+						for _, v1 := range platforms {
-+							v1S := v1.(string)
-+							parts := strings.SplitN(v1S, "/", 3)
-+							match := false
-+							arch := v.Platform.Architecture
-+							if len(parts) >= 2 {
-+								if v.Platform.OS == parts[0] && (arch == parts[1] || (arch == "amd64" && parts[1] == "x86_64") || (arch == "x86_64" && parts[1] == "amd64")) &&
-+									(len(parts) < 3 || parts[2] == v.Platform.Variant) {
-+									match = true
-+								}
-+							} else if arch == parts[0] || (arch == "amd64" && parts[0] == "x86_64") || (arch == "x86_64" && parts[0] == "amd64") {
-+								match = true
-+							}
-+
-+							if match {
-+								repoDigest = v.Digest.String()
-+								app.ManifestType = v.MediaType
-+								dockerPlatform = v1S
-+
-+								dm, err := p.GetDockerManifest(image, auth, repoDigest, app.ManifestType)
-+								if err != nil {
-+									return err
-+								}
-+								dockerManifest = dm
-+
-+								fmt.Fprintf(os.Stderr, "Found Manifest for platform %s\n",
-+									dockerPlatform)
-+
-+								break
-+							}
-+						}
-+						if repoDigest != "" {
-+							break
-+						}
-+					}
- 				}
--				dockerManifest = dm
-+			}
-+		}
- 
--				fmt.Fprintf(os.Stderr, "Found Manifest for platform %s\n",
--					dockerPlatform)
-+		if repoDigest == "" && app.Platform != "" {
-+			return ReportDockerManifestError(fmt.Errorf("no matching architecture found in manifest list for platforms %v", platforms), app.From)
-+		}
-+	}
- 
--				break
--			} else {
--				dockerPlatform = ""
--			}
-+	if dockerManifest == nil && repoDigest != "" {
-+		dockerManifest, err = p.GetDockerManifest(image, auth, repoDigest, app.ManifestType)
-+		if err != nil {
-+			return ReportDockerManifestError(err, app.From)
- 		}
-+		fmt.Fprintf(os.Stderr, "Found Manifest for digest %s\n", repoDigest)
- 	}
- 
- 	if dockerManifest == nil {
-+		if strings.HasPrefix(image.Reference(), "sha256:") {
-+			return ReportDockerManifestError(errors.New("could not find manifest for digest"), app.From)
-+		}
- 		dockerManifest, err = p.GetDockerManifest(image, auth, "", app.ManifestType)
- 		if err != nil {
- 			manifestErr := ReportDockerManifestError(err, app.From)
-@@ -547,11 +593,12 @@
+@@ -549,11 +549,12 @@ type AppData struct {
  	ConfigFile      string
  	Volumes         []string
  	FormatOptions   string
@@ -377,9 +258,11 @@
  }
  
  func (data *AppData) GetPlatform(p *Pvr) string {
+diff --git a/models/sourcetypes.go b/models/sourcetypes.go
+index 87f9a95..b3c153b 100644
 --- a/models/sourcetypes.go
 +++ b/models/sourcetypes.go
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,7 @@ const (
  	SourceTypePvr       = "pvr"
  	SourceTypeRootFs    = "rootfs"
  	SourceTypeGitLabPkg = "gitlabpkg"
@@ -387,7 +270,10 @@
  )
  
  type GetSTOptions struct {
---- a/templates/builtin-mcu.go
+diff --git a/templates/builtin-mcu.go b/templates/builtin-mcu.go
+new file mode 100644
+index 0000000..31acaad
+--- /dev/null
 +++ b/templates/builtin-mcu.go
 @@ -0,0 +1,87 @@
 +//
@@ -477,9 +363,11 @@
 +	files["run.json"], err = compileTemplate(MCU_RUN_JSON, values)
 +	return
 +}
+diff --git a/templates/templates.go b/templates/templates.go
+index a1bf493..6ea7e7a 100644
 --- a/templates/templates.go
 +++ b/templates/templates.go
-@@ -19,5 +19,6 @@
+@@ -19,5 +19,6 @@ package templates
  var (
  	Handlers = map[string]func(map[string]interface{}) (map[string][]byte, error){
  		"builtin-lxc-docker": BuiltinLXCDockerHandler,
