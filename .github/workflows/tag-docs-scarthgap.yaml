@@ -1,9 +1,9 @@
-name: "ontag: build and upload docs"
+name: "ontag: build and publish docs"
 
 # Runs after "ontag: sync and release" (tag-scarthgap.yaml) completes.
-# Builds the docs tarball via pantavisor-docs.bbclass and uploads it to S3
-# under the same tag name used by the release, e.g.:
-#   s3://<bucket>/<tag>/docs/<image>.rootfs.docs.tar.zst
+# Builds the pantavisor-starter docs tarball for raspberrypi-armv8, attaches
+# it to the GitHub release, then triggers docs-ingest.yml on
+# pantavisor/docs.pantavisor so the downstream workflow can open the PR.
 on:
   workflow_run:
     workflows: ["ontag: sync and release"]
@@ -12,7 +12,6 @@ on:
 
 jobs:
   build-docs:
-    # tag-scarthgap.yaml only triggers on tag pushes, so head_branch is the tag.
     if: github.event.workflow_run.conclusion != 'cancelled'
     env:
       TMPDIR: "tmp-scarthgap"
@@ -26,10 +25,12 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
           git fetch --tags --force
+
       - name: setup workspace
         run: |
           chown -R builder:builder $RUNNER_WORKSPACE
@@ -46,21 +47,25 @@ jobs:
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
           mkdir -p docs-out
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
+          find build/${{ env.TMPDIR }}/deploy/images/raspberrypi-armv8 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
           ls -l docs-out
 
-      - name: Archive docs tarball
-        uses: actions/upload-artifact@v7
-        with:
-          name: pantavisor-docs
-          path: docs-out/
-          if-no-files-found: ignore
-
-      - name: Upload to S3
+      - name: upload tarball to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          .github/scripts/upload-docs.sh \
-            ${{ secrets.AWS_ACCESS_KEY_ID }} \
-            ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-            ${{ secrets.AWS_S3_BUCKET }} \
-            ${{ github.event.workflow_run.head_branch }} \
-            docs-out
+          TAG="${{ github.event.workflow_run.head_branch }}"
+          FILEPATH=$(ls docs-out/*.rootfs.docs.tar.zst)
+          ARTIFACT_URL=$(python3 .github/scripts/upload-docs.py upload-asset \
+            "${{ github.repository }}" "${TAG}" "${FILEPATH}" "${GITHUB_TOKEN}")
+          echo "DOCS_ARTIFACT_URL=${ARTIFACT_URL}" >> "$GITHUB_ENV"
+          echo "DOCS_FILENAME=$(basename ${FILEPATH})" >> "$GITHUB_ENV"
+
+      - name: trigger docs-ingest on docs.pantavisor
+        env:
+          PANTAVISOR_DOC_SYNC: ${{ secrets.PANTAVISOR_DOC_SYNC }}
+        run: |
+          python3 .github/scripts/upload-docs.py trigger-ingest \
+            "${DOCS_ARTIFACT_URL}" \
+            "${DOCS_FILENAME}" \
+            "${PANTAVISOR_DOC_SYNC}"
