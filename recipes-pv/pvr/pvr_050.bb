@@ -2,7 +2,11 @@ DESCRIPTION = "This is a simple example recipe that cross-compiles a Go program.
 SECTION = "pantacor"
 HOMEPAGE = "https://golang.org/"
 
-inherit pvgo_mod deploy
+inherit pvgo_mod deploy pantacor-component-docs
+
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+DOCS_FILES = "${WORKDIR}/README.md"
+DOCS_COMPONENT_NAME = "pvr"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -12,6 +16,7 @@ S = "${WORKDIR}"
 SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
+        file://README.md \
 "
 
 SRC_URI[pvr.sha256sum] = "9cba05717f2fd6e8d8fa2bd8aaef0e4b641f7ef81afebbf498c50eaf4bc83bf5"

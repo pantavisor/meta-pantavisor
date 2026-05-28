@@ -1,8 +1,8 @@
 # Image class that collects documentation from all components in the image and
 # packages it alongside the layer's own docs into a single deployable tarball.
 #
-# Component recipes must inherit pantacor-component-docs and set DOCS_SRC_DIR.
-# Recipes without DOCS_SRC_DIR are silently excluded.
+# Component recipes must inherit pantacor-component-docs.
+# Recipes without DOCS_SRC_DIR or DOCS_FILES are silently excluded.
 #
 # Output: ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.docs.tar.zst
 #
@@ -11,16 +11,20 @@
 #   <bpn>/             ← per-component docs (one dir per component)
 #
 # Variables:
-#   PANTACOR_LAYER_DOCS      — layer docs source (default: ${LAYERDIR}/docs)
-#   PANTACOR_LAYER_DOCS_NAME — top-level dir name in the tarball (default: meta-pantavisor)
+#   PANTACOR_LAYER_DOCS        — layer docs source (default: ${META_PANTAVISOR_BASE}/docs)
+#   PANTACOR_LAYER_DOCS_NAME   — top-level dir name in the tarball (default: meta-pantavisor)
+#
+# Component docs are auto-detected: any recipe that inherits pantacor-component-docs and
+# is used by the image will have its tarball picked up automatically. This works because
+# pantacor-component-docs runs before do_deploy, and do_rootfs_pvroot (which depends on
+# all container/BSP do_deploy tasks) runs before do_create_pantacor_docs.
 
 PANTACOR_LAYER_DOCS ?= "${META_PANTAVISOR_BASE}/docs"
 PANTACOR_LAYER_DOCS_NAME ?= "meta-pantavisor"
 
-do_create_pantacor_docs[dirs] = "${WORKDIR}/pantacor-docs-staging"
+do_create_pantacor_docs[dirs] = "${WORKDIR}/pantacor-docs-staging ${DEPLOY_DIR_IMAGE}"
 do_create_pantacor_docs[cleandirs] = "${WORKDIR}/pantacor-docs-staging"
 do_create_pantacor_docs[depends] += "zstd-native:do_populate_sysroot"
-do_create_pantacor_docs[recrdeptask] += "do_create_component_docs"
 
 do_create_pantacor_docs() {
     staging="${WORKDIR}/pantacor-docs-staging"
@@ -54,4 +58,4 @@ do_create_pantacor_docs() {
     ln -fsr "$outfile" "${DEPLOY_DIR_IMAGE}/${IMAGE_LINK_NAME}.${version_str}.docs.tar.zst"
 }
 
-addtask do_create_pantacor_docs before do_build
+addtask do_create_pantacor_docs after do_rootfs_pvroot before do_build
