@@ -38,7 +38,7 @@ repos:
             meta-imx-sdk:
         commit: a0cf309d2e2d544111e520f572db8dff335eca01
     meta-arm:
-        commit: a81c19915b5b9e71ed394032e9a50fd06919e1cd
+        commit: c4fd56386ee30f8b46f8e4eb1220edaf510d2ac0
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -60,7 +60,7 @@ repos:
         commit: d4576e3c081a7ee7b57d48421c4c4f491cb4defe
     meta-pantavisor:
     meta-virtualization:
-        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
+        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:
