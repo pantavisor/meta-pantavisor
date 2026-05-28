@@ -30,7 +30,7 @@ repos:
         commit: d4576e3c081a7ee7b57d48421c4c4f491cb4defe
     meta-pantavisor:
     meta-virtualization:
-        commit: 8409bc0c8b9209327add72d8fa72571cdeb5521e
+        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
