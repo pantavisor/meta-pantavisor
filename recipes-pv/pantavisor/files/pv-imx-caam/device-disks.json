@@ -4,7 +4,8 @@
             "name": "dm-internal-secrets",
             "path": "-v2 /storage/dm-crypt-files/dm-internal-secrets-nxp/caam.img,2,caam_nxpkey-internal_secrets",
             "type": "dm-crypt-caam",
-            "mode": "nxp"
+            "mode": "nxp",
+            "aliases": ["dm-versatile"]
         }
     ]
 }
