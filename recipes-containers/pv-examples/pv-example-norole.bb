@@ -22,6 +22,7 @@ SRC_URI += "file://pv-app.sh"
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}
     install -m 0755 ${WORKDIR}/pv-app.sh ${IMAGE_ROOTFS}${bindir}/pv-app
+    install -d -m 1777 ${IMAGE_ROOTFS}/tmp
 }
 
 ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
