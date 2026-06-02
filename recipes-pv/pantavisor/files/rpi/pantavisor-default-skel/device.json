@@ -57,6 +57,9 @@
         "pv--phconfig": {
             "disk": "dm-internal-secrets",
             "persistence": "permanent"
+        },
+        "pv--firmware": {
+            "persistence": "boot"
         }
     },
     "network": {
