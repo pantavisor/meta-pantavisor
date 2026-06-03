@@ -484,6 +484,11 @@ object count: 6
     "modified": "default"
   },
   {
+    "key": "PV_STORAGE_FIRMWARE_VOL",
+    "value": "0",
+    "modified": "default"
+  },
+  {
     "key": "PV_STORAGE_PHCONFIG_VOL",
     "value": "0",
     "modified": "default"
