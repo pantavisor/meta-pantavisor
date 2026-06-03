@@ -45,15 +45,29 @@ if pvtest_machines:
 
 lines += [
     f"      - '.github/workflows/onpush-{branch}.yaml'",
-    "  # NOTE: no 'pull_request:' trigger. Pushes to same-repo branches",
-    "  # already emit check runs bound to the head SHA, so PRs show",
-    "  # those results in their checks tab without a duplicate run.",
-    "  # Fork PRs intentionally do NOT trigger CI on our self-hosted",
-    "  # runners — a maintainer must push the branch into this repo",
-    "  # to get a build.",
+    "  pull_request:",
+    "    types: [ready_for_review]",
+    "",
+    "concurrency:",
+    "  group: ${{ github.workflow }}-${{ github.ref }}",
+    "  cancel-in-progress: true",
     "",
     "jobs:",
+    "  check-draft:",
+    "    runs-on: ubuntu-latest",
+    "    outputs:",
+    "      is_draft: ${{ steps.check.outputs.is_draft }}",
+    "    steps:",
+    "      - id: check",
+    "        env:",
+    "          GH_TOKEN: ${{ github.token }}",
+    "        run: |",
+    "          draft=$(gh pr list --repo ${{ github.repository }} --head ${{ github.ref_name }} --json isDraft --jq '.[0].isDraft // false')",
+    '          echo "is_draft=$draft" >> $GITHUB_OUTPUT',
+    "",
     "  build-hw:",
+    "    needs: check-draft",
+    "    if: needs.check-draft.outputs.is_draft != 'true'",
     '    name: "build (${{ matrix.machine_name }})"',
     "    strategy:",
     "      fail-fast: false",
@@ -99,6 +113,8 @@ for m in pvtest_machines:
     lines += [
         "",
         f"  {job_id}:",
+        "    needs: check-draft",
+        "    if: needs.check-draft.outputs.is_draft != 'true'",
         f'    name: "build ({name}-{branch})"',
         "    uses: ./.github/workflows/buildkas-target.yaml",
         "    with:",
@@ -123,11 +139,8 @@ for m in pvtest_machines:
         ]
 
 all_build_job_ids = ["build-hw"] + pvtest_build_job_ids
-needs_str = (
-    all_build_job_ids[0]
-    if len(all_build_job_ids) == 1
-    else f"[{', '.join(all_build_job_ids)}]"
-)
+summary_needs = ["check-draft"] + all_build_job_ids
+needs_str = f"[{', '.join(summary_needs)}]"
 
 lines += [
     "",

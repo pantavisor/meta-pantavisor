@@ -54,6 +54,7 @@ PANTAVISOR_FEATURES:append = " appengine"
 
 ## Development Guidelines
 
+- **Pull requests**: Always open as drafts (`gh pr create --draft`); promote to ready only when CI passes and the branch is review-ready.
 - **Commits**: Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) v1.0.0
 - **Kconfig changes**: Run `.github/scripts/makemachines` after modifying Kconfig
 - **Storage state**: Use fresh storage volumes when testing pvtx.d changes (`docker volume rm storage-test`)
