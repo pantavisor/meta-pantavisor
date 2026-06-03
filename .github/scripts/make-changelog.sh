@@ -224,8 +224,14 @@ DOWNLOADS_SECTION="$(
                 }
             );
 
-        (.[$type][$tag] // [] | map(select(.name))) as $current |
-        ((if $prev_tag == "" then [] else (.[$prev_type][$prev_tag] // []) end) | map(select(.name))) as $prev |
+        def normalize_entry:
+            if . == null then []
+            elif type == "object" then (.devices // [] | [.[] | objects | select(.name)])
+            elif type == "array" then [.[] | objects | select(.name)]
+            else [] end;
+
+        (.[$type][$tag] | normalize_entry) as $current |
+        ((if $prev_tag == "" then null else .[$prev_type][$prev_tag] end) | normalize_entry) as $prev |
         if ($current | length) > 0 then
             render_table($current; false)
         elif ($prev | length) > 0 then
