@@ -107,17 +107,17 @@ jq --arg type "$RELEASE_TYPE" \
    --argjson new_device "$NEW_DEVICE" \
 '
     .[$type] //= {} |
-    .[$type][$rname] //= [] |
-    
-    (.[$type][$rname] | map(.name) | index($new_device.name)) as $device_idx |
+    .[$type][$rname] //= {} |
+    .[$type][$rname].devices //= [] |
+    .[$type][$rname]["release-date"] //= $time |
+
+    (.[$type][$rname].devices | map(.name) | index($new_device.name)) as $device_idx |
 
     if $device_idx == null then
-        .[$type][$rname] += [$new_device]
+        .[$type][$rname].devices += [$new_device]
     else
-        .[$type][$rname][$device_idx] = $new_device
-    end |
-
-	.[$type][$rname] |= (map(select(.timestamp == null)) + [{timestamp: $time}])
+        .[$type][$rname].devices[$device_idx] = $new_device
+    end
 
 ' "$RELEASE_FILE" > temp.json && mv temp.json "$RELEASE_FILE"
 

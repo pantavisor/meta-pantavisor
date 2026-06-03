@@ -51,7 +51,7 @@ Declares which services this container needs:
 }
 ```
 
-For xconnect service manifest details and supported service types (unix, rest, dbus, drm, wayland), see the [pantavisor xconnect reference](../../pantavisor/docs/reference/pantavisor-xconnect.md) or [pantavisor/docs/overview/xconnect.md](../../pantavisor/docs/overview/xconnect.md).
+For xconnect service manifest details and supported service types (unix, rest, dbus, drm, wayland), see the [pantavisor xconnect reference](../../pantavisor/reference/pantavisor-xconnect.md) or [pantavisor xconnect overview](../../pantavisor/overview/xconnect.md).
 
 ### Placing a container in the `app` group
 

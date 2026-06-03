@@ -49,17 +49,50 @@ Every build produces some subset of the following:
 
 1. Bundles the wic image and pvrexports into a tarball.
 2. Pushes the bundle to `s3://<BUCKET>/meta-pantavisor/<TAG>/<MACHINE>/`.
-3. Reads the existing `releases.json` from S3, appends an entry for this machine/tag, and writes it back.
+3. Reads the existing `releases.json` from S3, upserts the machine entry under `devices`, sets `release-date` on first write, and uploads the file back.
 
-`releases.json` is the discovery index used by the Pantavisor ecosystem to find the latest image URLs and SHA256 checksums.
+`releases.json` is the discovery index used by the Pantavisor ecosystem to find the latest image URLs and SHA256 checksums. Schema:
+
+```json
+{
+  "stable": {
+    "029": {
+      "release-date": "2026-06-03T10:00+00:00",
+      "docs": {
+        "name": "pantavisor-<rest>.docs.tar.zst",
+        "hash": "<sha256>",
+        "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029/pantavisor-<rest>.docs.tar.zst"
+      },
+      "devices": [
+        {
+          "name": "raspberrypi-armv8-scarthgap",
+          "full_image": { "url": "https://.../029/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-029.tar.gz", "sha256": "<sha256>" },
+          "pvrexports":  { "url": "https://.../pvexports-raspberrypi-armv8-scarthgap-029.tar.gz",                      "sha256": "<sha256>" },
+          "bsp":         { "url": "https://.../pantavisor-bsp-....pvrexport.tgz",                                      "sha256": "<sha256>" },
+          "sdk":         { "url": "https://.../panta-....sh",                                                           "sha256": "<sha256>" }
+        }
+      ]
+    }
+  },
+  "release-candidate": {
+    "029-rc1": {
+      "release-date": "2026-05-30T08:00+00:00",
+      "docs": { "name": "...", "hash": "...", "url": "..." },
+      "devices": [ "..." ]
+    }
+  }
+}
+```
+
+`release-date` is set by the first machine job to finish (using `//=`) and left unchanged by subsequent parallel jobs. The `docs` key is written later by `tag-docs-scarthgap.yaml`.
 
 ### S3 path layout
 
 ```
 s3://<BUCKET>/meta-pantavisor/
   <tag>/
-    <machine>/          ← bundle for this specific tag + machine
-    docs/               ← pantavisor-docs tarball for this tag
+    <machine>/                     ← bundle for this specific tag + machine
+    pantavisor-<rest>.docs.tar.zst ← combined docs tarball for this tag
   latest/
     stable/
       badges/           ← per-machine badge JSON, updated after every stable tag build
@@ -102,39 +135,39 @@ The job:
    `<IMAGE_LINK_NAME>.rootfs.docs.tar.zst`. No full image assembly is needed —
    BitBake only builds packages up to `do_install`.
 3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
-   `build/tmp-scarthgap/deploy/images/` and uploads it as a GitHub artifact.
-4. Calls `upload-docs.sh` to push the tarball to S3.
-
-`upload-docs.sh` uploads the tarball to:
-
-```
-s3://<BUCKET>/meta-pantavisor/<TAG>/docs/<IMAGE_LINK_NAME>.rootfs.docs.tar.zst
-```
-
-It then upserts a `docs` entry into the existing `releases.json` under the
-tag's array, alongside the per-machine entries already written by `upload.sh`:
+   `build/tmp-scarthgap/deploy/images/`.
+4. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
+   `pantavisor-<rest>.docs.tar.zst` (strips `starter-` and `.rootfs`).
+5. Uploads the renamed tarball directly under the tag prefix in S3:
+   ```
+   s3://<BUCKET>/meta-pantavisor/<TAG>/pantavisor-<rest>.docs.tar.zst
+   ```
+6. Downloads `releases.json` from S3, upserts a `docs` key at the tag level,
+   and writes it back. Machine entries written by `upload.sh` live under
+   `devices` in the same object:
 
 ```json
 {
   "release-candidate": {
-    "028-rc10": [
-      { "name": "sunxi-orange-pi-3lts-scarthgap", "full_image": {}, ... },
-      ...
-      { "docs": {
-          "name": "pantavisor-starter-raspberrypi-armv8.rootfs.docs.tar.zst",
-          "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc10/docs/pantavisor-starter-raspberrypi-armv8.rootfs.docs.tar.zst",
-          "sha256": "<sha256>"
-        }
+    "028-rc10": {
+      "release-date": "2026-05-13T21:27+00:00",
+      "docs": {
+        "name": "pantavisor-<rest>.docs.tar.zst",
+        "hash": "<sha256>",
+        "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc10/pantavisor-<rest>.docs.tar.zst"
       },
-      { "timestamp": "2026-05-13T21:27+00:00" }
-    ]
+      "devices": [
+        { "name": "sunxi-orange-pi-3lts-scarthgap", "full_image": {}, ... },
+        ...
+      ]
+    }
   }
 }
 ```
 
-The script downloads `releases.json`, finds the item with a `docs` key and
-replaces it (or appends one if absent), then writes the file back. All other
-entries — machine bundles and the timestamp — are left intact.
+7. Uploads the original (unstripped) tarball to the GitHub Release via
+   `upload-docs.py upload-asset`, then triggers `docs-ingest.yml` on
+   `pantavisor/docs.pantavisor` via `upload-docs.py trigger-ingest`.
 
 The tag is taken from `workflow_run.head_branch` (the tag that triggered
 `tag-scarthgap.yaml`). Because `workflow_run` only fires for workflow files

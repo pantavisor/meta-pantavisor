@@ -78,8 +78,8 @@ SCHEDULED
 | `make-manual-dispatch.py` | Generate `manual-scarthgap.yaml` |
 | `makecommit` | Audit layer changes and draft PR description |
 | `update-components.sh` | Fetch latest SRCREVs for tracked components |
-| `upload.sh` | Push build artifacts and update `releases.json` on S3 |
-| `upload-docs.sh` | Push the combined docs tarball (`*.rootfs.docs.tar.zst`) to S3 and upsert its metadata into `releases.json` |
+| `upload.sh` | Push build artifacts and update `releases.json` on S3 (machine `devices` entries) |
+| `upload-docs.py` | Upload docs tarball to GitHub Release and trigger `docs-ingest.yml` on `pantavisor/docs.pantavisor` |
 | `upload-badges` | Write per-machine badge JSON to S3 after a tag build |
 | `sync-pantavisor-tag.sh` | Push the tag to `pantavisor/pantavisor` via PAT |
 | `make-changelog.sh` | Render a CHANGELOG section for a given tag |

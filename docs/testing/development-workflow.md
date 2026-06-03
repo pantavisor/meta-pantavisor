@@ -136,7 +136,7 @@ docker exec pva-test pvcontrol buildinfo
 docker exec pva-test pvcontrol conf ls
 ```
 
-For the full pv-ctrl API reference, see [pantavisor/docs/reference/pantavisor-commands.md](../../pantavisor/docs/reference/pantavisor-commands.md).
+For the full pv-ctrl API reference, see [pantavisor/reference/pantavisor-commands.md](../../pantavisor/reference/pantavisor-commands.md).
 
 ## Cleanup
 
