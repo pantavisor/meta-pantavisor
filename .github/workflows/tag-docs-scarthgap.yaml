@@ -50,6 +50,53 @@ jobs:
           find build/${{ env.TMPDIR }}/deploy/images/raspberrypi-armv8 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
           ls -l docs-out
 
+      - name: upload docs to S3 and update releases.json
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          AWS_S3_URL="https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor"
+          RELEASE_FILE="releases.json"
+          TAG="${{ github.event.workflow_run.head_branch }}"
+
+          ORIG_FILEPATH=$(ls docs-out/*.rootfs.docs.tar.zst)
+          ORIG_FILENAME=$(basename "${ORIG_FILEPATH}")
+          # pantavisor-starter-<rest>.rootfs.docs.tar.zst → pantavisor-<rest>.docs.tar.zst
+          NEW_FILENAME=$(echo "${ORIG_FILENAME}" \
+            | sed 's/pantavisor-starter-/pantavisor-/' \
+            | sed 's/\.rootfs\.docs\.tar\.zst$/.docs.tar.zst/')
+          cp "${ORIG_FILEPATH}" "docs-out/${NEW_FILENAME}"
+
+          DOCS_CSUM=$(sha256sum "docs-out/${NEW_FILENAME}" | cut -d' ' -f1)
+
+          aws s3 cp "docs-out/${NEW_FILENAME}" "s3://${AWS_S3_BUCKET}/${TAG}/${NEW_FILENAME}"
+          DOCS_S3_URL="${AWS_S3_URL}/${TAG}/${NEW_FILENAME}"
+
+          if [[ "$TAG" == *"-rc"* ]]; then
+            RELEASE_TYPE="release-candidate"
+          elif [[ "$TAG" =~ ^[0-9] ]]; then
+            RELEASE_TYPE="stable"
+          else
+            echo "WARN: cannot determine release type for tag '${TAG}'" >&2
+            RELEASE_TYPE="unknown"
+          fi
+
+          aws s3 cp "s3://${AWS_S3_BUCKET}/${RELEASE_FILE}" "${RELEASE_FILE}" || echo "{}" > "${RELEASE_FILE}"
+
+          jq --arg type "${RELEASE_TYPE}" \
+             --arg rname "${TAG}" \
+             --arg docs_name "${NEW_FILENAME}" \
+             --arg docs_sha "${DOCS_CSUM}" \
+             --arg docs_url "${DOCS_S3_URL}" \
+          '
+            .[$type] //= {} |
+            .[$type][$rname] //= {} |
+            .[$type][$rname].docs = {name: $docs_name, hash: $docs_sha, url: $docs_url}
+          ' "${RELEASE_FILE}" > temp.json && mv temp.json "${RELEASE_FILE}"
+
+          aws s3 cp "${RELEASE_FILE}" "s3://${AWS_S3_BUCKET}/${RELEASE_FILE}"
+
       - name: upload tarball to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

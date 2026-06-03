@@ -1,6 +1,6 @@
 # xconnect Example Containers
 
-The `pv-examples` containers in `recipes-containers/pv-examples/` demonstrate pv-xconnect service mesh patterns. For the underlying xconnect concepts and manifest format, see the [pantavisor xconnect overview](../../pantavisor/docs/overview/xconnect.md) and [reference](../../pantavisor/docs/reference/pantavisor-xconnect.md).
+The `pv-examples` containers in `recipes-containers/pv-examples/` demonstrate pv-xconnect service mesh patterns. For the underlying xconnect concepts and manifest format, see the [pantavisor xconnect overview](../../pantavisor/overview/xconnect.md) and [reference](../../pantavisor/reference/pantavisor-xconnect.md).
 
 ## Overview
 

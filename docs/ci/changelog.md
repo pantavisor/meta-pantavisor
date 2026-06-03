@@ -11,7 +11,7 @@ the [Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/
 |---|---|
 | Generator | [`.github/scripts/make-changelog.sh`](../../.github/scripts/make-changelog.sh) |
 | Component map (JSON) | [`.github/scripts/components.json`](../../.github/scripts/components.json) |
-| CI workflow | [`.github/workflows/changelog-on-tag.yaml`](../../.github/workflows/changelog-on-tag.yaml) |
+| CI workflow | [`.github/workflows/tag-changelogs.yaml`](../../.github/workflows/tag-changelogs.yaml) |
 | Output | `CHANGELOG/CHANGELOG-<MAJOR>.md` (e.g. `CHANGELOG-028.md`) |
 
 The generator is a single bash script using `git`, `curl`, `jq`, and `awk`.
@@ -85,7 +85,7 @@ changelog file inside the tagged commit itself.
    ```
 2. The push triggers `tag-scarthgap.yaml`, which builds every machine and
    uploads the artifacts to S3.
-3. On completion, `changelog-on-tag.yaml` fires via `workflow_run`. It:
+3. On completion, `tag-changelogs.yaml` fires via `workflow_run`. It:
    - Checks out `master` with full history
    - Runs `make-changelog.sh <TAG>` in **historical mode** — writes the
      `CHANGELOG/CHANGELOG-<MAJOR>.md` file but does not auto-commit
@@ -106,7 +106,7 @@ If S3 wasn't ready when the workflow first fired (rare race), re-run the
 workflow manually:
 
 ```sh
-gh workflow run changelog-on-tag.yaml -f tag=028-rc8
+gh workflow run tag-changelogs.yaml -f tag=028-rc8
 ```
 
 The release notes and PR will be regenerated from the now-current
@@ -138,7 +138,7 @@ git tag 028-rc8
 git push origin master 028-rc8
 ```
 
-The CI flow still runs after the tag push: `changelog-on-tag.yaml` will
+The CI flow still runs after the tag push: `tag-changelogs.yaml` will
 generate the historical-mode section (with real download SHA256s) and open
 a PR overwriting the predicted section with the live one. Merge that PR to
 update master with real hashes; the tagged commit's section keeps the
