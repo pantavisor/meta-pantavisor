@@ -23,7 +23,7 @@ repos:
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: ae7dfb12245c7f9b9a353499e2688015bd4e6413
+        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
         layers:
             meta-filesystems:
             meta-networking:
