@@ -21,15 +21,29 @@ on:
       - '.github/workflows/buildkas-target.yaml'
       - '.github/workflows/call-pvtests.yaml'
       - '.github/workflows/onpush-scarthgap.yaml'
-  # NOTE: no 'pull_request:' trigger. Pushes to same-repo branches
-  # already emit check runs bound to the head SHA, so PRs show
-  # those results in their checks tab without a duplicate run.
-  # Fork PRs intentionally do NOT trigger CI on our self-hosted
-  # runners — a maintainer must push the branch into this repo
-  # to get a build.
+  pull_request:
+    types: [ready_for_review]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  check-draft:
+    runs-on: ubuntu-latest
+    outputs:
+      is_draft: ${{ steps.check.outputs.is_draft }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          draft=$(gh pr list --repo ${{ github.repository }} --head ${{ github.ref_name }} --json isDraft --jq '.[0].isDraft // false')
+          echo "is_draft=$draft" >> $GITHUB_OUTPUT
+
   build-hw:
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
     name: "build (${{ matrix.machine_name }})"
     strategy:
       fail-fast: false
@@ -55,6 +69,8 @@ jobs:
     secrets: inherit
 
   build-docker:
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
     name: "build (docker-x86_64-scarthgap)"
     uses: ./.github/workflows/buildkas-target.yaml
     with:
@@ -73,7 +89,7 @@ jobs:
     secrets: inherit
 
   summary:
-    needs: [build-hw, build-docker]
+    needs: [check-draft, build-hw, build-docker]
     if: always()
     runs-on: ubuntu-latest
     steps:
