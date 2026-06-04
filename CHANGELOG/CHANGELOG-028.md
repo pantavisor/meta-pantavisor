@@ -9,6 +9,83 @@ which runs both automatically in CI (via
 after the tag build completes) and on demand locally; see
 [`docs/ci/changelog.md`](../docs/ci/changelog.md).
 
+## v028-rc12
+
+Released: 2026-06-03
+
+### Downloads
+
+| Machine | Image | PV Exports | BSP | SDK |
+|---|---|---|---|---|
+| sunxi-orange-pi-r1-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-orange-pi-r1-scarthgap/sunxi-orange-pi-r1-scarthgap-028-rc12.tar.gz)<br>`4abe6f148e2d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-orange-pi-r1-scarthgap/pvexports-sunxi-orange-pi-r1-scarthgap-028-rc12.tar.gz)<br>`2acf4eba479c…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-orange-pi-r1-scarthgap/pantavisor-bsp-orange-pi-r1.pvrexport.tgz)<br>`00a9c75d7704…` | — |
+| raspberrypi-armv8-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-028-rc12.tar.gz)<br>`553e1a30e347…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/raspberrypi-armv8-scarthgap/pvexports-raspberrypi-armv8-scarthgap-028-rc12.tar.gz)<br>`81a13c50fb5c…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/raspberrypi-armv8-scarthgap/pantavisor-bsp-raspberrypi-armv8.pvrexport.tgz)<br>`8b8848d4e099…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/raspberrypi-armv8-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa53-raspberrypi-armv8-toolchain-027-rc3.sh)<br>`865c82a836ad…` |
+| docker-x86_64-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/docker-x86_64-scarthgap/docker-x86_64-scarthgap-028-rc12.tar.gz)<br>`3fa8dbc0fb81…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/docker-x86_64-scarthgap/pvexports-docker-x86_64-scarthgap-028-rc12.tar.gz)<br>`7a99f1ac471d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/docker-x86_64-scarthgap/pantavisor-bsp-docker-x86_64.pvrexport.tgz)<br>`9b10ce040c71…` | — |
+| sunxi-bananapi-m2-berry-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-bananapi-m2-berry-scarthgap/sunxi-bananapi-m2-berry-scarthgap-028-rc12.tar.gz)<br>`d7f4e05ede7e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-bananapi-m2-berry-scarthgap/pvexports-sunxi-bananapi-m2-berry-scarthgap-028-rc12.tar.gz)<br>`1e295f9eb0bf…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-bananapi-m2-berry-scarthgap/pantavisor-bsp-bananapi-m2-berry.pvrexport.tgz)<br>`07f37c68c6b6…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/sunxi-bananapi-m2-berry-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa7t2hf-neon-bananapi-m2-berry-toolchain-027-rc3.sh)<br>`53f150c675e3…` |
+| imx8qxp-b0-mek-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8qxp-b0-mek-scarthgap/imx8qxp-b0-mek-scarthgap-028-rc12.tar.gz)<br>`6f63db15da7a…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8qxp-b0-mek-scarthgap/pvexports-imx8qxp-b0-mek-scarthgap-028-rc12.tar.gz)<br>`874b1e75a0ed…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8qxp-b0-mek-scarthgap/pantavisor-bsp-imx8qxp-b0-mek.pvrexport.tgz)<br>`d77670fb20d3…` | — |
+| imx8mn-var-som-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8mn-var-som-scarthgap/imx8mn-var-som-scarthgap-028-rc12.tar.gz)<br>`e783d69184db…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8mn-var-som-scarthgap/pvexports-imx8mn-var-som-scarthgap-028-rc12.tar.gz)<br>`02dca9dada5b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc12/imx8mn-var-som-scarthgap/pantavisor-bsp-imx8mn-var-som.pvrexport.tgz)<br>`ad7c17dddfa0…` | — |
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`release-candidate` → `028-rc12`).
+
+### Component versions
+
+| Component | Previous (028-rc11) | Current (028-rc12) | Compare |
+|---|---|---|---|
+| busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
+| dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
+| libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | `cfe4807` | `65491cc` | [`cfe4807…65491cc`](https://github.com/pantavisor/pantavisor/compare/cfe4807018bde49eaa8902ee074e2d4f88c17d34...65491cc7b0d7bfd0f7981c3935f93278c27ddcca) |
+| picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
+
+### Changes
+
+Changes since [`028-rc11`](https://github.com/pantavisor/meta-pantavisor/releases/tag/028-rc11):
+
+#### Features
+- **docs**: generate merged HTML reference via Sphinx from ordered Markdown
+- **device-json**: add pv--firmware boot volume as default
+- **docs**: add pantavisor-docs and pantacor-component-docs bbclasses
+- **docs**: add pantavisor-docs and pantacor-component-docs bbclasses
+- **docs**: add docs from pantavisor.io
+- **pvtx**: add libpvtx.so in the pvtx package
+
+#### Fixes
+- **changelog**: handle upload.sh object format in releases.json
+- **pv-example-norole**: create /tmp in rootfs
+- **imx**: add dm-versatile alias to caam/dcp disk overrides
+- **docs**: fix sstate skipping do_create_component_docs and empty tarballs
+- **ci**: make-onpush-matrix: separate pvtest machines into dedicated jobs
+- **pvtest**: clean up orphan dm-crypt devices before each test run
+- **ci**: truncate PR body in schedule-updatemachines to avoid GitHub 65536 limit
+
+#### CI
+- **docs**: publish docs tarball to docs.pantavisor on tag
+- **docs**: switch docs build target to raspberrypi-armv8 / pantavisor-starter
+- **workflow**: upgrade gh CLI inside docker container
+- add do-not-edit header to all generated workflow files
+
+#### Docs
+- restructure documentation and update CI release flow
+- document pantavisor-docs and pantacor-component-docs bbclasses
+- rename test plan to todo list, add category descriptions
+- **learn**: rewrite learn section docs to accurately reflect the project
+
+#### Other
+- **(uncategorized)**: AutoPR: update kas meta layers to latest branch commits
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: AutoPR: update kas meta layers to latest branch commits
+- (test) **pvtest**: address PR #342 review — recategorize pv-ctrl tests
+- (test) **pvtest**: cover pv-ctrl control endpoints
+- (test) **pvtest**: add remote/control/device-user-metadata
+- (test) **pvtest**: add local/control/basic-endpoints-curl
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: AutoPR: update kas meta layers to latest branch commits
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: AutoPR: update kas meta layers to latest branch commits
+
 ## v028-rc11
 
 Released: 2026-05-18
