@@ -43,6 +43,7 @@ do_create_pantacor_docs[cleandirs] = " \
 do_create_pantacor_docs[depends] += " \
     zstd-native:do_populate_sysroot \
     python3-sphinx-native:do_populate_sysroot \
+    pantavisor:do_create_component_docs \
 "
 do_create_pantacor_docs[file-checksums] += "${META_PANTAVISOR_BASE}/classes/pantavisor-docs-gen-html.py:True"
 
@@ -63,24 +64,17 @@ do_create_pantacor_docs() {
         tar -C "$staging" --use-compress-program=zstd -xf "$doctar"
     done
 
-    # Root index for the tarball — plain Markdown, no Sphinx directives
-    cat > "${staging}/index.md" <<'INDEXEOF'
-# Pantavisor Documentation
-
-This archive bundles two sets of reference documentation shipped alongside
-the build artefacts:
-
-- **[Pantavisor](pantavisor/)** — the embedded Linux runtime that manages
-  the device lifecycle: booting containers, applying atomic OTA updates, and
-  exposing a REST API for local and cloud control.
-
-- **[meta-pantavisor](meta-pantavisor/)** — the Yocto/OpenEmbedded layer
-  used to build Pantavisor-based BSP images. Covers the build system, KAS
-  configurations, BitBake recipes, and the CI/release pipeline.
-
-Start with [meta-pantavisor/index.md](meta-pantavisor/index.md) for a guided
-reading order, or jump straight into either section above.
-INDEXEOF
+    # Root index — only list sections that are actually present in staging
+    {
+        printf '# Pantavisor Documentation\n\n'
+        printf 'This archive bundles reference documentation shipped alongside the build artefacts.\n\n'
+        [ -d "${staging}/pantavisor" ] && \
+            printf -- '- **[Pantavisor](pantavisor/)** — the embedded Linux runtime that manages\n  the device lifecycle: booting containers, applying atomic OTA updates, and\n  exposing a REST API for local and cloud control.\n\n'
+        [ -d "${staging}/meta-pantavisor" ] && \
+            printf -- '- **[meta-pantavisor](meta-pantavisor/)** — the Yocto/OpenEmbedded layer\n  used to build Pantavisor-based BSP images. Covers the build system, KAS\n  configurations, BitBake recipes, and the CI/release pipeline.\n\n'
+        [ -d "${staging}/meta-pantavisor" ] && \
+            printf 'Start with [meta-pantavisor/index.md](meta-pantavisor/index.md) for a guided\nreading order, or jump straight into either section above.\n'
+    } > "${staging}/index.md"
 
     # Version string shared by the HTML tarball name and the markdown tarball symlink
     git_hash=$(git -C "${META_PANTAVISOR_BASE}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
