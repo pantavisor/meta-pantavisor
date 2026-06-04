@@ -166,8 +166,10 @@ The job:
 ```
 
 7. Uploads the original (unstripped) tarball to the GitHub Release via
-   `upload-docs.py upload-asset`, then triggers `docs-ingest.yml` on
-   `pantavisor/docs.pantavisor` via `upload-docs.py trigger-ingest`.
+   `upload-docs.py upload-asset`, then sends a `repository_dispatch` event
+   (`event_type: "docs-release"`, payload `{"tag": "<TAG>"}`) directly to
+   `pantavisor/docs.pantavisor` via `curl` using the `PANTAVISOR_DOC_SYNC`
+   secret.
 
 The tag is taken from `workflow_run.head_branch` (the tag that triggered
 `tag-scarthgap.yaml`). Because `workflow_run` only fires for workflow files
