@@ -23,6 +23,7 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
+	echo "  -p, --parallel N      Run up to N tests concurrently (default: 1)"
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "  -V, --valgrind        Run Pantavisor with valgrind"
 	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
@@ -102,10 +103,14 @@ install_docker() {
 	NETSIM_PATH=${NETSIM_PATH:-"pantavisor-appengine-netsim-docker.tar"}
 	if [ -f "$NETSIM_PATH" ]; then
 		docker load -i "$NETSIM_PATH"
+		docker image inspect --format '{{.Id}}' pantavisor-appengine-netsim \
+			> "$(dirname "$0")/netsim.imgid" 2>/dev/null || true
 	fi
 	TESTER_PATH=${TESTER_PATH:-"pantavisor-appengine-tester-docker.tar"}
 	if [ -f "$TESTER_PATH" ]; then
 		docker load -i "$TESTER_PATH"
+		docker image inspect --format '{{.Id}}' pantavisor-appengine-tester \
+			> "$(dirname "$0")/tester.imgid" 2>/dev/null || true
 	fi
 	APPENGINE_PATH=${APPENGINE_PATH:-"pantavisor-appengine-docker.tar"}
 	if [ -f "$APPENGINE_PATH" ]; then
@@ -259,35 +264,6 @@ teardown_network() {
 	sudo -n modprobe -r mac80211_hwsim
 }
 
-# Remove orphan dm-crypt devices whose backing loop file has been deleted.
-# These are left over from a previously crashed test container: the storage
-# tmpfs was torn down (deleting the image file) but the dm-crypt mapping and
-# its loop device were never closed.  Active containers always have a live
-# backing file, so matching on '(deleted)' is safe even with parallel runs.
-cleanup_orphan_dmcrypt() {
-	echo "cleanup_orphan_dmcrypt: scanning /dev/mapper ..."
-	sudo -n dmsetup ls --noheadings 2>&1 | awk '{print $1}' \
-		| while IFS= read -r _dm_dev; do
-			_backing=$(sudo -n dmsetup table "$_dm_dev" 2>&1 | awk '{print $7}')
-			echo "cleanup_orphan_dmcrypt: dev=$_dm_dev backing=$_backing"
-			echo "$_backing" | grep -qE '^7:[0-9]+$' || { echo "cleanup_orphan_dmcrypt: skip $_dm_dev (not loop-backed)"; continue; }
-			_lo="/dev/loop${_backing#7:}"
-			_back_file=$(sudo -n losetup -nO BACK-FILE "$_lo" 2>&1 || true)
-			echo "cleanup_orphan_dmcrypt: lo=$_lo back_file=$_back_file"
-			case "$_back_file" in
-				*"(deleted)"*)
-					echo "cleanup_orphan_dmcrypt: removing orphan $_dm_dev (backing file deleted)"
-					sudo -n dmsetup remove --force "$_dm_dev" 2>&1 || true
-					sudo -n losetup -d "$_lo" 2>&1 || true
-					;;
-				*)
-					echo "cleanup_orphan_dmcrypt: skip $_dm_dev (backing file still live)"
-					;;
-			esac
-		done
-	echo "cleanup_orphan_dmcrypt: done"
-}
-
 exec_test() {
 	local json_path=$1
 	local interactive=$2
@@ -339,18 +315,14 @@ exec_test() {
 	tester_name="pantavisor-tester-${slot}"
 	netsim_name="pantavisor-netsim-${slot}"
 	host_port=$((8222 + slot))
-	# losetup -D would detach loop devices used by sibling parallel runs, so
-	# we no longer call it. losetup -f needs root on CI runners where
-	# /dev/loop* is not world-readable — match the privilege the previous
-	# `sudo -n losetup -D` line ran with. The race between concurrent callers
-	# is benign: the container also gets /dev/loop-control + a 'b 7:* rmw'
-	# device-cgroup rule, so it can allocate its own loop devices internally
-	# regardless of which one we preview here.
-	unused_lo=$(sudo -n losetup -f)
+
+	_script_dir="$(cd "$(dirname "$0")" && pwd)"
+	tester_image="pantavisor-appengine-tester"
+	[ -f "$_script_dir/tester.imgid" ] && tester_image=$(cat "$_script_dir/tester.imgid")
+	netsim_image="pantavisor-appengine-netsim"
+	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
 
 	start=$(date +%s)
-
-	cleanup_orphan_dmcrypt
 
 	setup_network0
 
@@ -363,7 +335,7 @@ exec_test() {
 			-e VERBOSE="$verbose" \
 			--rm \
 			--cap-add NET_ADMIN \
-			pantavisor-appengine-netsim > /dev/null
+			"$netsim_image" > /dev/null
 
 		setup_network "$tester_name" "$netsim_name" &
 	fi
@@ -391,11 +363,8 @@ exec_test() {
 		--cap-add SYS_PTRACE \
 		--device /dev/kmsg \
 		--device /dev/hwrng \
-		--device "$unused_lo" \
 		--device /dev/loop-control \
-		--device /dev/mapper \
 		--device-cgroup-rule 'b 7:* rmw' \
-		--device-cgroup-rule 'a 252:0 rmw' \
 		--security-opt apparmor=unconfined \
 		--security-opt seccomp=unconfined \
 		--volume "/sys/fs":"/sys/fs" \
@@ -407,19 +376,10 @@ exec_test() {
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
 		-v "$abs_valgrind_path":/tmp/valgrind \
-		pantavisor-appengine-tester
+		"$tester_image"
 	res=$?
 
 	sudo -n chmod -R a+rX "$work_path/storage/$test_id/" 2>/dev/null || true
-
-	# Detach only loop devices whose backing file lives under this run's
-	# storage tree. Targets exactly what we created — leaves sibling parallel
-	# runs (and any unrelated host loop devices) untouched.
-	sudo -n losetup -nO NAME,BACK-FILE 2>/dev/null \
-		| awk -v p="$abs_storage_path/" '$2 ~ "^"p {print $1}' \
-		| while read -r lo; do
-			[ -n "$lo" ] && sudo -n losetup -d "$lo" 2>/dev/null || :
-		done
 
 	if [ "$netsim" = "true" ]; then
 		docker stop "$netsim_name" > /dev/null 2>&1
@@ -443,29 +403,31 @@ exec_test() {
 		cp "$diff_src" "$work_path/${test_id}/diff"
 	fi
 
-	exec 1>&3 3>&- 2>&4 4>&-
-
-	if [ $res -eq 0 ]; then
-		echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
-		return 0
-	elif [ $res -eq 2 ]; then
-		echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
-		return 2
-	else
-		echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
-		diff_file="$work_path/${test_id}/diff"
-		if [ -s "$diff_file" ]; then
-			{
-			printf "\n--- diff: %s ---\n" "$test_id"
-			cat "$diff_file"
-			printf '%s\n' "--- end diff ---"
-			} | tee -a "$work_path/run.log"
+	{
+		flock -x 200
+		exec 1>&3 3>&- 2>&4 4>&-
+		if [ $res -eq 0 ]; then
+			echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+			echo "Info: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
+			return 0
+		elif [ $res -eq 2 ]; then
+			echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+			echo "Info: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
+			return 2
+		else
+			echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
+			echo "Info: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
+			diff_file="$work_path/${test_id}/diff"
+			if [ -s "$diff_file" ]; then
+				{
+				printf "\n--- diff: %s ---\n" "$test_id"
+				cat "$diff_file"
+				printf '%s\n' "--- end diff ---"
+				} | tee -a "$work_path/run.log"
+			fi
+			return 1
 		fi
-		return 1
-	fi
+	} 200>"$work_path/.print.lock"
 }
 
 run_with_retry() {
@@ -503,11 +465,41 @@ skip_test () {
 	return 0
 }
 
+run_tests_parallel() {
+	local max_parallel="$1"
+	shift
+
+	local sem_fifo
+	sem_fifo=$(mktemp -u)
+	mkfifo "$sem_fifo"
+	exec {SEM_FD}<>"$sem_fifo"
+	rm "$sem_fifo"
+	local i
+	for ((i=0; i<max_parallel; i++)); do printf 'x' >&$SEM_FD; done
+
+	local json_path
+	for json_path in "$@"; do
+		read -r -n1 -u$SEM_FD _tok
+		(
+			skip_test "$json_path" "$work_path" || { printf 'x' >&$SEM_FD; exit 0; }
+			run_with_retry "$json_path"
+			[ $? -ne 0 ] && touch "$failed_flag"
+			printf 'x' >&$SEM_FD
+		) &
+	done
+
+	for ((i=0; i<max_parallel; i++)); do
+		read -r -n1 -u$SEM_FD _tok
+	done
+	exec {SEM_FD}>&-
+}
+
 run_test() {
 	local target_path=
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
+	local parallel=1
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
@@ -546,6 +538,10 @@ run_test() {
 				valgrind="true"
 				shift
 				;;
+			-p|--parallel)
+				parallel="$2"
+				shift 2
+				;;
 			-r|--retry)
 				max_retries="$2"
 				shift 2
@@ -557,6 +553,12 @@ run_test() {
 				;;
 		esac
 	done
+
+	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
+		echo "Error: -p is incompatible with -i and -m"
+		usage
+		exit 1
+	fi
 
 	if [ "$interactive" = true ] && [ -z "$target_path" ]; then
 		echo "Error: Interactive mode requires a specific test path"
@@ -588,25 +590,15 @@ run_test() {
 	echo "Info: diff=$work_path/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
+	local _tests=()
 	if [ -z "$target_path" ]; then
-		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
-			skip_test "$json_path" "$work_path"
-			if [ $? -ne 0 ]; then continue; fi
-			run_with_retry "$json_path"
-			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
-		done
+		mapfile -t _tests < <(find $test_dir/ -name "test.json" | sort)
 	elif [ -f "$test_dir/$target_path/test.json" ]; then
-		json_path="$test_dir/$target_path/test.json"
-		run_with_retry "$json_path"
-		if [ $? -ne 0 ]; then touch "$failed_flag"; fi
+		_tests=("$test_dir/$target_path/test.json")
 	else
-		find "$test_dir/$target_path" -name "test.json" | sort | while read -r json_path; do
-			skip_test "$json_path" "$work_path"
-			if [ $? -ne 0 ]; then continue; fi
-			run_with_retry "$json_path"
-			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
-		done
+		mapfile -t _tests < <(find "$test_dir/$target_path" -name "test.json" | sort)
 	fi
+	run_tests_parallel "$parallel" "${_tests[@]}"
 
 	set +x
 	{
@@ -656,7 +648,7 @@ It mixes output from four sources:
 
 **1. `test.docker.sh` (`set -x` traces)**
 The host-side orchestrator. Visible as `++ docker run ...`, `++ allocate_slot`, etc.
-Covers container startup, loop device allocation, and network setup.
+Covers container startup and network setup.
 
 **2. `pvtest-run` (`set -x` traces) + `resources/test` output**
 `pvtest-run` is the inner test runner inside the tester container. It parses `test.json`,
@@ -666,7 +658,7 @@ is captured and diffed against the stored `output` file; the diff appears at the
 the log.
 
 **3. `pv-appengine` (Pantavisor runtime launcher)**
-Runs inside the tester container. Sets up cgroups, loop devices, and storage mounts,
+Runs inside the tester container. Sets up cgroups and storage mounts,
 then launches the `pantavisor` binary in a restart loop (simulating device reboots).
 
 **4. Pantavisor logs (`stdout_direct`)**

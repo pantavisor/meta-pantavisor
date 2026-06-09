@@ -50,13 +50,6 @@ locals/updated
 /storage/disks/perm/pvr-sdk/docker--etc-volume/shadow
 /storage/disks/perm/pvr-sdk/docker--home-pantavisor-.ssh
 /storage/disks/perm/pvr-sdk/docker--var-pvr-sdk
-/storage/dm-crypt-files
-/storage/dm-crypt-files/dm-internal-secrets
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img.goodbak
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img.prebak
-/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.init_done
-/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.txt
 /storage/logs
 /storage/logs/0
 /storage/logs/0/pantavisor
@@ -243,13 +236,6 @@ object count: 11
 /storage/disks/perm/pvr-sdk/docker--etc-volume/shadow
 /storage/disks/perm/pvr-sdk/docker--home-pantavisor-.ssh
 /storage/disks/perm/pvr-sdk/docker--var-pvr-sdk
-/storage/dm-crypt-files
-/storage/dm-crypt-files/dm-internal-secrets
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img.goodbak
-/storage/dm-crypt-files/dm-internal-secrets/versatile.img.prebak
-/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.init_done
-/storage/dm-crypt-files/dm-internal-secrets/versatile_key-internal_secrets.txt
 /storage/logs
 /storage/logs/current
 /storage/logs/locals
