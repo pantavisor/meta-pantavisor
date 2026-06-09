@@ -6,6 +6,10 @@ inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-dbus-client"
 
+# Place xconnect example client/server in the app group so they are
+# lifecycle-controllable (container restart policy, stop/start via API).
+PVR_APP_ADD_GROUP = "app"
+
 PVRIMAGE_AUTO_MDEV = "0"
 
 
