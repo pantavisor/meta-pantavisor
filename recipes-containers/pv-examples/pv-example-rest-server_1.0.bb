@@ -5,6 +5,10 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 inherit core-image container-pvrexport
 
 IMAGE_BASENAME = "pv-example-rest-server"
+
+# Place xconnect example client/server in the app group so they are
+# lifecycle-controllable (container restart policy, stop/start via API).
+PVR_APP_ADD_GROUP = "app"
 PVRIMAGE_AUTO_MDEV = "0"
 
 IMAGE_INSTALL += "python3-core python3-netserver python3-json busybox"
