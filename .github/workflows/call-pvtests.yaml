@@ -10,6 +10,11 @@ on:
       test_path:
         required: false
         type: string
+      parallel:
+        description: 'Number of tests to run in parallel'
+        required: false
+        type: string
+        default: "4"
 jobs:
 
   validate:
@@ -60,12 +65,14 @@ jobs:
           echo "RUNNING: ${TEST_TARGET:-all}"
           echo "------------------------------------------------------"
 
+          PARALLEL=${{ inputs.parallel }}
+
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh -v run -V --retry 2 -w $PVTEST_WORKSPACE
+            ./test.docker.sh -v run -V --retry 2 -p "$PARALLEL" -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
             ./test.docker.sh -v run "$TEST_TARGET" -V --retry 2 -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh -v run "$TEST_TARGET" -V -w $PVTEST_WORKSPACE
+            ./test.docker.sh -v run "$TEST_TARGET" -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
