@@ -2,7 +2,7 @@
     "disks": [
         {
 	    "name": "dm-internal-secrets",
-	    "type": "directory",
+	    "type": "volume-disk",
 	    "aliases": ["dm-versatile"]
 	}
     ],
