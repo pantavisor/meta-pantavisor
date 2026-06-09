@@ -309,6 +309,11 @@ object count: 6
     "modified": "default"
   },
   {
+    "key": "PV_LOG_AUTO_DEVLOG",
+    "value": "1",
+    "modified": "default"
+  },
+  {
     "key": "PV_LOG_CAPTURE",
     "value": "1",
     "modified": "default"

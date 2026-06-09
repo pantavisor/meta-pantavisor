@@ -323,6 +323,10 @@ exec_test() {
 	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
 
 	start=$(date +%s)
+	echo "[pvtest] $start INFO -- launching '$test_id'"
+	echo "[pvtest] $start INFO -- launching '$test_id'" >> "$work_path/run.log"
+	[ "$interactive" = "false" ] && [ "$manual" = "false" ] && \
+		echo "[pvtest] $start INFO -- launching '$test_id'" >&3
 
 	setup_network0
 
@@ -407,16 +411,16 @@ exec_test() {
 		flock -x 200
 		exec 1>&3 3>&- 2>&4 4>&-
 		if [ $res -eq 0 ]; then
-			echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
-			echo "Info: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $(date +%s) INFO -- '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
 			return 0
 		elif [ $res -eq 2 ]; then
-			echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
-			echo "Info: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $(date +%s) INFO -- '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
 			return 2
 		else
-			echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-			echo "Info: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $(date +%s) ERROR -- '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $(date +%s) ERROR -- '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
 			diff_file="$work_path/${test_id}/diff"
 			if [ -s "$diff_file" ]; then
 				{
@@ -457,8 +461,8 @@ skip_test () {
 
 	skip=$(jq -r '.skip' "$json_path")
 	if [ "$skip" = "true" ]; then
-		echo -e "Info: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
-		echo "Info: '$test_id' SKIPPED" >> "$work_path/run.log"
+		echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
+		echo "[pvtest] $(date +%s) INFO -- '$test_id' SKIPPED" >> "$work_path/run.log"
 		return 1
 	fi
 
@@ -605,7 +609,7 @@ run_test() {
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
-	grep "^Info: '.*\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log"
+	grep "\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log" | grep -v "^Retry:"
 	echo "======================================================="
 	} | tee -a "$work_path/run.log"
 	set -h
