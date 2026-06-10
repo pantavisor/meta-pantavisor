@@ -42,6 +42,8 @@ usage() {
 	echo ""
 }
 
+pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]: %s\n' "$(date +%s)" "$level" "$*"; }
+
 list_tests() {
 	printf "%-50s %-10s\n" "test" "description"
 	printf "%-50s %-10s\n" "====" "==========="
@@ -56,7 +58,7 @@ add_test() {
 	local test_path=
 
 	if [ -z "$1" ]; then
-		echo "Error: Missing test path (scope/category/name)"
+		pvtest_log ERROR "Missing test path (scope/category/name)"
 		usage
 		exit 1
 	fi
@@ -66,7 +68,7 @@ add_test() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			*)
-				echo "Error: Unknown argument: $1"
+				pvtest_log ERROR "Unknown argument: $1"
 				usage
 				exit 1
 				;;
@@ -77,13 +79,13 @@ add_test() {
 	local scope=$(echo "$test_path" | cut -d'/' -f1)
 
 	if [ -e "$full_path" ]; then
-		echo "Error: '$full_path' already exists"
+		pvtest_log ERROR "'$full_path' already exists"
 		exit 1
 	fi
 
 	local common_path="$test_dir/$scope/common"
 	if [ ! -d "$common_path" ]; then
-		echo "Error: common directory '$common_path' missing"
+		pvtest_log ERROR "common directory '$common_path' missing"
 		exit 1
 	fi
 
@@ -94,7 +96,7 @@ add_test() {
 	cp "$common_path/templates/template.ready" "$full_path/resources/ready"
 	chmod +x "$full_path/resources/ready"
 
-	echo "Info: New test created at: $full_path"
+	pvtest_log INFO "New test created at: $full_path"
 }
 
 install_docker() {
@@ -160,7 +162,7 @@ echo "This will install some packages in your system. Do you want to continue? [
 
 	install_docker
 
-	echo "Dependency installation complete"
+	pvtest_log INFO "Dependency installation complete"
 
 	exit 0
 }
@@ -241,7 +243,7 @@ setup_network() {
 
 	wait_for_status "docker inspect -f '{{.State.Pid}}' $netsim_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: $netsim_name not responding"
+		pvtest_log ERROR "$netsim_name not responding"
 		exit 1
 	fi
 	local pid=$(docker inspect -f '{{.State.Pid}}' "$netsim_name")
@@ -251,7 +253,7 @@ setup_network() {
 
 	wait_for_status "docker inspect -f '{{.State.Pid}}' $tester_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: $tester_name not responding"
+		pvtest_log ERROR "$tester_name not responding"
 		exit 1
 	fi
 	local pid=$(docker inspect -f '{{.State.Pid}}' "$tester_name")
@@ -275,7 +277,7 @@ exec_test() {
 	local retry_index=${8:-0}
 
 	if [ ! -f "$json_path" ]; then
-		echo "Error: '$json_path' missing"
+		pvtest_log ERROR "'$json_path' missing"
 		exit 1
 	fi
 
@@ -323,10 +325,11 @@ exec_test() {
 	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
 
 	start=$(date +%s)
-	echo "[pvtest] $start INFO -- launching '$test_id'"
-	echo "[pvtest] $start INFO -- launching '$test_id'" >> "$work_path/run.log"
+	local launch_line="[pvtest] $start DEBUG -- [test.docker.sh]: launching '$test_id'"
+	echo "$launch_line"
+	echo "$launch_line" >> "$work_path/run.log"
 	[ "$interactive" = "false" ] && [ "$manual" = "false" ] && \
-		echo "[pvtest] $start INFO -- launching '$test_id'" >&3
+		echo "$launch_line" >&3
 
 	setup_network0
 
@@ -410,17 +413,19 @@ exec_test() {
 	{
 		flock -x 200
 		exec 1>&3 3>&- 2>&4 4>&-
+		local ts
+		ts=$(date +%s)
 		if [ $res -eq 0 ]; then
-			echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $(date +%s) INFO -- '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
 			return 0
 		elif [ $res -eq 2 ]; then
-			echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $(date +%s) INFO -- '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
 			return 2
 		else
-			echo -e "[pvtest] $(date +%s) ERROR -- '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $(date +%s) ERROR -- '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
+			echo -e "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
 			diff_file="$work_path/${test_id}/diff"
 			if [ -s "$diff_file" ]; then
 				{
@@ -447,8 +452,9 @@ run_with_retry() {
 			return 1
 		fi
 		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-		echo -e "Retry: '$test_id' attempt $attempt/$max_retries after failure..."
-		echo "Retry: '$test_id' attempt $attempt/$max_retries after failure..." >> "$work_path/run.log"
+		local retry_msg="[pvtest] $(date +%s) INFO -- [test.docker.sh]: retry '$test_id' attempt $attempt/$max_retries after failure"
+		echo -e "$retry_msg"
+		echo "$retry_msg" >> "$work_path/run.log"
 		sleep 5
 	done
 }
@@ -461,8 +467,8 @@ skip_test () {
 
 	skip=$(jq -r '.skip' "$json_path")
 	if [ "$skip" = "true" ]; then
-		echo -e "[pvtest] $(date +%s) INFO -- '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
-		echo "[pvtest] $(date +%s) INFO -- '$test_id' SKIPPED" >> "$work_path/run.log"
+		echo -e "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
+		echo "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' SKIPPED" >> "$work_path/run.log"
 		return 1
 	fi
 
@@ -551,7 +557,7 @@ run_test() {
 				shift 2
 				;;
 			*)
-				echo "Error: Unknown argument: $1"
+				pvtest_log ERROR "Unknown argument: $1"
 				usage
 				exit 1
 				;;
@@ -559,39 +565,45 @@ run_test() {
 	done
 
 	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
-		echo "Error: -p is incompatible with -i and -m"
+		pvtest_log ERROR "-p is incompatible with -i and -m"
+		usage
+		exit 1
+	fi
+
+	if [ "$parallel" -gt 1 ] && [ "$overwrite" = "true" ]; then
+		pvtest_log ERROR "-p is incompatible with -o"
 		usage
 		exit 1
 	fi
 
 	if [ "$interactive" = true ] && [ -z "$target_path" ]; then
-		echo "Error: Interactive mode requires a specific test path"
+		pvtest_log ERROR "Interactive mode requires a specific test path"
 		usage
 		exit 1
 	fi
 
 	if [ "$interactive" = true ] && [ ! -f "$test_dir/$target_path/test.json" ]; then
-		echo "Error: '$target_path' is not a leaf test (no test.json found)"
+		pvtest_log ERROR "'$target_path' is not a leaf test (no test.json found)"
 		usage
 		exit 1
 	fi
 
 	if [ "$overwrite" = "true" ] && [ "$interactive" = "true" ]; then
-		echo "Error: Cannot use overwrite and interactive at the same time"
+		pvtest_log ERROR "Cannot use overwrite and interactive at the same time"
 		usage
 		exit 1
 	fi
 
 	mkdir -p "$work_path"
 	{
-	echo "Info: workspace=$work_path"
-	echo "Info: readme=$work_path/README.md"
-	echo "Info: run log=$work_path/run.log"
-	echo "Info: test log=$work_path/<scope>/<category>/<name>/test.log"
+	pvtest_log DEBUG "workspace=$work_path"
+	pvtest_log DEBUG "readme=$work_path/README.md"
+	pvtest_log DEBUG "run log=$work_path/run.log"
+	pvtest_log DEBUG "test log=$work_path/<scope>/<category>/<name>/test.log"
 	if [ "$valgrind" = "true" ]; then
-		echo "Info: valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
+		pvtest_log DEBUG "valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
 	fi
-	echo "Info: diff=$work_path/<scope>/<category>/<name>/diff"
+	pvtest_log DEBUG "diff=$work_path/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
 	local _tests=()
@@ -722,7 +734,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $# -eq 0 ]; then
-	echo "Error: Missing command"
+	pvtest_log ERROR "Missing command"
 	usage
 	exit 1
 fi
@@ -747,7 +759,7 @@ case "$command" in
 		run_test "$@"
 		;;
 	*)
-		echo "Error: Unknown command: $command"
+		pvtest_log ERROR "Unknown command: $command"
 		usage
 		exit 1
 		;;
