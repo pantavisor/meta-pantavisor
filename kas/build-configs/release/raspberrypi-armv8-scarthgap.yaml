@@ -27,7 +27,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: d03f09df0ab0bf326ab1e0d0969f4643a9f8a378
+        commit: b56134ff90dec996e8aae45ed7e6ad6b1d5a84a0
     meta-pantavisor:
     meta-virtualization:
         commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
