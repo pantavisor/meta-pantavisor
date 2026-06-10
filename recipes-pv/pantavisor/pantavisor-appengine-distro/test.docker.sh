@@ -636,7 +636,7 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- location info, one result line per test + inline diffs, SUMMARY
+  run.log                           <- per-test result lines + inline diffs + SUMMARY
   README.md
   <scope>/<category>/<name>/
     test.log                        <- full verbose output (see below)
@@ -648,43 +648,73 @@ run_test() {
       trails/ objects/ logs/ ...
 ```
 
-## Interpreting Results
+## Log Format
 
-A failure means actual test output diverged from expected. Lines prefixed with `-` are
-expected; lines prefixed with `+` are what the test produced.
+All structured log lines follow the pantavisor log convention:
 
-When a test fails, the diff is printed inline in `run.log` right after the FAILED line, and
-also saved to `<scope>/<category>/<name>/diff`. Retry attempts get their own directory
+```
+[pvtest] <epoch> LEVEL -- [source]: message
+```
+
+Sources: `test.docker.sh`, `pvtest-run`, `pv-appengine`.
+
+## run.log
+
+Contains one structured line per test result plus a SUMMARY section at the end.
+
+Log levels used in `run.log`:
+
+| Level | When |
+|-------|------|
+| `DEBUG` | Test launch and workspace setup diagnostics |
+| `INFO` | PASSED, ABORTED, SKIPPED, retry |
+| `ERROR` | FAILED |
+
+On failure the diff is printed inline after the `ERROR` line, and also saved to
+`<scope>/<category>/<name>/diff`. Retry attempts get their own directory
 (`<name>.1/`, `<name>.2/`).
 
-### test.log
+Quick scan for failures:
+
+    grep ERROR run.log
+
+## test.log
 
 `test.log` is a single interleaved stream of everything that happened during a test run.
 It mixes output from four sources:
 
-**1. `test.docker.sh` (`set -x` traces)**
-The host-side orchestrator. Visible as `++ docker run ...`, `++ allocate_slot`, etc.
-Covers container startup and network setup.
+**1. `test.docker.sh`**
+Host-side orchestrator. With `-v` produces `set -x` traces (`++ docker run ...`,
+`++ allocate_slot`, etc.) covering container startup and network setup.
+Structured messages use `[pvtest] LEVEL -- [test.docker.sh]: message`.
 
-**2. `pvtest-run` (`set -x` traces) + `resources/test` output**
-`pvtest-run` is the inner test runner inside the tester container. It parses `test.json`,
-initialises storage, starts Pantavisor via `pv-appengine`, then runs `resources/test`
-(the actual test script, with `set -x` injected at the top). The test script's stdout
-is captured and diffed against the stored `output` file; the diff appears at the end of
-the log.
+**2. `pvtest-run` + `resources/test`**
+Inner test runner inside the tester container. Parses `test.json`, initialises storage,
+starts Pantavisor via `pv-appengine`, then runs `resources/test` (with `set -x` injected).
+Structured messages use `[pvtest] LEVEL -- [pvtest-run]: message`.
+The test script output is captured and diffed against the stored `output` file.
 
-**3. `pv-appengine` (Pantavisor runtime launcher)**
-Runs inside the tester container. Sets up cgroups and storage mounts,
-then launches the `pantavisor` binary in a restart loop (simulating device reboots).
+**3. `pv-appengine`**
+Pantavisor runtime launcher inside the tester container. Sets up cgroups and storage
+mounts, then runs the `pantavisor` binary in a restart loop (simulating device reboots).
+Structured messages use `[pvtest] LEVEL -- [pv-appengine]: message`.
 
-**4. Pantavisor logs (`stdout_direct`)**
-Pantavisor is started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The
-`stdout_direct` output mode streams Pantavisor's internal log directly to stdout as
-each event happens, without buffering. These lines carry the familiar
-`[pantavisor] TIMESTAMP LEVEL -- [module]: message` format and are interleaved
-in real time with the shell traces above.
+**4. Pantavisor (`stdout_direct`)**
+Started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. Streams internal logs
+directly to stdout without buffering:
+`[pantavisor] TIMESTAMP LEVEL -- [module]: message`.
 
-### Valgrind Logs
+To filter by source:
+
+    grep '\[pvtest-run\]'   test.log    # pvtest-run messages only
+    grep '\[pv-appengine\]' test.log    # pv-appengine messages only
+    grep '\[pantavisor\]'   test.log    # pantavisor messages only
+    grep 'WARN\|ERROR'      test.log    # all warnings and errors
+
+In GHA, WARN and ERROR lines from `test.log` are automatically surfaced in the
+job step summary under **Test log issues**.
+
+## Valgrind Logs
 
 Each test's valgrind output is under `<scope>/<category>/<name>/valgrind/valgrind.log.<pid>`.
 The main Pantavisor worker is typically the largest file:
