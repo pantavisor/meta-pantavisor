@@ -57,12 +57,12 @@
 + jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
 + tr -d '\r'
 {
-  "pantavisor.status": "READY",
   "pantahub.claimed": "0",
   "pantahub.online": "0",
+  "pantavisor.arch": "x86_64/64/EL",
   "pantavisor.mode": "local",
   "pantavisor.revision": "0",
-  "pantavisor.arch": "x86_64/64/EL"
+  "pantavisor.status": "READY"
 }
 ++ pvcontrol objects ls
 ++ jq -M length
@@ -306,6 +306,11 @@ object count: 6
   {
     "key": "PV_LIBTHTTP_LOG_LEVEL",
     "value": "3",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOG_AUTO_DEVLOG",
+    "value": "1",
     "modified": "default"
   },
   {
