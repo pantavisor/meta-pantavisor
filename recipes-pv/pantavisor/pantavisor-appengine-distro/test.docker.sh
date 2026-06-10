@@ -433,6 +433,16 @@ exec_test() {
 				cat "$diff_file"
 				printf '%s\n' "--- end diff ---"
 				} | tee -a "$work_path/run.log"
+			else
+				errors=$(grep -E "^\[pvtest\] [0-9]+ ERROR --" "$work_path/$test_id/test.log" 2>/dev/null || true)
+				if [ -n "$errors" ]; then
+					printf '%s\n' "$errors" > "$diff_file"
+					{
+					printf "\n--- diff: %s ---\n" "$test_id"
+					printf '%s\n' "$errors"
+					printf '%s\n' "--- end diff ---"
+					} | tee -a "$work_path/run.log"
+				fi
 			fi
 			return 1
 		fi
@@ -621,7 +631,18 @@ run_test() {
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
-	grep "\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log" | grep -v "^Retry:"
+	while IFS= read -r line; do
+		echo "$line"
+		if echo "$line" | grep -q " FAILED "; then
+			test_id=$(echo "$line" | sed "s/.*'\(.*\)' FAILED.*/\1/")
+			diff_file="$work_path/$test_id/diff"
+			if [ -s "$diff_file" ]; then
+				printf "\n--- diff: %s ---\n" "$test_id"
+				cat "$diff_file"
+				printf "--- end diff ---\n"
+			fi
+		fi
+	done < <(grep "\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log" | grep -v "^Retry:")
 	echo "======================================================="
 	} | tee -a "$work_path/run.log"
 	set -h
