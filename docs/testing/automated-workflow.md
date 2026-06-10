@@ -75,7 +75,7 @@ The workspace is a temporary directory. Location info (workspace path, log paths
   <scope>/<category>/<name>.2/      <- retry attempt 2 (same structure)
   storage/                          <- full Pantavisor on-device storage per test (same naming convention)
     <scope>/<category>/<name>/
-      trails/ objects/ disks/ dm-crypt-files/ cache/ boot/ config/ logs/
+      trails/ objects/ cache/ boot/ config/ logs/
 ```
 
 > **Note:** `storage/` is kept on disk for local debugging but is **not** uploaded to CI artifacts. `local/` and `remote/` (with per-test logs, diffs, and valgrind results) are uploaded.
@@ -92,21 +92,25 @@ Info: test log=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/test.log
 Info: valgrind log=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>
 Info: diff=/tmp/pv_appengine.jBZqVz/<scope>/<category>/<name>/diff
 
-Info: 'local/core/legacy-config-overload' PASSED (23 s)
-Info: 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
+[pvtest] 1748000000 INFO -- launching 'local/core/legacy-config-overload'
+[pvtest] 1748000000 INFO -- launching 'local/lifecycle/reboot-nonreboot-rollback'
+[pvtest] 1748000023 INFO -- 'local/core/legacy-config-overload' PASSED (23 s)
+[pvtest] 1748000110 ERROR -- 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
 --- diff: local/lifecycle/reboot-nonreboot-rollback ---
 -expected line
 +actual line
 --- end diff ---
-Info: 'local/runtime/remount-policies' SKIPPED
+[pvtest] 1748000110 INFO -- 'local/runtime/remount-policies' SKIPPED
 =======================================================
 ======================= SUMMARY =======================
 =======================================================
-Info: 'local/core/legacy-config-overload' PASSED (23 s)
-Info: 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
-Info: 'local/runtime/remount-policies' SKIPPED
+[pvtest] 1748000023 INFO -- 'local/core/legacy-config-overload' PASSED (23 s)
+[pvtest] 1748000110 ERROR -- 'local/lifecycle/reboot-nonreboot-rollback' FAILED (110 s)
+[pvtest] 1748000110 INFO -- 'local/runtime/remount-policies' SKIPPED
 =======================================================
 ```
+
+Result lines use a `[pvtest] UNIX_TIMESTAMP LEVEL -- message` format (matching pantavisor's own log format). `INFO` for PASSED/SKIPPED/launching; `ERROR` for FAILED. The launch line is printed before the test starts, letting you correlate parallel test timelines by timestamp. With `-p N`, multiple launch lines appear together before any result lines arrive.
 
 A failure means actual test output diverged from expected. Lines prefixed with `-` are expected; lines prefixed with `+` are what the test produced.
 
@@ -340,12 +344,25 @@ done
 | Flag | Description |
 |------|-------------|
 | `-V`, `--valgrind` | Run Pantavisor under valgrind; results saved to `<tmpdir>/valgrind/` |
+| `-p N`, `--parallel N` | Run up to N tests concurrently (default: 1). Incompatible with `-i` and `-m`. |
 | `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Use to inspect a working system. Requires a specific leaf test path. |
 | `-m`, `--manual` | Open a shell without starting Pantavisor. Use when PV fails to reach READY and you need to debug startup. Requires a specific leaf test path. |
 | `-o`, `--overwrite` | Create or overwrite the expected test output (use when authoring or updating tests) |
 | `-n`, `--netsim` | Enable wireless network simulation via `mac80211_hwsim` (experimental) |
 
 **Exit codes**: `0` = PASSED, `1` = FAILED, `2` = ABORTED
+
+### Parallel execution
+
+Pass `-p N` to run up to N tests at the same time:
+
+```bash
+./test.docker.sh run local -p 2
+```
+
+Each parallel test slot gets its own Docker container and isolated storage volume. The semaphore releases immediately when a test finishes, so the next queued test starts with no artificial delay. The practical limit on a development machine is around `-p 2`; higher values can push 4+ simultaneous Docker+LXC stacks past the 30 s pantavisor startup timeout.
+
+`-p N` is incompatible with `-i` (interactive) and `-m` (manual), which require a single test to be running.
 
 ---
 
