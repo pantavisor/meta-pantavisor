@@ -1,40 +1,58 @@
 # Flashing: Toradex Colibri iMX6ULL
 
-**Flash method:** Toradex Easy Installer (Tezi) — see the Tezi section above
+**Flash method:** UUU via pv-flash-bundle — see [toradex.md](../toradex.md)
 
-**Image artifact:** `pantavisor-starter-colibri-imx6ull*pv_teziimg.tar.xz`
+**Image artifact:** `pv-flash-bundle-colibri-imx6ull.tar.gz`
 
-## Supported carrier boards
+## Entering USB serial download (SDP) mode
 
-Standard Toradex carrier boards:
+The Colibri iMX6ULL ROM enters SDP mode when the `RECOVERY#` pin is held low
+during power-on. For the iMX6ULL the ROM directly loads a full U-Boot binary
+(no SPL stage).
 
-- Colibri Evaluation Board (EVB)
-- Aster carrier board
-- Viola carrier board
+### Colibri Evaluation Board v3
 
-## Entering Tezi recovery mode
+1. Connect a Micro-USB cable from the board's **USB Client** port to your host PC.
+2. Hold the **Recovery** button while applying power (or while pressing Reset).
+3. Release after ~1 second. The module enumerates as an NXP SDP device.
 
-### Colibri EVB
+Verify detection:
 
-1. Short the **BOOT_CFG** jumper (JP1) on the EVB to force USB serial download
-   mode — consult the EVB schematic for the exact jumper location.
-2. Connect a USB Micro-B cable from the EVB's USB OTG port to your host PC.
-3. Power on the EVB.
-4. Tezi on the host should detect the module automatically.
+```bash
+sudo ./uuu -lsusb
+# Expected: SE Blank ARIK  or  SDP:MX6ULL
+```
 
 ### Other carrier boards
 
-Refer to the carrier board datasheet for the correct boot-mode configuration.
-The general principle is the same: force the i.MX6ULL into USB serial download
-mode by pulling `BOOT_MODE[1:0]` to `10b`.
+Consult the Toradex developer documentation for your specific carrier board.
+The general procedure is the same: pull `RECOVERY#` low during power-on.
+
+## NAND partition layout
+
+The production NAND layout (from `colibri-imx6ull_defconfig`):
+
+| Partition | Offset | Size | Purpose |
+|---|---|---|---|
+| `mx6ull-bcb` | `0x000000` | 512 KB | Boot Control Block |
+| `u-boot1` _(ro)_ | `0x080000` | 1536 KB | Primary U-Boot |
+| `u-boot2` _(ro)_ | `0x200000` | 1536 KB | U-Boot redundant copy |
+| `u-boot-env` | `0x380000` | 512 KB | U-Boot environment |
+| `ubi` | `0x400000` | remainder | UBI device (`boot` UBIFS volume) |
+
+The pv-flash-bundle UUU script writes U-Boot to `u-boot1` and `u-boot2` using
+raw byte offsets (bypassing the `ro` partition flag, which only applies in Linux
+userspace). The `boot` UBI volume holds the Pantavisor UBIFS rootfs.
 
 ## Flashing
 
-Follow the Tezi flashing procedure described in the section above.
+With the module in SDP mode, follow the procedure in
+[toradex.md — Flashing procedure](../toradex.md#flashing-procedure).
 
 ## Notes
 
-- The Colibri iMX6ULL module uses eMMC as its primary storage. Tezi writes
-  directly to eMMC; no SD card is needed.
-- After flashing, remove the boot-mode jumper before the next power cycle so
-  the module boots from eMMC.
+- WiFi firmware is included (`linux-firmware-sd8997`).
+- eMMC-equipped Colibri iMX6ULL modules (product ID 0062) use a different machine
+  configuration (`colibri-imx6ull-emmc`) and are not covered by this build.
+- After flashing, release the recovery button/jumper before the next power cycle
+  so the module boots from NAND.

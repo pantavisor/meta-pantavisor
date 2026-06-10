@@ -1,0 +1,25 @@
+uuu_version 1.5.165
+
+# Factory flash for Pantavisor on Colibri iMX6ULL (NAND)
+# NAND layout: 512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi)
+# Fastboot buffer: 0x81100000  (CONFIG_FASTBOOT_BUF_ADDR)
+# Usage (from inside the extracted bundle directory):
+#   sudo ./uuu ./
+
+SDP: boot -f @RECOVERY_IMAGE@
+CFG: FB: -vid 0x1b67 -pid 0x4000
+# Write U-Boot to u-boot1 (offset 0x80000, 1536KB) and mirror to u-boot2 (offset 0x200000).
+# Raw byte offsets bypass the 'ro' partition flag set in the production MTD table.
+FB: download -f @UBOOT_NAND@
+FB: ucmd nand erase 0x80000 0x180000
+FB: ucmd nand write.trimffs 0x81100000 0x80000 ${filesize}
+FB: ucmd nand erase 0x200000 0x180000
+FB: ucmd nand write.trimffs 0x81100000 0x200000 ${filesize}
+# Write UBIFS rootfs to the ubi MTD partition
+FB: download -f @UBIFS@
+FB[-t 120000]: ucmd nand erase.part ubi
+FB: ucmd ubi part ubi
+FB: ucmd ubi create boot
+FB[-t 300000]: ucmd ubi write 0x81100000 boot ${filesize}
+FB: acmd reset
+FB: done

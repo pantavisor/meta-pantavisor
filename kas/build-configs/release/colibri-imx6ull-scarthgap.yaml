@@ -24,6 +24,16 @@ repos:
         commit: 7bbd2b25581a265a42ff04a7c66b5098e18fca2e
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
+    meta-toradex-tezi:
+        branch: scarthgap-7.x.y
+        commit: 09d7800fcec48cd4880df14f1391a198b5867ad1
+        path: layers/meta-toradex-tezi
+        url: https://github.com/toradex/meta-toradex-tezi.git
+    meta-qt5:
+        branch: scarthgap
+        commit: 227cf5e7b64c93dfc1a45f235c466db8c3fd8707
+        path: layers/meta-qt5
+        url: https://github.com/meta-qt5/meta-qt5/
     poky:
         patches:
             fit-image-multiconfig:
@@ -57,14 +67,31 @@ local_conf_header:
         ACCEPT_FSL_EULA = "1"
     platform-toradex: |
         PV_UBOOT_AUTOFDT = "1"
+    tezi-recovery-multiconfig: "BBMULTICONFIG:append = \" tezi-recovery\"\n# meta-toradex-tezi\
+        \ recipes outside recipes-bsp/ require DISTRO = \"tezi\" to\n# parse cleanly\
+        \ (TDX_VERSION undefined, tezirunimg IMAGE_CMD missing, Qt/Wayland\n# version\
+        \ pins incompatible with panta-distro). Mask them globally; the only\n# tezi\
+        \ artifacts we need are the u-boot and imx-boot bbappends in recipes-bsp/.\n\
+        # meta-toradex-bsp-common ships its own u-boot-distro-boot.bb which conflicts\n\
+        # with the tezi-specific 1.1 version \u2014 mask that too.\nBBMASK:append\
+        \ = \" \\\n    meta-toradex-tezi/recipes-tezi/ \\\n    meta-toradex-tezi/recipes-graphics/\
+        \ \\\n    meta-toradex-tezi/recipes-qt/ \\\n    meta-toradex-tezi/recipes-connectivity/\
+        \ \\\n    meta-toradex-tezi/recipes-core/ \\\n    meta-toradex-tezi/recipes-kernel/\
+        \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
+        \ \\\n    \"\n"
     platform-colibri-imx6ull: |
-        PV_FLASH_README = "docs/flashing/boards/colibri-imx6ull.md"
-        PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
+        PV_FLASH_README = "docs/how-to-install/boards/colibri-imx6ull.md"
+        PV_FLASH_README_DEPS = "docs/how-to-install/toradex.md"
         include conf/machine/include/colibri-imx6ull.inc
         IMAGE_CLASSES:remove = " image_type_tezi"
-        IMAGE_FSTYPES:remove  = "teziimg"
-        IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
-        IMAGE_FSTYPES:append = " pv_teziimg"
+        IMAGE_FSTYPES:remove = "teziimg"
+        IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
+        MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
+        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
+        PANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = "${MACHINE_FIRMWARE}"
+        PV_FLASH_RECOVERY_MC = "tezi-recovery"
+        PV_FLASH_RECOVERY_RECIPE = "u-boot-toradex"
+        PV_FLASH_RECOVERY_IMAGE = "u-boot.imx-recoverytezi"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
@@ -95,6 +122,8 @@ defaults:
         branch: scarthgap
 target:
 - pantavisor-starter
+- mc:tezi-recovery:u-boot-toradex
+- pv-flash-bundle
 build_system: oe
 distro: panta-distro
 env:

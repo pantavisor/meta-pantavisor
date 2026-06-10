@@ -1,0 +1,6 @@
+#!/bin/sh
+# Flash Pantavisor to Colibri iMX6ULL NAND via UUU.
+# Put the module in USB SDP mode (hold RECOVERY# low during power-on), then run:
+#   ./flash.sh
+echo "Flashing Pantavisor to Colibri iMX6ULL NAND..."
+sudo ./uuu ./
