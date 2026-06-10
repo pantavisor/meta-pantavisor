@@ -1,0 +1,19 @@
+uuu_version 1.5.165
+
+# Factory flash for Pantavisor on Verdin iMX8MM
+# Usage (from inside the extracted bundle directory):
+#   sudo ./uuu ./
+
+SDP: boot -f @RECOVERY_IMAGE@
+CFG: SDPV: -chip SPL1 -vid 0x1b67 -pid 0x4fff
+SDPV: delay 1000
+SDPV: write -f @RECOVERY_IMAGE@ -skipspl
+SDPV: jump
+CFG: FB: -vid 0x1b67 -pid 0x4000
+FB: ucmd setenv fastboot_dev mmc
+FB: ucmd setenv mmcdev 0
+FB: ucmd mmc dev 0
+FB: ucmd setenv fastboot_raw_partition_all 0 0xFFFFFFFF
+FB: flash -raw2sparse all @WIC@
+FB: acmd reset
+FB: done
