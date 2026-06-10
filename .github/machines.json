@@ -59,7 +59,7 @@
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-x86_64",
-			"pvtest": ["local/lifecycle"],
+			"pvtest": ["local"],
 			"workflows": ["manual", "tag", "onpush"]
 		}
 	]
