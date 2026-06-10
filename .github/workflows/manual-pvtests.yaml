@@ -9,6 +9,12 @@ on:
         required: false
         type: string
 
+      parallel:
+        description: 'Number of tests to run in parallel'
+        required: false
+        type: string
+        default: "4"
+
 jobs:
 
   build-docker-x86_64-scarthgap:
@@ -26,4 +32,5 @@ jobs:
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: ${{ inputs.test_path }}
+      parallel: ${{ inputs.parallel }}
     secrets: inherit

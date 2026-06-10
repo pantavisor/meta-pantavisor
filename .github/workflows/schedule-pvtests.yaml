@@ -24,8 +24,7 @@ jobs:
     secrets: inherit
 
   remote:
-    needs: [build-docker-x86_64-scarthgap, local]
-    if: always()
+    needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: remote

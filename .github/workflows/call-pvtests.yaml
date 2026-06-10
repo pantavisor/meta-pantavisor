@@ -10,6 +10,11 @@ on:
       test_path:
         required: false
         type: string
+      parallel:
+        description: 'Number of tests to run in parallel'
+        required: false
+        type: string
+        default: "4"
 jobs:
 
   validate:
@@ -60,12 +65,14 @@ jobs:
           echo "RUNNING: ${TEST_TARGET:-all}"
           echo "------------------------------------------------------"
 
+          PARALLEL=${{ inputs.parallel }}
+
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh -v run -V --retry 2 -w $PVTEST_WORKSPACE
+            ./test.docker.sh run -V --retry 2 -p "$PARALLEL" -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh -v run "$TEST_TARGET" -V --retry 2 -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V --retry 2 -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh -v run "$TEST_TARGET" -V -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
@@ -81,6 +88,23 @@ jobs:
           else
             echo "Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      - name: Show test.log issues
+        if: always()
+        run: |
+          found=0
+          while IFS= read -r -d '' logfile; do
+            test_name="${logfile#${{ env.PVTEST_WORKSPACE }}/}"
+            test_name="${test_name%/test.log}"
+            issues=$(grep -E "^\[pvtest\] [0-9]+ (WARN|ERROR) --" "$logfile" 2>/dev/null || true)
+            if [ -n "$issues" ]; then
+              if [ "$found" -eq 0 ]; then
+                echo "## Test log issues" >> "$GITHUB_STEP_SUMMARY"
+                found=1
+              fi
+              printf '\n### %s\n```\n%s\n```\n' "$test_name" "$issues" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done < <(find "${{ env.PVTEST_WORKSPACE }}" -name "test.log" -print0 2>/dev/null)
 
       - name: Prepare pvtest workspace
         if: always()

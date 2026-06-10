@@ -129,7 +129,7 @@ for m in pvtest_machines:
     ]
 
     for test_path in m.get("pvtest", []):
-        test_name = test_path.split("/")[-1]
+        test_name = test_path.replace("/", "-")
         lines += [
             "",
             f"  pvtest-{test_name}:",
@@ -137,6 +137,7 @@ for m in pvtest_machines:
             "    uses: ./.github/workflows/call-pvtests.yaml",
             "    with:",
             f"      test_path: {test_path}",
+            '      parallel: "4"',
             "    secrets: inherit",
         ]
 

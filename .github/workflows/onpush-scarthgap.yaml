@@ -83,11 +83,12 @@ jobs:
       sdk: 0
     secrets: inherit
 
-  pvtest-lifecycle:
+  pvtest-local:
     needs: build-docker
     uses: ./.github/workflows/call-pvtests.yaml
     with:
-      test_path: local/lifecycle
+      test_path: local
+      parallel: "4"
     secrets: inherit
 
   summary:
