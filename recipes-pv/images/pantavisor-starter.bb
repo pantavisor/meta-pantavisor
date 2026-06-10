@@ -24,7 +24,7 @@ do_rootfs_boot_scr(){
 # kas/machines/<machine>.yaml via local_conf_header.
 # PV_FLASH_README      - board/method-specific flashing doc (required)
 # PV_FLASH_README_DEPS - space-separated list of method docs to prepend
-#                        before PV_FLASH_README (e.g. tezi.md, uuu.md)
+#                        before PV_FLASH_README (e.g. toradex.md, uuu.md)
 # Deployed as: pantavisor.md + deps (in order) + PV_FLASH_README
 PV_FLASH_README ??= ""
 PV_FLASH_README_DEPS ??= ""

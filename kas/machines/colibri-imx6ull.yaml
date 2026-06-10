@@ -1,23 +1,21 @@
-# Every file needs to contain a header, that provides kas with information
-# about the context of this file.
 header:
-  # The `version` entry in the header describes for which configuration
-  # format version this file was created for. It is used by kas to figure
-  # out if it is compatible with this file. The version is an integer that
-  # is increased on every format change.
   version: 16
   includes:
     - kas/platforms/toradex.yaml
 
-# The machine as it is written into the `local.conf` of bitbake.
 machine: colibri-imx6ull
 
 local_conf_header:
   platform-colibri-imx6ull: |
-        PV_FLASH_README = "docs/flashing/boards/colibri-imx6ull.md"
-        PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
+        PV_FLASH_README = "docs/how-to-install/boards/colibri-imx6ull.md"
+        PV_FLASH_README_DEPS = "docs/how-to-install/toradex.md"
         include conf/machine/include/colibri-imx6ull.inc
         IMAGE_CLASSES:remove = " image_type_tezi"
-        IMAGE_FSTYPES:remove  = "teziimg"
-        IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
-        IMAGE_FSTYPES:append = " pv_teziimg"
+        IMAGE_FSTYPES:remove = "teziimg"
+        IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
+        MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
+        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
+        PANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = "${MACHINE_FIRMWARE}"
+        PV_FLASH_RECOVERY_MC = "tezi-recovery"
+        PV_FLASH_RECOVERY_RECIPE = "u-boot-toradex"
+        PV_FLASH_RECOVERY_IMAGE = "u-boot.imx-recoverytezi"
