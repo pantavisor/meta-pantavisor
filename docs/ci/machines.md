@@ -38,7 +38,7 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | `onpush` | `onpush-scarthgap.yaml` | push to master | `buildkas-target.yaml` (build only) |
 | `manual` | `manual-scarthgap.yaml` | `workflow_dispatch` | `buildkas-target.yaml` (build only) |
 
-Machines with only `["manual"]` are never built automatically. The `colibri-imx6ull` is an example — it requires hardware-specific handling not suitable for general CI.
+Machines with only `["manual"]` are never built automatically. `colibri-imx6ull` is an example — its NAND flash workflow hasn't been integrated into automated release pipelines.
 
 ## Regenerating Workflows
 
@@ -76,8 +76,40 @@ Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
 - `kas/with-lxc-next.yaml` — LXC 6.x instead of LXC 3.x
+- `kas/build-configs/build-base-toradex-starter.yaml` — Toradex-specific targets (see below)
 
 `makemachines` resolves each fragment's `SRCREV` pins and writes a single self-contained `kas/build-configs/release/<name>-scarthgap.yaml` that can reproduce the build without network access to layer repos.
+
+## Toradex Machines
+
+`verdin-imx8mm` and `colibri-imx6ull` replace `build-base-starter.yaml` with
+`build-base-toradex-starter.yaml`, which specifies three build targets:
+
+```yaml
+target:
+  - pantavisor-starter
+  - mc:tezi-recovery:u-boot-toradex
+  - pv-flash-bundle
+```
+
+The `tezi-recovery` multiconfig (`DISTRO = "tezi"`) builds the recovery U-Boot
+used to enter fastboot mode during UUU flashing. Its output lands in
+`tmp-scarthgap-tezi-recovery/` and is picked up by `pv-flash-bundle`.
+
+Because the `output` field accepts space-separated globs, Toradex machines set
+it to capture both the main WIC image and the flash bundle:
+
+```json
+"output": "pantavisor-starter*.rootfs.wic* pv-flash-bundle-colibri-imx6ull.tar.gz"
+```
+
+For `verdin-imx8mm` the default `output` (`pantavisor-starter*.rootfs.wic*`)
+is used; the flash bundle is archived separately by the dedicated "Archive
+pv-flash-bundle artifacts" step in `buildkas-upload.yaml`.
+
+See [docs/ci/builds.md — Toradex Builds](builds.md#toradex-builds) and
+[docs/how-to-install/toradex.md](../how-to-install/toradex.md) for details on
+the flash bundle contents and flashing procedure.
 
 ## Automated Machine Updates
 

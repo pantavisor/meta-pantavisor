@@ -45,7 +45,8 @@ jobs:
 
       - name: build
         run: |
-           su - builder -c "cd $GITHUB_WORKSPACE && env  && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
+           BUILD_TARGET="${{ inputs.build_target }}"
+           su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
 
       - name: build with sdk
         if: inputs.sdk == 1

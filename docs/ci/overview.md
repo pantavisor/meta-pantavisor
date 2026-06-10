@@ -96,3 +96,4 @@ All builds run on self-hosted runners inside the `ghcr.io/pantacor/kas/kas:next-
 - [changelog.md](changelog.md) — changelog generator and release notes
 - [tag-sync.md](tag-sync.md) — tag mirror to pantavisor/pantavisor
 - [status.md](status.md) — live CI status badges
+- [versioning.md](versioning.md) — dynamic DISTRO_VERSION generation
