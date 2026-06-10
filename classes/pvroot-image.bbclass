@@ -19,6 +19,14 @@ MACHINE_FEATURES = ""
 DISTRO_FEATURES = ""
 IMAGE_FEATURES = ""
 
+# Block the linux-firmware umbrella package. It is pulled in transitively via
+# MACHINE_EXTRA_RRECOMMENDS=kernel-modules → RRECOMMENDS linux-firmware, which
+# drags in 500+ MB of unrelated firmware blobs for every pvroot image.
+# Machine-specific firmware listed in MACHINE_FIRMWARE (sd8997, nxp-wifi,
+# imx-sdma, etc.) lands in MACHINE_EXTRA_RRECOMMENDS directly and still
+# installs, so only the catch-all umbrella is blocked here.
+BAD_RECOMMENDATIONS += "linux-firmware"
+
 # allow to assemble pvroot images by making special rootfs
 # allow bundling multiple pvrexports to initial state
 

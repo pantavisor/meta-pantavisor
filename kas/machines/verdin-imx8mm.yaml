@@ -13,8 +13,8 @@ machine: verdin-imx8mm
 # This ensures the correct WiFi-enabled device tree is selected
 local_conf_header:
  platform-verdin-imx8mm: |
-  PV_FLASH_README = "docs/flashing/boards/verdin-imx8mm.md"
-  PV_FLASH_README_DEPS = "docs/flashing/tezi.md"
+  PV_FLASH_README = "docs/how-to-install/boards/verdin-imx8mm.md"
+  PV_FLASH_README_DEPS = "docs/how-to-install/toradex.md"
   UBOOT_DTB_NAME = "imx8mm-verdin-wifi-dev.dtb"
 
   # Alternative device trees based on carrier board
@@ -35,6 +35,14 @@ local_conf_header:
   # WiFi kernel modules to autoload
   KERNEL_MODULE_AUTOLOAD:append = " cfg80211 mwifiex_sdio"
 
+  # Zinnia DTBs are listed in meta-toradex-nxp machine conf but absent from the
+  # linux-toradex 6.6 NXP BSP kernel source; machine conf only removes them for mainline BSP.
+  KERNEL_DEVICETREE:remove = "freescale/imx8mm-verdin-nonwifi-zinnia.dtb freescale/imx8mm-verdin-wifi-zinnia.dtb"
+
+  # Required: pantavisor-default-skel adds a dm-crypt-caam disk for mx8m-generic-bsp;
+  # caam-nxp installs keyctl-caam (caam-keygen) in the initramfs to mount it.
+  PANTAVISOR_FEATURES:append = " caam-nxp"
+
   # Exclude problematic firmware package that causes license manifest issues
   PACKAGE_EXCLUDE:append = " firmware-nxp-wifi-bcm4359-pcie"
 
@@ -42,18 +50,21 @@ local_conf_header:
   INHERIT:remove = "create-spdx"
 
   # Additional WiFi-specific settings
-  PV_INITIAL_DTB = "imx8mm-verdin-wifi-dev.dtb"
-  
+  # PV_INITIAL_DTB = "imx8mm-verdin-wifi-dev.dtb"
+
   # Disable auto FDT selection to use PV_INITIAL_DTB
   # This prevents the first DTB from KERNEL_DEVICETREE from being selected
-  PV_UBOOT_AUTOFDT = ""
+  PV_UBOOT_AUTOFDT = "1"
 
-  IMAGE_CLASSES:remove = " image_type_tezi"
-  IMAGE_FSTYPES:remove  = "teziimg"
+  # Required when meta-toradex-tezi is in BBLAYERS: its u-boot-toradex bbappend
+  # derives the recovery defconfig name from this variable. Without it the
+  # do_configure:prepend shell task fails trying to copy "_defconfig".
+  UBOOT_CONFIG_BASENAME:verdin-imx8mm = "verdin-imx8mm"
 
-  # Enable Pantavisor TEZI image support (eMMC storage)
-  IMAGE_CLASSES:append = " image_type_pv_tezi pv-tezi-uboot"
-  IMAGE_FSTYPES:append = " pv_teziimg"
+  # pv-flash bundle: recovery U-Boot source for factory flashing via UUU.
+  PV_FLASH_RECOVERY_MC = "tezi-recovery"
+  PV_FLASH_RECOVERY_RECIPE = "u-boot-toradex"
+  PV_FLASH_RECOVERY_IMAGE = "imx-boot-recoverytezi"
 
 env:
   TORADEX_VARIANT: wifi
