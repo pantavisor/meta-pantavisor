@@ -68,11 +68,11 @@ jobs:
           PARALLEL=${{ inputs.parallel }}
 
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh -v run -V --retry 2 -p "$PARALLEL" -w $PVTEST_WORKSPACE
+            ./test.docker.sh run -V --retry 2 -p "$PARALLEL" -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh -v run "$TEST_TARGET" -V --retry 2 -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V --retry 2 -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh -v run "$TEST_TARGET" -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
