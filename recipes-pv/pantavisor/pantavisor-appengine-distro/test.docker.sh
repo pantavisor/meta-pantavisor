@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 usage() {
 	echo ""
 	echo "Usage: $0 [options] <command> [arguments]"
@@ -23,6 +22,7 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
+	echo "  -p, --parallel N      Run up to N tests concurrently (default: 1)"
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "  -V, --valgrind        Run Pantavisor with valgrind"
 	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
@@ -41,6 +41,8 @@ usage() {
 	echo ""
 }
 
+pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]: %s\n' "$(date +%s)" "$level" "$*"; }
+
 list_tests() {
 	printf "%-50s %-10s\n" "test" "description"
 	printf "%-50s %-10s\n" "====" "==========="
@@ -55,7 +57,7 @@ add_test() {
 	local test_path=
 
 	if [ -z "$1" ]; then
-		echo "Error: Missing test path (scope/category/name)"
+		pvtest_log ERROR "Missing test path (scope/category/name)"
 		usage
 		exit 1
 	fi
@@ -65,7 +67,7 @@ add_test() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			*)
-				echo "Error: Unknown argument: $1"
+				pvtest_log ERROR "Unknown argument: $1"
 				usage
 				exit 1
 				;;
@@ -76,13 +78,13 @@ add_test() {
 	local scope=$(echo "$test_path" | cut -d'/' -f1)
 
 	if [ -e "$full_path" ]; then
-		echo "Error: '$full_path' already exists"
+		pvtest_log ERROR "'$full_path' already exists"
 		exit 1
 	fi
 
 	local common_path="$test_dir/$scope/common"
 	if [ ! -d "$common_path" ]; then
-		echo "Error: common directory '$common_path' missing"
+		pvtest_log ERROR "common directory '$common_path' missing"
 		exit 1
 	fi
 
@@ -93,7 +95,7 @@ add_test() {
 	cp "$common_path/templates/template.ready" "$full_path/resources/ready"
 	chmod +x "$full_path/resources/ready"
 
-	echo "Info: New test created at: $full_path"
+	pvtest_log INFO "New test created at: $full_path"
 }
 
 install_docker() {
@@ -102,10 +104,14 @@ install_docker() {
 	NETSIM_PATH=${NETSIM_PATH:-"pantavisor-appengine-netsim-docker.tar"}
 	if [ -f "$NETSIM_PATH" ]; then
 		docker load -i "$NETSIM_PATH"
+		docker image inspect --format '{{.Id}}' pantavisor-appengine-netsim \
+			> "$(dirname "$0")/netsim.imgid" 2>/dev/null || true
 	fi
 	TESTER_PATH=${TESTER_PATH:-"pantavisor-appengine-tester-docker.tar"}
 	if [ -f "$TESTER_PATH" ]; then
 		docker load -i "$TESTER_PATH"
+		docker image inspect --format '{{.Id}}' pantavisor-appengine-tester \
+			> "$(dirname "$0")/tester.imgid" 2>/dev/null || true
 	fi
 	APPENGINE_PATH=${APPENGINE_PATH:-"pantavisor-appengine-docker.tar"}
 	if [ -f "$APPENGINE_PATH" ]; then
@@ -155,7 +161,7 @@ echo "This will install some packages in your system. Do you want to continue? [
 
 	install_docker
 
-	echo "Dependency installation complete"
+	pvtest_log INFO "Dependency installation complete"
 
 	exit 0
 }
@@ -236,7 +242,7 @@ setup_network() {
 
 	wait_for_status "docker inspect -f '{{.State.Pid}}' $netsim_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: $netsim_name not responding"
+		pvtest_log ERROR "$netsim_name not responding"
 		exit 1
 	fi
 	local pid=$(docker inspect -f '{{.State.Pid}}' "$netsim_name")
@@ -246,7 +252,7 @@ setup_network() {
 
 	wait_for_status "docker inspect -f '{{.State.Pid}}' $tester_name" 0 5 > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		echo "Error: $tester_name not responding"
+		pvtest_log ERROR "$tester_name not responding"
 		exit 1
 	fi
 	local pid=$(docker inspect -f '{{.State.Pid}}' "$tester_name")
@@ -257,35 +263,6 @@ setup_network() {
 
 teardown_network() {
 	sudo -n modprobe -r mac80211_hwsim
-}
-
-# Remove orphan dm-crypt devices whose backing loop file has been deleted.
-# These are left over from a previously crashed test container: the storage
-# tmpfs was torn down (deleting the image file) but the dm-crypt mapping and
-# its loop device were never closed.  Active containers always have a live
-# backing file, so matching on '(deleted)' is safe even with parallel runs.
-cleanup_orphan_dmcrypt() {
-	echo "cleanup_orphan_dmcrypt: scanning /dev/mapper ..."
-	sudo -n dmsetup ls --noheadings 2>&1 | awk '{print $1}' \
-		| while IFS= read -r _dm_dev; do
-			_backing=$(sudo -n dmsetup table "$_dm_dev" 2>&1 | awk '{print $7}')
-			echo "cleanup_orphan_dmcrypt: dev=$_dm_dev backing=$_backing"
-			echo "$_backing" | grep -qE '^7:[0-9]+$' || { echo "cleanup_orphan_dmcrypt: skip $_dm_dev (not loop-backed)"; continue; }
-			_lo="/dev/loop${_backing#7:}"
-			_back_file=$(sudo -n losetup -nO BACK-FILE "$_lo" 2>&1 || true)
-			echo "cleanup_orphan_dmcrypt: lo=$_lo back_file=$_back_file"
-			case "$_back_file" in
-				*"(deleted)"*)
-					echo "cleanup_orphan_dmcrypt: removing orphan $_dm_dev (backing file deleted)"
-					sudo -n dmsetup remove --force "$_dm_dev" 2>&1 || true
-					sudo -n losetup -d "$_lo" 2>&1 || true
-					;;
-				*)
-					echo "cleanup_orphan_dmcrypt: skip $_dm_dev (backing file still live)"
-					;;
-			esac
-		done
-	echo "cleanup_orphan_dmcrypt: done"
 }
 
 exec_test() {
@@ -299,7 +276,7 @@ exec_test() {
 	local retry_index=${8:-0}
 
 	if [ ! -f "$json_path" ]; then
-		echo "Error: '$json_path' missing"
+		pvtest_log ERROR "'$json_path' missing"
 		exit 1
 	fi
 
@@ -339,18 +316,19 @@ exec_test() {
 	tester_name="pantavisor-tester-${slot}"
 	netsim_name="pantavisor-netsim-${slot}"
 	host_port=$((8222 + slot))
-	# losetup -D would detach loop devices used by sibling parallel runs, so
-	# we no longer call it. losetup -f needs root on CI runners where
-	# /dev/loop* is not world-readable — match the privilege the previous
-	# `sudo -n losetup -D` line ran with. The race between concurrent callers
-	# is benign: the container also gets /dev/loop-control + a 'b 7:* rmw'
-	# device-cgroup rule, so it can allocate its own loop devices internally
-	# regardless of which one we preview here.
-	unused_lo=$(sudo -n losetup -f)
+
+	_script_dir="$(cd "$(dirname "$0")" && pwd)"
+	tester_image="pantavisor-appengine-tester"
+	[ -f "$_script_dir/tester.imgid" ] && tester_image=$(cat "$_script_dir/tester.imgid")
+	netsim_image="pantavisor-appengine-netsim"
+	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
 
 	start=$(date +%s)
-
-	cleanup_orphan_dmcrypt
+	local launch_line="[pvtest] $start DEBUG -- [test.docker.sh]: launching '$test_id'"
+	echo "$launch_line"
+	echo "$launch_line" >> "$work_path/run.log"
+	[ "$interactive" = "false" ] && [ "$manual" = "false" ] && \
+		echo "$launch_line" >&3
 
 	setup_network0
 
@@ -363,7 +341,7 @@ exec_test() {
 			-e VERBOSE="$verbose" \
 			--rm \
 			--cap-add NET_ADMIN \
-			pantavisor-appengine-netsim > /dev/null
+			"$netsim_image" > /dev/null
 
 		setup_network "$tester_name" "$netsim_name" &
 	fi
@@ -391,11 +369,8 @@ exec_test() {
 		--cap-add SYS_PTRACE \
 		--device /dev/kmsg \
 		--device /dev/hwrng \
-		--device "$unused_lo" \
 		--device /dev/loop-control \
-		--device /dev/mapper \
 		--device-cgroup-rule 'b 7:* rmw' \
-		--device-cgroup-rule 'a 252:0 rmw' \
 		--security-opt apparmor=unconfined \
 		--security-opt seccomp=unconfined \
 		--volume "/sys/fs":"/sys/fs" \
@@ -407,19 +382,10 @@ exec_test() {
 		-v "$abs_common_path":"/work/$test_path/../../common" \
 		-v "$abs_storage_path":/var/pantavisor/storage \
 		-v "$abs_valgrind_path":/tmp/valgrind \
-		pantavisor-appengine-tester
+		"$tester_image"
 	res=$?
 
 	sudo -n chmod -R a+rX "$work_path/storage/$test_id/" 2>/dev/null || true
-
-	# Detach only loop devices whose backing file lives under this run's
-	# storage tree. Targets exactly what we created — leaves sibling parallel
-	# runs (and any unrelated host loop devices) untouched.
-	sudo -n losetup -nO NAME,BACK-FILE 2>/dev/null \
-		| awk -v p="$abs_storage_path/" '$2 ~ "^"p {print $1}' \
-		| while read -r lo; do
-			[ -n "$lo" ] && sudo -n losetup -d "$lo" 2>/dev/null || :
-		done
 
 	if [ "$netsim" = "true" ]; then
 		docker stop "$netsim_name" > /dev/null 2>&1
@@ -443,29 +409,43 @@ exec_test() {
 		cp "$diff_src" "$work_path/${test_id}/diff"
 	fi
 
-	exec 1>&3 3>&- 2>&4 4>&-
-
-	if [ $res -eq 0 ]; then
-		echo -e "Info: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
-		return 0
-	elif [ $res -eq 2 ]; then
-		echo -e "Info: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
-		return 2
-	else
-		echo -e "Info: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-		echo "Info: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
-		diff_file="$work_path/${test_id}/diff"
-		if [ -s "$diff_file" ]; then
-			{
-			printf "\n--- diff: %s ---\n" "$test_id"
-			cat "$diff_file"
-			printf '%s\n' "--- end diff ---"
-			} | tee -a "$work_path/run.log"
+	{
+		flock -x 200
+		exec 1>&3 3>&- 2>&4 4>&-
+		local ts
+		ts=$(date +%s)
+		if [ $res -eq 0 ]; then
+			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
+			return 0
+		elif [ $res -eq 2 ]; then
+			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
+			return 2
+		else
+			echo -e "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
+			echo "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
+			diff_file="$work_path/${test_id}/diff"
+			if [ -s "$diff_file" ]; then
+				{
+				printf "\n--- diff: %s ---\n" "$test_id"
+				cat "$diff_file"
+				printf '%s\n' "--- end diff ---"
+				} | tee -a "$work_path/run.log"
+			else
+				errors=$(grep -E "^\[pvtest\] [0-9]+ ERROR --" "$work_path/$test_id/test.log" 2>/dev/null || true)
+				if [ -n "$errors" ]; then
+					printf '%s\n' "$errors" > "$diff_file"
+					{
+					printf "\n--- diff: %s ---\n" "$test_id"
+					printf '%s\n' "$errors"
+					printf '%s\n' "--- end diff ---"
+					} | tee -a "$work_path/run.log"
+				fi
+			fi
+			return 1
 		fi
-		return 1
-	fi
+	} 200>"$work_path/.print.lock"
 }
 
 run_with_retry() {
@@ -481,8 +461,9 @@ run_with_retry() {
 			return 1
 		fi
 		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-		echo -e "Retry: '$test_id' attempt $attempt/$max_retries after failure..."
-		echo "Retry: '$test_id' attempt $attempt/$max_retries after failure..." >> "$work_path/run.log"
+		local retry_msg="[pvtest] $(date +%s) INFO -- [test.docker.sh]: retry '$test_id' attempt $attempt/$max_retries after failure"
+		echo -e "$retry_msg"
+		echo "$retry_msg" >> "$work_path/run.log"
 		sleep 5
 	done
 }
@@ -495,12 +476,41 @@ skip_test () {
 
 	skip=$(jq -r '.skip' "$json_path")
 	if [ "$skip" = "true" ]; then
-		echo -e "Info: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
-		echo "Info: '$test_id' SKIPPED" >> "$work_path/run.log"
+		echo -e "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
+		echo "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' SKIPPED" >> "$work_path/run.log"
 		return 1
 	fi
 
 	return 0
+}
+
+run_tests_parallel() {
+	local max_parallel="$1"
+	shift
+
+	local sem_fifo
+	sem_fifo=$(mktemp -u)
+	mkfifo "$sem_fifo"
+	exec {SEM_FD}<>"$sem_fifo"
+	rm "$sem_fifo"
+	local i
+	for ((i=0; i<max_parallel; i++)); do printf 'x' >&$SEM_FD; done
+
+	local json_path
+	for json_path in "$@"; do
+		read -r -n1 -u$SEM_FD _tok
+		(
+			skip_test "$json_path" "$work_path" || { printf 'x' >&$SEM_FD; exit 0; }
+			run_with_retry "$json_path"
+			[ $? -ne 0 ] && touch "$failed_flag"
+			printf 'x' >&$SEM_FD
+		) &
+	done
+
+	for ((i=0; i<max_parallel; i++)); do
+		read -r -n1 -u$SEM_FD _tok
+	done
+	exec {SEM_FD}>&-
 }
 
 run_test() {
@@ -508,6 +518,7 @@ run_test() {
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
+	local parallel=1
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
@@ -546,74 +557,91 @@ run_test() {
 				valgrind="true"
 				shift
 				;;
+			-p|--parallel)
+				parallel="$2"
+				shift 2
+				;;
 			-r|--retry)
 				max_retries="$2"
 				shift 2
 				;;
 			*)
-				echo "Error: Unknown argument: $1"
+				pvtest_log ERROR "Unknown argument: $1"
 				usage
 				exit 1
 				;;
 		esac
 	done
 
+	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
+		pvtest_log ERROR "-p is incompatible with -i and -m"
+		usage
+		exit 1
+	fi
+
+	if [ "$parallel" -gt 1 ] && [ "$overwrite" = "true" ]; then
+		pvtest_log ERROR "-p is incompatible with -o"
+		usage
+		exit 1
+	fi
+
 	if [ "$interactive" = true ] && [ -z "$target_path" ]; then
-		echo "Error: Interactive mode requires a specific test path"
+		pvtest_log ERROR "Interactive mode requires a specific test path"
 		usage
 		exit 1
 	fi
 
 	if [ "$interactive" = true ] && [ ! -f "$test_dir/$target_path/test.json" ]; then
-		echo "Error: '$target_path' is not a leaf test (no test.json found)"
+		pvtest_log ERROR "'$target_path' is not a leaf test (no test.json found)"
 		usage
 		exit 1
 	fi
 
 	if [ "$overwrite" = "true" ] && [ "$interactive" = "true" ]; then
-		echo "Error: Cannot use overwrite and interactive at the same time"
+		pvtest_log ERROR "Cannot use overwrite and interactive at the same time"
 		usage
 		exit 1
 	fi
 
 	mkdir -p "$work_path"
 	{
-	echo "Info: workspace=$work_path"
-	echo "Info: readme=$work_path/README.md"
-	echo "Info: run log=$work_path/run.log"
-	echo "Info: test log=$work_path/<scope>/<category>/<name>/test.log"
+	pvtest_log DEBUG "workspace=$work_path"
+	pvtest_log DEBUG "readme=$work_path/README.md"
+	pvtest_log DEBUG "run log=$work_path/run.log"
+	pvtest_log DEBUG "test log=$work_path/<scope>/<category>/<name>/test.log"
 	if [ "$valgrind" = "true" ]; then
-		echo "Info: valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
+		pvtest_log DEBUG "valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
 	fi
-	echo "Info: diff=$work_path/<scope>/<category>/<name>/diff"
+	pvtest_log DEBUG "diff=$work_path/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
+	local _tests=()
 	if [ -z "$target_path" ]; then
-		find $test_dir/ -name "test.json" | sort | while read -r json_path; do
-			skip_test "$json_path" "$work_path"
-			if [ $? -ne 0 ]; then continue; fi
-			run_with_retry "$json_path"
-			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
-		done
+		mapfile -t _tests < <(find $test_dir/ -name "test.json" | sort)
 	elif [ -f "$test_dir/$target_path/test.json" ]; then
-		json_path="$test_dir/$target_path/test.json"
-		run_with_retry "$json_path"
-		if [ $? -ne 0 ]; then touch "$failed_flag"; fi
+		_tests=("$test_dir/$target_path/test.json")
 	else
-		find "$test_dir/$target_path" -name "test.json" | sort | while read -r json_path; do
-			skip_test "$json_path" "$work_path"
-			if [ $? -ne 0 ]; then continue; fi
-			run_with_retry "$json_path"
-			if [ $? -ne 0 ]; then touch "$failed_flag"; fi
-		done
+		mapfile -t _tests < <(find "$test_dir/$target_path" -name "test.json" | sort)
 	fi
+	run_tests_parallel "$parallel" "${_tests[@]}"
 
 	set +x
 	{
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
-	grep "^Info: '.*\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log"
+	while IFS= read -r line; do
+		echo "$line"
+		if echo "$line" | grep -q " FAILED "; then
+			test_id=$(echo "$line" | sed "s/.*'\(.*\)' FAILED.*/\1/")
+			diff_file="$work_path/$test_id/diff"
+			if [ -s "$diff_file" ]; then
+				printf "\n--- diff: %s ---\n" "$test_id"
+				cat "$diff_file"
+				printf '%s\n' "--- end diff ---"
+			fi
+		fi
+	done < <(grep "\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log" | grep -v "^Retry:")
 	echo "======================================================="
 	} | tee -a "$work_path/run.log"
 	set -h
@@ -628,7 +656,7 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- location info, one result line per test + inline diffs, SUMMARY
+  run.log                           <- per-test result lines + inline diffs + SUMMARY
   README.md
   <scope>/<category>/<name>/
     test.log                        <- full verbose output (see below)
@@ -640,43 +668,73 @@ run_test() {
       trails/ objects/ logs/ ...
 ```
 
-## Interpreting Results
+## Log Format
 
-A failure means actual test output diverged from expected. Lines prefixed with `-` are
-expected; lines prefixed with `+` are what the test produced.
+All structured log lines follow the pantavisor log convention:
 
-When a test fails, the diff is printed inline in `run.log` right after the FAILED line, and
-also saved to `<scope>/<category>/<name>/diff`. Retry attempts get their own directory
+```
+[pvtest] <epoch> LEVEL -- [source]: message
+```
+
+Sources: `test.docker.sh`, `pvtest-run`, `pv-appengine`.
+
+## run.log
+
+Contains one structured line per test result plus a SUMMARY section at the end.
+
+Log levels used in `run.log`:
+
+| Level | When |
+|-------|------|
+| `DEBUG` | Test launch and workspace setup diagnostics |
+| `INFO` | PASSED, ABORTED, SKIPPED, retry |
+| `ERROR` | FAILED |
+
+On failure the diff is printed inline after the `ERROR` line, and also saved to
+`<scope>/<category>/<name>/diff`. Retry attempts get their own directory
 (`<name>.1/`, `<name>.2/`).
 
-### test.log
+Quick scan for failures:
+
+    grep ERROR run.log
+
+## test.log
 
 `test.log` is a single interleaved stream of everything that happened during a test run.
 It mixes output from four sources:
 
-**1. `test.docker.sh` (`set -x` traces)**
-The host-side orchestrator. Visible as `++ docker run ...`, `++ allocate_slot`, etc.
-Covers container startup, loop device allocation, and network setup.
+**1. `test.docker.sh`**
+Host-side orchestrator. With `-v` produces `set -x` traces (`++ docker run ...`,
+`++ allocate_slot`, etc.) covering container startup and network setup.
+Structured messages use `[pvtest] LEVEL -- [test.docker.sh]: message`.
 
-**2. `pvtest-run` (`set -x` traces) + `resources/test` output**
-`pvtest-run` is the inner test runner inside the tester container. It parses `test.json`,
-initialises storage, starts Pantavisor via `pv-appengine`, then runs `resources/test`
-(the actual test script, with `set -x` injected at the top). The test script's stdout
-is captured and diffed against the stored `output` file; the diff appears at the end of
-the log.
+**2. `pvtest-run` + `resources/test`**
+Inner test runner inside the tester container. Parses `test.json`, initialises storage,
+starts Pantavisor via `pv-appengine`, then runs `resources/test` (with `set -x` injected).
+Structured messages use `[pvtest] LEVEL -- [pvtest-run]: message`.
+The test script output is captured and diffed against the stored `output` file.
 
-**3. `pv-appengine` (Pantavisor runtime launcher)**
-Runs inside the tester container. Sets up cgroups, loop devices, and storage mounts,
-then launches the `pantavisor` binary in a restart loop (simulating device reboots).
+**3. `pv-appengine`**
+Pantavisor runtime launcher inside the tester container. Sets up cgroups and storage
+mounts, then runs the `pantavisor` binary in a restart loop (simulating device reboots).
+Structured messages use `[pvtest] LEVEL -- [pv-appengine]: message`.
 
-**4. Pantavisor logs (`stdout_direct`)**
-Pantavisor is started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The
-`stdout_direct` output mode streams Pantavisor's internal log directly to stdout as
-each event happens, without buffering. These lines carry the familiar
-`[pantavisor] TIMESTAMP LEVEL -- [module]: message` format and are interleaved
-in real time with the shell traces above.
+**4. Pantavisor (`stdout_direct`)**
+Started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. Streams internal logs
+directly to stdout without buffering:
+`[pantavisor] TIMESTAMP LEVEL -- [module]: message`.
 
-### Valgrind Logs
+To filter by source:
+
+    grep '\[pvtest-run\]'   test.log    # pvtest-run messages only
+    grep '\[pv-appengine\]' test.log    # pv-appengine messages only
+    grep '\[pantavisor\]'   test.log    # pantavisor messages only
+    grep 'WARN\|ERROR'      test.log    # all warnings and errors
+
+In GHA, WARN and ERROR lines from `test.log` are automatically surfaced in the
+job step summary under **Test log issues**.
+
+## Valgrind Logs
 
 Each test's valgrind output is under `<scope>/<category>/<name>/valgrind/valgrind.log.<pid>`.
 The main Pantavisor worker is typically the largest file:
@@ -726,7 +784,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ $# -eq 0 ]; then
-	echo "Error: Missing command"
+	pvtest_log ERROR "Missing command"
 	usage
 	exit 1
 fi
@@ -751,7 +809,7 @@ case "$command" in
 		run_test "$@"
 		;;
 	*)
-		echo "Error: Unknown command: $command"
+		pvtest_log ERROR "Unknown command: $command"
 		usage
 		exit 1
 		;;
