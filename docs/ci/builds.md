@@ -40,8 +40,49 @@ Every build produces some subset of the following:
 | `pvrexports-<machine>` | pvrexport tarballs (`*pvrexport.tgz`) | both |
 | `pantavisor-bsp-<machine>` | BSP pvrexport only | both |
 | `pvtest-distro-<machine>` | unpacked appengine distro directory | both |
-| `tezi-<target>-<machine>` | Toradex TEZI image (`*pv_teziimg.tar.xz`) | both |
+| `pv-flash-bundle-<machine>` | Toradex factory flash bundle (`pv-flash-bundle-*.tar.gz`) | both |
 | `sdk-artifact-<machine>` | Yocto SDK installer (`panta*.sh`) | both |
+
+## Toradex Builds
+
+Toradex machines (`verdin-imx8mm`, `colibri-imx6ull`) use a multi-target build
+that produces three artifacts in a single `kas build` invocation:
+
+```
+target:
+  - pantavisor-starter          # main Pantavisor image (wic / ubifs)
+  - mc:tezi-recovery:u-boot-toradex  # recovery U-Boot via tezi-recovery multiconfig
+  - pv-flash-bundle             # self-contained factory flash archive
+```
+
+### tezi-recovery multiconfig
+
+`BBMULTICONFIG = "tezi-recovery"` is set by the `kas/platforms/toradex.yaml`
+fragment. The multiconfig uses `DISTRO = "tezi"` (from `meta-toradex-tezi`) and
+builds in a separate `tmp-scarthgap-tezi-recovery/` tmpdir. It produces the
+recovery U-Boot artifacts that `pv-flash-bundle` picks up:
+
+| Machine | Recovery artifact | Production NAND artifact |
+|---|---|---|
+| verdin-imx8mm | `imx-boot-recoverytezi` | — (eMMC, no separate NAND binary) |
+| colibri-imx6ull | `u-boot.imx-recoverytezi` | `u-boot.imx-rawnand` |
+
+`meta-toradex-tezi` is masked (via `BBMASK`) in the main panta-distro build to
+prevent Tezi-specific recipes from conflicting. Only the `recipes-bsp/` U-Boot
+bbappends are active in the main build context.
+
+### pv-flash-bundle
+
+`recipes-bsp/pv-flash/pv-flash-bundle.bb` assembles a self-contained archive
+that operators use for factory flashing:
+
+| Machine | Image payload | Flash method |
+|---|---|---|
+| verdin-imx8mm | `.wic.gz` (eMMC) | SDP + SDPV → fastboot → `FB: flash -raw2sparse all` |
+| colibri-imx6ull | `.ubifs` (NAND) | SDP → fastboot → `nand write` + `ubi write` |
+
+See [docs/how-to-install/toradex.md](../how-to-install/toradex.md) for the full
+flashing procedure and bundle contents.
 
 ## S3 Distribution (upload.sh)
 

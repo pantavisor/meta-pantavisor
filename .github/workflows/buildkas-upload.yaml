@@ -45,7 +45,8 @@ jobs:
 
       - name: build
         run: |
-         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} --target ${{ inputs.build_target }} "
+         BUILD_TARGET="${{ inputs.build_target }}"
+         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
       - name: build-sdk
         run: |
            if [ "${{ inputs.sdk }}" = 1 ]; then
@@ -95,7 +96,7 @@ jobs:
       - name: Archive wic artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.build_target}}-${{ inputs.machine_name }}
+          name: ${{ inputs.build_target || 'pantavisor-starter' }}-${{ inputs.machine_name }}
           path: |
              images/${{ inputs.output }}
           if-no-files-found: ignore
@@ -116,12 +117,12 @@ jobs:
             pvexports/pantavisor-bsp*
           if-no-files-found: ignore
 
-      - name: Archive tezi tar artifacts
+      - name: Archive pv-flash-bundle artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: tezi-${{ inputs.build_target}}-${{ inputs.machine_name }}
+          name: pv-flash-bundle-${{ inputs.machine_name }}
           path: |
-            images/*pv_teziimg.tar.xz
+            images/pv-flash-bundle-*.tar.gz
           if-no-files-found: ignore
 
       - name: Archive sdk tar artifacts

@@ -47,6 +47,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 0
+          - machine_name: colibri-imx6ull-scarthgap
+            configs: kas/build-configs/release/colibri-imx6ull-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: 
+            output: "pantavisor-starter*.rootfs.wic* pv-flash-bundle-colibri-imx6ull.tar.gz"
+            sdk: 0
           - machine_name: radxa-rock5a-scarthgap
             configs: kas/build-configs/release/radxa-rock5a-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
@@ -61,6 +66,11 @@ jobs:
             configs: kas/build-configs/release/imx8mm-var-dart-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
+            sdk: 0
+          - machine_name: verdin-imx8mm-scarthgap
+            configs: kas/build-configs/release/verdin-imx8mm-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: 
+            output: "pantavisor-starter*.rootfs.wic* pv-flash-bundle-verdin-imx8mm.tar.gz"
             sdk: 0
           - machine_name: docker-x86_64-scarthgap
             configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml

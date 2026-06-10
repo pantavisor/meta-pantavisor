@@ -34,10 +34,11 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-toradex-starter.yaml",
 			"name": "colibri-imx6ull",
-			"output": " pantavisor-starter*.rootfs.wic* *pv_teziimg.tar.xz",
-			"workflows": ["manual"]
+			"build_target": "",
+			"output": "pantavisor-starter*.rootfs.wic* pv-flash-bundle-colibri-imx6ull.tar.gz",
+			"workflows": ["manual", "tag"]
 		},
 		{
 			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
@@ -52,6 +53,13 @@
 		{
 			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "imx8mm-var-dart",
+			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/verdin-imx8mm.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-toradex-starter.yaml",
+			"name": "verdin-imx8mm",
+			"build_target": "",
+			"output": "pantavisor-starter*.rootfs.wic* pv-flash-bundle-verdin-imx8mm.tar.gz",
 			"workflows": ["manual", "tag"]
 		},
 		{
