@@ -446,6 +446,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/xconnect/unix-sockets` | Unix Sockets (UDS proxying) | |
 | `local/xconnect/rest-over-uds` | REST-over-UDS (Identity headers) | |
 | `local/xconnect/dbus` | D-Bus (Policy mediation) | |
+| `local/xconnect/dbus-systembus` | Hosted D-Bus system bus (owns/allow, generated policy, collision rejection) | |
 | `local/xconnect/drm` | DRM (Graphics node injection) | |
 | `local/xconnect/wayland` | Wayland (Isolated UI rendering) | |
 
