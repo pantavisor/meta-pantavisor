@@ -36,6 +36,7 @@ PACKAGE_INSTALL = "pantavisor \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'mtools', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'container-mdev', 'pantavisor-hooks-mdev', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'dbus', '', d)} \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
 PACKAGE_INSTALL:append = " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'keyctl-caam keyutils', '', d)}"
