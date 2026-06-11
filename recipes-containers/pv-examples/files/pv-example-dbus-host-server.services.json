@@ -1,0 +1,12 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "type": "dbus",
+      "bus": "system-bus",
+      "owns": "org.pantavisor.Example",
+      "role": "example-service",
+      "allow": ["operator", "monitor"]
+    }
+  ]
+}
