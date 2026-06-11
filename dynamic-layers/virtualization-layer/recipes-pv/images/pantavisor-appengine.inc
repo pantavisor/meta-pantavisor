@@ -34,6 +34,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	util-linux \
 	pantavisor-pvtx \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'pvcontrol', 'pantavisor-pvcontrol', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'dbus', '', d)} \
 	${VIRTUAL-RUNTIME_pantavisor_config} \
 "
 
