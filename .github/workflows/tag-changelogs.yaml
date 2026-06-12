@@ -74,8 +74,11 @@ jobs:
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "Release $TAG exists — updating notes."
+            # --draft=false re-publishes a release that GitHub flipped back
+            # to draft after a tag re-push
             gh release edit "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
+              --draft=false \
               --notes-file /tmp/release-notes.md
           else
             echo "Release $TAG does not exist — creating with notes."

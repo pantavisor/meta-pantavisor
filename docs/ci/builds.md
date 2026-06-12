@@ -209,7 +209,7 @@ The job:
 7. Uploads the original (unstripped) tarball to the GitHub Release via
    `upload-docs.py upload-asset`, then sends a `repository_dispatch` event
    (`event_type: "docs-release"`, payload `{"tag": "<TAG>"}`) directly to
-   `pantavisor/docs.pantavisor` via `curl` using the `PANTAVISOR_DOC_SYNC`
+   `pantavisor/docs.pantavisor` via `curl` using the `PANTAVISOR_DOCS_SYNC`
    secret.
 
 The tag is taken from `workflow_run.head_branch` (the tag that triggered
