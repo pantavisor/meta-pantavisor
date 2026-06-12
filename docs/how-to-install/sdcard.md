@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # Flashing via SD Card (WIC images)
 
 Most Pantavisor machines produce a `.wic` image that can be written directly

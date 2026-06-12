@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Machine Configuration
 
 All CI behavior is controlled by `.github/machines.json`. Adding, removing, or reconfiguring a machine means editing this file and regenerating the workflows — no manual YAML editing required.

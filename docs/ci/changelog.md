@@ -1,7 +1,10 @@
+---
+sidebar_position: 7
+---
 # Per-release CHANGELOG
 
 Each meta-pantavisor release ships with a section in
-[`CHANGELOG/CHANGELOG-NNN.md`](../../CHANGELOG/) summarizing what changed
+[`CHANGELOG/CHANGELOG-NNN.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG) summarizing what changed
 relative to the previous release in the same stream. The format is modeled on
 the [Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.36.md).
 
@@ -9,9 +12,9 @@ the [Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/
 
 | Piece | Path |
 |---|---|
-| Generator | [`.github/scripts/make-changelog.sh`](../../.github/scripts/make-changelog.sh) |
-| Component map (JSON) | [`.github/scripts/components.json`](../../.github/scripts/components.json) |
-| CI workflow | [`.github/workflows/tag-changelogs.yaml`](../../.github/workflows/tag-changelogs.yaml) |
+| Generator | [`.github/scripts/make-changelog.sh`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/make-changelog.sh) |
+| Component map (JSON) | [`.github/scripts/components.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/components.json) |
+| CI workflow | [`.github/workflows/tag-changelogs.yaml`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/workflows/tag-changelogs.yaml) |
 | Output | `CHANGELOG/CHANGELOG-<MAJOR>.md` (e.g. `CHANGELOG-028.md`) |
 
 The generator is a single bash script using `git`, `curl`, `jq`, and `awk`.
@@ -34,7 +37,7 @@ For tag `T` (e.g. `028-rc7`):
    artifacts to S3, after which they activate at exactly those URLs. SHA256
    columns are blank in predicted mode (the hashes aren't known yet).
 2. **Component versions** — for every recipe in
-   [`components.json`](../../.github/scripts/components.json), the `SRCREV` is
+   [`components.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/components.json), the `SRCREV` is
    read at the source rev (HEAD in pre-tag mode, the tag in historical mode)
    and at the previous tag in the stream. Each row shows previous SHA, current
    SHA, and a `compare` URL when they differ.
@@ -179,7 +182,7 @@ git commit -m "changelogs(028): backfill"
 
 ## Adding a new component
 
-Append an entry to [`components.json`](../../.github/scripts/components.json):
+Append an entry to [`components.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/components.json):
 
 ```json
 {

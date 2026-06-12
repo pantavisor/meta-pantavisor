@@ -1,3 +1,6 @@
+---
+sidebar_position: 7
+---
 # Bootchartd
 
 Pantavisor supports [bootchartd](https://github.com/mmeeks/bootchart) for boot time profiling. When enabled, Pantavisor generates a `bootchartd.tgz` tarball capturing the boot sequence.

@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Automated Test Workflow
 
 Structured testing using `test.docker.sh` — the test runner bundled inside the `pantavisor-appengine-distro` build target. Use this for collecting valgrind results and CI validation. For the manual development workflow (quick iteration while coding), including test plans, see [development-workflow.md](development-workflow.md).
@@ -262,7 +265,7 @@ cp <workdir>/$SCOPE/$CATEGORY/$NAME/output \
 
 Iterate between steps 4–6 until the test passes cleanly.
 
-**7.** Add the test to the [test plan table](#test-plan) below and mark `[x]` in `TODO.md`.
+**7.** Add the test to the [todo list](#todo-list) below and mark `[x]` in `TODO.md`.
 
 ### Updating expected output for an existing test
 

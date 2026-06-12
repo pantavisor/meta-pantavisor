@@ -1,3 +1,6 @@
+---
+sidebar_position: 6
+---
 # Tag sync: meta-pantavisor → pantavisor
 
 When a release tag is pushed to `meta-pantavisor`, a workflow mirrors that tag

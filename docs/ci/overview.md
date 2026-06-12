@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # CI Overview
 
 The CI system builds Yocto images for all supported machines, runs integration tests, mirrors release tags, and publishes artifacts to S3. All behavior is driven from a single source of truth — `.github/machines.json` — from which most workflow files are generated.

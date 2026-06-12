@@ -1,3 +1,6 @@
+---
+sidebar_position: 3
+---
 # Flashing Toradex Modules
 
 Both supported Toradex modules use **UUU + pv-flash-bundle** for factory flashing.

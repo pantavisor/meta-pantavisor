@@ -1,3 +1,6 @@
+---
+sidebar_position: 5
+---
 # Versioning
 
 `meta-pantavisor` uses dynamic versioning tied to its own git repository. This means the `DISTRO_VERSION` variable automatically reflects the latest git tag and commit state of your local `meta-pantavisor` checkout.

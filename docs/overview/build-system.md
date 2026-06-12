@@ -1,3 +1,6 @@
+---
+sidebar_position: 3
+---
 # Build System Overview
 
 ## KAS Configuration Hierarchy

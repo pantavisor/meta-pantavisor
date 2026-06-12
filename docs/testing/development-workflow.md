@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # Development Workflow
 
 The appengine is a Docker-based environment for running and testing Pantavisor locally without real hardware. This document covers the manual workflow used during development. For structured automated testing with `test.docker.sh`, see [automated-workflow.md](automated-workflow.md).

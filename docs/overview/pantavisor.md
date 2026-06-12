@@ -1,3 +1,6 @@
+---
+sidebar_position: 1
+---
 # Pantavisor
 
 Pantavisor is an open-source, container-based embedded Linux system runtime.
