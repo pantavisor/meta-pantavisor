@@ -16,16 +16,7 @@ jobs:
       sdk: 0
     secrets: inherit
 
-  local:
+  pvtests:
     needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
-    with:
-      test_path: local
-    secrets: inherit
-
-  remote:
-    needs: build-docker-x86_64-scarthgap
-    uses: ./.github/workflows/call-pvtests.yaml
-    with:
-      test_path: remote
     secrets: inherit
