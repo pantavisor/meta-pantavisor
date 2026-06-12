@@ -1,3 +1,6 @@
+---
+sidebar_position: 4
+---
 # CI/CD Overview
 
 GitHub Actions workflows in `.github/workflows/` automate builds for all supported machines.

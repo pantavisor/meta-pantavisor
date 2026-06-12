@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Supported Devices
 
 This document outlines the devices (machines) currently supported by meta-pantavisor, including those that are built automatically by our CI infrastructure.
@@ -21,7 +24,7 @@ The following machines are configured in our CI pipeline (`.github/machines.json
 | `docker-x86_64` | AppEngine testing container (x86_64) |
 
 > [!NOTE]
-> For an up-to-date programmatic list of what is built, always refer to [`.github/machines.json`](../../.github/machines.json). If you add a new machine, remember to run `.github/scripts/makeworkflows` to regenerate the GitHub Actions workflows.
+> For an up-to-date programmatic list of what is built, always refer to [`.github/machines.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/machines.json). If you add a new machine, remember to run `.github/scripts/makeworkflows` to regenerate the GitHub Actions workflows.
 
 ## Downloading Images
 
@@ -39,4 +42,4 @@ To learn how to build an image for one of these supported devices, check out the
 Once you have built an image for your device, you need to flash it or install it on the target hardware. The installation process varies by board type:
 
 - See the [**How to Install Overview**](../how-to-install/index.md) for general flashing instructions.
-- Refer to board-specific guides such as [SD Card installation](../how-to-install/sdcard.md), [Toradex Easy Installer (Tezi)](../how-to-install/tezi.md), or [NXP UUU](../how-to-install/uuu.md) depending on your target machine.
+- Refer to board-specific guides such as [SD Card installation](../how-to-install/sdcard.md), [Toradex flashing (UUU + pv-flash-bundle)](../how-to-install/toradex.md), or [NXP UUU](../how-to-install/uuu.md) depending on your target machine.

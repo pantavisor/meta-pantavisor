@@ -1,3 +1,6 @@
+---
+sidebar_position: 5
+---
 # Pantavisor Manifest Audit
 
 `pv-manifest-audit.bbclass` produces a deterministic listing of every entry in

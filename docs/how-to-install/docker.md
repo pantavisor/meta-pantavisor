@@ -1,3 +1,6 @@
+---
+sidebar_position: 2
+---
 # Running Pantavisor AppEngine
 
 Pantavisor AppEngine init mode lets you run Pantavisor in your already set up

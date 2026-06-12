@@ -1,3 +1,6 @@
+---
+sidebar_position: 6
+---
 # Component Documentation Packaging
 
 meta-pantavisor ships two BitBake classes that together form a documentation

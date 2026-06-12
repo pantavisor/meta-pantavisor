@@ -1,3 +1,6 @@
+---
+sidebar_position: 4
+---
 # Flashing via NXP uuu (Universal Update Utility)
 
 Some i.MX-based boards support flashing via **uuu** (Universal Update Utility),
