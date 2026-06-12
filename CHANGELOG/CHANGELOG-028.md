@@ -34,13 +34,13 @@ Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor
 
 ### Component versions
 
-| Component | Previous (028-rc14) | Current (028-rc15) | Compare |
+| Component | Previous (028-rc13) | Current (028-rc14) | Compare |
 |---|---|---|---|
 | busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
 | dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
 | libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
 | lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
-| pantavisor | `59e3964` | `bc7f0ca` | [`59e3964…bc7f0ca`](https://github.com/pantavisor/pantavisor/compare/59e3964c5237f6e2a01d26c9c3e634f469bf4f5d...bc7f0ca0b96d78857c4a089a477daa7d5526b855) |
+| pantavisor | `65491cc` | `59e3964` | [`65491cc…59e3964`](https://github.com/pantavisor/pantavisor/compare/65491cc7b0d7bfd0f7981c3935f93278c27ddcca...59e3964c5237f6e2a01d26c9c3e634f469bf4f5d) |
 | picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
 
 ### Changes
@@ -53,8 +53,69 @@ Changes since [`028-rc14`](https://github.com/pantavisor/meta-pantavisor/release
 #### CI
 - unify scheduled pvtest into single job
 
+## v028-rc14
+
+Released: 2026-06-10
+
+### Component versions
+
+| Component | Previous (028-rc14) | Current (028-rc15) | Compare |
+| imx8mn-var-som-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mn-var-som-scarthgap/imx8mn-var-som-scarthgap-028-rc14.tar.gz)<br>`f3e4ba4892a3…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mn-var-som-scarthgap/pvexports-imx8mn-var-som-scarthgap-028-rc14.tar.gz)<br>`415e8dafdbe8…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mn-var-som-scarthgap/pantavisor-bsp-imx8mn-var-som.pvrexport.tgz)<br>`8bca235acac6…` | — |
+| sunxi-bananapi-m2-berry-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-bananapi-m2-berry-scarthgap/sunxi-bananapi-m2-berry-scarthgap-028-rc14.tar.gz)<br>`7548d3bf78d9…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-bananapi-m2-berry-scarthgap/pvexports-sunxi-bananapi-m2-berry-scarthgap-028-rc14.tar.gz)<br>`c54a2b28d6e3…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-bananapi-m2-berry-scarthgap/pantavisor-bsp-bananapi-m2-berry.pvrexport.tgz)<br>`7c33e720f4f2…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-bananapi-m2-berry-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa7t2hf-neon-bananapi-m2-berry-toolchain-028-rc14.sh)<br>`41ef78982a81…` |
+| sunxi-orange-pi-3lts-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-3lts-scarthgap/sunxi-orange-pi-3lts-scarthgap-028-rc14.tar.gz)<br>`d800e4d3e842…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-3lts-scarthgap/pvexports-sunxi-orange-pi-3lts-scarthgap-028-rc14.tar.gz)<br>`4fe737aa8722…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-3lts-scarthgap/pantavisor-bsp-orange-pi-3lts.pvrexport.tgz)<br>`ac6c904434f6…` | — |
+| imx8mm-var-dart-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mm-var-dart-scarthgap/imx8mm-var-dart-scarthgap-028-rc14.tar.gz)<br>`a903729ce090…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mm-var-dart-scarthgap/pvexports-imx8mm-var-dart-scarthgap-028-rc14.tar.gz)<br>`cc92bd539b7e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8mm-var-dart-scarthgap/pantavisor-bsp-imx8mm-var-dart.pvrexport.tgz)<br>`399745ff4113…` | — |
+| radxa-rock5a-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/radxa-rock5a-scarthgap/radxa-rock5a-scarthgap-028-rc14.tar.gz)<br>`c54a3be3620d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/radxa-rock5a-scarthgap/pvexports-radxa-rock5a-scarthgap-028-rc14.tar.gz)<br>`6f2c5e7ad662…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/radxa-rock5a-scarthgap/pantavisor-bsp-rock-5a.pvrexport.tgz)<br>`76267db96313…` | — |
+| colibri-imx6ull-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/colibri-imx6ull-scarthgap/colibri-imx6ull-scarthgap-028-rc14.tar.gz)<br>`327b09b8177e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/colibri-imx6ull-scarthgap/pvexports-colibri-imx6ull-scarthgap-028-rc14.tar.gz)<br>`8c9a4c1f4a4b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/colibri-imx6ull-scarthgap/pantavisor-bsp-colibri-imx6ull.pvrexport.tgz)<br>`46845faea9cb…` | — |
+| rpi-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/rpi-scarthgap/rpi-scarthgap-028-rc14.tar.gz)<br>`5f471a50c8d1…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/rpi-scarthgap/pvexports-rpi-scarthgap-028-rc14.tar.gz)<br>`47543f06c3b8…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/rpi-scarthgap/pantavisor-bsp-raspberrypi.pvrexport.tgz)<br>`d40ef84044d7…` | — |
+| raspberrypi-armv8-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-028-rc14.tar.gz)<br>`42ad190edae4…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/raspberrypi-armv8-scarthgap/pvexports-raspberrypi-armv8-scarthgap-028-rc14.tar.gz)<br>`7ff1e3b345bc…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/raspberrypi-armv8-scarthgap/pantavisor-bsp-raspberrypi-armv8.pvrexport.tgz)<br>`6efc3171aa86…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/raspberrypi-armv8-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa53-raspberrypi-armv8-toolchain-028-rc14.sh)<br>`2192b2537376…` |
+| sunxi-orange-pi-r1-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-r1-scarthgap/sunxi-orange-pi-r1-scarthgap-028-rc14.tar.gz)<br>`53a9002fd08f…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-r1-scarthgap/pvexports-sunxi-orange-pi-r1-scarthgap-028-rc14.tar.gz)<br>`6309ad0a87b1…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/sunxi-orange-pi-r1-scarthgap/pantavisor-bsp-orange-pi-r1.pvrexport.tgz)<br>`5d4528cd7997…` | — |
+| verdin-imx8mm-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/verdin-imx8mm-scarthgap/verdin-imx8mm-scarthgap-028-rc14.tar.gz)<br>`8da1ee46146f…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/verdin-imx8mm-scarthgap/pvexports-verdin-imx8mm-scarthgap-028-rc14.tar.gz)<br>`1e390a4c29a2…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/verdin-imx8mm-scarthgap/pantavisor-bsp-verdin-imx8mm.pvrexport.tgz)<br>`a884a1bd519b…` | — |
+| imx8qxp-b0-mek-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8qxp-b0-mek-scarthgap/imx8qxp-b0-mek-scarthgap-028-rc14.tar.gz)<br>`f27a5561e907…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8qxp-b0-mek-scarthgap/pvexports-imx8qxp-b0-mek-scarthgap-028-rc14.tar.gz)<br>`867ed0096fca…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/imx8qxp-b0-mek-scarthgap/pantavisor-bsp-imx8qxp-b0-mek.pvrexport.tgz)<br>`a165c361b168…` | — |
+| docker-x86_64-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/docker-x86_64-scarthgap/docker-x86_64-scarthgap-028-rc14.tar.gz)<br>`8367f042bf35…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/docker-x86_64-scarthgap/pvexports-docker-x86_64-scarthgap-028-rc14.tar.gz)<br>`bf243e18b0ad…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc14/docker-x86_64-scarthgap/pantavisor-bsp-docker-x86_64.pvrexport.tgz)<br>`41442b096226…` | — |
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`release-candidate` → `028-rc14`).
+
+### Component versions
+
+| Component | Previous (028-rc13) | Current (028-rc14) | Compare |
+|---|---|---|---|
+| busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
+| dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
+| libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | `59e3964` | `bc7f0ca` | [`59e3964…bc7f0ca`](https://github.com/pantavisor/pantavisor/compare/59e3964c5237f6e2a01d26c9c3e634f469bf4f5d...bc7f0ca0b96d78857c4a089a477daa7d5526b855) |
+| picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
+
+
 #### Other
 - **(uncategorized)**: recipes-pv: automated srcrev update
+Changes since [`028-rc13`](https://github.com/pantavisor/meta-pantavisor/releases/tag/028-rc13):
+
+#### Features
+- **colibri-imx6ull**: add Pantavisor NAND factory flash via UUU
+- **verdin-imx8mm**: add Pantavisor factory flash bundle via UUU
+- **appengine**: switch dm-internal-secrets disk to volume-disk type
+- **ci**: parallel pvtest execution and test.log warnings in GHA summary
+- **pvtest**: parallel execution, structured logging, and SUMMARY failure evidence
+- **pv-examples**: place xconnect example pairs in the app group
+
+#### Fixes
+- **distro**: apply oe.buildcfg.get_metadata_git_describe to all distro confs
+- **pvtest**: sort devmeta keys for stable output in basic-endpoints tests
+- **ci**: remove double meta-pantavisor/ prefix in upload-badges
+- **docs**: add missing component-docs dep; generate index.md conditionally
+
+#### CI
+- **docs**: signal docs.pantavisor via repository_dispatch; fix shell portability
+
+#### Docs
+- **testplan**: add xconnect rest test and proxy lifecycle checks
+
+#### Other
+- **(uncategorized)**: feat(distro)/ci: dynamic DISTRO_VERSION and fix Toradex multi-target CI builds
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: recipes-pv: automated srcrev update
+- **(uncategorized)**: AutoPR: update kas meta layers to latest branch commits
 
 ## v028-rc13
 
