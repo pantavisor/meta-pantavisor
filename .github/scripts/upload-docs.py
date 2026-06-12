@@ -18,10 +18,11 @@ Commands:
       artifact_url — public download URL of the .docs.tar.zst file
       filename     — e.g. pantavisor-starter-raspberrypi-armv8.abc1234+v23.docs.tar.zst
       token        — GitHub token with actions:write on pantavisor/docs.pantavisor
-                     (PANTAVISOR_DOC_SYNC secret)
+                     (PANTAVISOR_DOCS_SYNC secret)
 """
 import sys
 import json
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -42,12 +43,38 @@ def _api(url, token, method="GET", data=None, content_type="application/json"):
         },
     )
     with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+        body = resp.read()
+        return json.loads(body) if body else None
+
+
+def _find_release(repo, tag, token):
+    try:
+        return _api(f"https://api.github.com/repos/{repo}/releases/tags/{tag}", token)
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            raise
+    # /releases/tags/{tag} only returns published releases; a tag re-push
+    # flips the existing release back to draft, so fall back to listing.
+    page = 1
+    while True:
+        releases = _api(
+            f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}",
+            token,
+        )
+        if not releases:
+            sys.exit(f"error: no release (published or draft) found for tag '{tag}' in {repo}")
+        for release in releases:
+            if release["tag_name"] == tag:
+                return release
+        page += 1
 
 
 def upload_asset(repo, tag, filepath, token):
     asset = Path(filepath)
-    release = _api(f"https://api.github.com/repos/{repo}/releases/tags/{tag}", token)
+    release = _find_release(repo, tag, token)
+    for existing in release.get("assets", []):
+        if existing["name"] == asset.name:
+            _api(existing["url"], token, method="DELETE")
     upload_url = release["upload_url"].split("{")[0]
     with asset.open("rb") as fh:
         _api(
