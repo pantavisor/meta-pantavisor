@@ -6,7 +6,7 @@ inherit image pvroot-image pantavisor-docs
 FILESPATH = "${@base_set_filespath(["${FILE_DIRNAME}/${BP}", \
         "${FILE_DIRNAME}/${BPN}", "${FILE_DIRNAME}/files"], d)}"
 
-PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk pv-alpine-connman pvwificonnect"
+PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk pv-alpine-connman pv-avahi pvwificonnect"
 
 PVROOT_IMAGE_BSP ?= "core-image-minimal"
 
