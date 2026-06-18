@@ -24,4 +24,5 @@ repos:
 local_conf_header:
   platform-freescale: |
      ACCEPT_FSL_EULA = "1"
+     PANTAVISOR_FEATURES:append = " fsl-image-host-ttys"
 

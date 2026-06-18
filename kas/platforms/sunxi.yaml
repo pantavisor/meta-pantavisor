@@ -27,3 +27,4 @@ repos:
 local_conf_header:
   platform-sunxi: |
     PV_UBOOT_AUTOFDT = "1"
+    PANTAVISOR_FEATURES:append = " core-image-host-ttys"
