@@ -53,4 +53,39 @@ if [ -n "$deviceid" ] || [ -n "$challenge" ] || [ -n "$phurl" ]; then
 	fi
 fi
 
+# Decide whether to expose avahi's D-Bus API on the pantavisor-hosted system
+# bus. The bus socket is injected by xconnect (asynchronously), so we wait a
+# short grace period before deciding.
+#
+#   - socket present       -> enable-dbus=yes (expose org.freedesktop.Avahi)
+#   - socket absent        -> enable-dbus=no  (plain mDNS, graceful degrade)
+#   - PV_AVAHI_REQUIRE_DBUS=1 and socket absent -> exit non-zero so a mis-wired
+#     stack (bus feature off, missing requirement, etc.) fails and rolls back.
+#
+# avahi is the container's PID 1 (we exec it below, no init wrapper), so this
+# non-zero exit becomes the container exit status that pantavisor acts on.
+DBUS_SOCKET=/run/dbus/system_bus_socket
+
+# xconnect injects the bus socket only after it has reconciled the link graph,
+# which can take well over the container's first few seconds. Wait generously so
+# we don't lose the D-Bus API to a startup race; the socket, once present, stays.
+DBUS_WAIT=${PV_AVAHI_DBUS_WAIT:-60}
+
+i=0
+while [ ! -S "$DBUS_SOCKET" ] && [ "$i" -lt "$DBUS_WAIT" ]; do
+	i=$((i + 1))
+	sleep 1
+done
+
+if [ -S "$DBUS_SOCKET" ]; then
+	echo "pv-avahi: hosted D-Bus system bus at $DBUS_SOCKET after ${i}s -> enabling D-Bus API (org.freedesktop.Avahi)"
+	sed -i 's/^enable-dbus=.*/enable-dbus=yes/' "$CONF"
+elif [ "${PV_AVAHI_REQUIRE_DBUS:-0}" = "1" ]; then
+	echo "pv-avahi: PV_AVAHI_REQUIRE_DBUS=1 but $DBUS_SOCKET absent after ${DBUS_WAIT}s -> failing for rollback" >&2
+	exit 1
+else
+	echo "pv-avahi: no D-Bus system bus at $DBUS_SOCKET -> starting plain mDNS without D-Bus API"
+	sed -i 's/^enable-dbus=.*/enable-dbus=no/' "$CONF"
+fi
+
 exec avahi-daemon -f "$CONF"
