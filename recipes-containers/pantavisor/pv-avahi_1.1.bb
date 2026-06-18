@@ -20,6 +20,7 @@ SRC_URI += "file://args.json \
             file://pv-avahi-start.sh \
             file://ssh.service \
             file://pv-avahi-config \
+            file://pv-avahi.services.json \
 "
 
 PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
@@ -55,5 +56,9 @@ install_scripts() {
     install -d ${IMAGE_ROOTFS}/run/avahi-daemon
     install -d ${IMAGE_ROOTFS}/var/run
 }
+
+# pv-avahi.services.json is picked up automatically by container-pvrexport
+# (it copies ${PN}.services.json into the container's services.json), so no
+# manual install into the rootfs is needed.
 
 ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
