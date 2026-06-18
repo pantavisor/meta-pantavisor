@@ -1,0 +1,9 @@
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "hello-tcp",
+            "type": "tcp"
+        }
+    ]
+}
