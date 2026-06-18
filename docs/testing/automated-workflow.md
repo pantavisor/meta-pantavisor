@@ -205,17 +205,20 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 |-------|---------|-------|
 | `#spec` | always `"pv-test@1"` | do not change |
 | `description` | human-readable summary | keep it short |
-| `setup.cmdline` | kernel cmdline overrides | `""` if not needed |
-| `setup.env` | space-separated `KEY=VALUE` env vars for Pantavisor | e.g. `"PV_WDT_MODE=disabled PV_SECUREBOOT_MODE=disabled"` |
-| `setup.pantavisor.config` | path to a custom `pantavisor.config`, or `""` | e.g. `"resources/pantavisor.config"` |
-| `setup.pvs` | glob for PVS signing key tarballs | keep `"../../common/pvs/*.tar.gz"` for local; `""` for remote |
+| `setup.required-config` | the device config this test needs, as space-separated `KEY=VALUE`; matched against the device's live `pvcontrol conf ls`. A device runs the test only if its config satisfies every pair (empty matches any). Tests that match no running policy are SKIPPED. | e.g. `"PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=lenient"` |
+| `setup.usrmeta` | per-test runtime metadata, space-separated `KEY=VALUE`; applied one-by-one via `pvcontrol usrmeta save` after the initial revision is ready and removed in teardown | e.g. `"PV_LOG_PUSH=1 PH_UPDATER_INTERVAL=5"`; `""` if not needed |
 | `setup.containers.control` | name of the container used as control plane | usually `"pvr-sdk"` |
 | `setup.containers.tarballs` | list of container pvrexport tarballs | always include `bsp.tgz` and `pvr-sdk.tgz`; add extra containers as needed |
 | `setup.containers.urls` | OTA container URLs (remote tests) | `[]` for local tests |
-| `setup.ready-script` | script to run once Pantavisor reaches READY | `""` if not needed; `"resources/ready"` otherwise |
-| `setup.self-claim` | remote tests only: auto-claim the device | `"true"` |
+| `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed | requires `PH_USER`/`PH_PASS` when `"true"` |
 | `test-script` | path to the test script | `"resources/test"` |
 | `skip` | exclude test from runs | `"false"` normally; `"true"` to disable |
+
+> The persistent-device model picks the runner from `setup.required-config` (no
+> longer injects env). Deprecated keys `setup.cmdline`, `setup.env`,
+> `setup.pantavisor.config`, `setup.pvs`, and `setup.ready-script` are no longer
+> read. Runners are started one policy at a time (secureboot / remote /
+> phconfig combinations); see the runner policies below.
 
 **3. Write `resources/test`:**
 
@@ -344,9 +347,10 @@ done
 | Flag | Description |
 |------|-------------|
 | `-V`, `--valgrind` | Run Pantavisor under valgrind; results saved to `<tmpdir>/valgrind/` |
-| `-p N`, `--parallel N` | Run up to N tests concurrently (default: 1). Incompatible with `-i` and `-m`. |
-| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Use to inspect a working system. Requires a specific leaf test path. |
-| `-m`, `--manual` | Open a shell without starting Pantavisor. Use when PV fails to reach READY and you need to debug startup. Requires a specific leaf test path. |
+| `-p N`, `--parallel N` | Run up to N runners per policy concurrently (default: 1). Incompatible with `-i` and `-m`. |
+| `-P TAG`, `--policy TAG` | Pin the run to a single runner policy (`./test.docker.sh policies` lists them). For a headless run, only that policy executes; for `-i`/`-m`, selects which device to launch (default: the first policy, `local-lenient`). |
+| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Uses a single policy (see `--policy`). Use to inspect a working system. Requires a specific leaf test path. |
+| `-m`, `--manual` | Open a shell without starting Pantavisor. With `--policy` the container boots into that policy; otherwise pick it at runtime from the `pv-appengine -m` welcome. Use when PV fails to reach READY and you need to debug startup. |
 | `-o`, `--overwrite` | Create or overwrite the expected test output (use when authoring or updating tests) |
 | `-n`, `--netsim` | Enable wireless network simulation via `mac80211_hwsim` (experimental) |
 
@@ -433,6 +437,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/control/basic-endpoints` | Basic Endpoints (Containers, Objects, etc.) | ✓ |
 | `local/control/basic-endpoints-curl` | Basic Endpoints via cURL | ✓ |
 | `local/control/status-codes` | HTTP status-code contract (commands, signals, drivers, buildinfo) | ✓ |
+| `local/control/pvcontrol-responsiveness` | pvcontrol responds normally during a time-consuming local operation (e.g. object transfer, sequential update) | |
 
 #### xconnect
 
@@ -518,6 +523,7 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | `remote/control/auto-claim` | Automatic Device Claim | ✓ |
 | `remote/control/always-remote-disabled` | Always Remote Disabled | |
 | `remote/control/always-remote-enabled` | Always Remote Enabled | ✓ |
+| `remote/control/pvcontrol-responsiveness` | pvcontrol responds normally during a Pantahub download or other expensive remote operation | |
 
 #### services
 

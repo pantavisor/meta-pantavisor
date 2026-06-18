@@ -2,20 +2,24 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-
 device_id=`cat /var/run/pantavisor/pv/device-id`
 pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
 cd /home/checkout
+
+echo "== post 3 revisions simultaneously =="
 pvr post -m "first revision" > /dev/null 2>&1
 pvr post -m "second revision" > /dev/null 2>&1
 pvr post -m "third revision" > /dev/null 2>&1
 
+echo "== revision 1 =="
 wait_for_revision_state "pvr-sdk" "1" "UPDATED" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for revision 1 to reach UPDATED" >&2; exit 1; }
 pvcontrol steps show-progress 1
+echo "== revision 2 =="
 wait_for_revision_state "pvr-sdk" "2" "UPDATED" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for revision 2 to reach UPDATED" >&2; exit 1; }
 pvcontrol steps show-progress 2
+echo "== revision 3 =="
 wait_for_revision_state "pvr-sdk" "3" "UPDATED" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for revision 3 to reach UPDATED" >&2; exit 1; }
 pvcontrol steps show-progress 3

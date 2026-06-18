@@ -16,6 +16,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	bc \
 	curl \
 	jq \
+	openssh-ssh \
 	pantavisor-pvtest \
 	procps \
 	pvr \
@@ -23,7 +24,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	vim-xxd \
 "
 
-PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" MANUAL="false" OVERWRITE="false" VERBOSE="false" NETSIM="false"'
+PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" MANUAL="false" OVERWRITE="false" VERBOSE="false" NETSIM="false" PVTEST_APPENGINES="" PVTEST_SSH_KEY="/tmp/pvtest_id" MAX_RETRIES="0"'
 PV_DOCKER_IMAGE_ENTRYPOINT_ARGS = '-c "/usr/bin/pvtest-run $TEST_PATH $INTERACTIVE $MANUAL $OVERWRITE $VERBOSE $NETSIM"'
 
 SRC_URI += "\

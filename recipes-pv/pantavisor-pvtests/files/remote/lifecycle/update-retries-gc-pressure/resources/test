@@ -6,7 +6,7 @@ device_id=$(cat /var/run/pantavisor/pv/device-id)
 pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
 cd /home/checkout
 
-# Add a 50 MB random file to ensure download outlasts PV's graceful shutdown window
+echo "== post large revision (download takes long) =="
 dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=50 2>/dev/null
 pvr add pvr-sdk/bigfile.bin > /dev/null 2>&1
 pvr commit -m "add large file to exercise download phase" > /dev/null 2>&1
@@ -14,35 +14,25 @@ pvr post -m "trigger retry test" > /dev/null 2>&1
 
 cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/1"
 
-# Wait for PV to start downloading the new revision (retry 1)
+echo "== wait for revision 1 to start downloading (retry 1) =="
 wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "DOWNLOADING" 120 \
     || { echo "ERROR: timeout waiting for revision 1 to start DOWNLOADING" >&2; exit 1; }
-
-# Show local step progress after first resume (expect retries:1; strip volatile download details)
 pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
 
-# Kill PV — simulates crash during download (retries++)
+echo "== kill PV (crash 1, triggers retry 2) =="
 killall pantavisor
-
-# pv-appengine restarts PV; wait for it to be READY again
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 120 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (1)" >&2; exit 1; }
-
-# Wait for PV to be DOWNLOADING again (retry 2)
 wait_for_value "pvcontrol steps show-progress 1 | jq -r '.retries'" "2" 120 \
     || { echo "ERROR: timeout waiting for revision 1 retries to reach 2" >&2; exit 1; }
-
-# Show local step progress after first resume (expect retries:2; strip volatile download details)
 pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
 
-# Kill PV — simulates crash during download (retries++)
+echo "== kill PV (crash 2, triggers WONTGO via cloud) =="
 killall pantavisor
-
-# Wait for PV to be READY again
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 120 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (2)" >&2; exit 1; }
 
-# Wait for cloud to reflect WONTGO, then show it
+echo "== cloud step 1 status after max retries =="
 wait_for_value "pvr stepinfo $cloud_step_url 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "WONTGO" 60 \
     || { echo "ERROR: timeout waiting for cloud to reflect WONTGO" >&2; exit 1; }
 pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq '{status: .progress.status, "status-msg": .progress."status-msg", retries: .progress.retries}'

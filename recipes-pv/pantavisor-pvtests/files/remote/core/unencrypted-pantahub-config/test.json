@@ -2,10 +2,8 @@
 	"#spec": "pv-test@1",
 	"description": "unencrypted pantahub.config",
 	"setup": {
-		"cmdline": "",
-		"env": "PV_CONTROL_REMOTE=1 PV_LOG_CAPTURE_DMESG=0 PV_STORAGE_PHCONFIG_VOL=0 PV_UPDATER_GOALS_TIMEOUT=10 PV_UPDATER_COMMIT_DELAY=5 PV_SECUREBOOT_MODE=disabled PH_METADATA_DEVMETA_INTERVAL=10 PH_METADATA_USRMETA_INTERVAL=10 PH_UPDATER_INTERVAL=5 PV_WDT_MODE=disabled PV_DEBUG_SSH=0 PV_LOG_DIR_MAXSIZE=2147483647",
-		"pantavisor.config": "",
-		"pvs": "",
+		"required-config": "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1",
+		"usrmeta": "PH_METADATA_DEVMETA_INTERVAL=10 PH_METADATA_USRMETA_INTERVAL=10 PH_UPDATER_INTERVAL=5",
 		"containers": {
 			"control": "pvr-sdk",
 			"tarballs": [
@@ -14,7 +12,6 @@
 			],
 			"urls": []
 		},
-		"ready-script": "",
 		"self-claim": "true"
 	},
 	"test-script": "resources/test",

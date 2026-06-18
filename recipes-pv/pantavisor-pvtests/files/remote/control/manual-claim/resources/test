@@ -3,19 +3,22 @@
 source /usr/share/pantavisor/pvtest/utils
 PVR_USERNAME="$PH_USER" PVR_PASSWORD="$PH_PASS" pvr login > /dev/null 2>&1
 
+echo "== wait for unclaimed state =="
 wait_for_pantahub_state "pvr-sdk" "claim" \
     || { echo "ERROR: timeout waiting for pantahub.state claim" >&2; exit 1; }
 pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
+echo "== claim device =="
 device_id=`cat /var/run/pantavisor/pv/device-id`
 challenge=`cat /var/run/pantavisor/pv/challenge`
-
 pvr claim -c "$challenge" "$device_id"
 
+echo "== wait for idle (claimed) =="
 wait_for_pantahub_state "pvr-sdk" "idle" \
     || { echo "ERROR: timeout waiting for pantahub.state idle" >&2; exit 1; }
 pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
+echo "== cleanup =="
 if [ -n "$device_id" ]; then
 	pvr dev delete -y $device_id
 fi

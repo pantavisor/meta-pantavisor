@@ -2,9 +2,14 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-
+echo "== phconfig volume config key =="
 pvcontrol conf ls | jq '.[] | select(.key == "PV_STORAGE_PHCONFIG_VOL")'
 
+echo "== /storage/config contents =="
 ls /storage/config/
+
+echo "== /volumes/bsp/pv--phconfig contents =="
 ls /volumes/bsp/pv--phconfig/
+
+echo "== /var/run/pantavisor/pv/phconfig contents =="
 ls /var/run/pantavisor/pv/phconfig/
