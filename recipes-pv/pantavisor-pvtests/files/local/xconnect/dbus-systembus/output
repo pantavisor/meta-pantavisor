@@ -1,0 +1,53 @@
+[pvtest] 1781530847 DEBUG -- [test-script]: ADDR=unix:path=/run/dbus/system_bus_socket
+[pvtest] 1781530847 DEBUG -- [test-script]: SVC=org.pantavisor.Example
+[pvtest] 1781530847 DEBUG -- [test-script]: OBJ=/org/pantavisor/Example
+[pvtest] 1781530847 DEBUG -- [test-script]: i=0
+[pvtest] 1781530847 DEBUG -- [test-script]: '[' 0 -lt 30 ']'
+[pvtest] 1781530847 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530847 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781530847 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+[pvtest] 1781530847 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781530848 DEBUG -- [test-script]: i=1
+[pvtest] 1781530848 DEBUG -- [test-script]: '[' 1 -lt 30 ']'
+[pvtest] 1781530848 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530848 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781530848 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+[pvtest] 1781530848 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781530849 DEBUG -- [test-script]: i=2
+[pvtest] 1781530849 DEBUG -- [test-script]: '[' 2 -lt 30 ']'
+[pvtest] 1781530849 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530849 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781530849 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+[pvtest] 1781530849 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781530850 DEBUG -- [test-script]: i=3
+[pvtest] 1781530850 DEBUG -- [test-script]: '[' 3 -lt 30 ']'
+[pvtest] 1781530850 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530850 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781530850 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+[pvtest] 1781530850 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781530851 DEBUG -- [test-script]: i=4
+[pvtest] 1781530851 DEBUG -- [test-script]: '[' 4 -lt 30 ']'
+[pvtest] 1781530851 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781530851 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530851 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+[pvtest] 1781530851 DEBUG -- [test-script]: break
+[pvtest] 1781530851 DEBUG -- [test-script]: echo '== well-known name org.pantavisor.Example is owned =='
+== well-known name org.pantavisor.Example is owned ==
+[pvtest] 1781530851 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example'
+[pvtest] 1781530851 DEBUG -- [test-script]: grep -o 'boolean true'
+[pvtest] 1781530851 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.pantavisor.Example
+boolean true
+[pvtest] 1781530851 DEBUG -- [test-script]: echo '== allowed role '\''operator'\'' calls GetInfo (masquerade + policy allow) =='
+== allowed role 'operator' calls GetInfo (masquerade + policy allow) ==
+[pvtest] 1781530851 DEBUG -- [test-script]: dsend '--dest=org.pantavisor.Example /org/pantavisor/Example org.pantavisor.Example.GetInfo'
+[pvtest] 1781530851 DEBUG -- [test-script]: grep -q '"status": "active"'
+[pvtest] 1781530851 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.pantavisor.Example /org/pantavisor/Example org.pantavisor.Example.GetInfo
+[pvtest] 1781530851 DEBUG -- [test-script]: echo 'operator GetInfo: OK'
+operator GetInfo: OK
+[pvtest] 1781530851 DEBUG -- [test-script]: echo '== default-deny: '\''operator'\'' may not own a well-known name =='
+== default-deny: 'operator' may not own a well-known name ==
+[pvtest] 1781530851 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0'
+[pvtest] 1781530851 DEBUG -- [test-script]: grep -qE 'AccessDenied|not allowed to own'
+[pvtest] 1781530851 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0
+[pvtest] 1781530851 DEBUG -- [test-script]: echo 'operator RequestName: DENIED'
+operator RequestName: DENIED

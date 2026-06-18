@@ -9,6 +9,7 @@ PANTAVISOR_FEATURES ??= " \
 	rngdaemon \
 	pvcontrol \
 	xconnect \
+	xconnect-dbus-systembus \
 	container-mdev \
 "
 # PANTAVISOR_FEATURES += "lxc-next"

@@ -47,6 +47,7 @@ local_conf_header:
     DISTRO_FEATURES:append = " pantavisor-appengine "
     PANTAVISOR_FEATURES:append = " dm-crypt"
     PANTAVISOR_FEATURES:append = " dm-verity"
+    PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
     PANTAVISOR_FEATURES:remove = "autogrow"
   pantavisor-runc: |
     PANTAVISOR_FEATURES:append = " runc"

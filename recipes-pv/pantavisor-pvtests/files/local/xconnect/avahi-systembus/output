@@ -1,0 +1,55 @@
+[pvtest] 1781780632 DEBUG -- [test-script]: ADDR=unix:path=/run/dbus/system_bus_socket
+[pvtest] 1781780632 DEBUG -- [test-script]: SVC=org.freedesktop.Avahi
+[pvtest] 1781780632 DEBUG -- [test-script]: OBJ=/
+[pvtest] 1781780632 DEBUG -- [test-script]: IFACE=org.freedesktop.Avahi.Server
+[pvtest] 1781780632 DEBUG -- [test-script]: i=0
+[pvtest] 1781780632 DEBUG -- [test-script]: '[' 0 -lt 30 ']'
+[pvtest] 1781780632 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi'
+[pvtest] 1781780632 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781780632 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi
+[pvtest] 1781780632 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781780633 DEBUG -- [test-script]: i=1
+[pvtest] 1781780633 DEBUG -- [test-script]: '[' 1 -lt 30 ']'
+[pvtest] 1781780633 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi'
+[pvtest] 1781780633 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781780633 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi
+[pvtest] 1781780633 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781780634 DEBUG -- [test-script]: i=2
+[pvtest] 1781780634 DEBUG -- [test-script]: '[' 2 -lt 30 ']'
+[pvtest] 1781780634 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi'
+[pvtest] 1781780634 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi
+[pvtest] 1781780634 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781780634 DEBUG -- [test-script]: sleep 1
+[pvtest] 1781780635 DEBUG -- [test-script]: i=3
+[pvtest] 1781780635 DEBUG -- [test-script]: '[' 3 -lt 30 ']'
+[pvtest] 1781780635 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi'
+[pvtest] 1781780635 DEBUG -- [test-script]: grep -q 'boolean true'
+[pvtest] 1781780635 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi
+[pvtest] 1781780635 DEBUG -- [test-script]: break
+[pvtest] 1781780635 DEBUG -- [test-script]: echo '== avahi owns org.freedesktop.Avahi on the hosted bus =='
+== avahi owns org.freedesktop.Avahi on the hosted bus ==
+[pvtest] 1781780635 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi'
+[pvtest] 1781780635 DEBUG -- [test-script]: grep -o 'boolean true'
+[pvtest] 1781780635 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.NameHasOwner string:org.freedesktop.Avahi
+boolean true
+[pvtest] 1781780635 DEBUG -- [test-script]: echo '== monitor roundtrip: Server.GetVersionString (masquerade + policy allow) =='
+== monitor roundtrip: Server.GetVersionString (masquerade + policy allow) ==
+[pvtest] 1781780635 DEBUG -- [test-script]: grep -q 'string "avahi'
+[pvtest] 1781780635 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.Avahi / org.freedesktop.Avahi.Server.GetVersionString'
+[pvtest] 1781780635 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.Avahi / org.freedesktop.Avahi.Server.GetVersionString
+[pvtest] 1781780635 DEBUG -- [test-script]: echo 'monitor GetVersionString: OK'
+monitor GetVersionString: OK
+[pvtest] 1781780635 DEBUG -- [test-script]: echo '== monitor roundtrip: Server.GetHostName =='
+== monitor roundtrip: Server.GetHostName ==
+[pvtest] 1781780635 DEBUG -- [test-script]: grep -qE 'string "[^"]+"'
+[pvtest] 1781780635 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.Avahi / org.freedesktop.Avahi.Server.GetHostName'
+[pvtest] 1781780635 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.Avahi / org.freedesktop.Avahi.Server.GetHostName
+[pvtest] 1781780635 DEBUG -- [test-script]: echo 'monitor GetHostName: OK'
+monitor GetHostName: OK
+[pvtest] 1781780635 DEBUG -- [test-script]: echo '== default-deny: monitor may not own a well-known name =='
+== default-deny: monitor may not own a well-known name ==
+[pvtest] 1781780635 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0'
+[pvtest] 1781780636 DEBUG -- [test-script]: grep -qE 'AccessDenied|not allowed to own'
+[pvtest] 1781780636 DEBUG -- [test-script]: pventer -c pv-avahi-browse env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0
+[pvtest] 1781780636 DEBUG -- [test-script]: echo 'monitor RequestName: DENIED'
+monitor RequestName: DENIED

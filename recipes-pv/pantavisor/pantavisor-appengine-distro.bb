@@ -16,6 +16,8 @@ PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pan
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
 do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
+do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-example-dbus-host-server:do_image_complete pv-example-dbus-host-client:do_image_complete', '', d)}"
+do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-avahi:do_image_complete pv-avahi-browse:do_image_complete', '', d)}"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
@@ -108,6 +110,30 @@ do_create_tarball() {
     for f in ${DEPLOY_DIR_IMAGE}/pv-example-norole.pvrexport.tgz; do
         if [ -e "$f" ]; then
             cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-norole.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-dbus-host-server.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-dbus-host-server.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-dbus-host-client.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-dbus-host-client.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-avahi.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-avahi.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-avahi-browse.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-avahi-browse.tgz"
             break
         fi
     done

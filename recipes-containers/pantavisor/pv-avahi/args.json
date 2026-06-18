@@ -1,5 +1,13 @@
 {
     "PV_GROUP": "app",
+    "PV_SERVICES_REQUIRED": [
+        {
+            "name": "system-bus",
+            "type": "dbus",
+            "role": "avahi-service",
+            "target": "/run/dbus/system_bus_socket"
+        }
+    ],
     "PV_LXC_CAP_KEEP": [
         "net_admin",
         "net_raw",
