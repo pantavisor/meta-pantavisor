@@ -17,6 +17,7 @@ do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d
 do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
 do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
 do_create_tarball[depends] += "pv-example-ready:do_image_complete pv-example-ready-timeout:do_image_complete"
+do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-example-dbus-host-server:do_image_complete pv-example-dbus-host-client:do_image_complete', '', d)}"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
@@ -121,6 +122,18 @@ do_create_tarball() {
     for f in ${DEPLOY_DIR_IMAGE}/pv-example-ready-timeout.pvrexport.tgz; do
         if [ -e "$f" ]; then
             cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-ready-timeout.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-dbus-host-server.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-dbus-host-server.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-dbus-host-client.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-dbus-host-client.tgz"
             break
         fi
     done
