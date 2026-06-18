@@ -1,56 +1,87 @@
 #!/bin/sh
 
-# Stage writable copies of avahi config into /tmp (which has an overlay volume).
-# /etc lives on the read-only squashfs lower, so we never sed it in place.
+# Stage a writable copy of avahi's config in /tmp (the squashfs lower is
+# read-only; we point avahi at it with -f). The static *service* file, however,
+# must live in avahi's compiled-in services directory — /etc/avahi/services —
+# because "services-dir" is NOT a valid avahi-daemon.conf key (avahi rejects the
+# config and exits if it is present) and avahi reads service files only from
+# that path. /etc/avahi/services is writable here via the container overlay.
 RUNDIR=/tmp/avahi-run
 CONF=$RUNDIR/avahi-daemon.conf
-SVCDIR=$RUNDIR/services
+TEMPLATE=$RUNDIR/ssh.service.tmpl
+SVCFILE=/etc/avahi/services/ssh.service
 
-mkdir -p "$RUNDIR" "$SVCDIR"
+mkdir -p "$RUNDIR"
 cp /etc/avahi/avahi-daemon.conf "$CONF"
-cp /etc/avahi/services/ssh.service "$SVCDIR/ssh.service"
-sed -i "s|^services-dir=.*|services-dir=$SVCDIR|" "$CONF" 2>/dev/null || \
-	echo "services-dir=$SVCDIR" >> "$CONF"
+cp "$SVCFILE" "$TEMPLATE"   # keep a pristine copy before we start rewriting it
 
-hostname=pantavisor
-if [ -e /pantavisor/device-nick ]; then
-	hostname=$(cat /pantavisor/device-nick | xargs 2>/dev/null)
-fi
+# Read the first line of $1, trimmed, into the variable named $2 (empty if the
+# file is missing/empty). Uses the shell builtin `read` rather than `cat|xargs`:
+# this busybox has no xargs applet, so the old pipeline silently yielded "".
+read_meta_field() {
+	eval "$2=''"
+	[ -r "$1" ] && read -r "$2" < "$1"
+	return 0
+}
+
+read_meta_field /pantavisor/device-nick hostname
+[ -n "$hostname" ] || hostname=pantavisor
 sed -i "s/^host-name=.*/host-name=$hostname/" "$CONF"
 
-devnet=
-if [ -e /pantavisor/device-net ]; then
-	devnet=$(cat /pantavisor/device-net | xargs 2>/dev/null)
-fi
+read_meta_field /pantavisor/device-net devnet
 localdomain=${devnet:-local}
 sed -i "s/^domain-name=.*/domain-name=$localdomain/" "$CONF"
 
-deviceid=
-if [ -e /pantavisor/device-id ]; then
-	deviceid=$(cat /pantavisor/device-id | xargs 2>/dev/null)
-fi
-challenge=
-if [ -e /pantavisor/challenge ]; then
-	challenge=$(cat /pantavisor/challenge | xargs 2>/dev/null)
-fi
-phurl=
-if [ -e /pantavisor/pantahub-host ]; then
-	phurl=$(cat /pantavisor/pantahub-host | xargs 2>/dev/null)
-fi
+read_meta() {
+	read_meta_field /pantavisor/device-id deviceid
+	read_meta_field /pantavisor/challenge challenge
+	read_meta_field /pantavisor/pantahub-host phurl
+}
 
-if [ -n "$deviceid" ] || [ -n "$challenge" ] || [ -n "$phurl" ]; then
-	sed -i '/<txt-record>/d' "$SVCDIR/ssh.service"
-	sed -i '/<subtype>/d' "$SVCDIR/ssh.service"
-	sed -i '/<type>/a <subtype>_pantavisor._sub._ssh._tcp</subtype>' "$SVCDIR/ssh.service"
-	if [ -n "$deviceid" ]; then
-		sed -i "/<port>/a <txt-record>device-id=$deviceid</txt-record>" "$SVCDIR/ssh.service"
+# Rebuild the service file from the pristine template each time, so cleared
+# fields (e.g. challenge after claim) don't linger.
+write_service() {
+	cp "$TEMPLATE" "$SVCFILE"
+	if [ -n "$deviceid" ] || [ -n "$challenge" ] || [ -n "$phurl" ]; then
+		sed -i '/<type>/a <subtype>_pantavisor._sub._ssh._tcp</subtype>' "$SVCFILE"
+		if [ -n "$deviceid" ]; then
+			sed -i "/<port>/a <txt-record>device-id=$deviceid</txt-record>" "$SVCFILE"
+		fi
+		if [ -n "$challenge" ]; then
+			sed -i "/<port>/a <txt-record>challenge=$challenge</txt-record>" "$SVCFILE"
+		fi
+		if [ -n "$phurl" ]; then
+			sed -i "/<port>/a <txt-record>pantahub=$phurl</txt-record>" "$SVCFILE"
+		fi
 	fi
-	if [ -n "$challenge" ]; then
-		sed -i "/<port>/a <txt-record>challenge=$challenge</txt-record>" "$SVCDIR/ssh.service"
-	fi
-	if [ -n "$phurl" ]; then
-		sed -i "/<port>/a <txt-record>pantahub=$phurl</txt-record>" "$SVCDIR/ssh.service"
-	fi
-fi
+}
 
-exec avahi-daemon -f "$CONF"
+read_meta
+write_service
+
+avahi-daemon -f "$CONF" &
+apid=$!
+
+# device-id/challenge are written by Pantavisor asynchronously (after the device
+# registers with pantahub), which can happen long after this container started
+# (e.g. only once Wi-Fi is provisioned). Re-publish on change instead of
+# snapshotting once at boot.
+# ponytail: 5s poll; switch to inotify on /pantavisor only if this proves too slow.
+last="$deviceid|$challenge|$phurl"
+while kill -0 "$apid" 2>/dev/null; do
+	sleep 5
+	read_meta
+	cur="$deviceid|$challenge|$phurl"
+	if [ "$cur" != "$last" ]; then
+		write_service
+		# avahi does NOT reload static services on SIGHUP in this build, so
+		# restart the daemon to re-read /etc/avahi/services (matches upstream
+		# pv-avahid, which does `rc-service avahi-daemon restart` on change).
+		kill "$apid" 2>/dev/null
+		wait "$apid" 2>/dev/null
+		avahi-daemon -f "$CONF" &
+		apid=$!
+		last="$cur"
+	fi
+done
+wait "$apid"
