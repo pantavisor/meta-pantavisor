@@ -2,20 +2,31 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
+echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# Per-test private HOME + checkout dir: the tester is shared and runs tests
+# concurrently at -p>1, so a fixed /home/checkout and pvr's global object cache
+# ($HOME/.pvr/objects) race between tests. Use an isolated HOME so this test's
+# pvr clone/add/commit/post and checkout cannot collide with other tests.
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1
+cd "$HOME/checkout"
 
-# check secureboot mode
+echo "== secureboot mode =="
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
 
-# post a new change with a new oem config signed by oem
-pvr get /work/local/common/tarballs/pv-oem-developer-001_oemsigned.tgz
+echo "== post OEM-signed config (expect rejection) =="
+# Normalize the per-test private HOME (a mktemp dir, set above for concurrency
+# isolation) back to a stable path so "Imported N objects to <HOME>/.pvr/objects"
+# is deterministic across runs.
+pvr get /work/local/common/tarballs/pv-oem-developer-001_oemsigned.tgz 2>&1 | sed "s#$HOME#/home/root#g"
 pvr checkout
-pvr post --rev "locals/error" > /dev/null
+# No reset between tests: "Posting object info for: <obj> ... [OK]" is printed
+# (on stderr) only when the object is not already on the device, so it comes and
+# goes depending on what earlier tests uploaded. Drop it; keep the rejection.
+pvr post --rev "locals/error" 2>&1 >/dev/null | grep -v 'Posting object info for:'
 
-# after posting evaluation
+echo "== step progress after rejection =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
 pvcontrol steps show-progress locals/error

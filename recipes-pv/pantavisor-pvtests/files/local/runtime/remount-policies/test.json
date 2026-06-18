@@ -3,7 +3,7 @@
 	"description": "remount",
 	"setup": {
 		"cmdline": "",
-		"env": "PV_CONTROL_REMOTE=0 PV_LOG_CAPTURE_DMESG=0 PV_UPDATER_GOALS_TIMEOUT=10 PV_UPDATER_COMMIT_DELAY=5 PV_SECUREBOOT_MODE=disabled PV_REMOUNT_POLICY=test PV_WDT_MODE=disabled PV_DEBUG_SSH=0 PV_LOG_DIR_MAXSIZE=2147483647",
+		"required-config": "PV_CONTROL_REMOTE=0 PV_REMOUNT_POLICY=test",
 		"pantavisor.config": "",
 		"pvs": "../../common/pvs/*.tar.gz",
 		"containers": {
@@ -17,5 +17,6 @@
 		"ready-script": ""
 	},
 	"test-script": "resources/test",
-	"skip": "true"
+	"skip": "true",
+	"devices": []
 }

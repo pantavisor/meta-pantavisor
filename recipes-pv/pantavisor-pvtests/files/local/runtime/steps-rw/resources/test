@@ -22,4 +22,7 @@ pvcontrol -m "test put" steps put /tmp/state.json locals/test-put-rev >/dev/null
 echo "steps put exit: $?"
 
 echo "== steps ls names =="
-pvcontrol steps ls | jq -M 'map(.name) | sort' | tr -d '\r'
+# No reset between tests: the trail accumulates revisions from prior tests, so
+# filter to this test's own revisions (factory, the current rev, the put rev).
+current_rev=$(pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]' | tr -d '\r')
+pvcontrol steps ls | jq -M --arg r "$current_rev" 'map(.name) | map(select(. == "0" or . == $r or . == "locals/test-put-rev")) | sort' | tr -d '\r'

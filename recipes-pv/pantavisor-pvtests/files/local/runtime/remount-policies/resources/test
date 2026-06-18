@@ -2,7 +2,7 @@
 
 options_to_keep="nosuid|suid|exec|noexec|relatime|noatime|nodev|dev|rw|ro"
 
-# write your test here
+echo "== pvr-sdk mount points =="
 pventer -c pvr-sdk "mount | sort" | \
 	grep -vE "devpts|sysfs|proc|tmpfs|cgroup|mqueue|debugfs" | \
 	sed -E \

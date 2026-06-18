@@ -2,39 +2,55 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
-pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# present/absent check for a path inside the pvr-sdk container (which has
+# /storage bind-mounted); used to assert GC removed factory + unreferenced objs.
+exists() { pventer -c pvr-sdk ls -d "$1" > /dev/null 2>&1 && echo present || echo absent; }
 
-# post a new change that triggers a reboot update
+echo "== initial revision =="
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+# Per-test private HOME + checkout dir: the tester is shared and runs tests
+# concurrently at -p>1, so a fixed /home/checkout and pvr's global object cache
+# ($HOME/.pvr/objects) race between tests. Use an isolated HOME so this test's
+# pvr clone/add/commit/post and checkout cannot collide with other tests.
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1
+cd "$HOME/checkout"
+
+echo "== post reboot update =="
 sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pvr-sdk/lxc.container.conf
 pvr add .
 pvr commit > /dev/null 2>&1
 pvr post --rev "locals/done" > /dev/null 2>&1
 
-# after posting evaluation
 wait_for_revision_state "pvr-sdk" "locals/done" "DONE" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for locals/done to reach DONE" >&2; exit 1; }
+echo "== locals/done: DONE =="
 pvcontrol steps show-progress locals/done
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
-# post a new change that triggers a non-reboot update
+echo "== post non-reboot update =="
 sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
 pvr add .
 pvr commit > /dev/null 2>&1
 pvr post --rev "locals/updated" > /dev/null 2>&1
 
-# after posting evaluation
 wait_for_revision_state "pvr-sdk" "locals/updated" "UPDATED" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for locals/updated to reach UPDATED" >&2; exit 1; }
+echo "== locals/updated: UPDATED =="
 pvcontrol steps show-progress locals/updated
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
-# run garbage collector, compare before and after
-OBJ_COUNT=$(pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1 | wc -l)
-pventer -c pvr-sdk find /storage -not -name console.log | grep -v '^/storage/objects/[0-9a-f]' | sort
-echo "object count: $OBJ_COUNT"
+echo "== storage before GC =="
+# No reset between tests: a full /storage listing is not deterministic (other
+# tests' revs, containers and logs accumulate). Assert only paths that are
+# reliably present here and removed by GC: the factory trail (trails/0, the GC
+# target nothing else removes) and the factory pvr-sdk object (only referenced
+# by the factory revision). logs/0 and other unreferenced objects are still
+# asserted gone by the wait_for_path block after GC below.
+echo "factory trail (trails/0):  $(exists /storage/trails/0)"
+echo "factory pvr-sdk object:    $(exists /storage/objects/2ef57a87c9044d9c828ed4efc9bff8fd67fa15b00abad6cb607f7ca3d47c1df8)"
+
+echo "== run garbage collector =="
 pvcontrol commands run-gc
 wait_for_path "pvr-sdk" "/storage/logs/0" "-d" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for /storage/logs/0 to disappear" >&2; exit 1; }
@@ -44,6 +60,7 @@ wait_for_path "pvr-sdk" "/storage/objects/e5ee4b76420bf4d317221f081618eba2e68ab9
     || { echo "ERROR: timeout waiting for object e5ee4b76 to be GC'd" >&2; exit 1; }
 wait_for_path "pvr-sdk" "/storage/objects/2ef57a87c9044d9c828ed4efc9bff8fd67fa15b00abad6cb607f7ca3d47c1df8" "-d" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for object 2ef57a87 to be GC'd" >&2; exit 1; }
-OBJ_COUNT=$(pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1 | wc -l)
-pventer -c pvr-sdk find /storage -not -name console.log | grep -v '^/storage/objects/[0-9a-f]' | sort
-echo "object count: $OBJ_COUNT"
+
+echo "== storage after GC =="
+echo "factory trail (trails/0):  $(exists /storage/trails/0)"
+echo "factory pvr-sdk object:    $(exists /storage/objects/2ef57a87c9044d9c828ed4efc9bff8fd67fa15b00abad6cb607f7ca3d47c1df8)"

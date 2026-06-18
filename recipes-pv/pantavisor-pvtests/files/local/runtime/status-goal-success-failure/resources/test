@@ -2,32 +2,36 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
+echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# Per-test private HOME + checkout dir: the tester is shared and runs tests
+# concurrently at -p>1, so a fixed /home/checkout and pvr's global object cache
+# ($HOME/.pvr/objects) race between tests. Use an isolated HOME so this test's
+# pvr clone/add/commit/post and checkout cannot collide with other tests.
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1
+cd "$HOME/checkout"
 
-# post a new container that expects and sends READY
+echo "== post revision with container that signals READY =="
 pvr get https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/3#container-ready-demo/ > /dev/null 2>&1
 pvr checkout
 pvr post --rev "locals/success" > /dev/null 2>&1
 
-# after posting evaluation
 wait_for_revision_state "pvr-sdk" "locals/success" "DONE" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for locals/success to reach DONE" >&2; exit 1; }
+echo "== locals/success: DONE =="
 pvcontrol steps show-progress locals/success
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
-# post a new container that expects but does not send READY
+echo "== post revision where container never signals READY (triggers rollback) =="
 pvr get https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/5#pvr-sdk_ready/ > /dev/null 2>&1
 pvr checkout
 pvr post --rev "locals/failure" > /dev/null 2>&1
 
-# after posting evaluation — locals/failure triggers a rollback (pvr-sdk_ready never signals READY)
-# wait for the step to reach ERROR (the goals timeout), then for status to be READY again after rollback
 wait_for_value "pvcontrol steps show-progress locals/failure | jq -r '.status'" "ERROR" 90 > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for locals/failure to reach ERROR" >&2; exit 1; }
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 30 > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after rollback" >&2; exit 1; }
+echo "== locals/failure: ERROR (rolled back) =="
 pvcontrol steps show-progress locals/failure | sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'

@@ -1,11 +1,28 @@
 #!/bin/sh
 
-# this should succeed
+echo "== pvr-sdk (control role): pvcontrol access =="
 pventer -c "pvr-sdk" pvcontrol ls
-# full mounted /pantavisor
-pventer -c "pvr-sdk" find /pantavisor -not -name console.log | sort
+echo "== pvr-sdk: /pantavisor contents =="
+# No reset between tests: /pantavisor/logs accumulates the factory rev (logs/0),
+# logs/current and other tests' local_* log trees. Under /pantavisor/logs keep
+# only the structural parents and this test's own log subtree so the listing is
+# deterministic. Also drop the unknown-platform/dropbear subtree: it is the
+# debug-SSH daemon's log dir and only appears if dropbear logged during the
+# window, so its presence is nondeterministic.
+pventer -c "pvr-sdk" find /pantavisor -not -name console.log | sort | awk '
+/^\/pantavisor\/logs(\/|$)/ {
+    if (($0 == "/pantavisor/logs" || $0 == "/pantavisor/logs/locals" || $0 ~ /^\/pantavisor\/logs\/locals\/local_security_container_roles(\/|$)/) && $0 !~ /\/unknown-platform(\/|$)/)
+        print
+    next
+}
+# user-meta is device-persistent and other tests may leave keys behind (no reset
+# between tests); this test creates none, so drop all user-meta leaf keys (keep
+# the dir and the per-container user-meta.<name> overlays).
+/^\/pantavisor\/user-meta\// { next }
+{ print }
+'
 
-# this should fail
+echo "== pv-example-norole (no role): pvcontrol access (expected to fail) =="
 pventer -c "pv-example-norole" pvcontrol ls
-# limited mounted /pantavisor
+echo "== pv-example-norole: /pantavisor contents =="
 pventer -c "pv-example-norole" find /pantavisor -not -name console.log | sort

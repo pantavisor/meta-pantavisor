@@ -1,3 +1,10 @@
 #!/bin/sh
 
-grep 'validati' /storage/logs/current/pantavisor/pantavisor.log | sed 's/^[^]]*\] *[^ ]* *[^ ]* *-- *\[[^]]*\] *: *//; s/^([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) //' | grep -v '^no validation list:' | sed 's/ and id=[0-9a-f]\{64\}/ and id=XXX/; s|/storage/objects/[0-9a-f]\{64\}|/storage/objects/XXX|g' | sort
+echo "== checksum validation log =="
+# This script runs in the tester, where /storage does not exist. Read the log
+# from the pvr-sdk container, which has /storage bind-mounted (same as the other
+# tests that inspect /storage via pventer).
+# No reset between tests: the app containers (pv-example*) may already have their
+# objects validated/cached from an earlier test, so those lines come and go. Drop
+# them and keep the always-revalidated core (bsp, pvr-sdk, _config, device.json).
+pventer -c "pvr-sdk" grep 'validati' /storage/logs/current/pantavisor/pantavisor.log | sed 's/^[^]]*\] *[^ ]* *[^ ]* *-- *\[[^]]*\] *: *//; s/^([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) //' | grep -v '^no validation list:' | grep -v 'pv-example' | sed 's/ and id=[0-9a-f]\{64\}/ and id=XXX/; s|/storage/objects/[0-9a-f]\{64\}|/storage/objects/XXX|g' | sort
