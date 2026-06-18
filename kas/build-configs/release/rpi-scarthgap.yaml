@@ -70,6 +70,7 @@ local_conf_header:
         DISTRO_FEATURES:append = " pantavisor-system "
         PANTAVISOR_FEATURES:append = " dm-crypt"
         PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
         PANTAVISOR_FEATURES:append = " autogrow"
         INITRAMFS_IMAGE = "pantavisor-initramfs"
     pantavisor-runc: |
