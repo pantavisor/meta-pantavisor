@@ -1,0 +1,29 @@
+From bba8be48a2786a3459c0717cf7b19888981fbb4d Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Tue, 16 Jun 2026 18:00:00 -0300
+Subject: [PATCH] ARM: dts: imx6ull-colibri: enable dcp
+
+Enable the DCP hardware block for hardware-backed encryption.
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ arch/arm/boot/dts/nxp/imx/imx6ull-colibri.dtsi | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/arm/boot/dts/nxp/imx/imx6ull-colibri.dtsi b/arch/arm/boot/dts/nxp/imx/imx6ull-colibri.dtsi
+index e80b07e781df..8b417c8cf1ba 100644
+--- a/arch/arm/boot/dts/nxp/imx/imx6ull-colibri.dtsi
++++ b/arch/arm/boot/dts/nxp/imx/imx6ull-colibri.dtsi
+@@ -100,6 +100,10 @@ backlight: backlight {
+ 	};
+ };
+ 
++&dcp {
++	status = "okay";
++};
++
+ &adc1 {
+ 	num-channels = <4>;
+ 	vref-supply = <&reg_module_3v3_avdd>;
+-- 
+2.34.1

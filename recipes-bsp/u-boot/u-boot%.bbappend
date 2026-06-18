@@ -5,6 +5,13 @@ OVERRIDES =. "mc-${BB_CURRENT_MC}:"
 PV_MACHINE_UBOOT_CONFIGS ?= ""
 PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
 
+# colibri-imx6ull is a NAND-only module in this layer; drop the unused "emmc"
+# UBOOT_CONFIG variant that tezi.conf adds ("rawnand emmc recoverytezi"). Its
+# colibri-imx6ull-emmc_defconfig has no MTD/UBI, so the CMD_UBIFS enabled by
+# pv.colibri-imx6ull.cfg fails to compile there. Scoped to the tezi-recovery
+# multiconfig (where tezi.conf sets UBOOT_CONFIG) via the mc override above.
+UBOOT_CONFIG:mc-tezi-recovery:colibri-imx6ull = "rawnand recoverytezi"
+
 PV_BOOT_OEMARGS ?= ""
 
 SRC_URI += " \

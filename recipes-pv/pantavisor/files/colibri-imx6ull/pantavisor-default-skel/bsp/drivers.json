@@ -7,15 +7,15 @@
             "bluetooth"
         ],
         "wifi": [
-            "mlan",
+            "mwifiex_sdio",
             "cfg80211"
         ],
         "wireguard": [
             "wireguard"
         ],
-		"rng": [
-			"imx-rng"
-		]
+        "rng": [
+            "imx-rng"
+        ]
     },
     "dtb:all": {}
 }

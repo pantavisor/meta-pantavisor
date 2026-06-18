@@ -39,6 +39,9 @@ PACKAGE_INSTALL = "pantavisor \
 	${ROOTFS_BOOTSTRAP_INSTALL}"
 
 PACKAGE_INSTALL:append = " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'keyctl-caam keyutils', '', d)}"
+# DCP mainline dm-crypt uses keyctl trusted keys (no caam-keygen); keyutils
+# provides keyctl, run by scripts/volmount/crypt/crypt from the initramfs.
+PACKAGE_INSTALL:append = " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'dcp', 'keyutils', '', d)}"
 
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 
