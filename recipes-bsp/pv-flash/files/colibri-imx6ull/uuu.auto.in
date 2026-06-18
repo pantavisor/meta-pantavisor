@@ -15,6 +15,11 @@ FB: ucmd nand erase 0x80000 0x180000
 FB: ucmd nand write.trimffs 0x81100000 0x80000 ${filesize}
 FB: ucmd nand erase 0x200000 0x180000
 FB: ucmd nand write.trimffs 0x81100000 0x200000 ${filesize}
+# Erase the u-boot-env partition (0x380000, 512KB) so U-Boot falls back to
+# its built-in default environment. The CONFIG_BOOTCOMMAND baked in by
+# pv.colibri-imx6ull.cfg mounts ubi0:boot and sources /boot/boot.scr; a
+# leftover env from a prior image would otherwise run a stale bootcmd.
+FB: ucmd nand erase 0x380000 0x80000
 # Write UBIFS rootfs to the ubi MTD partition
 FB: download -f @UBIFS@
 FB[-t 120000]: ucmd nand erase.part ubi

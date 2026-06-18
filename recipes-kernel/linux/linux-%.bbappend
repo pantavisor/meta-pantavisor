@@ -39,6 +39,7 @@ PANTAVISOR_SRC_URI = " \
 	${TAILSCALE_KERNEL_SRC_URI} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'file://caam-nxp.cfg', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dcp', 'file://dcp.cfg', '', d)} \
 "
 
 
@@ -50,6 +51,7 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 	${TAILSCALE_KERNEL_FRAGMENT} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '${WORKDIR}/pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', '${WORKDIR}/caam-nxp.cfg', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dcp', '${WORKDIR}/dcp.cfg', '', d)} \
 "
 
 SRC_URI:append = " \

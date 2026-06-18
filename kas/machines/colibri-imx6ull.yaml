@@ -14,6 +14,29 @@ local_conf_header:
         IMAGE_FSTYPES:remove = "teziimg"
         IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
         MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
+        PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
+
+        # WiFi/BT (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes
+        # PV_UBOOT_AUTOFDT pick the non-WiFi imx6ull-colibri-aster.dtb, which never
+        # enables usdhc2, so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio
+        # loads but binds nothing, no wlan0). Pin the WiFi device tree for the Aster
+        # carrier and disable autofdt so it isn't overridden by the first DTB.
+        # Other carriers: imx6ull-colibri-wifi-{eval-v3,iris,iris-v2}.dtb
+        # NB: use a :colibri-imx6ull override to disable autofdt — a plain
+        # PV_UBOOT_AUTOFDT = "" loses to the platform-toradex "1" emitted later
+        # in local.conf; the machine override is applied at finalize and wins.
+        PV_INITIAL_DTB = "imx6ull-colibri-wifi-aster.dtb"
+        PV_UBOOT_AUTOFDT:colibri-imx6ull = ""
+        MACHINE_FEATURES:append = " wifi"
+
+        # 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type
+        # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.
+        # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key
+        # backend rejects the zeroed OTP key on open devices. To enable it on a
+        # secured device, set PANTAVISOR_FEATURES "dcp" (wires the DCP kernel
+        # backport patches + dcp.cfg + keyutils) and 'trusted.source=dcp' here,
+        # and switch the device-disks.json disk back to type dm-crypt-dcp.
+        PV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull = "file://pv.colibri-imx6ull.cfg"
         UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
         PANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = "${MACHINE_FIRMWARE}"
         PV_FLASH_RECOVERY_MC = "tezi-recovery"

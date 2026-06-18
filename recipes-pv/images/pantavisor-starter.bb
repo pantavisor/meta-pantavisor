@@ -17,6 +17,12 @@ do_rootfs_boot_scr(){
 		mkdir -p ${IMAGE_ROOTFS}/boot
 		cp -f ${DEPLOY_DIR_IMAGE}/boot.scr ${IMAGE_ROOTFS}/boot/
 	fi
+	# boot.scr loads oemEnv.txt from the boot volume root; on UBIFS
+	# machines the image rootfs is that volume, so wic IMAGE_BOOT_FILES
+	# (pvroot-image.bbclass) never places it there
+	if [ -f "${DEPLOY_DIR_IMAGE}/oemEnv.txt" ]; then
+		cp -f ${DEPLOY_DIR_IMAGE}/oemEnv.txt ${IMAGE_ROOTFS}/
+	fi
 }
 
 

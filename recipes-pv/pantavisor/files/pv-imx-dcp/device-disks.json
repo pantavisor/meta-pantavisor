@@ -2,10 +2,8 @@
     "disks": [
         {
             "name": "dm-internal-secrets",
-            "path": "/storage/dm-crypt-files/dm-internal-secrets-nxp/dcp.img,2,dcp_key-internal_secrets",
-            "migrate_keyblob": "no",
-            "mode": "nxp",
-            "type": "dm-crypt-dcp",
+            "path": "/storage/dm-crypt-files/dm-internal-secrets/versatile.img,2,versatile_key-internal_secrets",
+            "type": "dm-crypt-versatile",
             "aliases": ["dm-versatile"]
         }
     ]
