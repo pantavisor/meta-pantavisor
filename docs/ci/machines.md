@@ -54,6 +54,12 @@ After any change to `machines.json`:
 
 Always commit `machines.json` together with the generated files.
 
+When running this from Codex or another restricted development sandbox, run
+`makemachines` outside the sandbox with explicit approval. `kas dump
+--resolve-refs` performs git repository setup while generating the release
+configs and can hang if `.git` metadata is mounted read-only. The scheduled
+machine update workflow is unaffected because it runs inside the KAS container.
+
 > `tag-scarthgap.yaml` is **not** regenerated — it is a static orchestrator. Edit it directly when the tag trigger logic needs to change.
 
 ## Adding a Machine
