@@ -4,9 +4,9 @@
 # Covers testplan-pvctrl.md Tests 17 (list), 18 (stop), 19 (start),
 # 20 (stop non-existent -> 404).
 #
-# pv-xconnect is spawned by pantavisor itself (compiled-in daemon), so it is
-# present without any extra fixture container. Its PID is volatile, so we
-# normalize any positive pid to "POS" and keep the (stable) respawn flag.
+# pv-xconnect and, when the hosted system bus is enabled, pv-dbus are spawned
+# by pantavisor itself. Their PIDs are volatile, so normalize any positive pid
+# to "POS" and keep the stable respawn flag.
 
 SOCK=/run/pantavisor/pv/pv-ctrl
 PIDNORM='sort_by(.name) | map(.pid = (if (.pid // 0) > 0 then "POS" else .pid end))'
