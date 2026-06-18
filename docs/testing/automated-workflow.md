@@ -19,6 +19,29 @@ When changes are made in meta-pantavisor (test scripts, `test.json`, expected ou
 
 For quicker iteration, you can also edit files directly inside an already-extracted workdir (e.g. `local/lifecycle/seq-non-reboot-updates/resources/test` or the `output` file) without rebuilding. Changes made this way are immediate but ephemeral — they must be ported back to the source tree under `recipes-pv/pantavisor-pvtests/files/local/` or `recipes-pv/pantavisor-pvtests/files/remote/` to become persistent.
 
+### Testing an unmerged pantavisor source change
+
+When the behaviour under test lives in **pantavisor C source on a branch that is not yet merged** (a new feature, a fix, a feature-gated code path), you **must** build with the workspace overlay so the recipe compiles your branch instead of its pinned revision:
+
+```bash
+./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml -c \
+    'bitbake -c cleansstate pantavisor pantavisor-appengine-distro \
+     && bitbake pantavisor-appengine-distro'
+```
+
+The recipe's pinned `PANTAVISOR_SRCREV` (in `recipes-pv/pantavisor/pantavisor.inc`) routinely **lags** the workspace feature branch. Building **without** `:kas/with-workspace.yaml` silently compiles the *old* pantavisor, so your change is simply absent — even though the build, image load, and test all run "successfully". A feature-gated path then behaves as if the code were never written (for example, a `#ifdef`-guarded check fails validation: `required service 'system-bus' ... not found` when the hosted-bus code was not compiled in). The Docker load step (`install-docker`) is **not** the culprit here — it loads a perfectly valid image that just holds a feature-less binary.
+
+To confirm which pantavisor you are actually running:
+
+```bash
+grep PANTAVISOR_SRCREV recipes-pv/pantavisor/pantavisor.inc
+git -C build/workspace/sources/pantavisor rev-parse <your-branch>
+```
+
+Notes:
+- Toggling the overlay on or off changes the recipe (it inherits `externalsrc`), so `cleansstate pantavisor` first or the switch may be ignored.
+- The pantavisor that runs the appengine state machine ships **inside `pantavisor-appengine-docker.tar`**, not only in `bsp.tgz`. Re-run `install-docker` after every rebuild (build → load → run) so the new binary is actually loaded.
+
 ## Install
 
 Extract the tarball and load the Docker images as described in [how-to-install/docker.md](../how-to-install/docker.md). When working directly on the build machine, the deploy directory already contains an unpacked directory — cd into it and run `test.docker.sh` without extracting anything.
@@ -236,8 +259,52 @@ Guidelines (from `GEMINI.md` conventions):
 - Always source `utils` and `set_env` at the top — they set up the test environment
 - Use `pventer -c <container> <cmd>` for commands inside containers
 - Use `pvcontrol` and `pvcurl` for the pv-ctrl API
-- **Output determinism**: pipe JSON through `jq -M` (compact, sorted) and use `tr -d '\r'` to strip carriage returns — the runner diffs stdout byte-for-byte
+- **Output determinism**: pipe JSON through `jq -M` (compact, sorted) and use `tr -d '\r'` to strip carriage returns; echo *fixed marker strings* rather than variable content (see [How the `output` diff works](#how-the-output-diff-works) below)
 - Keep tests independent: each test starts from a clean container and storage state
+
+#### How the `output` diff works
+
+The runner does **not** diff stdout byte-for-byte. Before comparing, it strips
+from both the recorded `output` and the live run every line matching:
+
+```
+^(\+|\$|\[pvtest\] <timestamp> DEBUG -- \[test-script\]:)
+```
+
+That is: the `set -x` execution traces (the `[pvtest] … DEBUG -- [test-script]:`
+lines, which carry per-line timestamps) **and** any line beginning with `+` or
+`$` are discarded. Only the remaining lines — i.e. what your script actually
+`echo`s or what commands print to stdout — are diffed. Consequences:
+
+- **Timestamps, pids and the trace itself never matter** — they are filtered out.
+- **Everything you deliberately print must be deterministic.** Do not echo a
+  raw command reply that contains volatile data (a version string, hostname,
+  uid, socket path, dynamic D-Bus sender like `:1.7`). Instead, assert with
+  `grep` and echo a fixed marker:
+
+  ```sh
+  if dsend "--dest=$SVC $OBJ $IFACE.GetVersionString" | grep -q 'string "avahi'; then
+      echo "monitor GetVersionString: OK"   # fixed line -> stable in output
+  else
+      echo "monitor GetVersionString: FAILED"
+  fi
+  ```
+
+  The `output` golden then only contains your `== headers ==` and `… OK/DENIED`
+  markers, never the volatile reply text.
+
+- **`pventer` + `dbus-send` stdout caveat**: run `dbus-send` (or any command
+  whose stdout you need to capture) **directly** under `pventer`, passing env via
+  `env KEY=VALUE`, not wrapped in `sh -c "…"`. Under `pventer` a busybox
+  `sh -c` wrapper swallows the child's stdout, so the reply is lost and the
+  `grep` assertion silently fails:
+
+  ```sh
+  # GOOD — reply reaches the pipe
+  pventer -c "$C" env DBUS_SYSTEM_BUS_ADDRESS="$ADDR" dbus-send --system --print-reply …
+  # BAD  — stdout swallowed, assertion always FAILED
+  pventer -c "$C" sh -c "DBUS_SYSTEM_BUS_ADDRESS=$ADDR dbus-send --system --print-reply …"
+  ```
 
 **4. Generate the `output` file** (never edit manually):
 
@@ -447,6 +514,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/xconnect/rest-over-uds` | REST-over-UDS (Identity headers) | |
 | `local/xconnect/dbus` | D-Bus (Policy mediation) | |
 | `local/xconnect/dbus-systembus` | Hosted D-Bus system bus (owns/allow, generated policy, collision rejection) | ✓ |
+| `local/xconnect/avahi-systembus` | Hosted D-Bus system bus with a real daemon: avahi owns `org.freedesktop.Avahi`, monitor consumer roundtrips its API | ✓ |
 | `local/xconnect/drm` | DRM (Graphics node injection) | |
 | `local/xconnect/wayland` | Wayland (Isolated UI rendering) | |
 
