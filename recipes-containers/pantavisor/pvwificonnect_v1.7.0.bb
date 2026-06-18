@@ -2,7 +2,7 @@ SUMMARY = "Pantavisor WiFi Connect container"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit core-image container-pvrexport
+inherit image container-pvrexport
 
 DEPENDS:append = " jq-native"
 
@@ -18,7 +18,12 @@ PVRIMAGE_AUTO_MDEV = "1"
 
 IMAGE_FSTYPES = "pvrexportit"
 
-IMAGE_INSTALL += "busybox pvwificonnect-app"
+# Smaller than core-image: `inherit image` drops packagegroup-core-boot
+# (eudev, sysvinit, …) which a pvr container doesn't need. base-files +
+# base-passwd reproduce the busybox:musl Docker base — the /proc /sys /dev
+# mountpoint dirs and /etc/passwd that the container's lxc.mount.auto (cgroup)
+# and user setup require. Without them the container aborts at start.
+IMAGE_INSTALL += "busybox pvwificonnect-app base-files base-passwd"
 
 do_fetch[noexec] = "0"
 do_unpack[noexec] = "0"
