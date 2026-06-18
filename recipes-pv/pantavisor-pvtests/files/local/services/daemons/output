@@ -12,6 +12,11 @@
     "respawn": true
   },
   {
+    "name": "pv-dbus",
+    "pid": "POS",
+    "respawn": true
+  },
+  {
     "name": "pv-xconnect",
     "pid": "POS",
     "respawn": true
@@ -32,6 +37,11 @@
     "respawn": true
   },
   {
+    "name": "pv-dbus",
+    "pid": "POS",
+    "respawn": true
+  },
+  {
     "name": "pv-xconnect",
     "pid": -1,
     "respawn": false
@@ -49,6 +59,11 @@
   {
     "name": "hwrngd",
     "pid": 0,
+    "respawn": true
+  },
+  {
+    "name": "pv-dbus",
+    "pid": "POS",
     "respawn": true
   },
   {
