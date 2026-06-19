@@ -9,6 +9,54 @@ which runs both automatically in CI (via
 after the tag build completes) and on demand locally; see
 [`docs/ci/changelog.md`](../docs/ci/changelog.md).
 
+## v028-rc16
+
+Released: 2026-06-18
+
+### Downloads
+
+| Machine | Image | PV Exports | BSP | SDK |
+|---|---|---|---|---|
+| imx8mm-var-dart-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mm-var-dart-scarthgap/imx8mm-var-dart-scarthgap-028-rc16.tar.gz)<br>`3d7866aa7805…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mm-var-dart-scarthgap/pvexports-imx8mm-var-dart-scarthgap-028-rc16.tar.gz)<br>`256c26f5274b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mm-var-dart-scarthgap/pantavisor-bsp-imx8mm-var-dart.pvrexport.tgz)<br>`be7f7681fbd7…` | — |
+| colibri-imx6ull-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/colibri-imx6ull-scarthgap/colibri-imx6ull-scarthgap-028-rc16.tar.gz)<br>`7295c156bee4…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/colibri-imx6ull-scarthgap/pvexports-colibri-imx6ull-scarthgap-028-rc16.tar.gz)<br>`747999bbb83a…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/colibri-imx6ull-scarthgap/pantavisor-bsp-colibri-imx6ull.pvrexport.tgz)<br>`aedb28702527…` | — |
+| imx8mn-var-som-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mn-var-som-scarthgap/imx8mn-var-som-scarthgap-028-rc16.tar.gz)<br>`e3eb0cf8f58d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mn-var-som-scarthgap/pvexports-imx8mn-var-som-scarthgap-028-rc16.tar.gz)<br>`069f2e9142b1…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8mn-var-som-scarthgap/pantavisor-bsp-imx8mn-var-som.pvrexport.tgz)<br>`e86a44319b59…` | — |
+| sunxi-bananapi-m2-berry-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-bananapi-m2-berry-scarthgap/sunxi-bananapi-m2-berry-scarthgap-028-rc16.tar.gz)<br>`a30fd405c420…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-bananapi-m2-berry-scarthgap/pvexports-sunxi-bananapi-m2-berry-scarthgap-028-rc16.tar.gz)<br>`7fbd6ed31fe8…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-bananapi-m2-berry-scarthgap/pantavisor-bsp-bananapi-m2-berry.pvrexport.tgz)<br>`7fccb0fa3a70…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-bananapi-m2-berry-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa7t2hf-neon-bananapi-m2-berry-toolchain-028-rc16.sh)<br>`85ec9dbcf1ed…` |
+| raspberrypi-armv8-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-028-rc16.tar.gz)<br>`73d5a4a8eb72…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/raspberrypi-armv8-scarthgap/pvexports-raspberrypi-armv8-scarthgap-028-rc16.tar.gz)<br>`a7f67f04882c…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/raspberrypi-armv8-scarthgap/pantavisor-bsp-raspberrypi-armv8.pvrexport.tgz)<br>`48ee13c2dd12…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/raspberrypi-armv8-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa53-raspberrypi-armv8-toolchain-028-rc16.sh)<br>`fe291fe9761c…` |
+| docker-x86_64-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/docker-x86_64-scarthgap/docker-x86_64-scarthgap-028-rc16.tar.gz)<br>`878299578412…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/docker-x86_64-scarthgap/pvexports-docker-x86_64-scarthgap-028-rc16.tar.gz)<br>`8accd8df09ad…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/docker-x86_64-scarthgap/pantavisor-bsp-docker-x86_64.pvrexport.tgz)<br>`c3d0570fc572…` | — |
+| verdin-imx8mm-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/verdin-imx8mm-scarthgap/verdin-imx8mm-scarthgap-028-rc16.tar.gz)<br>`282d013522af…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/verdin-imx8mm-scarthgap/pvexports-verdin-imx8mm-scarthgap-028-rc16.tar.gz)<br>`9b00f1668280…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/verdin-imx8mm-scarthgap/pantavisor-bsp-verdin-imx8mm.pvrexport.tgz)<br>`0d78fb7de317…` | — |
+| imx8qxp-b0-mek-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8qxp-b0-mek-scarthgap/imx8qxp-b0-mek-scarthgap-028-rc16.tar.gz)<br>`b07628225ab5…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8qxp-b0-mek-scarthgap/pvexports-imx8qxp-b0-mek-scarthgap-028-rc16.tar.gz)<br>`cd705398a8c4…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/imx8qxp-b0-mek-scarthgap/pantavisor-bsp-imx8qxp-b0-mek.pvrexport.tgz)<br>`f00ad61f623e…` | — |
+| radxa-rock5a-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/radxa-rock5a-scarthgap/radxa-rock5a-scarthgap-028-rc16.tar.gz)<br>`45d47a6feb0a…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/radxa-rock5a-scarthgap/pvexports-radxa-rock5a-scarthgap-028-rc16.tar.gz)<br>`efd10fb48cbf…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/radxa-rock5a-scarthgap/pantavisor-bsp-rock-5a.pvrexport.tgz)<br>`62f7d0058c75…` | — |
+| sunxi-orange-pi-3lts-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-3lts-scarthgap/sunxi-orange-pi-3lts-scarthgap-028-rc16.tar.gz)<br>`5c755cf45047…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-3lts-scarthgap/pvexports-sunxi-orange-pi-3lts-scarthgap-028-rc16.tar.gz)<br>`3c13a4db8d04…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-3lts-scarthgap/pantavisor-bsp-orange-pi-3lts.pvrexport.tgz)<br>`2a40c5ab83d0…` | — |
+| sunxi-orange-pi-r1-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-r1-scarthgap/sunxi-orange-pi-r1-scarthgap-028-rc16.tar.gz)<br>`2a5211d2e415…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-r1-scarthgap/pvexports-sunxi-orange-pi-r1-scarthgap-028-rc16.tar.gz)<br>`486937244ddc…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/sunxi-orange-pi-r1-scarthgap/pantavisor-bsp-orange-pi-r1.pvrexport.tgz)<br>`9e1f1fc18bd9…` | — |
+| rpi-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/rpi-scarthgap/rpi-scarthgap-028-rc16.tar.gz)<br>`d6b81ca7c586…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/rpi-scarthgap/pvexports-rpi-scarthgap-028-rc16.tar.gz)<br>`11d6b80dfe41…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/028-rc16/rpi-scarthgap/pantavisor-bsp-raspberrypi.pvrexport.tgz)<br>`90da1d7419e6…` | — |
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`release-candidate` → `028-rc16`).
+
+### Component versions
+
+| Component | Previous (028-rc15) | Current (028-rc16) | Compare |
+|---|---|---|---|
+| busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
+| dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
+| libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | `bc7f0ca` | `bc7f0ca` | _unchanged_ |
+| picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
+
+### Changes
+
+Changes since [`028-rc15`](https://github.com/pantavisor/meta-pantavisor/releases/tag/028-rc15):
+
+#### Features
+- **colibri-imx6ull**: bring up NAND/UBI boot, secrets, and WiFi/BT
+
+#### Fixes
+- **pv-avahi**: publish device-id over mDNS so `pvr device scan` finds devices
+- **ci**: make docs release publishing resilient to tag re-push and fix secret name
+
+#### Docs
+- fix Toradex install references and impose sidebar reading order
+
 ## v028-rc15
 
 Released: 2026-06-12
