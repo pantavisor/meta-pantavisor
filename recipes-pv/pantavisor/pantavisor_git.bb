@@ -60,6 +60,14 @@ FILES:${PN}-config += "/etc/pantavisor.config"
 FILES:${PN}-config += "/etc/pantavisor/"
 FILES:${PN}-config += "/etc/resolv.conf"
 
+# Public PV_* template ABI dumped by pantavisor CMake. Layer recipes that
+# render their own pantavisor.config.in consume this from sysroot via
+# ${STAGING_DATADIR}/pantavisor/pantavisor-vars.env (see
+# classes/pantavisor-config-provider.bbclass). Ships in the -config
+# subpackage so it travels with the config it documents, and isn't
+# pulled into images that swap in their own pantavisor-config provider.
+FILES:${PN}-config += "${datadir}/pantavisor/pantavisor-vars.env"
+
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/pvtx"
