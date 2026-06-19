@@ -53,8 +53,11 @@ echo ""
 
 echo "Checking for existing tag $TAG_NAME on $UPSTREAM..."
 EXISTING_SHA=""
-if EXISTING_REF=$(gh api "repos/$UPSTREAM/git/refs/tags/$TAG_NAME" 2>/dev/null); then
-    EXISTING_SHA=$(echo "$EXISTING_REF" | jq -r '.object.sha')
+# Use the singular git/ref endpoint: it matches the tag exactly (or 404s).
+# The plural git/refs endpoint does prefix matching and would return a JSON
+# array for "028" once 028-rc* tags exist, breaking the .object.sha lookup.
+if EXISTING_REF=$(gh api "repos/$UPSTREAM/git/ref/tags/$TAG_NAME" 2>/dev/null); then
+    EXISTING_SHA=$(echo "$EXISTING_REF" | jq -r '.object.sha // empty')
 fi
 
 UPSTREAM_TAG_URL="https://github.com/$UPSTREAM/releases/tag/$TAG_NAME"
