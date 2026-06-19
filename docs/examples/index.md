@@ -1,16 +1,17 @@
 ---
 title: "Examples"
-description: "Example containers demonstrating xconnect service mesh patterns in meta-pantavisor."
+description: "Worked examples for building containers in meta-pantavisor: Yocto-built containers and xconnect service mesh patterns."
 sidebar_position: 4
 ---
 
 # Examples
 
-Working example containers in `recipes-containers/pv-examples/` that demonstrate pv-xconnect service mesh patterns. Use these as reference implementations for your own app containers.
+Reference implementations for building your own Pantavisor containers — both Yocto-built containers (assembled from layer packages) and the xconnect service-mesh example containers in `recipes-containers/pv-examples/`.
 
 ## Topics
 
-1. [xconnect Examples](xconnect-examples.md) — Unix socket, REST, D-Bus, DRM, and Wayland proxy patterns with provider/consumer container pairs
+1. [Building a Yocto Container for Pantavisor](yocto-container.md) — author an image recipe that builds a daemon from source (e.g. `tailscale` from `meta-networking`) and ships it as a `.pvrexport.tgz`, including `config.json` (OCI) vs `args.json` (LXC)
+2. [xconnect Examples](xconnect-examples.md) — Unix socket, REST, D-Bus, DRM, and Wayland proxy patterns with provider/consumer container pairs
 
 ## Related
 

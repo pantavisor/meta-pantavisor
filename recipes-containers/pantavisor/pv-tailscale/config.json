@@ -1,0 +1,15 @@
+{
+    "Entrypoint": ["/usr/bin/pv-tailscale-start"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "TS_STATE_DIR=/var/lib/tailscale",
+        "TS_SOCKET=/var/run/tailscale/tailscaled.sock",
+        "TS_TUN=tailscale0",
+        "TS_USERSPACE=false"
+    ],
+    "WorkingDir": "/",
+    "Volumes": {
+        "/tmp": {},
+        "/var/lib/tailscale": {}
+    }
+}
