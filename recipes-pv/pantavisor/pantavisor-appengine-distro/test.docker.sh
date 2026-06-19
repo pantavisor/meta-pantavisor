@@ -830,31 +830,33 @@ run_test() {
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
 	local skip_fail=0 skip_fail_seen=0
-	while IFS=$'\t' read -r test_id result wtag; do
-		[ -n "$test_id" ] || continue
-		printf "'%s' %s (on %s)\n" "$test_id" "$result" "$wtag"
-		if [ "$result" = "FAILED" ]; then
+	if [ -s "$merged_file" ]; then
+		# Failure details first: for each FAILED test, show the diff that made it
+		# fail (mirrors the inline diff printed during the run).
+		while IFS=$'\t' read -r test_id result wtag; do
+			[ "$result" = "FAILED" ] || continue
 			local diff_file="$work_path/results/$wtag/$test_id/diff"
 			if [ -s "$diff_file" ]; then
-				printf "\n--- diff: %s ---\n" "$test_id"
+				printf -- "--- diff: %s ---\n" "$test_id"
 				cat "$diff_file"
-				printf '%s\n' "--- end diff ---"
+				printf '%s\n\n' "--- end diff ---"
 			fi
-		fi
-		# --fail-on-skip applies to the MERGED result: a test is only a skip-
-		# failure when NO running policy could run it (matched none). Per-policy
-		# SKIPPED lines are expected for the 3 non-matching policies and ignored.
-		[ "$result" = "SKIPPED" ] && skip_fail_seen=1
-	done < "$merged_file"
-	rm -f "$merged_file"
-	# Surface ERROR-level messages so a run that failed before producing any
-	# per-test result (e.g. claim/setup failures) isn't a blank summary.
-	local err_lines
-	err_lines=$(grep -hE "ERROR -- " "$work_path"/run.*.log 2>/dev/null)
-	if [ -n "$err_lines" ]; then
-		echo "------------------------ ERRORS -----------------------"
-		printf '%s\n' "$err_lines"
+		done < "$merged_file"
+		# Then the result list: PASSED/FAILED/SKIPPED with the policy that ran it.
+		while IFS=$'\t' read -r test_id result wtag; do
+			[ -n "$test_id" ] || continue
+			printf "'%s' %s (on %s)\n" "$test_id" "$result" "$wtag"
+			# --fail-on-skip applies to the MERGED result: a test is only a skip-
+			# failure when NO running policy could run it (matched none). Per-policy
+			# SKIPPED lines are expected for the non-matching policies and ignored.
+			[ "$result" = "SKIPPED" ] && skip_fail_seen=1
+		done < "$merged_file"
+	else
+		# Nothing was dispatched (e.g. a claim/setup failure before any test ran):
+		# the result list is empty, so surface the ERROR messages instead.
+		grep -hE "ERROR -- " "$work_path"/run.*.log 2>/dev/null
 	fi
+	rm -f "$merged_file"
 	echo "======================================================="
 
 	if [ "$fail_on_skip" = "true" ] && [ "${skip_fail_seen:-0}" = "1" ]; then
