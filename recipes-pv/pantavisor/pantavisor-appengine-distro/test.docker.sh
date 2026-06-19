@@ -847,6 +847,14 @@ run_test() {
 		[ "$result" = "SKIPPED" ] && skip_fail_seen=1
 	done < "$merged_file"
 	rm -f "$merged_file"
+	# Surface ERROR-level messages so a run that failed before producing any
+	# per-test result (e.g. claim/setup failures) isn't a blank summary.
+	local err_lines
+	err_lines=$(grep -hE "ERROR -- " "$work_path"/run.*.log 2>/dev/null)
+	if [ -n "$err_lines" ]; then
+		echo "------------------------ ERRORS -----------------------"
+		printf '%s\n' "$err_lines"
+	fi
 	echo "======================================================="
 
 	if [ "$fail_on_skip" = "true" ] && [ "${skip_fail_seen:-0}" = "1" ]; then
