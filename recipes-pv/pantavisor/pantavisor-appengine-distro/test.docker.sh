@@ -62,12 +62,18 @@ pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]
 # pv-appengine-<tag>.config on the device (selected via PV_POLICY). A headless
 # run executes every policy in turn; -i/-m run a single policy (default the
 # first, or --policy <tag>).
-# remote-noalways-auto / -manual are identical to remote-noalways except for a
-# harmless PV_LXC_LOG_LEVEL marker (6 / 7). They give the two self-claim=false
+# Remote pools split by (PV_CONTROL_REMOTE_ALWAYS, PV_STORAGE_PHCONFIG_VOL):
+#   remote-noalways       ALWAYS=0 VOL=1  -> always-remote-disabled (needs ALWAYS=0)
+#   remote-always         ALWAYS=1 VOL=0  -> always-remote-enabled (the VOL=0 test)
+#   remote-always-phvol   ALWAYS=1 VOL=1  -> every other claim=true remote test
+# ALWAYS=1 keeps the Hub client connected even while a local revision runs, so
+# device-meta keeps syncing (ALWAYS=0 stops comms in local mode).
+# remote-always-phvol-auto / -manual are identical to remote-always-phvol except
+# for a harmless PV_LXC_LOG_LEVEL marker (6 / 7). They give the two self-claim=false
 # remote tests (auto-claim, manual-claim) their own isolated, never-claimed pool:
 # self-claim=true tests pin PV_LXC_LOG_LEVEL to the default (2), so they never
 # match these pools, leaving them unclaimed for the false test to self-claim on.
-POLICY_TAGS="local-disabled local-strict remote-always remote-noalways remote-noalways-auto remote-noalways-manual"
+POLICY_TAGS="local-disabled local-strict remote-always remote-noalways remote-always-phvol remote-always-phvol-auto remote-always-phvol-manual"
 
 # Is $1 a known policy tag?
 is_policy_tag() {
@@ -87,8 +93,9 @@ policy_config() {
 		local-strict)    echo "PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=strict" ;;
 		remote-always)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=0" ;;
 		remote-noalways) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1" ;;
-		remote-noalways-auto)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=6" ;;
-		remote-noalways-manual) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=7" ;;
+		remote-always-phvol) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1" ;;
+		remote-always-phvol-auto)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=6" ;;
+		remote-always-phvol-manual) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=7" ;;
 	esac
 }
 
