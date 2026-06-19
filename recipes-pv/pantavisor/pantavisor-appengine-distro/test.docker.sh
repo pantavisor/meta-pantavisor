@@ -62,7 +62,12 @@ pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]
 # pv-appengine-<tag>.config on the device (selected via PV_POLICY). A headless
 # run executes every policy in turn; -i/-m run a single policy (default the
 # first, or --policy <tag>).
-POLICY_TAGS="local-disabled local-strict remote-always remote-noalways"
+# remote-noalways-auto / -manual are identical to remote-noalways except for a
+# harmless PV_LXC_LOG_LEVEL marker (6 / 7). They give the two self-claim=false
+# remote tests (auto-claim, manual-claim) their own isolated, never-claimed pool:
+# self-claim=true tests pin PV_LXC_LOG_LEVEL to the default (2), so they never
+# match these pools, leaving them unclaimed for the false test to self-claim on.
+POLICY_TAGS="local-disabled local-strict remote-always remote-noalways remote-noalways-auto remote-noalways-manual"
 
 # Is $1 a known policy tag?
 is_policy_tag() {
@@ -82,6 +87,8 @@ policy_config() {
 		local-strict)    echo "PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=strict" ;;
 		remote-always)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=0" ;;
 		remote-noalways) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1" ;;
+		remote-noalways-auto)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=6" ;;
+		remote-noalways-manual) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=7" ;;
 	esac
 }
 
