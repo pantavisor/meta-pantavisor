@@ -9,6 +9,33 @@ which runs both automatically in CI (via
 after the tag build completes) and on demand locally; see
 [`docs/ci/changelog.md`](../docs/ci/changelog.md).
 
+## v028
+
+Released: 2026-06-19
+
+### Downloads
+
+_(no artifacts recorded in releases.json yet, and no previous release to predict from)_
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`stable` → `028`).
+
+### Component versions
+
+| Component | Previous (028) | Current (028) | Compare |
+|---|---|---|---|
+| busybox-pv | `22051d7` | `22051d7` | _unchanged_ |
+| dropbear | `50e2ec6` | `50e2ec6` | _unchanged_ |
+| libthttp | `c4287fe` | `c4287fe` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | `bc7f0ca` | `bc7f0ca` | _unchanged_ |
+| picohttpparser | `fbefe74` | `fbefe74` | _unchanged_ |
+
+### Changes
+
+Changes since [`028`](https://github.com/pantavisor/meta-pantavisor/releases/tag/028):
+
+_(no commits between 028 and 028)_
+
 ## v028-rc16
 
 Released: 2026-06-18
