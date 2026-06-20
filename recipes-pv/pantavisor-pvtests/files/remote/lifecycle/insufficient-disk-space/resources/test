@@ -2,7 +2,7 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(cat /var/run/pantavisor/pv/device-id)
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
 cd /home/checkout
 

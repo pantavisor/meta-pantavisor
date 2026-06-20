@@ -9,7 +9,7 @@ echo "== wait for ph-logger to push logs =="
 sleep 20
 
 echo "== fetch device logs from Hub =="
-device_id=`cat /var/run/pantavisor/pv/device-id`
+device_id=`_pv_exec cat /run/pantavisor/pv/device-id`
 output=`mktemp`
 pvr device logs "$device_id" -r 0 > "$output" &
 

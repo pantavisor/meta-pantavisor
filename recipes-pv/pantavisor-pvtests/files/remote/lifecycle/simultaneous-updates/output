@@ -1,17 +1,7 @@
-+ control_container=pvr-sdk
-++ cat /var/run/pantavisor/pv/device-id
-+ device_id=69c691f43732d300091f20bc
-+ pvr clone https://api.pantahub.com/trails/69c691f43732d300091f20bc /home/checkout
-+ cd /home/checkout
-+ pvr post -m 'first revision'
-+ pvr post -m 'second revision'
-+ pvr post -m 'third revision'
-+ wait_for_revision_state pvr-sdk 1 UPDATED
-+ pventer -c pvr-sdk pvcontrol steps show-progress 1
+== post 3 revisions simultaneously ==
+== revision 1 ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}
-+ wait_for_revision_state pvr-sdk 2 UPDATED
-+ pventer -c pvr-sdk pvcontrol steps show-progress 2
+== revision 2 ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}
-+ wait_for_revision_state pvr-sdk 3 UPDATED
-+ pventer -c pvr-sdk pvcontrol steps show-progress 3
+== revision 3 ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}
