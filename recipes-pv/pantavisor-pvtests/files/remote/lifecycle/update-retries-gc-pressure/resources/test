@@ -2,7 +2,7 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(cat /var/run/pantavisor/pv/device-id)
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
 cd /home/checkout
 
@@ -20,7 +20,7 @@ wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "DOWNLOADING"
 pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
 
 echo "== kill PV (crash 1, triggers retry 2) =="
-killall pantavisor
+crash_pv
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 120 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (1)" >&2; exit 1; }
 wait_for_value "pvcontrol steps show-progress 1 | jq -r '.retries'" "2" 120 \
@@ -28,11 +28,11 @@ wait_for_value "pvcontrol steps show-progress 1 | jq -r '.retries'" "2" 120 \
 pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads)'
 
 echo "== kill PV (crash 2, triggers WONTGO via cloud) =="
-killall pantavisor
+crash_pv
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 120 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (2)" >&2; exit 1; }
 
 echo "== cloud step 1 status after max retries =="
 wait_for_value "pvr stepinfo $cloud_step_url 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "WONTGO" 60 \
     || { echo "ERROR: timeout waiting for cloud to reflect WONTGO" >&2; exit 1; }
-pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq '{status: .progress.status, "status-msg": .progress."status-msg", retries: .progress.retries}'
+pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress."status-msg", retries: .progress.retries}'
