@@ -831,20 +831,21 @@ run_test() {
 	echo "======================================================="
 	local skip_fail=0 skip_fail_seen=0
 	if [ -s "$merged_file" ]; then
-		# Failure details first: for each FAILED test, show the diff that made it
-		# fail (mirrors the inline diff printed during the run).
-		while IFS=$'\t' read -r test_id result wtag; do
-			[ "$result" = "FAILED" ] || continue
-			local diff_file="$work_path/results/$wtag/$test_id/diff"
-			if [ -s "$diff_file" ]; then
-				printf -- "--- diff: %s ---\n" "$test_id"
-				cat "$diff_file"
-				printf '%s\n\n' "--- end diff ---"
-			fi
-		done < "$merged_file"
-		# Then the result list: PASSED/FAILED/SKIPPED with the policy that ran it.
+		# Single pass in test order: for each non-passing test that has a diff,
+		# print the diff/error block immediately BEFORE its result line, then the
+		# result line itself ('<tid>' RESULT (on <policy>)). This interleaves the
+		# failure detail with the test it belongs to instead of dumping all diffs
+		# in one block up front.
 		while IFS=$'\t' read -r test_id result wtag; do
 			[ -n "$test_id" ] || continue
+			if [ "$result" = "FAILED" ] || [ "$result" = "ABORTED" ]; then
+				local diff_file="$work_path/results/$wtag/$test_id/diff"
+				if [ -s "$diff_file" ]; then
+					printf -- "--- diff: %s ---\n" "$test_id"
+					cat "$diff_file"
+					printf '%s\n\n' "--- end diff ---"
+				fi
+			fi
 			printf "'%s' %s (on %s)\n" "$test_id" "$result" "$wtag"
 			# --fail-on-skip applies to the MERGED result: a test is only a skip-
 			# failure when NO running policy could run it (matched none). Per-policy
