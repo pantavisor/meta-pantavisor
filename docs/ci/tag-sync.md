@@ -69,6 +69,29 @@ repo secret `PANTAVISOR_TAG_SYNC_TOKEN`.
 Replace the secret value before the recorded expiry. The workflow only reads
 the secret at run time — there is no caching to invalidate.
 
+## Downstream: changelog and release in pantavisor
+
+Because the tag ref is created with a **PAT** (`PANTAVISOR_TAG_SYNC_TOKEN`)
+rather than the default `GITHUB_TOKEN`, the synced tag triggers workflows in
+`pantavisor`. In particular it fires `pantavisor`'s
+`.github/workflows/tag-changelogs.yaml`, which:
+
+1. Generates `CHANGELOG/CHANGELOG-<MAJOR>.md` for the tag (version line plus
+   categorized Conventional-Commits changes since the previous tag) and opens a
+   PR back to `master`.
+2. Creates (or updates) the GitHub Release for the tag with that section as its
+   body.
+
+This is the source-repo counterpart of meta-pantavisor's own
+[changelog generator](changelog.md). It does **not** render the Downloads or
+multi-component SRCREV sections — those are aggregation-layer concepts that do
+not apply to the single pantavisor source repo.
+
+For the changelog PR to trigger CI, `pantavisor` needs its own
+`PANTAVISOR_TAG_SYNC_TOKEN` repo secret (same kind of PAT as above, with write
+access to `pantavisor/pantavisor`). The GitHub Release step uses the built-in
+`GITHUB_TOKEN`.
+
 ## Recovering from a conflict
 
 If the upstream tag already exists at a different SHA, the workflow exits
