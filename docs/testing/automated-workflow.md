@@ -212,7 +212,7 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 | `setup.containers.urls` | OTA container URLs (remote tests) | `[]` for local tests |
 | `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed | requires `PH_USER`/`PH_PASS` when `"true"` |
 | `test-script` | path to the test script | `"resources/test"` |
-| `skip` | exclude test from runs | `"false"` normally; `"true"` to disable |
+| `skip` | exclude test from runs | `"false"` normally; `"true"` to disable **for local iteration only** — `--fail-on-skip-field` (used on CI/master) turns `"true"` into a hard ERROR, so a skipped test must never be committed to master |
 
 > The persistent-device model picks the runner from `setup.required-config` (no
 > longer injects env). Deprecated keys `setup.cmdline`, `setup.env`,
@@ -225,19 +225,86 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 ```sh
 #!/bin/sh
 
-source /work/scripts/utils
-. /opt/pantavisor/set_env
+source /usr/share/pantavisor/pvtest/utils
 
 # Use pventer to run commands inside a container; stdout is diff-ed against `output`
 pventer -c pvr-sdk pvcontrol config ls | jq -M -r '.["policy"]'
 ```
 
-Guidelines (from `GEMINI.md` conventions):
-- Always source `utils` and `set_env` at the top — they set up the test environment
-- Use `pventer -c <container> <cmd>` for commands inside containers
-- Use `pvcontrol` and `pvcurl` for the pv-ctrl API
-- **Output determinism**: pipe JSON through `jq -M` (compact, sorted) and use `tr -d '\r'` to strip carriage returns — the runner diffs stdout byte-for-byte
-- Keep tests independent: each test starts from a clean container and storage state
+#### Test authoring rules
+
+Tests run **sequentially against one shared device/trail and one shared tester
+filesystem** (in pool mode, concurrently at `-p>1`). They must pass both run
+individually and run together — so a test must never depend on, or leak into, the
+state of another. The rules below are mandatory; they encode lessons that caused
+real cross-test failures.
+
+1. **Per-test isolation.** Any test that clones or uses `pvr` must clone into a
+   unique per-test temp dir — never a fixed shared path like `/home/checkout`,
+   `/home/remote`, `/home/local`, and never `rm -rf` a shared dir as a workaround:
+   ```sh
+   checkout="$(mktemp -d)/checkout"
+   pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$checkout" > /dev/null 2>&1 \
+       || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+   cd "$checkout"
+   ```
+   **Do not override `$HOME`.** The harness exports a per-device, Hub-authenticated
+   `$HOME` (`exec_test` runs `pvr login` into it), and `pvr post` / `pvr_post_rev`
+   and every other Hub call read its `$HOME/.pvr/auth.json`. Clobbering `$HOME`
+   (e.g. `export HOME="$(mktemp -d)"`) throws that token away, so Hub posts fail
+   unauthenticated and `pvr_post_rev` returns empty. The per-device `$HOME` is
+   already isolated per pool slot, so its object cache (`$HOME/.pvr/objects`) is
+   safe to share across the sequential tests on one device. (A purely local test
+   that never touches the Hub has no token to lose, but the temp-checkout pattern
+   above is preferred everywhere and the only one that is safe for remote tests.)
+2. **Clone source.** Clone the device's *current* state from its local pvr
+   endpoint (`http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr`) — a clean
+   baseline. Do **not** clone the accumulating Hub trail head
+   (`https://api.pantahub.com/trails/$device_id`), which inherits other tests'
+   leftovers.
+3. **Clone safety.** Always guard the exit code and fail loud; suppress only
+   stdout so it can't leak into the diffed output (as in the snippet above).
+4. **Hub revisions: capture, never hardcode.** Hub revision numbers accumulate
+   across the shared trail and are not fixed — never hardcode `"1"`/`"2"`. Post
+   explicitly to the trail and capture the integer the Hub assigned with
+   `pvr_post_rev` (from `utils`):
+   ```sh
+   device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+   trail_url="https://api.pantahub.com/trails/$device_id"
+   rev=$(pvr_post_rev -m "msg" "$trail_url")
+   [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+   wait_for_revision_state "pvr-sdk" "$rev" "UPDATED"
+   ```
+   Because the captured integer varies run-to-run, **mask it** wherever it appears
+   in diffed stdout (e.g. `sed "s/\"$rev\"/\"REV\"/g"`).
+5. **Local revisions: name them.** Post local revisions with a test-specific name
+   (`pvr post --rev "locals/<name>"`) and wait with
+   `wait_for_revision_state "pvr-sdk" "locals/<name>" "UPDATED|DONE"`.
+6. **Output determinism.** Pipe JSON through `jq -M`, strip `\r`, and mask volatile
+   fields (timestamps, PIDs, object hashes, `$HOME` paths, Hub rev integers). Never
+   hand-edit `output` — regenerate it with `run … -o`.
+7. **Clean up created state.** Device-meta / user-meta / signatures / objects a
+   test creates persist on the shared device — delete them before the test ends,
+   or assert deltas / filter to the test's own revisions rather than dumping
+   absolute trail history.
+8. **Containers / tarballs.** Declare containers in `test.json`
+   `setup.containers.tarballs[]` (always include `bsp.tgz` + `pvr-sdk.tgz`). A new
+   container = add a pvrexport `.tgz` and list it here (see "Adding a new container
+   for a test" below).
+9. **Runners / policies.** A test selects its runner via `setup.required-config`
+   (subset-matched against the pool's live config). A new runner type = add a
+   policy in `test.docker.sh` `policy_config()` and select it via
+   `required-config`. A test that matches no running policy is legitimately
+   SKIPPED at runtime — that is **not** the same as the `skip` field below.
+10. **`skip` is local-only.** `"skip":"true"` is fine for local developer
+    iteration, but it must never reach master: CI/master runs pass
+    `--fail-on-skip-field`, which turns a `skip:"true"` test into a hard ERROR.
+    Tests that are not ready to run on master live in the [Todo list](#todo-list),
+    not as skipped dirs in the tree.
+
+Always source `utils` at the top (`source /usr/share/pantavisor/pvtest/utils`); it
+provides `pvcontrol`/`pventer`/`pvcurl`, `_pv_exec`, the `wait_for_*` helpers and
+`pvr_post_rev`.
 
 **4. Generate the `output` file** (never edit manually):
 
@@ -353,6 +420,9 @@ done
 | `-m`, `--manual` | Open a shell without starting Pantavisor. With `--policy` the container boots into that policy; otherwise pick it at runtime from the `pv-appengine -m` welcome. Use when PV fails to reach READY and you need to debug startup. |
 | `-o`, `--overwrite` | Create or overwrite the expected test output (use when authoring or updating tests) |
 | `-n`, `--netsim` | Enable wireless network simulation via `mac80211_hwsim` (experimental) |
+| `-r N`, `--retry N` | Retry failed tests up to N times (default: 0) |
+| `--fail-on-skip` | Exit non-zero if any test is SKIPPED at runtime (e.g. no matching runner policy) |
+| `--fail-on-skip-field` | Treat a `test.json` `"skip":"true"` as a hard ERROR. Use on CI/master so a skipped test cannot land. |
 
 **Exit codes**: `0` = PASSED, `1` = FAILED, `2` = ABORTED
 
@@ -422,8 +492,8 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/runtime/config-overlay` | Configuration Overlay | |
 | `local/runtime/resource-constraints` | Resource Constraints (CPU/Mem) | |
 | `local/runtime/status-goal-success-failure` | Status Goal Success and Failure | ✓ |
-| `local/runtime/container-exports` | Container Exports to Host | ✓ |
-| `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | ✓ |
+| `local/runtime/container-exports` | Container Exports to Host | |
+| `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | |
 | `local/runtime/objects-crud` | Object store put/get/verify (pv-ctrl) | ✓ |
 | `local/runtime/steps-rw` | Step read + local revision put (pv-ctrl) | ✓ |
 | `local/runtime/invalid-signal-handling` | Invalid Signal Handling | |
@@ -498,7 +568,7 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/core/encrypted-pantahub-config` | Encrypted `pantahub.config` handling | ✓ |
-| `remote/core/unencrypted-pantahub-config` | Unencrypted `pantahub.config` handling | ✓ |
+| `remote/core/unencrypted-pantahub-config` | Unencrypted `pantahub.config` handling | |
 
 #### lifecycle
 
@@ -521,7 +591,7 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 |------|-------------|------|
 | `remote/control/manual-claim` | Manual Device Claim | ✓ |
 | `remote/control/auto-claim` | Automatic Device Claim | ✓ |
-| `remote/control/always-remote-disabled` | Always Remote Disabled | |
+| `remote/control/always-remote-disabled` | Always Remote Disabled | ✓ |
 | `remote/control/always-remote-enabled` | Always Remote Enabled | ✓ |
 | `remote/control/pvcontrol-responsiveness` | pvcontrol responds normally during a Pantahub download or other expensive remote operation | |
 
@@ -532,5 +602,5 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/services/ph-logger-cloud-push` | `ph-logger` cloud push | ✓ |
-| `remote/services/device-user-metadata` | Device/User Metadata Exchange | |
+| `remote/control/device-user-metadata` | Device/User Metadata Exchange | ✓ |
 

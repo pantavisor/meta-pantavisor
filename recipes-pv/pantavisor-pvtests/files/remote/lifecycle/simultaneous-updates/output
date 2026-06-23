@@ -1,7 +1,7 @@
 == post 3 revisions simultaneously ==
-== revision 1 ==
+== first revision ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}
-== revision 2 ==
+== second revision ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}
-== revision 3 ==
+== third revision ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":1}

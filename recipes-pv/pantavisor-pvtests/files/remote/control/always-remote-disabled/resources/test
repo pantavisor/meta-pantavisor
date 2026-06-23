@@ -3,42 +3,58 @@
 source /usr/share/pantavisor/pvtest/utils
 
 device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+trail_url="https://api.pantahub.com/trails/$device_id"
 
-pvr clone "https://api.pantahub.com/trails/$device_id" /home/remote > /dev/null 2>&1
-pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr /home/local > /dev/null 2>&1
+# Per-test isolation: the tester FS and pvr's object cache are shared across tests
+# (and concurrent at -p>1), so clone into per-test temp dirs. Never override the
+# harness-authenticated $HOME (its .pvr/auth.json is what `pvr post` uses for the
+# Hub). Use TWO checkouts: posting to an explicit Hub URL rebinds a checkout's
+# default remote, which would hijack a later bare local post — so keep the Hub and
+# local posts in separate checkouts. Both clone the device's CURRENT state from its
+# local pvr endpoint (a clean baseline). Hub rev numbers accumulate across the
+# shared trail, so capture each one (never hardcode "1"/"2") and mask the volatile
+# integer where it would otherwise appear in the diffed output.
+co_remote="$(mktemp -d)/remote"
+co_local="$(mktemp -d)/local"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$co_remote" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone (remote) failed" >&2; exit 1; }
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$co_local" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone (local) failed" >&2; exit 1; }
 
 echo "== enter remote mode (base was installed as a local revision) =="
 pvcontrol commands go-remote
 
 echo "== post remote update 1 (non-reboot) =="
-cd /home/remote
-pvr post -m "remote update 1" > /dev/null 2>&1
-wait_for_revision_state "pvr-sdk" "1" "UPDATED" \
-    || { echo "ERROR: timeout waiting for revision 1 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 1
-pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+cd "$co_remote"
+rev1=$(pvr_post_rev -m "remote update 1" "$trail_url")
+[ -n "$rev1" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+wait_for_revision_state "pvr-sdk" "$rev1" "UPDATED" \
+    || { echo "ERROR: timeout waiting for revision $rev1 to reach UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress "$rev1"
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]' | sed "s/^${rev1}\$/REMOTE_REV_1/"
 
 echo "== post local update (device enters local mode) =="
-cd /home/local
+cd "$co_local"
 pvr post --rev "locals/test-302" > /dev/null 2>&1
 wait_for_revision_state "pvr-sdk" "locals/test-302" "UPDATED" \
     || { echo "ERROR: timeout waiting for locals/test-302 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress locals/test-302
+pvcontrol steps show-progress "locals/test-302"
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
 echo "== post remote update 2 (should not be consumed in local mode) =="
-cd /home/remote
-pvr post -m "remote update 2" > /dev/null 2>&1
+cd "$co_remote"
+rev2=$(pvr_post_rev -m "remote update 2" "$trail_url")
+[ -n "$rev2" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
 
 sleep 15
 echo "== step 2 should not exist (Hub client stopped in local mode) =="
-pvcontrol steps show-progress 2
+pvcontrol steps show-progress "$rev2"
 
 echo "== resume Hub connection via GO_REMOTE =="
 pvcontrol commands go-remote
 
-wait_for_revision_state "pvr-sdk" "2" "UPDATED" \
-    || { echo "ERROR: timeout waiting for revision 2 to reach UPDATED" >&2; exit 1; }
+wait_for_revision_state "pvr-sdk" "$rev2" "UPDATED" \
+    || { echo "ERROR: timeout waiting for revision $rev2 to reach UPDATED" >&2; exit 1; }
 echo "== remote update 2 applied after GO_REMOTE =="
-pvcontrol steps show-progress 2
-pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+pvcontrol steps show-progress "$rev2"
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]' | sed "s/^${rev2}\$/REMOTE_REV_2/"

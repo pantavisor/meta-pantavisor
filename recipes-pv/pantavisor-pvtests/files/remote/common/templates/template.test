@@ -1,6 +1,27 @@
 #!/bin/sh
 
-source /work/scripts/utils
-. /opt/pantavisor/set_env
+source /usr/share/pantavisor/pvtest/utils
 
-# write your test here
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+trail_url="https://api.pantahub.com/trails/$device_id"
+
+# Per-test isolation: the tester FS and pvr's object cache are shared across tests
+# (and concurrent at -p>1). Clone into a per-test temp subdir so no two tests
+# collide on a fixed path. Do NOT override $HOME: the harness exports a per-device,
+# Hub-authenticated $HOME (its .pvr/auth.json is what `pvr post`/`pvr_post_rev` and
+# other Hub calls use) — clobbering it makes Hub posts fail with no auth. Clone the
+# device's CURRENT state from its local pvr endpoint (a clean baseline) — NOT the
+# Hub trail head, which accumulates other tests' revisions. Delete this block if
+# the test does not clone.
+checkout="$(mktemp -d)/checkout"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$checkout"
+
+# write your test here. Post to the Hub trail and CAPTURE the assigned revision
+# (Hub rev numbers accumulate across the shared trail — never hardcode them):
+#   rev=$(pvr_post_rev -m "example" "$trail_url")
+#   [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+#   wait_for_revision_state "pvr-sdk" "$rev" "UPDATED"
+# Output is diffed byte-for-byte: pipe JSON through `jq -M`, strip `\r`, and mask
+# the volatile $rev integer (e.g. sed "s/\"$rev\"/\"REV\"/g").

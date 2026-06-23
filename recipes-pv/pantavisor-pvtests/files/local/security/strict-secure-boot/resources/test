@@ -9,7 +9,8 @@ pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 # ($HOME/.pvr/objects) race between tests. Use an isolated HOME so this test's
 # pvr clone/add/commit/post and checkout cannot collide with other tests.
 export HOME="$(mktemp -d)"
-pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
 cd "$HOME/checkout"
 
 echo "== secureboot mode and factory signatures =="

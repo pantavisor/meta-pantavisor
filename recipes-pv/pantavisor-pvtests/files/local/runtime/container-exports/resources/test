@@ -1,4 +1,0 @@
-#!/bin/sh
-
-echo "== exports tree =="
-find /exports | sort

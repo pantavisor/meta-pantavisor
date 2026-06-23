@@ -2,24 +2,43 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=`_pv_exec cat /run/pantavisor/pv/device-id`
-pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
-cd /home/checkout
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+
+# Per-test isolation: the tester FS and pvr's object cache are shared across
+# tests (and concurrent at -p>1), so clone into a per-test temp subdir; never override the
+# harness-authenticated $HOME (it holds the Hub login used by pvr post). Clone
+# the device's CURRENT state from its local pvr endpoint (a clean baseline) — NOT
+# the accumulating Hub trail head, which would inherit other tests' leftovers
+# (e.g. a stale run.json status_goal) and force a reboot to DONE instead of the
+# UPDATED transition this test asserts. Post that same content back to the trail
+# so each post is a true no-op -> non-reboot -> UPDATED.
+checkout="$(mktemp -d)/checkout"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$checkout"
+trail_url="https://api.pantahub.com/trails/$device_id"
 
 echo "== post 3 revisions simultaneously =="
-pvr post -m "first revision" > /dev/null 2>&1
-pvr post -m "second revision" > /dev/null 2>&1
-pvr post -m "third revision" > /dev/null 2>&1
+rev1=$(pvr_post_rev -m "first revision" "$trail_url")
+rev2=$(pvr_post_rev -m "second revision" "$trail_url")
+rev3=$(pvr_post_rev -m "third revision" "$trail_url")
+{ [ -n "$rev1" ] && [ -n "$rev2" ] && [ -n "$rev3" ]; } \
+    || { echo "ERROR: could not determine posted revisions" >&2; exit 1; }
 
-echo "== revision 1 =="
-wait_for_revision_state "pvr-sdk" "1" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 1 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 1
-echo "== revision 2 =="
-wait_for_revision_state "pvr-sdk" "2" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 2 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 2
-echo "== revision 3 =="
-wait_for_revision_state "pvr-sdk" "3" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 3 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 3
+echo "== first revision =="
+# Settle on show-progress itself reporting UPDATED (not just the platform state):
+# with 3 back-to-back posts the step projection can lag, returning empty briefly.
+# Then strip the volatile `logs`/`downloads` fields (ph_logger push errors carry
+# timestamps + rev-path) so the diff is deterministic — matching the rest of the
+# lifecycle suite's `del(.logs, .downloads)` convention.
+wait_for_value "pvcontrol steps show-progress $rev1 | jq -r '.status'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for show-progress $rev1 = UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress $rev1 | jq -Mc 'del(.logs, .downloads)'
+echo "== second revision =="
+wait_for_value "pvcontrol steps show-progress $rev2 | jq -r '.status'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for show-progress $rev2 = UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress $rev2 | jq -Mc 'del(.logs, .downloads)'
+echo "== third revision =="
+wait_for_value "pvcontrol steps show-progress $rev3 | jq -r '.status'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for show-progress $rev3 = UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress $rev3 | jq -Mc 'del(.logs, .downloads)'
