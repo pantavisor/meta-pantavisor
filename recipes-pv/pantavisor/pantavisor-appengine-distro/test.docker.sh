@@ -28,6 +28,7 @@ usage() {
 	echo "                        selects which device to launch (default: first policy)."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
+	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
 	echo "  -V, --valgrind        Run Pantavisor with valgrind"
 	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
 	echo ""
@@ -388,6 +389,7 @@ run_test() {
 	local valgrind="false"
 	local max_retries=0
 	local fail_on_skip="false"
+	local fail_on_skip_field="false"
 	local policy=""
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
@@ -432,6 +434,10 @@ run_test() {
 				;;
 			--fail-on-skip)
 				fail_on_skip="true"
+				shift
+				;;
+			--fail-on-skip-field)
+				fail_on_skip_field="true"
 				shift
 				;;
 			-P|--policy)
@@ -729,6 +735,7 @@ run_test() {
 			-e PVTEST_HOST="${PVTEST_HOST:-}"
 			-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
 			-e MAX_RETRIES="$max_retries"
+			-e FAIL_ON_SKIP_FIELD="$fail_on_skip_field"
 			-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
 			-e RUN_DIR=/work/results
 			--rm
