@@ -833,6 +833,30 @@ run_test() {
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
+
+	# Top of the summary: run-level pvtest_log ERROR lines — configuration,
+	# pool-init or claim failures that are not tied to any single test (e.g.
+	# PH_USER/PH_PASS not set but required). A per-test error is mirrored into
+	# that test's test.log and shown inline below, so exclude any ERROR that
+	# also appears in a test.log, and exclude per-test result lines. Timestamps
+	# are stripped before de-duping so the same error across policies collapses.
+	local runerr_file test_errs
+	runerr_file=$(mktemp); test_errs=$(mktemp)
+	find "$work_path/results" -name test.log -exec \
+		grep -hE '^\[pvtest\] .* ERROR -- ' {} + 2>/dev/null \
+		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u > "$test_errs"
+	grep -hE '^\[pvtest\] .* ERROR -- ' "$work_path"/run.*.log 2>/dev/null \
+		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u \
+		| grep -vxF -f "$test_errs" 2>/dev/null \
+		| grep -vE "ERROR -- \[[^]]*\]: '[^']*' (FAILED|ABORTED|PASSED|SKIPPED|RECORDED)" \
+		> "$runerr_file" || true
+	if [ -s "$runerr_file" ]; then
+		printf -- "--- run errors ---\n"
+		cat "$runerr_file"
+		printf '%s\n\n' "--- end run errors ---"
+	fi
+	rm -f "$runerr_file" "$test_errs"
+
 	local skip_fail=0 skip_fail_seen=0
 	if [ -s "$merged_file" ]; then
 		# Single pass in test order: for each non-passing test that has a diff,
@@ -863,11 +887,9 @@ run_test() {
 			# SKIPPED lines are expected for the non-matching policies and ignored.
 			[ "$result" = "SKIPPED" ] && skip_fail_seen=1
 		done < "$merged_file"
-	else
-		# Nothing was dispatched (e.g. a claim/setup failure before any test ran):
-		# the result list is empty, so surface the ERROR messages instead.
-		grep -hE "ERROR -- " "$work_path"/run.*.log 2>/dev/null
 	fi
+	# Nothing dispatched (claim/setup failure before any test ran) is covered by
+	# the run-errors block above, which surfaces the ERROR messages regardless.
 	rm -f "$merged_file"
 	echo "======================================================="
 
