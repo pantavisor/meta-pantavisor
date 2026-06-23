@@ -814,16 +814,20 @@ run_test() {
 				tid = q[2]
 				split(q[3], a, " ")            # " RESULT (..)" -> a[1]=RESULT
 				res = a[1]
+				# Keep the parenthetical only when it is a duration "(N s)", so a
+				# reason like "(claim failed: ...)" is never shown as a time.
+				if (match(q[3], /\([0-9]+ s\)/)) tm = substr(q[3], RSTART, RLENGTH)
+				else tm = ""
 				rk = rank(res)
 				if (rk > 0) {
 					tag = FILENAME
 					sub(/.*\/run\./, "", tag)
 					sub(/\.log$/, "", tag)
-					if (rk > best[tid]) { best[tid]=rk; result[tid]=res; wtag[tid]=tag }
+					if (rk > best[tid]) { best[tid]=rk; result[tid]=res; wtag[tid]=tag; time[tid]=tm }
 				}
 			}
 		}
-		END { for (t in result) printf "%s\t%s\t%s\n", t, result[t], wtag[t] }
+		END { for (t in result) printf "%s\t%s\t%s\t%s\n", t, result[t], wtag[t], time[t] }
 	' "$work_path"/run.*.log 2>/dev/null | sort > "$merged_file"
 
 	echo "======================================================="
@@ -836,17 +840,24 @@ run_test() {
 		# result line itself ('<tid>' RESULT (on <policy>)). This interleaves the
 		# failure detail with the test it belongs to instead of dumping all diffs
 		# in one block up front.
-		while IFS=$'\t' read -r test_id result wtag; do
+		while IFS=$'\t' read -r test_id result wtag time; do
 			[ -n "$test_id" ] || continue
 			if [ "$result" = "FAILED" ] || [ "$result" = "ABORTED" ]; then
 				local diff_file="$work_path/results/$wtag/$test_id/diff"
+				local tlog="$work_path/results/$wtag/$test_id/test.log"
 				if [ -s "$diff_file" ]; then
 					printf -- "--- diff: %s ---\n" "$test_id"
 					cat "$diff_file"
 					printf '%s\n\n' "--- end diff ---"
+				elif [ -s "$tlog" ]; then
+					# No diff (the ABORT case, or a FAILED with no diff): surface the
+					# test's own pvtest_log ERROR lines so the reason is inline.
+					printf -- "--- errors: %s ---\n" "$test_id"
+					grep -E '^\[pvtest\] .* ERROR -- ' "$tlog" 2>/dev/null
+					printf '%s\n\n' "--- end errors ---"
 				fi
 			fi
-			printf "'%s' %s (on %s)\n" "$test_id" "$result" "$wtag"
+			printf "'%s' %s %s(on %s)\n" "$test_id" "$result" "${time:+$time }" "$wtag"
 			# --fail-on-skip applies to the MERGED result: a test is only a skip-
 			# failure when NO running policy could run it (matched none). Per-policy
 			# SKIPPED lines are expected for the non-matching policies and ignored.
