@@ -15,7 +15,6 @@ usage() {
 	echo "  install-deps               Install dependencies (and docker)"
 	echo "  install-docker             Install docker"
 	echo "  ls                         List all tests"
-	echo "  policies                   List appengine runner policies (for -i/--policy)"
 	echo "  run [path]                 Run one to many tests"
 	echo ""
 	echo "Arguments for 'run' command:"
@@ -23,9 +22,9 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
-	echo "  -p, --parallel N      Run N runners per policy concurrently (default: 1)"
-	echo "  -P, --policy TAG      Pin the run to a single policy (see 'policies'). With -i/-m"
-	echo "                        selects which device to launch (default: first policy)."
+	echo "  -p, --parallel N      Max runner instances per runner-type (default: 1)"
+	echo "  -P, --max-instances N Global cap on concurrent runners across all types;"
+	echo "                        types are scheduled in waves to stay under it (default: -p)."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
 	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
@@ -59,101 +58,42 @@ usage() {
 
 pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]: %s\n' "$(date +%s)" "$level" "$*"; }
 
-# Appengine runner policies. Each maps to a /etc/pantavisor/policies/
-# pv-appengine-<tag>.config on the device (selected via PV_POLICY). A headless
-# run executes every policy in turn; -i/-m run a single policy (default the
-# first, or --policy <tag>).
-# Remote pools split by (PV_CONTROL_REMOTE_ALWAYS, PV_STORAGE_PHCONFIG_VOL):
-#   remote-noalways       ALWAYS=0 VOL=1  -> always-remote-disabled (needs ALWAYS=0)
-#   remote-always         ALWAYS=1 VOL=0  -> always-remote-enabled (the VOL=0 test)
-#   remote-always-phvol   ALWAYS=1 VOL=1  -> every other claim=true remote test
-# ALWAYS=1 keeps the Hub client connected even while a local revision runs, so
-# device-meta keeps syncing (ALWAYS=0 stops comms in local mode).
-# remote-always-phvol-auto / -manual are identical to remote-always-phvol except
-# for a harmless PV_LXC_LOG_LEVEL marker (6 / 7). They give the two self-claim=false
-# remote tests (auto-claim, manual-claim) their own isolated, never-claimed pool:
-# self-claim=true tests pin PV_LXC_LOG_LEVEL to the default (2), so they never
-# match these pools, leaving them unclaimed for the false test to self-claim on.
-POLICY_TAGS="local-disabled local-strict remote-always remote-noalways remote-always-phvol remote-always-phvol-auto remote-always-phvol-manual"
+# ---------------------------------------------------------------------------
+# Runner-type model
+#
+# A runner is an appengine container booted with a specific device configuration,
+# passed as PV_* environment variables — the new config format pantavisor reads
+# straight from its environment (the same path PV_POLICY used). The set of
+# distinct configurations a run needs is derived dynamically from each test's
+# setup.required-config; there is no static policy list and no policy file.
+#
+# A runner-TYPE is keyed by (normalized required-config, needs-claim) where
+#   needs-claim = required-config has PV_CONTROL_REMOTE=1 AND test self-claim=true.
+# Remote self-claim=true tests need a device claimed once up front (claim pool);
+# remote self-claim=false tests (the claim tests) need an UNCLAIMED device of the
+# SAME config (their own script claims/unclaims), so config alone can't separate
+# them — the claim-role does. Local tests never claim.
+# ---------------------------------------------------------------------------
 
-# Is $1 a known policy tag?
-is_policy_tag() {
-	local t
-	for t in $POLICY_TAGS; do
-		[ "$t" = "$1" ] && return 0
+# Normalize a required-config string: drop empty tokens and any PV_LXC_LOG_LEVEL
+# (a legacy pool discriminator no longer used), then sort the KEY=VALUE tokens for
+# a stable signature. Echoes the normalized space-separated config.
+normalize_reqcfg() {
+	local kv out=()
+	for kv in $1; do
+		[ -n "$kv" ] || continue
+		case "$kv" in PV_LXC_LOG_LEVEL=*) continue ;; esac
+		out+=("$kv")
 	done
-	return 1
+	[ ${#out[@]} -eq 0 ] && return 0
+	printf '%s\n' "${out[@]}" | sort | tr '\n' ' ' | sed 's/ *$//'
 }
 
-# Distinguishing KEY=VALUE config for a policy tag (mirrors the device's
-# /etc/pantavisor/policies/pv-appengine-<tag>.config). Used by list_policies and
-# by the pre-checkup that prunes policies no selected test can match.
-policy_config() {
-	case "$1" in
-		local-disabled)   echo "PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=disabled" ;;
-		local-strict)    echo "PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=strict" ;;
-		remote-always)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=0 PV_LXC_LOG_LEVEL=2" ;;
-		remote-noalways) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=0 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=2" ;;
-		remote-always-phvol) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=2" ;;
-		remote-always-phvol-auto)   echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=6" ;;
-		remote-always-phvol-manual) echo "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=7" ;;
-	esac
-}
-
-list_policies() {
-	local t
-	printf "%-18s %s\n" "POLICY" "DISTINGUISHING CONFIG"
-	printf "%-18s %s\n" "======" "====================="
-	for t in $POLICY_TAGS; do
-		printf "%-18s %s\n" "$t" "$(policy_config "$t")"
-	done
-	echo ""
-	echo "Use with -i to pick the single policy to launch, e.g.:"
-	echo "  $0 run local/control/basic-endpoints -i --policy local-disabled"
-}
-
-# 0 if every KEY=VALUE in required-config $1 is consistent with policy config $2
-# (i.e. $2 does not set KEY to a different value). Empty required-config matches
-# any policy. A key absent from $2 is "don't care" (may be a device default).
-required_config_consistent() {
-	local _req="$1" _pol="$2" kv k v pkv pv
-	for kv in $_req; do
-		k=${kv%%=*}; v=${kv#*=}
-		[ -n "$k" ] || continue
-		pv=""
-		for pkv in $_pol; do
-			[ "${pkv%%=*}" = "$k" ] && { pv=${pkv#*=}; break; }
-		done
-		[ -n "$pv" ] && [ "$pv" != "$v" ] && return 1
-	done
-	return 0
-}
-
-# Echo the subset of policy tags $1 that at least one selected (non-skip) test
-# under $test_dir/$target_path can match, based on each test's required-config.
-# This is a host-side pre-checkup: it lets the run loop avoid the costly
-# start/stop of appengine containers for a policy that every selected test would
-# SKIP anyway. It is conservative — a policy is dropped only when one of its
-# .config keys explicitly contradicts a test's required-config — so any test that
-# would have run still runs.
-needed_policies() {
-	local _all="$1" _tag _req _matched _kept="" _reqs
-	_reqs=$(mktemp)
-	find "$test_dir/${target_path:-.}" -name test.json 2>/dev/null | while read -r j; do
-		[ "$(jq -r '.skip' "$j")" = "true" ] && continue
-		jq -r '.setup."required-config" // ""' "$j"
-	done > "$_reqs"
-	for _tag in $_all; do
-		local _pol; _pol=$(policy_config "$_tag")
-		_matched=no
-		while IFS= read -r _req; do
-			required_config_consistent "$_req" "$_pol" && { _matched=yes; break; }
-		done < "$_reqs"
-		[ "$_matched" = yes ] && _kept="${_kept:+$_kept }$_tag"
-	done
-	rm -f "$_reqs"
-	# Fail-safe: if the selector matched no tests, keep all policies.
-	[ -n "$_kept" ] && printf '%s' "$_kept" || printf '%s' "$_all"
+# Echo "yes" if (required-config $1, self-claim $2) needs an up-front claim:
+# only remote (PV_CONTROL_REMOTE=1) self-claim=true tests. Everything else "no".
+reqcfg_needs_claim() {
+	case " $1 " in *" PV_CONTROL_REMOTE=1 "*) ;; *) echo no; return ;; esac
+	[ "$2" = "true" ] && echo yes || echo no
 }
 
 list_tests() {
@@ -390,7 +330,7 @@ run_test() {
 	local max_retries=0
 	local fail_on_skip="false"
 	local fail_on_skip_field="false"
-	local policy=""
+	local max_instances=0
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
@@ -440,8 +380,8 @@ run_test() {
 				fail_on_skip_field="true"
 				shift
 				;;
-			-P|--policy)
-				policy="$2"
+			-P|--max-instances)
+				max_instances="$2"
 				shift 2
 				;;
 			*)
@@ -452,14 +392,13 @@ run_test() {
 		esac
 	done
 
+	# Global concurrency cap defaults to -p: -p 1 runs fully serial (cap 1),
+	# -p N allows up to N concurrent runners across all types (like a master pool).
+	[ "$max_instances" -le 0 ] 2>/dev/null && max_instances="$parallel"
+
 	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
 		pvtest_log ERROR "-p is incompatible with -i and -m"
 		usage
-		exit 1
-	fi
-
-	if [ -n "$policy" ] && ! is_policy_tag "$policy"; then
-		pvtest_log ERROR "unknown --policy '$policy' (see '$0 policies')"
 		exit 1
 	fi
 
@@ -518,14 +457,12 @@ run_test() {
 	docker ps -aq --filter "name=pantavisor-tester-${USER}-${slot}" | xargs -r docker rm -f 2>/dev/null || true
 	docker rm -f "$netsim_name" 2>/dev/null || true
 
-	# Device-outer model: appengine runners are started ONE POLICY AT A TIME
-	# (loop further down). For each policy we start -p containers
-	# (pantavisor-appengine-${USER}-${slot}-<tag>-<0..p-1>, selecting the policy
-	# via PV_POLICY=pv-appengine-<tag>), invoke the tester against just them — it
-	# runs ALL selected tests, executing the ones whose required-config matches
-	# this policy and SKIPPING the rest — then stop them before the next policy.
-	# Per-test results across policies are merged afterward by precedence.
-	local policy_tags="$POLICY_TAGS"
+	# Runner-fleet model: tests are grouped into runner-types by their
+	# (required-config, needs-claim). Each type boots up to -p appengine runners
+	# (pantavisor-appengine-${USER}-${slot}-t<type>-<0..n-1>) configured via PV_*
+	# env. Types are scheduled in waves bounded by the global instance cap (-P); a
+	# single tester (pvtest-run) runs per wave and dispatches each test to an idle
+	# runner of its type. Each test runs exactly once, so results need no merge.
 
 	# Resolve absolute paths for test scope dirs (local/ and remote/)
 	local abs_local_path= abs_remote_path=
@@ -564,11 +501,13 @@ run_test() {
 	fi
 
 	# Manual mode: start a single appengine in interactive shell mode; no tester.
-	# pv-appengine -m lets you pick the policy at runtime; --policy <tag> presets
-	# PV_POLICY so the container boots straight into that policy.
+	# Boot it with the target test's own required-config (as PV_* env), so the
+	# shell lands on a device configured the way that test expects.
 	if [ "$manual" = "true" ]; then
-		local manual_policy_args=()
-		[ -n "$policy" ] && manual_policy_args=(-e PV_POLICY="pv-appengine-${policy}")
+		local manual_cfg_args=() _mkv
+		for _mkv in $(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")"); do
+			manual_cfg_args+=(-e "$_mkv")
+		done
 		docker run -it --rm \
 			--name "pantavisor-appengine-${USER}-${slot}-0" \
 			--net=test-appengine-net \
@@ -588,7 +527,7 @@ run_test() {
 			--mount type=tmpfs,target="/volumes" \
 			--mount type=tmpfs,target="/configs" \
 			-v "$work_path/storage/0":/var/pantavisor/storage \
-			"${manual_policy_args[@]}" \
+			"${manual_cfg_args[@]}" \
 			pantavisor-appengine \
 			/usr/bin/pv-appengine -m
 		release_slot
@@ -607,7 +546,7 @@ run_test() {
 	fi
 
 	# Tester-shared mounts (SSH key) and scope mounts (local/remote test trees)
-	# are policy-independent — compute once.
+	# are the same for every wave — compute once.
 	local tester_shared_args=()
 	if [ -z "$PVTEST_EXEC" ]; then
 		tester_shared_args=(-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro)
@@ -619,107 +558,159 @@ run_test() {
 	local docker_it_opt=
 	[ "$interactive" = "true" ] && docker_it_opt="-it"
 
-	# Device-outer loop. Headless: run every policy in turn (start its -p
-	# containers, run the tester against just them, stop them) and merge the
-	# per-policy results afterward. Interactive (-i): use a single policy and
-	# drop into the tester shell — no looping, no merge. --policy <tag> pins the
-	# run to one policy (both headless and -i); otherwise -i defaults to the
-	# first policy and headless runs them all.
-	# Pre-checkup: prune policies no selected test can match so we don't pay the
-	# container start/stop for a policy that would SKIP everything.
-	local run_tags="$policy_tags"
-	if [ -n "$policy" ]; then
-		run_tags="$policy"
-		case " $(needed_policies "$policy") " in
-			*" $policy "*) ;;
-			*) pvtest_log WARN "no selected test matches --policy '$policy'; all will SKIP" ;;
-		esac
-	elif [ "$interactive" = "true" ]; then
-		# Default to the first policy a selected test can actually match, so -i on
-		# a remote-only test boots a matching device instead of always local-disabled.
-		run_tags="$(needed_policies "$policy_tags")"
-		run_tags="${run_tags%% *}"
-	else
-		run_tags="$(needed_policies "$policy_tags")"
-		pvtest_log INFO "pre-checkup: running policies [$run_tags] (of: $policy_tags)"
-	fi
-	[ "$interactive" = "true" ] && pvtest_log INFO "interactive mode: using policy '${run_tags}'"
+	# ----------------------------------------------------------------------
+	# Discovery: scan selected tests and derive runner-types from their
+	# (required-config, needs-claim). Build, per type: the config to boot it with,
+	# its claim role, the /work test.json paths it owns, and its test count.
+	# ----------------------------------------------------------------------
+	# Populate in the current shell (no pipe — a pipe would run the loop in a
+	# subshell and drop the arrays). Headless stdout is already tee'd to run.log.
+	local -A TYPE_CFG TYPE_CLAIM TYPE_TESTS TYPE_COUNT TYPE_IDX TYPE_INST
+	local -a _type_keys=()
+	local _ntests=0
+	local _json _rel _work _cfg _sc _nc _key _tid
+	while IFS= read -r _json; do
+		[ -n "$_json" ] || continue
+		_rel=${_json#"$test_dir"/}; _rel=${_rel#./}
+		_work="/work/$_rel"
+		_tid=${_rel%/test.json}
+		_cfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$_json")")
+		_sc=$(jq -r '.setup."self-claim" // "false"' "$_json")
+		_nc=$(reqcfg_needs_claim "$_cfg" "$_sc")
+		_key="${_cfg}||claim=${_nc}"
+		if [ -z "${TYPE_COUNT[$_key]:-}" ]; then
+			TYPE_IDX[$_key]=${#_type_keys[@]}
+			_type_keys+=("$_key")
+			TYPE_CFG[$_key]="$_cfg"; TYPE_CLAIM[$_key]="$_nc"
+			TYPE_TESTS[$_key]=""; TYPE_COUNT[$_key]=0
+		fi
+		TYPE_TESTS[$_key]="${TYPE_TESTS[$_key]:+${TYPE_TESTS[$_key]} }$_work"
+		TYPE_COUNT[$_key]=$(( TYPE_COUNT[$_key] + 1 ))
+		_ntests=$((_ntests + 1))
+		pvtest_log INFO "test ${_tid} -> type[${TYPE_IDX[$_key]}] claim=${_nc} cfg=[${_cfg:-<none>}]"
+	done < <(find "$test_dir/${target_path:-.}" -name test.json 2>/dev/null | sort)
 
-	local start res=0 _tag _p
+	if [ "$_ntests" -eq 0 ]; then
+		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
+		release_slot
+		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		return 0
+	fi
+
+	# Per-type instance count = min(tests, -p), capped by the global instance cap.
+	local _k
+	for _k in "${_type_keys[@]}"; do
+		local _inst=${TYPE_COUNT[$_k]}
+		[ "$_inst" -gt "$parallel" ] && _inst=$parallel
+		[ "$_inst" -gt "$max_instances" ] && _inst=$max_instances
+		TYPE_INST[$_k]=$_inst
+		pvtest_log INFO "type[${TYPE_IDX[$_k]}]: claim=${TYPE_CLAIM[$_k]} instances=${_inst} tests=${TYPE_COUNT[$_k]} cfg=[${TYPE_CFG[$_k]:-<none>}]"
+	done
+
+	# Greedy-pack runner-types into waves whose total instances fit the global cap.
+	# A type is kept intact within one wave so its claim-once lifecycle stays whole.
+	local -a _waves=()
+	local _cur="" _cur_sum=0
+	for _k in "${_type_keys[@]}"; do
+		local _inst=${TYPE_INST[$_k]}
+		if [ -n "$_cur" ] && [ $((_cur_sum + _inst)) -gt "$max_instances" ]; then
+			_waves+=("$_cur"); _cur=""; _cur_sum=0
+		fi
+		_cur="${_cur:+$_cur }${TYPE_IDX[$_k]}"; _cur_sum=$((_cur_sum + _inst))
+	done
+	[ -n "$_cur" ] && _waves+=("$_cur")
+	pvtest_log INFO "=== scheduling ${_ntests} test(s) across ${#_type_keys[@]} runner-type(s) in ${#_waves[@]} wave(s) (cap=${max_instances}) ==="
+
+	local start res=0 _w=0 _wave
 	start=$(date +%s)
 
-	for _tag in $run_tags; do
-		# This policy's -p container names + per-device log files, keyed by the
-		# full container name so per-policy "-0" suffixes never collide.
-		local ae_names_tag="" ae_log_pids=""
+	for _wave in "${_waves[@]}"; do
+		# Build this wave's fleet: container names, claim-role map, log mounts, and
+		# the explicit test list (all tests of this wave's types).
+		local ae_names="" ae_claim_map="" ae_log_pids="" wave_tests=""
 		local appengine_log_mounts=() appengine_log_paths=""
-		for ((_p=0; _p<parallel; _p++)); do
-			local ae="pantavisor-appengine-${USER}-${slot}-${_tag}-${_p}"
-			ae_names_tag="${ae_names_tag:+$ae_names_tag }$ae"
-			touch "$work_path/appengine-${ae}.log"
-			appengine_log_mounts+=(-v "$work_path/appengine-${ae}.log:/work/appengine-${ae}.log")
-			appengine_log_paths="${appengine_log_paths:+$appengine_log_paths }/work/appengine-${ae}.log"
+		local _ti _ci _key
+		for _ti in $_wave; do
+			_key="${_type_keys[$_ti]}"
+			wave_tests="${wave_tests:+$wave_tests }${TYPE_TESTS[$_key]}"
+			for ((_ci=0; _ci<${TYPE_INST[$_key]}; _ci++)); do
+				local ae="pantavisor-appengine-${USER}-${slot}-t${_ti}-${_ci}"
+				ae_names="${ae_names:+$ae_names }$ae"
+				ae_claim_map="${ae_claim_map:+$ae_claim_map }${ae}=${TYPE_CLAIM[$_key]}"
+				touch "$work_path/appengine-${ae}.log"
+				appengine_log_mounts+=(-v "$work_path/appengine-${ae}.log:/work/appengine-${ae}.log")
+				appengine_log_paths="${appengine_log_paths:+$appengine_log_paths }/work/appengine-${ae}.log"
+			done
 		done
 
-		pvtest_log INFO "=== policy ${_tag}: starting ${parallel} runner(s): ${ae_names_tag} ==="
+		pvtest_log INFO "=== wave $((_w+1))/${#_waves[@]}: starting runner(s): ${ae_names} ==="
 
-		# Start this policy's appengine containers (skipped for external target).
+		# Start this wave's appengine containers (skipped for external target).
 		if [ -z "$PVTEST_EXEC" ]; then
-			for ae in $ae_names_tag; do
-				mkdir -p "$work_path/storage/$ae"
-				local ae_valgrind_args=()
-				if [ "$valgrind" = "true" ]; then
-					mkdir -p "$work_path/valgrind/$ae"
-					ae_valgrind_args=(-v "$work_path/valgrind/$ae":/tmp/valgrind)
-				fi
+			for _ti in $_wave; do
+				_key="${_type_keys[$_ti]}"
+				local _cfg_env=() _kv
+				for _kv in ${TYPE_CFG[$_key]}; do _cfg_env+=(-e "$_kv"); done
+				for ((_ci=0; _ci<${TYPE_INST[$_key]}; _ci++)); do
+					local ae="pantavisor-appengine-${USER}-${slot}-t${_ti}-${_ci}"
+					mkdir -p "$work_path/storage/$ae"
+					local ae_valgrind_args=()
+					if [ "$valgrind" = "true" ]; then
+						mkdir -p "$work_path/valgrind/$ae"
+						ae_valgrind_args=(-v "$work_path/valgrind/$ae":/tmp/valgrind)
+					fi
 
-				docker run \
-					--name "$ae" \
-					--net=test-appengine-net \
-					-d \
-					--rm \
-					--cgroupns host \
-					--cap-add NET_ADMIN \
-					--cap-add SYS_ADMIN \
-					--cap-add SYS_PTRACE \
-					--cap-add MKNOD \
-					--device /dev/kmsg \
-					--device /dev/hwrng \
-					--device /dev/loop-control \
-					--device-cgroup-rule 'b 7:* rmw' \
-					--security-opt apparmor=unconfined \
-					--security-opt seccomp=unconfined \
-					--volume "/sys/fs":"/sys/fs" \
-					--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
-					--mount type=tmpfs,target="/volumes" \
-					--mount type=tmpfs,target="/configs" \
-					-v "$work_path/storage/$ae":/var/pantavisor/storage \
-					"${ae_valgrind_args[@]}" \
-					-e VALGRIND="$valgrind" \
-					-e PV_DEBUG_SSH=1 \
-					-e PV_DEBUG_SSH_AUTHORIZED_KEYS="pvtest-authorized_keys" \
-					-e PV_DEBUG_SSH_PUBKEY="$pvtest_pubkey" \
-					-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
-					-e PV_POLICY="pv-appengine-${_tag}" \
-					pantavisor-appengine \
-						/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null
+					docker run \
+						--name "$ae" \
+						--net=test-appengine-net \
+						-d \
+						--rm \
+						--cgroupns host \
+						--cap-add NET_ADMIN \
+						--cap-add SYS_ADMIN \
+						--cap-add SYS_PTRACE \
+						--cap-add MKNOD \
+						--device /dev/kmsg \
+						--device /dev/hwrng \
+						--device /dev/loop-control \
+						--device-cgroup-rule 'b 7:* rmw' \
+						--security-opt apparmor=unconfined \
+						--security-opt seccomp=unconfined \
+						--volume "/sys/fs":"/sys/fs" \
+						--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
+						--mount type=tmpfs,target="/volumes" \
+						--mount type=tmpfs,target="/configs" \
+						-v "$work_path/storage/$ae":/var/pantavisor/storage \
+						"${ae_valgrind_args[@]}" \
+						-e VALGRIND="$valgrind" \
+						-e PV_DEBUG_SSH=1 \
+						-e PV_DEBUG_SSH_AUTHORIZED_KEYS="pvtest-authorized_keys" \
+						-e PV_DEBUG_SSH_PUBKEY="$pvtest_pubkey" \
+						-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
+						"${_cfg_env[@]}" \
+						pantavisor-appengine \
+							/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null
 
-				pvtest_log DEBUG "started appengine $ae (policy=pv-appengine-${_tag})"
-				docker logs -f "$ae" 2>/dev/null \
-					| while IFS= read -r _pv_line; do printf '[%s] %s\n' "$ae" "$_pv_line"; done \
-					>> "$work_path/appengine-${ae}.log" &
-				ae_log_pids="${ae_log_pids:+$ae_log_pids }$!"
+					pvtest_log DEBUG "started appengine $ae (claim=${TYPE_CLAIM[$_key]} cfg=[${TYPE_CFG[$_key]:-<none>}])"
+					docker logs -f "$ae" 2>/dev/null \
+						| while IFS= read -r _pv_line; do printf '[%s] %s\n' "$ae" "$_pv_line"; done \
+						>> "$work_path/appengine-${ae}.log" &
+					ae_log_pids="${ae_log_pids:+$ae_log_pids }$!"
+				done
 			done
 		fi
 
-		# Per-policy results dir: results/<tag>/<scope>/<category>/<name>/...
-		mkdir -p "$work_path/results/$_tag"
+		# Per-wave results dir: results/wave<N>/<scope>/<category>/<name>/...
+		mkdir -p "$work_path/results/wave${_w}"
 
-		# Tester run args for this policy.
+		# Tester run args for this wave. The tester dispatches each test in
+		# PVTEST_JSON_LIST to an idle runner of its type (PVTEST_AE_CLAIM gives each
+		# runner's claim role; the dispatcher routes by required-config + self-claim).
 		local -a tester_run_args=(
 			--net=test-appengine-net
-			--name "${tester_name}-${_tag}"
+			--name "${tester_name}-w${_w}"
 			-e TEST_PATH="/work/$target_path"
+			-e PVTEST_JSON_LIST="$wave_tests"
 			-e INTERACTIVE="$interactive"
 			-e MANUAL="$manual"
 			-e OVERWRITE="$overwrite"
@@ -729,7 +720,8 @@ run_test() {
 			-e PH_USER="$PH_USER"
 			-e PH_PASS="$PH_PASS"
 			-e PVR_DISABLE_SELF_UPGRADE=true
-			-e PVTEST_APPENGINES="$ae_names_tag"
+			-e PVTEST_APPENGINES="$ae_names"
+			-e PVTEST_AE_CLAIM="$ae_claim_map"
 			-e PVTEST_SSH_KEY="/tmp/pvtest_id"
 			-e PVTEST_EXEC="${PVTEST_EXEC:-}"
 			-e PVTEST_HOST="${PVTEST_HOST:-}"
@@ -741,28 +733,27 @@ run_test() {
 			--rm
 			"${tester_shared_args[@]}"
 			"${tester_scope_args[@]}"
-			-v "$work_path/results/$_tag":/work/results
+			-v "$work_path/results/wave${_w}":/work/results
 			-e APPENGINE_LOGS="$appengine_log_paths"
 			"${appengine_log_mounts[@]}"
 		)
 		[ -n "$docker_it_opt" ] && tester_run_args+=("$docker_it_opt")
 
-		# Run the tester for this policy. Headless: capture output to a per-policy
-		# run log (consumed by the merge) and the aggregate run.log. Interactive:
-		# run directly (no pipe) so the TTY is preserved.
+		# Run the tester for this wave. Headless: capture output to a per-wave run
+		# log and the aggregate run.log. Interactive: run directly (TTY preserved).
 		local _res
 		if [ "$interactive" = "true" ]; then
 			docker run "${tester_run_args[@]}" "$tester_image"
 			_res=$?
 		else
-			docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.${_tag}.log"
+			docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.wave${_w}.log"
 			_res=${PIPESTATUS[0]}
 		fi
 		[ "$_res" -ne 0 ] && res=$_res
 
-		# Stop this policy's appengine containers before the next policy.
+		# Stop this wave's appengine containers before the next wave.
 		if [ -z "$PVTEST_EXEC" ]; then
-			for ae in $ae_names_tag; do
+			for ae in $ae_names; do
 				local _ae_grace=45 _ae_elapsed=0 _ae_status=
 				while _ae_status=$(docker inspect -f '{{.State.Status}}' "$ae" 2>/dev/null) \
 				      && [ "$_ae_status" = "running" ] && [ "$_ae_elapsed" -lt "$_ae_grace" ]; do
@@ -776,6 +767,7 @@ run_test() {
 			done
 			[ -n "$ae_log_pids" ] && kill $ae_log_pids 2>/dev/null || true
 		fi
+		_w=$((_w + 1))
 	done
 
 	[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
@@ -803,11 +795,10 @@ run_test() {
 
 	set +x
 
-	# Merge per-policy results. Each policy ran ALL selected tests, so a test
-	# appears in several run.<tag>.log files (e.g. PASSED on its matching policy,
-	# SKIPPED on the others). Collapse to one result per test by precedence:
+	# Collect results. Each test runs exactly once (in one wave), so each appears in
+	# a single run.wave<N>.log; the rank() precedence is a harmless tie-break and we
+	# remember which wave produced it (for the diff path results/wave<N>/...).
 	#   FAILED > ABORTED > PASSED > SKIPPED > RECORDED
-	# and remember which policy produced the winning result (for the diff path).
 	local merged_file
 	merged_file=$(mktemp)
 	awk '
@@ -889,9 +880,8 @@ run_test() {
 				fi
 			fi
 			printf "'%s' %s %s(on %s)\n" "$test_id" "$result" "${time:+$time }" "$wtag"
-			# --fail-on-skip applies to the MERGED result: a test is only a skip-
-			# failure when NO running policy could run it (matched none). Per-policy
-			# SKIPPED lines are expected for the non-matching policies and ignored.
+			# --fail-on-skip: a SKIPPED result is final (the test ran once and the
+			# runner skipped it, e.g. device filter or missing Hub creds).
 			[ "$result" = "SKIPPED" ] && skip_fail_seen=1
 		done < "$merged_file"
 	fi
@@ -902,7 +892,7 @@ run_test() {
 
 	if [ "$fail_on_skip" = "true" ] && [ "${skip_fail_seen:-0}" = "1" ]; then
 		skip_fail=1
-		pvtest_log ERROR "--fail-on-skip: one or more tests matched no policy (merged SKIPPED)"
+		pvtest_log ERROR "--fail-on-skip: one or more tests were SKIPPED"
 	fi
 
 	# make summary available to the run path for the CI
@@ -915,15 +905,13 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- aggregate output of all policies + merged SUMMARY
-  run.<policy>.log                  <- one per policy (local-disabled, local-strict,
-                                       remote-always, remote-noalways): that policy's
-                                       per-test result lines (merge input)
+  run.log                           <- aggregate output of all waves + SUMMARY
+  run.wave<N>.log                   <- one per wave: that wave's per-test result lines
   appengine-<container>.log         <- full pantavisor stdout_direct for one appengine
                                        container (keyed by its full name)
   README.md
   results/
-    <policy>/<scope>/<category>/<name>/
+    wave<N>/<scope>/<category>/<name>/
       test.log     <- test script output interleaved with pantavisor logs during exec_test
       diff         <- diff (expected vs actual), present only when test failed
   storage/
@@ -934,11 +922,12 @@ run_test() {
       valgrind.log.<pid>   <- present only when run with -V
 ```
 
-The device-outer run model executes one policy at a time: each policy starts its
-`-p` appengine containers, runs ALL selected tests (those whose `required-config`
-matches the policy run; the rest are SKIPPED), then the containers are stopped
-before the next policy. The final SUMMARY merges each test's results across
-policies by precedence: FAILED > ABORTED > PASSED > SKIPPED > RECORDED.
+The runner-fleet model groups tests into runner-types by their
+(`required-config`, needs-claim). Each type boots up to `-p` appengine runners
+configured via `PV_*` env; types are scheduled in waves bounded by the global
+instance cap (`-P`, default `-p`). One tester (`pvtest-run`) runs per wave and
+dispatches each test to an idle runner of its type, so each test runs exactly
+once. The SUMMARY collects the per-test results across waves.
 
 ## Log Format
 
@@ -1075,9 +1064,6 @@ case "$command" in
 		;;
 	ls)
 		list_tests
-		;;
-	policies)
-		list_policies
 		;;
 	run)
 		run_test "$@"

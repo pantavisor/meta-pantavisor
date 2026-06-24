@@ -2,7 +2,7 @@
 	"#spec": "pv-test@1",
 	"description": "Update retries when PV crashes with GC pressure",
 	"setup": {
-		"required-config": "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1 PV_LXC_LOG_LEVEL=2",
+		"required-config": "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1",
 		"usrmeta": "PV_STORAGE_GC_THRESHOLD=100 PV_REVISION_RETRIES=3 PH_METADATA_DEVMETA_INTERVAL=10 PH_METADATA_USRMETA_INTERVAL=10 PH_UPDATER_INTERVAL=5",
 		"containers": {
 			"control": "pvr-sdk",

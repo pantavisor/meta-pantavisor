@@ -205,7 +205,7 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 |-------|---------|-------|
 | `#spec` | always `"pv-test@1"` | do not change |
 | `description` | human-readable summary | keep it short |
-| `setup.required-config` | the device config this test needs, as space-separated `KEY=VALUE`; matched against the device's live `pvcontrol conf ls`. A device runs the test only if its config satisfies every pair (empty matches any). Tests that match no running policy are SKIPPED. | e.g. `"PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=lenient"` |
+| `setup.required-config` | the device config this test needs, as space-separated `KEY=VALUE`; the host boots a runner-type configured with exactly these keys (passed as `PV_*` env) and matches them against the device's live `pvcontrol conf ls`. A device runs the test only if its config satisfies every pair (empty matches any). Keep it as short as possible — prefer `setup.usrmeta` for keys configurable at runtime. | e.g. `"PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=lenient"` |
 | `setup.usrmeta` | per-test runtime metadata, space-separated `KEY=VALUE`; applied one-by-one via `pvcontrol usrmeta save` after the initial revision is ready and removed in teardown | e.g. `"PV_LOG_PUSH=1 PH_UPDATER_INTERVAL=5"`; `""` if not needed |
 | `setup.containers.control` | name of the container used as control plane | usually `"pvr-sdk"` |
 | `setup.containers.tarballs` | list of container pvrexport tarballs | always include `bsp.tgz` and `pvr-sdk.tgz`; add extra containers as needed |
@@ -214,11 +214,12 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 | `test-script` | path to the test script | `"resources/test"` |
 | `skip` | exclude test from runs | `"false"` normally; `"true"` to disable **for local iteration only** — `--fail-on-skip-field` (used on CI/master) turns `"true"` into a hard ERROR, so a skipped test must never be committed to master |
 
-> The persistent-device model picks the runner from `setup.required-config` (no
-> longer injects env). Deprecated keys `setup.cmdline`, `setup.env`,
-> `setup.pantavisor.config`, `setup.pvs`, and `setup.ready-script` are no longer
-> read. Runners are started one policy at a time (secureboot / remote /
-> phconfig combinations); see the runner policies below.
+> The persistent-device model picks the runner from `setup.required-config`.
+> Deprecated keys `setup.cmdline`, `setup.env`, `setup.pantavisor.config`,
+> `setup.pvs`, and `setup.ready-script` are no longer read. The host derives one
+> runner-type per distinct `(required-config, self-claim)` and boots it by passing
+> the config keys as `PV_*` env — no static policy list; see the runner-fleet
+> model below.
 
 **3. Write `resources/test`:**
 
@@ -291,11 +292,13 @@ real cross-test failures.
    `setup.containers.tarballs[]` (always include `bsp.tgz` + `pvr-sdk.tgz`). A new
    container = add a pvrexport `.tgz` and list it here (see "Adding a new container
    for a test" below).
-9. **Runners / policies.** A test selects its runner via `setup.required-config`
-   (subset-matched against the pool's live config). A new runner type = add a
-   policy in `test.docker.sh` `policy_config()` and select it via
-   `required-config`. A test that matches no running policy is legitimately
-   SKIPPED at runtime — that is **not** the same as the `skip` field below.
+9. **Runner-types.** A test selects its runner via `setup.required-config`. The
+   host derives the runner-types automatically — one per distinct
+   `(required-config, self-claim)` — and boots each by passing its config keys as
+   `PV_*` env, so a new config combination needs **no** code change (just set it in
+   `required-config`; keep it short). A test whose type could not be brought up is
+   legitimately SKIPPED at runtime — that is **not** the same as the `skip` field
+   below.
 10. **`skip` is local-only.** `"skip":"true"` is fine for local developer
     iteration, but it must never reach master: CI/master runs pass
     `--fail-on-skip-field`, which turns a `skip:"true"` test into a hard ERROR.
@@ -414,27 +417,34 @@ done
 | Flag | Description |
 |------|-------------|
 | `-V`, `--valgrind` | Run Pantavisor under valgrind; results saved to `<tmpdir>/valgrind/` |
-| `-p N`, `--parallel N` | Run up to N runners per policy concurrently (default: 1). Incompatible with `-i` and `-m`. |
-| `-P TAG`, `--policy TAG` | Pin the run to a single runner policy (`./test.docker.sh policies` lists them). For a headless run, only that policy executes; for `-i`/`-m`, selects which device to launch (default: the first policy, `local-lenient`). |
-| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Uses a single policy (see `--policy`). Use to inspect a working system. Requires a specific leaf test path. |
-| `-m`, `--manual` | Open a shell without starting Pantavisor. With `--policy` the container boots into that policy; otherwise pick it at runtime from the `pv-appengine -m` welcome. Use when PV fails to reach READY and you need to debug startup. |
+| `-p N`, `--parallel N` | Max runner instances per runner-type (default: 1). Incompatible with `-i` and `-m`. |
+| `-P N`, `--max-instances N` | Global cap on concurrent runners across all types; types are scheduled in waves to stay under it (default: the value of `-p`). With `-p 1` the run is fully serial; with `-p 4` up to 4 runners run at once, like a shared pool. |
+| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Boots a single runner configured from the target test's `required-config`. Use to inspect a working system. Requires a specific leaf test path. |
+| `-m`, `--manual` | Open a shell without starting Pantavisor; the container boots with the target test's `required-config` (as `PV_*` env). Use when PV fails to reach READY and you need to debug startup. |
 | `-o`, `--overwrite` | Create or overwrite the expected test output (use when authoring or updating tests) |
 | `-n`, `--netsim` | Enable wireless network simulation via `mac80211_hwsim` (experimental) |
 | `-r N`, `--retry N` | Retry failed tests up to N times (default: 0) |
-| `--fail-on-skip` | Exit non-zero if any test is SKIPPED at runtime (e.g. no matching runner policy) |
+| `--fail-on-skip` | Exit non-zero if any test is SKIPPED at runtime (e.g. its runner-type could not be brought up) |
 | `--fail-on-skip-field` | Treat a `test.json` `"skip":"true"` as a hard ERROR. Use on CI/master so a skipped test cannot land. |
 
 **Exit codes**: `0` = PASSED, `1` = FAILED, `2` = ABORTED
 
 ### Parallel execution
 
-Pass `-p N` to run up to N tests at the same time:
+Tests are grouped into runner-types by their `(required-config, self-claim)`. Each
+type boots up to `-p` appengine runners; types are scheduled in waves bounded by the
+global cap `-P` (default: the value of `-p`). One tester (`pvtest-run`) runs per wave
+and dispatches each test to an idle runner of its type, so every test runs exactly
+once and runners of different types execute concurrently.
 
 ```bash
 ./test.docker.sh run local -p 2
 ```
 
-Each parallel test slot gets its own Docker container and isolated storage volume. The semaphore releases immediately when a test finishes, so the next queued test starts with no artificial delay. The practical limit on a development machine is around `-p 2`; higher values can push 4+ simultaneous Docker+LXC stacks past the 30 s pantavisor startup timeout.
+A runner that frees up immediately picks the next queued test of its type, so there is
+no artificial delay. `-p 1` runs fully serial (global cap 1); raise `-p`/`-P` to widen
+concurrency. The practical limit on a development machine is around 2–4 simultaneous
+Docker+LXC stacks before the 30 s pantavisor startup timeout is at risk.
 
 `-p N` is incompatible with `-i` (interactive) and `-m` (manual), which require a single test to be running.
 
