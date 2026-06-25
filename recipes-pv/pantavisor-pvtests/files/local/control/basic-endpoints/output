@@ -220,7 +220,7 @@ object count > 0: true
   {
     "key": "PV_CONTROL_REMOTE",
     "value": "0",
-    "modified": "policy"
+    "modified": "env"
   },
   {
     "key": "PV_CONTROL_REMOTE_ALWAYS",
@@ -389,8 +389,8 @@ object count > 0: true
   },
   {
     "key": "PV_POLICY",
-    "value": "pv-appengine-local-disabled",
-    "modified": "env"
+    "value": "(null)",
+    "modified": "default"
   },
   {
     "key": "PV_REVISION_RETRIES",
@@ -410,7 +410,7 @@ object count > 0: true
   {
     "key": "PV_SECUREBOOT_MODE",
     "value": "disabled",
-    "modified": "policy"
+    "modified": "env"
   },
   {
     "key": "PV_SECUREBOOT_OEM_TRUSTSTORE",

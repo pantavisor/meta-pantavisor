@@ -2,7 +2,7 @@
 [1;39m{
   [0m[1;34m"key"[0m[1;39m: [0m[0;32m"PV_STORAGE_PHCONFIG_VOL"[0m[1;39m,
   [0m[1;34m"value"[0m[1;39m: [0m[0;32m"1"[0m[1;39m,
-  [0m[1;34m"modified"[0m[1;39m: [0m[0;32m"policy"[0m[1;39m
+  [0m[1;34m"modified"[0m[1;39m: [0m[0;32m"env"[0m[1;39m
 [1;39m}[0m
 == /storage/config contents ==
 == /volumes/bsp/pv--phconfig contents ==
