@@ -54,7 +54,7 @@ PANTAVISOR_FEATURES:append = " appengine"
 
 ## Development Guidelines
 
-- **Pull requests**: Always open as drafts (`gh pr create --draft`); promote to ready only when CI passes and the branch is review-ready.
+- **Pull requests**: Open as drafts (`gh pr create --draft`) while still iterating. Note that the build/test matrix in `onpush-scarthgap.yaml` is gated `if: needs.check-draft.outputs.is_draft != 'true'`, so **CI does not run on drafts** — a draft only ever shows the cheap `check-draft`/`summary` jobs. To get real CI feedback you must `gh pr ready`. When promoting, keep a background monitor on the PR (`gh pr checks <n>`) that reports a failing build back to the developer here.
 - **Commits**: Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) v1.0.0
 - **Kconfig changes**: Run `.github/scripts/makemachines` after modifying Kconfig
 - **Storage state**: Use fresh storage volumes when testing pvtx.d changes (`docker volume rm storage-test`)
