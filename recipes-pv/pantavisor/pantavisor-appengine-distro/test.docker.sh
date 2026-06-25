@@ -22,9 +22,9 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
-	echo "  -p, --parallel N      Max runner instances per runner-type (default: 1)"
-	echo "  -P, --max-instances N Global cap on concurrent runners across all types;"
-	echo "                        types are scheduled in waves to stay under it (default: -p)."
+	echo "  -p, --parallel N      Global cap on concurrent runners across all types;"
+	echo "                        each type fans out to min(its tests, -p) and types are"
+	echo "                        scheduled in waves to stay under it (default: nproc)."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
 	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
@@ -318,19 +318,160 @@ teardown_network() {
 	sudo -n modprobe -r mac80211_hwsim
 }
 
+# ----------------------------------------------------------------------------
+# Slot-pool model helpers (single-tester global FIFO + host re-type service).
+#
+# A single tester (pvtest-run) owns a global semaphore of -p "slots" over one
+# flat test queue. A slot maps to one live appengine container; when the next
+# pending test needs a different required-config than the slot's current
+# container, the tester asks this host to RE-TYPE the slot — stop the old
+# container, boot a new one with the new config. Only the host can call docker,
+# so it runs a small file-based request/response service over a bind-mounted
+# control dir; the semaphore, claim-once and keeping slots busy live in the
+# tester. These functions run in run_test's dynamic scope (work_path, valgrind,
+# pvtest_pubkey) and globals (slot, USER) — including the backgrounded
+# retype_service subshell, which snapshots run_test's locals.
+# ----------------------------------------------------------------------------
+
+# Boot one appengine container named $1 with required-config $2 ("KEY=VAL ...").
+# Detached; readiness is awaited by the tester's init_device, not here. Starts a
+# host-side log tail into appengine-<name>.log and records its pid for teardown.
+_boot_appengine() {
+	local ae="$1" cfg="$2"
+	local _cfg_env=() _kv
+	for _kv in $cfg; do _cfg_env+=(-e "$_kv"); done
+	mkdir -p "$work_path/storage/$ae"
+	local ae_valgrind_args=()
+	if [ "$valgrind" = "true" ]; then
+		mkdir -p "$work_path/valgrind/$ae"
+		ae_valgrind_args=(-v "$work_path/valgrind/$ae":/tmp/valgrind)
+	fi
+	touch "$work_path/appengine-${ae}.log"
+	if ! docker run \
+		--name "$ae" \
+		--net=test-appengine-net \
+		-d \
+		--rm \
+		--cgroupns host \
+		--cap-add NET_ADMIN \
+		--cap-add SYS_ADMIN \
+		--cap-add SYS_PTRACE \
+		--cap-add MKNOD \
+		--device /dev/kmsg \
+		--device /dev/hwrng \
+		--device /dev/loop-control \
+		--device-cgroup-rule 'b 7:* rmw' \
+		--security-opt apparmor=unconfined \
+		--security-opt seccomp=unconfined \
+		--volume "/sys/fs":"/sys/fs" \
+		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
+		--mount type=tmpfs,target="/volumes" \
+		--mount type=tmpfs,target="/configs" \
+		-v "$work_path/storage/$ae":/var/pantavisor/storage \
+		"${ae_valgrind_args[@]}" \
+		-e VALGRIND="$valgrind" \
+		-e PV_DEBUG_SSH=1 \
+		-e PV_DEBUG_SSH_AUTHORIZED_KEYS="pvtest-authorized_keys" \
+		-e PV_DEBUG_SSH_PUBKEY="$pvtest_pubkey" \
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
+		"${_cfg_env[@]}" \
+		pantavisor-appengine \
+			/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null; then
+		return 1
+	fi
+	pvtest_log DEBUG "started appengine $ae (cfg=[${cfg:-<none>}])"
+	docker logs -f "$ae" 2>/dev/null \
+		| while IFS= read -r _pv_line; do printf '[%s] %s\n' "$ae" "$_pv_line"; done \
+		>> "$work_path/appengine-${ae}.log" &
+	echo $! > "$work_path/.logpid.$ae"
+	return 0
+}
+
+# Stop appengine container $1: wait briefly for a graceful exit (the tester has
+# already powered it off), force-stop if still running, kill its log tail.
+_stop_appengine() {
+	local ae="$1"
+	local _grace=30 _elapsed=0 _status=
+	while _status=$(docker inspect -f '{{.State.Status}}' "$ae" 2>/dev/null) \
+	      && [ "$_status" = "running" ] && [ "$_elapsed" -lt "$_grace" ]; do
+		sleep 1
+		_elapsed=$((_elapsed + 1))
+	done
+	if [ "${_status:-}" = "running" ]; then
+		docker stop --time 5 "$ae" > /dev/null 2>&1 || true
+	fi
+	if [ -f "$work_path/.logpid.$ae" ]; then
+		kill "$(cat "$work_path/.logpid.$ae")" 2>/dev/null || true
+		rm -f "$work_path/.logpid.$ae"
+	fi
+}
+
+# Handle one re-type request id=$2 for slot=$3 to config=$4 (empty = teardown).
+# Backgrounded by retype_service; per-slot current container in $1/state/slot<S>.ae.
+_retype_handle() {
+	local ctrl="$1" id="$2" S="$3" cfg="$4"
+	local stf="$ctrl/state/slot${S}.ae" old ae gen
+	old=$(cat "$stf" 2>/dev/null)
+	[ -n "$old" ] && _stop_appengine "$old"
+	: > "$stf"
+	if [ -z "$cfg" ] || [ "$cfg" = "__none__" ]; then
+		printf 'status=down\n' > "$ctrl/resp/.tmp.$id"
+		mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+		return 0
+	fi
+	gen=$( ( flock -x 8
+		local g; g=$(( $(cat "$ctrl/state/gen" 2>/dev/null || echo 0) + 1 ))
+		printf '%s' "$g" > "$ctrl/state/gen"; printf '%s' "$g"
+	) 8>"$ctrl/state/gen.lock" )
+	ae="pantavisor-appengine-${USER}-${slot}-w${S}-g${gen}"
+	if _boot_appengine "$ae" "$cfg"; then
+		printf '%s' "$ae" > "$stf"
+		printf 'ae=%s\nstatus=ready\n' "$ae" > "$ctrl/resp/.tmp.$id"
+	else
+		printf 'status=failed\n' > "$ctrl/resp/.tmp.$id"
+	fi
+	mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+}
+
+# Background re-type service. Watches $1/req/slot<S> files written by the tester;
+# for each, (re)boots the slot's container and writes the new name to
+# $1/resp/slot<S>. Exits when $1/stop appears, then tears down all slots.
+retype_service() {
+	local ctrl="$1"
+	mkdir -p "$ctrl/req" "$ctrl/resp" "$ctrl/state"
+	local req id S cfg
+	while [ ! -e "$ctrl/stop" ]; do
+		for req in "$ctrl"/req/slot*; do
+			[ -e "$req" ] || continue
+			id=$(basename "$req")
+			S=$(sed -n 's/^slot=//p' "$req")
+			cfg=$(sed -n 's/^cfg=//p' "$req")
+			rm -f "$req"
+			( _retype_handle "$ctrl" "$id" "$S" "$cfg" ) &
+		done
+		sleep 0.2
+	done
+	wait
+	local st ae
+	for st in "$ctrl"/state/slot*.ae; do
+		[ -e "$st" ] || continue
+		ae=$(cat "$st" 2>/dev/null)
+		[ -n "$ae" ] && _stop_appengine "$ae"
+	done
+}
+
 run_test() {
 	local target_path=
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
-	local parallel=1
+	local parallel=0
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
 	local max_retries=0
 	local fail_on_skip="false"
 	local fail_on_skip_field="false"
-	local max_instances=0
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
@@ -384,10 +525,6 @@ run_test() {
 				fail_on_skip_field="true"
 				shift
 				;;
-			-P|--max-instances)
-				max_instances="$2"
-				shift 2
-				;;
 			*)
 				pvtest_log ERROR "Unknown argument: $1"
 				usage
@@ -396,9 +533,18 @@ run_test() {
 		esac
 	done
 
-	# Global concurrency cap defaults to -p: -p 1 runs fully serial (cap 1),
-	# -p N allows up to N concurrent runners across all types (like a master pool).
-	[ "$max_instances" -le 0 ] 2>/dev/null && max_instances="$parallel"
+	# -p is the global cap on concurrent runners across all types: -p 1 runs fully
+	# serial, -p N allows up to N concurrent runners (like a master pool). When
+	# unset it defaults to nproc (size to the box); modes that must run serially
+	# (interactive, manual, overwrite, netsim) default to 1 instead.
+	if [ "$parallel" -le 0 ] 2>/dev/null; then
+		if [ "$interactive" = "true" ] || [ "$manual" = "true" ] || \
+		   [ "$overwrite" = "true" ] || [ "$netsim" = "true" ]; then
+			parallel=1
+		else
+			parallel=$(nproc 2>/dev/null || echo 1)
+		fi
+	fi
 
 	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
 		pvtest_log ERROR "-p is incompatible with -i and -m"
@@ -462,11 +608,12 @@ run_test() {
 	docker rm -f "$netsim_name" 2>/dev/null || true
 
 	# Runner-fleet model: tests are grouped into runner-types by their
-	# (required-config, needs-claim). Each type boots up to -p appengine runners
-	# (pantavisor-appengine-${USER}-${slot}-t<type>-<0..n-1>) configured via PV_*
-	# env. Types are scheduled in waves bounded by the global instance cap (-P); a
-	# single tester (pvtest-run) runs per wave and dispatches each test to an idle
-	# runner of its type. Each test runs exactly once, so results need no merge.
+	# (required-config, needs-claim). Each type fans out to min(its tests, -p)
+	# appengine runners (pantavisor-appengine-${USER}-${slot}-t<type>-<0..n-1>)
+	# configured via PV_* env. Types are scheduled in waves bounded by the global
+	# instance cap (-p); a single tester (pvtest-run) runs per wave and dispatches
+	# each test to an idle runner of its type. Each test runs exactly once, so
+	# results need no merge.
 
 	# Resolve absolute paths for test scope dirs (local/ and remote/)
 	local abs_local_path= abs_remote_path=
@@ -563,226 +710,118 @@ run_test() {
 	[ "$interactive" = "true" ] && docker_it_opt="-it"
 
 	# ----------------------------------------------------------------------
-	# Discovery: scan selected tests and derive runner-types from their
-	# (required-config, needs-claim). Build, per type: the config to boot it with,
-	# its claim role, the /work test.json paths it owns, and its test count.
+	# Interactive (non-manual): boot one container configured for the target
+	# test and drop into the tester's single-device interactive shell. The
+	# slot-pool path below is for automated runs only.
 	# ----------------------------------------------------------------------
-	# Populate in the current shell (no pipe — a pipe would run the loop in a
-	# subshell and drop the arrays). Headless stdout is already tee'd to run.log.
-	local -A TYPE_CFG TYPE_CLAIM TYPE_TESTS TYPE_COUNT TYPE_IDX TYPE_INST
-	local -a _type_keys=()
-	local _ntests=0
-	local _json _rel _work _cfg _sc _nc _key _tid
+	if [ "$interactive" = "true" ]; then
+		local _icfg _iae
+		_icfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")")
+		_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
+		_boot_appengine "$_iae" "$_icfg"
+		docker run -it --rm \
+			--net=test-appengine-net \
+			--name "$tester_name" \
+			-e TEST_PATH="/work/$target_path" \
+			-e INTERACTIVE=true \
+			-e MANUAL="$manual" \
+			-e VERBOSE="$verbose" \
+			-e VALGRIND="$valgrind" \
+			-e PH_USER="$PH_USER" \
+			-e PH_PASS="$PH_PASS" \
+			-e PVR_DISABLE_SELF_UPGRADE=true \
+			-e PVTEST_APPENGINES="$_iae" \
+			-e PVTEST_SSH_KEY="/tmp/pvtest_id" \
+			-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}" \
+			"${tester_shared_args[@]}" \
+			"${tester_scope_args[@]}" \
+			"$tester_image"
+		_stop_appengine "$_iae"
+		release_slot
+		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		return
+	fi
+
+	# ----------------------------------------------------------------------
+	# Slot-pool model: enumerate the selected tests into a flat queue and let a
+	# single tester (pvtest-run) dispatch them across -p slots, asking the host
+	# re-type service (above) to (re)boot each slot's container on demand. The
+	# tester owns the semaphore, claim-once, and keeping all slots busy.
+	# ----------------------------------------------------------------------
+	local ctrl_dir="$work_path/ctrl"
+	mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
+
+	# Flat queue of /work test.json paths (stable order; the tester regroups by
+	# runner-type and schedules them across slots).
+	local pvtest_queue="" _json _rel
 	while IFS= read -r _json; do
 		[ -n "$_json" ] || continue
 		_rel=${_json#"$test_dir"/}; _rel=${_rel#./}
-		_work="/work/$_rel"
-		_tid=${_rel%/test.json}
-		_cfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$_json")")
-		_sc=$(jq -r '.setup."self-claim" // "false"' "$_json")
-		_nc=$(reqcfg_needs_claim "$_cfg" "$_sc")
-		_key="${_cfg}||claim=${_nc}"
-		# A remote test with self-claim=false claims its own device during the
-		# test, consuming it — so it must never share a device with another claim
-		# test (the first would leave the device claimed, breaking the second).
-		# Give each such test its own runner-type: a dedicated, pristine device
-		# (separate waves at -p1, separate devices at higher -p).
-		case " $_cfg " in
-			*" PV_CONTROL_REMOTE=1 "*)
-				[ "$_sc" != "true" ] && _key="${_key}||self=${_tid}"
-				;;
-		esac
-		if [ -z "${TYPE_COUNT[$_key]:-}" ]; then
-			TYPE_IDX[$_key]=${#_type_keys[@]}
-			_type_keys+=("$_key")
-			TYPE_CFG[$_key]="$_cfg"; TYPE_CLAIM[$_key]="$_nc"
-			TYPE_TESTS[$_key]=""; TYPE_COUNT[$_key]=0
-		fi
-		TYPE_TESTS[$_key]="${TYPE_TESTS[$_key]:+${TYPE_TESTS[$_key]} }$_work"
-		TYPE_COUNT[$_key]=$(( TYPE_COUNT[$_key] + 1 ))
-		_ntests=$((_ntests + 1))
-		pvtest_log INFO "test ${_tid} -> type[${TYPE_IDX[$_key]}] claim=${_nc} cfg=[${_cfg:-<none>}]"
+		pvtest_queue="${pvtest_queue:+$pvtest_queue }/work/$_rel"
 	done < <(find "$test_dir/${target_path:-.}" -name test.json 2>/dev/null | sort)
 
-	if [ "$_ntests" -eq 0 ]; then
+	if [ -z "$pvtest_queue" ]; then
 		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
 		release_slot
 		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
 		return 0
 	fi
 
-	# Per-type instance count = min(tests, -p), capped by the global instance cap.
-	local _k
-	for _k in "${_type_keys[@]}"; do
-		local _inst=${TYPE_COUNT[$_k]}
-		[ "$_inst" -gt "$parallel" ] && _inst=$parallel
-		[ "$_inst" -gt "$max_instances" ] && _inst=$max_instances
-		TYPE_INST[$_k]=$_inst
-		pvtest_log INFO "type[${TYPE_IDX[$_k]}]: claim=${TYPE_CLAIM[$_k]} instances=${_inst} tests=${TYPE_COUNT[$_k]} cfg=[${TYPE_CFG[$_k]:-<none>}]"
-	done
+	local _nq res=0
+	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
+	pvtest_log INFO "=== slot pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
 
-	# Greedy-pack runner-types into waves whose total instances fit the global cap.
-	# A type is kept intact within one wave so its claim-once lifecycle stays whole.
-	local -a _waves=()
-	local _cur="" _cur_sum=0
-	for _k in "${_type_keys[@]}"; do
-		local _inst=${TYPE_INST[$_k]}
-		if [ -n "$_cur" ] && [ $((_cur_sum + _inst)) -gt "$max_instances" ]; then
-			_waves+=("$_cur"); _cur=""; _cur_sum=0
-		fi
-		_cur="${_cur:+$_cur }${TYPE_IDX[$_k]}"; _cur_sum=$((_cur_sum + _inst))
-	done
-	[ -n "$_cur" ] && _waves+=("$_cur")
-	pvtest_log INFO "=== scheduling ${_ntests} test(s) across ${#_type_keys[@]} runner-type(s) in ${#_waves[@]} wave(s) (cap=${max_instances}) ==="
+	# Start the host re-type service (container runs only).
+	local svc_pid=""
+	if [ -z "$PVTEST_EXEC" ]; then
+		retype_service "$ctrl_dir" &
+		svc_pid=$!
+	fi
 
-	local start res=0 _w=0 _wave
-	start=$(date +%s)
+	mkdir -p "$work_path/results/main"
 
-	for _wave in "${_waves[@]}"; do
-		# Build this wave's fleet: container names, claim-role map, log mounts, and
-		# the explicit test list (all tests of this wave's types).
-		local ae_names="" ae_claim_map="" ae_log_pids="" wave_tests=""
-		local appengine_log_mounts=() appengine_log_paths=""
-		local _ti _ci _key
-		for _ti in $_wave; do
-			_key="${_type_keys[$_ti]}"
-			wave_tests="${wave_tests:+$wave_tests }${TYPE_TESTS[$_key]}"
-			for ((_ci=0; _ci<${TYPE_INST[$_key]}; _ci++)); do
-				local ae="pantavisor-appengine-${USER}-${slot}-t${_ti}-${_ci}"
-				ae_names="${ae_names:+$ae_names }$ae"
-				ae_claim_map="${ae_claim_map:+$ae_claim_map }${ae}=${TYPE_CLAIM[$_key]}"
-				touch "$work_path/appengine-${ae}.log"
-				appengine_log_mounts+=(-v "$work_path/appengine-${ae}.log:/work/appengine-${ae}.log")
-				appengine_log_paths="${appengine_log_paths:+$appengine_log_paths }/work/appengine-${ae}.log"
-			done
-		done
+	local -a tester_run_args=(
+		--net=test-appengine-net
+		--name "${tester_name}"
+		-e TEST_PATH="/work/$target_path"
+		-e PVTEST_QUEUE="$pvtest_queue"
+		-e PVTEST_SLOTS="$parallel"
+		-e PVTEST_CTRL="/work/ctrl"
+		-e INTERACTIVE="$interactive"
+		-e MANUAL="$manual"
+		-e OVERWRITE="$overwrite"
+		-e VERBOSE="$verbose"
+		-e NETSIM="$netsim"
+		-e VALGRIND="$valgrind"
+		-e PH_USER="$PH_USER"
+		-e PH_PASS="$PH_PASS"
+		-e PVR_DISABLE_SELF_UPGRADE=true
+		-e PVTEST_SSH_KEY="/tmp/pvtest_id"
+		-e PVTEST_EXEC="${PVTEST_EXEC:-}"
+		-e PVTEST_HOST="${PVTEST_HOST:-}"
+		-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
+		-e MAX_RETRIES="$max_retries"
+		-e FAIL_ON_SKIP_FIELD="$fail_on_skip_field"
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
+		-e RUN_DIR=/work/results
+		--rm
+		"${tester_shared_args[@]}"
+		"${tester_scope_args[@]}"
+		-v "$work_path/results/main":/work/results
+		-v "$ctrl_dir":/work/ctrl
+	)
 
-		pvtest_log INFO "=== wave $((_w+1))/${#_waves[@]}: starting runner(s): ${ae_names} ==="
+	docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.main.log"
+	res=${PIPESTATUS[0]}
 
-		# Start this wave's appengine containers (skipped for external target).
-		if [ -z "$PVTEST_EXEC" ]; then
-			for _ti in $_wave; do
-				_key="${_type_keys[$_ti]}"
-				local _cfg_env=() _kv
-				for _kv in ${TYPE_CFG[$_key]}; do _cfg_env+=(-e "$_kv"); done
-				for ((_ci=0; _ci<${TYPE_INST[$_key]}; _ci++)); do
-					local ae="pantavisor-appengine-${USER}-${slot}-t${_ti}-${_ci}"
-					mkdir -p "$work_path/storage/$ae"
-					local ae_valgrind_args=()
-					if [ "$valgrind" = "true" ]; then
-						mkdir -p "$work_path/valgrind/$ae"
-						ae_valgrind_args=(-v "$work_path/valgrind/$ae":/tmp/valgrind)
-					fi
-
-					docker run \
-						--name "$ae" \
-						--net=test-appengine-net \
-						-d \
-						--rm \
-						--cgroupns host \
-						--cap-add NET_ADMIN \
-						--cap-add SYS_ADMIN \
-						--cap-add SYS_PTRACE \
-						--cap-add MKNOD \
-						--device /dev/kmsg \
-						--device /dev/hwrng \
-						--device /dev/loop-control \
-						--device-cgroup-rule 'b 7:* rmw' \
-						--security-opt apparmor=unconfined \
-						--security-opt seccomp=unconfined \
-						--volume "/sys/fs":"/sys/fs" \
-						--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
-						--mount type=tmpfs,target="/volumes" \
-						--mount type=tmpfs,target="/configs" \
-						-v "$work_path/storage/$ae":/var/pantavisor/storage \
-						"${ae_valgrind_args[@]}" \
-						-e VALGRIND="$valgrind" \
-						-e PV_DEBUG_SSH=1 \
-						-e PV_DEBUG_SSH_AUTHORIZED_KEYS="pvtest-authorized_keys" \
-						-e PV_DEBUG_SSH_PUBKEY="$pvtest_pubkey" \
-						-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
-						"${_cfg_env[@]}" \
-						pantavisor-appengine \
-							/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null
-
-					pvtest_log DEBUG "started appengine $ae (claim=${TYPE_CLAIM[$_key]} cfg=[${TYPE_CFG[$_key]:-<none>}])"
-					docker logs -f "$ae" 2>/dev/null \
-						| while IFS= read -r _pv_line; do printf '[%s] %s\n' "$ae" "$_pv_line"; done \
-						>> "$work_path/appengine-${ae}.log" &
-					ae_log_pids="${ae_log_pids:+$ae_log_pids }$!"
-				done
-			done
-		fi
-
-		# Per-wave results dir: results/wave<N>/<scope>/<category>/<name>/...
-		mkdir -p "$work_path/results/wave${_w}"
-
-		# Tester run args for this wave. The tester dispatches each test in
-		# PVTEST_JSON_LIST to an idle runner of its type (PVTEST_AE_CLAIM gives each
-		# runner's claim role; the dispatcher routes by required-config + self-claim).
-		local -a tester_run_args=(
-			--net=test-appengine-net
-			--name "${tester_name}-w${_w}"
-			-e TEST_PATH="/work/$target_path"
-			-e PVTEST_JSON_LIST="$wave_tests"
-			-e INTERACTIVE="$interactive"
-			-e MANUAL="$manual"
-			-e OVERWRITE="$overwrite"
-			-e VERBOSE="$verbose"
-			-e NETSIM="$netsim"
-			-e VALGRIND="$valgrind"
-			-e PH_USER="$PH_USER"
-			-e PH_PASS="$PH_PASS"
-			-e PVR_DISABLE_SELF_UPGRADE=true
-			-e PVTEST_APPENGINES="$ae_names"
-			-e PVTEST_AE_CLAIM="$ae_claim_map"
-			-e PVTEST_SSH_KEY="/tmp/pvtest_id"
-			-e PVTEST_EXEC="${PVTEST_EXEC:-}"
-			-e PVTEST_HOST="${PVTEST_HOST:-}"
-			-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
-			-e MAX_RETRIES="$max_retries"
-			-e FAIL_ON_SKIP_FIELD="$fail_on_skip_field"
-			-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
-			-e RUN_DIR=/work/results
-			--rm
-			"${tester_shared_args[@]}"
-			"${tester_scope_args[@]}"
-			-v "$work_path/results/wave${_w}":/work/results
-			-e APPENGINE_LOGS="$appengine_log_paths"
-			"${appengine_log_mounts[@]}"
-		)
-		[ -n "$docker_it_opt" ] && tester_run_args+=("$docker_it_opt")
-
-		# Run the tester for this wave. Headless: capture output to a per-wave run
-		# log and the aggregate run.log. Interactive: run directly (TTY preserved).
-		local _res
-		if [ "$interactive" = "true" ]; then
-			docker run "${tester_run_args[@]}" "$tester_image"
-			_res=$?
-		else
-			docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.wave${_w}.log"
-			_res=${PIPESTATUS[0]}
-		fi
-		[ "$_res" -ne 0 ] && res=$_res
-
-		# Stop this wave's appengine containers before the next wave.
-		if [ -z "$PVTEST_EXEC" ]; then
-			for ae in $ae_names; do
-				local _ae_grace=45 _ae_elapsed=0 _ae_status=
-				while _ae_status=$(docker inspect -f '{{.State.Status}}' "$ae" 2>/dev/null) \
-				      && [ "$_ae_status" = "running" ] && [ "$_ae_elapsed" -lt "$_ae_grace" ]; do
-					sleep 1
-					_ae_elapsed=$((_ae_elapsed + 1))
-				done
-				if [ "${_ae_status:-}" = "running" ]; then
-					echo "Warn: appengine container $ae still running after ${_ae_grace}s; forcing stop"
-					docker stop --time 5 "$ae" > /dev/null 2>&1 || true
-				fi
-			done
-			[ -n "$ae_log_pids" ] && kill $ae_log_pids 2>/dev/null || true
-		fi
-		_w=$((_w + 1))
-	done
+	# Stop the re-type service and tear down any remaining slot containers.
+	if [ -n "$svc_pid" ]; then
+		touch "$ctrl_dir/stop"
+		wait "$svc_pid" 2>/dev/null || true
+	fi
+	if [ -z "$PVTEST_EXEC" ]; then
+		docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
+	fi
 
 	[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
 
@@ -809,9 +848,9 @@ run_test() {
 
 	set +x
 
-	# Collect results. Each test runs exactly once (in one wave), so each appears in
-	# a single run.wave<N>.log; the rank() precedence is a harmless tie-break and we
-	# remember which wave produced it (for the diff path results/wave<N>/...).
+	# Collect results. The single tester run writes per-test result lines to
+	# run.main.log and per-test diffs under results/main/<tid>/; the rank()
+	# precedence is a harmless tie-break. wtag ("main") gives the diff path.
 	#   FAILED > ABORTED > PASSED > SKIPPED > RECORDED
 	local merged_file
 	merged_file=$(mktemp)
@@ -919,13 +958,13 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- aggregate output of all waves + SUMMARY
-  run.wave<N>.log                   <- one per wave: that wave's per-test result lines
+  run.log                           <- aggregate output + SUMMARY
+  run.main.log                      <- the tester run's per-test result lines
   appengine-<container>.log         <- full pantavisor stdout_direct for one appengine
                                        container (keyed by its full name)
   README.md
   results/
-    wave<N>/<scope>/<category>/<name>/
+    main/<scope>/<category>/<name>/
       test.log     <- test script output interleaved with pantavisor logs during exec_test
       diff         <- diff (expected vs actual), present only when test failed
   storage/
@@ -936,12 +975,14 @@ run_test() {
       valgrind.log.<pid>   <- present only when run with -V
 ```
 
-The runner-fleet model groups tests into runner-types by their
-(`required-config`, needs-claim). Each type boots up to `-p` appengine runners
-configured via `PV_*` env; types are scheduled in waves bounded by the global
-instance cap (`-P`, default `-p`). One tester (`pvtest-run`) runs per wave and
-dispatches each test to an idle runner of its type, so each test runs exactly
-once. The SUMMARY collects the per-test results across waves.
+The slot-pool model runs one tester (`pvtest-run`) that owns a global semaphore
+of `-p` slots over a flat test queue. A slot maps to one live appengine
+container; when the next pending test needs a different `required-config`, the
+tester asks the host re-type service to stop that slot's container and boot a
+new one with the new config (`PV_*` env). Each remote device is claimed once
+while a slot stays on its type and deleted once on switch, so claim-once holds
+without draining the pool between types. Each test runs exactly once; the
+SUMMARY collects the per-test results.
 
 ## Log Format
 

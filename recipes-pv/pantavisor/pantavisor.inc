@@ -1,4 +1,4 @@
 PANTAVISOR_BRANCH ??= "master"
-PANTAVISOR_BRANCH = "pvtest-device-target"
+PANTAVISOR_BRANCH = "pvtest-slot-pool-proto"
 PANTAVISOR_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
-PANTAVISOR_SRCREV = "f8babeceb141baae2aa3374011fee5daee3fcb7c"
+PANTAVISOR_SRCREV = "81fed10a2b550bb66b40eaf0ebb021381271ca79"
