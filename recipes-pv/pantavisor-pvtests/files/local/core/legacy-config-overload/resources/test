@@ -9,7 +9,7 @@ pvcontrol config ls | jq -M -r '.["metadata.devmeta.interval"]' | tr -d '\r'
 echo "== env =="
 pvcontrol config ls | jq -M -r '.["policy"]' | tr -d '\r'
 echo "== policy =="
-pvcontrol config ls | jq -M -r '.["debug.ssh"]' | tr -d '\r'
+pvcontrol config ls | jq -M -r '.["log.capture.dmesg"]' | tr -d '\r'
 echo "== oem config =="
 pvcontrol config ls | jq -M -r '.["metadata.usrmeta.interval"]' | tr -d '\r'
 echo "== metadata (before write) =="
