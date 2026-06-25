@@ -5,11 +5,11 @@ api.pantahub.com
 == cmdline ==
 15
 == env ==
-pv-appengine-local-disabled
+test
 == policy ==
-0
+true
 == oem config ==
-5
+30
 == metadata (before write) ==
 4
 == update log.level via user-meta ==

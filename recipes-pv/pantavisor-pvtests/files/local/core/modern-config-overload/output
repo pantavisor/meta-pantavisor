@@ -19,20 +19,20 @@
 == env ==
 {
   "key": "PV_POLICY",
-  "value": "pv-appengine-local-disabled",
+  "value": "test",
   "modified": "env"
 }
 == policy ==
 {
-  "key": "PV_SECUREBOOT_MODE",
-  "value": "disabled",
+  "key": "PV_LOG_CAPTURE_DMESG",
+  "value": "1",
   "modified": "policy"
 }
 == oem config ==
 {
   "key": "PH_METADATA_USRMETA_INTERVAL",
-  "value": "5",
-  "modified": "ph conf file"
+  "value": "30",
+  "modified": "oem config"
 }
 == metadata (before write) ==
 {
