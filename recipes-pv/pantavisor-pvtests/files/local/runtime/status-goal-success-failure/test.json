@@ -15,7 +15,8 @@
 				"https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/6#pvr-sdk/"
 			]
 		},
-		"self-claim": "false"
+		"self-claim": "false",
+		"expected-seconds": 216
 	},
 	"test-script": "resources/test",
 	"skip": "false",

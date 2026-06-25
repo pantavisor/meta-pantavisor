@@ -14,7 +14,8 @@
 			],
 			"urls": []
 		},
-		"ready-script": ""
+		"ready-script": "",
+		"expected-seconds": 22
 	},
 	"test-script": "resources/test",
 	"skip": "false",

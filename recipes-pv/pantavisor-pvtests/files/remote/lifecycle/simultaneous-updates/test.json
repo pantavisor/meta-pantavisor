@@ -12,7 +12,8 @@
 			],
 			"urls": []
 		},
-		"self-claim": "true"
+		"self-claim": "true",
+		"expected-seconds": 140
 	},
 	"test-script": "resources/test",
 	"skip": "false",
