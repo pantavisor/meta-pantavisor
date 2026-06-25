@@ -38,7 +38,11 @@ cd "$co_local"
 pvr post --rev "locals/test-302" > /dev/null 2>&1
 wait_for_revision_state "pvr-sdk" "locals/test-302" "UPDATED" \
     || { echo "ERROR: timeout waiting for locals/test-302 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress "locals/test-302"
+# Entering local mode tears down the Hub session; a couple of in-flight
+# usrmeta/devmeta calls then log benign "session must be opened first" ERRORs
+# that land non-deterministically in this step's .logs. Mask the volatile
+# .logs/.downloads fields so the status comparison stays stable.
+pvcontrol steps show-progress "locals/test-302" | jq -Mc 'del(.logs, .downloads)'
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
 echo "== post remote update 2 (should not be consumed in local mode) =="

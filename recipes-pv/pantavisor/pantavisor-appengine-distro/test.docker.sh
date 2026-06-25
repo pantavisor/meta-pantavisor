@@ -337,6 +337,10 @@ run_test() {
 		shift
 	fi
 
+	# "all" is a keyword for the whole suite (local/ + remote/), not a directory.
+	# Map it to an empty target so discovery searches both scope trees.
+	[ "$target_path" = "all" ] && target_path=
+
 	while [ $# -gt 0 ]; do
 		case "$1" in
 			-o|--overwrite)
@@ -578,6 +582,16 @@ run_test() {
 		_sc=$(jq -r '.setup."self-claim" // "false"' "$_json")
 		_nc=$(reqcfg_needs_claim "$_cfg" "$_sc")
 		_key="${_cfg}||claim=${_nc}"
+		# A remote test with self-claim=false claims its own device during the
+		# test, consuming it — so it must never share a device with another claim
+		# test (the first would leave the device claimed, breaking the second).
+		# Give each such test its own runner-type: a dedicated, pristine device
+		# (separate waves at -p1, separate devices at higher -p).
+		case " $_cfg " in
+			*" PV_CONTROL_REMOTE=1 "*)
+				[ "$_sc" != "true" ] && _key="${_key}||self=${_tid}"
+				;;
+		esac
 		if [ -z "${TYPE_COUNT[$_key]:-}" ]; then
 			TYPE_IDX[$_key]=${#_type_keys[@]}
 			_type_keys+=("$_key")
