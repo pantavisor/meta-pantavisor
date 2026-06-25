@@ -912,7 +912,7 @@ run_test() {
 	if [ -s "$merged_file" ]; then
 		# Single pass in test order: for each non-passing test that has a diff,
 		# print the diff/error block immediately BEFORE its result line, then the
-		# result line itself ('<tid>' RESULT (on <policy>)). This interleaves the
+		# result line itself ('<tid>' RESULT (N s)). This interleaves the
 		# failure detail with the test it belongs to instead of dumping all diffs
 		# in one block up front.
 		while IFS=$'\t' read -r test_id result wtag time; do
@@ -932,7 +932,7 @@ run_test() {
 					printf '%s\n\n' "--- end errors ---"
 				fi
 			fi
-			printf "'%s' %s %s(on %s)\n" "$test_id" "$result" "${time:+$time }" "$wtag"
+			printf "'%s' %s%s\n" "$test_id" "$result" "${time:+ $time}"
 			# --fail-on-skip: a SKIPPED result is final (the test ran once and the
 			# runner skipped it, e.g. device filter or missing Hub creds).
 			[ "$result" = "SKIPPED" ] && skip_fail_seen=1
