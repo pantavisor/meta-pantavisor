@@ -1,16 +1,20 @@
 ---
 title: "Examples"
-description: "Example containers demonstrating xconnect service mesh patterns in meta-pantavisor."
+description: "Feature and example containers shipped by meta-pantavisor — xconnect service mesh patterns and the pvwificonnect provisioning container."
 sidebar_position: 4
 ---
 
 # Examples
 
-Working example containers in `recipes-containers/pv-examples/` that demonstrate pv-xconnect service mesh patterns. Use these as reference implementations for your own app containers.
+Feature and example containers shipped by meta-pantavisor. The `pv-examples`
+containers in `recipes-containers/pv-examples/` demonstrate pv-xconnect service
+mesh patterns; use them as reference implementations for your own app
+containers. `pvwificonnect` is a core container documented here as a feature.
 
 ## Topics
 
 1. [xconnect Examples](xconnect-examples.md) — Unix socket, REST, D-Bus, DRM, and Wayland proxy patterns with provider/consumer container pairs
+2. [pvwificonnect](pvwificonnect.md) — WiFi provisioning container: access point, captive portal, tethering, and connection watcher
 
 ## Related
 

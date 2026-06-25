@@ -1,3 +1,6 @@
+---
+sidebar_position: 5
+---
 # U-Boot Boot Flow
 
 How Pantavisor boots from U-Boot via the generic boot script
