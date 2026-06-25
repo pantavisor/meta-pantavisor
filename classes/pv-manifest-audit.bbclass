@@ -48,7 +48,8 @@
 #       cd <layer>/files && patch < .../${IMAGE_NAME}.manifest.patch
 
 PV_MANIFEST_PREFIX ??= "${PN}"
-PV_MANIFEST_REFERENCE_NAME ??= "${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}-${DISTRO_CODENAME}.manifest.reference.txt"
+# DISTRO_CODENAME is optional — many distros leave it unset.
+PV_MANIFEST_REFERENCE_NAME ??= "${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}${@'-' + d.getVar('DISTRO_CODENAME') if d.getVar('DISTRO_CODENAME') else ''}.manifest.reference.txt"
 
 # Path prefixes (rootfs-relative, leading slash) whose entire subtree is
 # omitted from the manifest. Defaults cover package-manager state files

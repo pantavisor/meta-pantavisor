@@ -172,7 +172,7 @@ trigger a `do_rootfs` rerun.
 | Variable                        | Default                                                                   | Purpose                                                                  |
 |---------------------------------|---------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | `PV_MANIFEST_PREFIX`            | `${PN}`                                                                   | Recipe-stable label embedded in the reference filename                   |
-| `PV_MANIFEST_REFERENCE_NAME`    | `${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}-${DISTRO_CODENAME}.manifest.reference.txt` | Basename of the reference fetched into `${WORKDIR}`         |
+| `PV_MANIFEST_REFERENCE_NAME`    | `${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}-${DISTRO_CODENAME}.manifest.reference.txt` (the `-${DISTRO_CODENAME}` segment is dropped when `DISTRO_CODENAME` is unset) | Basename of the reference fetched into `${WORKDIR}`         |
 | `PV_MANIFEST_EXCLUDES`          | (see above)                                                               | Rootfs-relative path prefixes to omit from the manifest                  |
 
 ## Inheriting the class
