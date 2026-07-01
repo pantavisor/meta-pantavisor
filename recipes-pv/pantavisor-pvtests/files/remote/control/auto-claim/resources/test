@@ -26,8 +26,9 @@ autotok=$(echo "$autotok_json" | jq -r '.token')
 autotok_id=$(echo "$autotok_json" | jq -r '.id')
 
 echo "== inject autotok and reboot =="
-_pv_exec sh -c "echo PH_FACTORY_AUTOTOK=$autotok >> /run/pantavisor/pv/phconfig/pantahub.config"
-_pv_exec rm -f /run/pantavisor/pv/phconfig/unclaimed.config
+# Overwrite (not append) unclaimed.config: clearing PH_CREDS_ID forces a fresh
+# registration, the only path that consumes the factory autotok.
+_pv_exec sh -c "echo PH_FACTORY_AUTOTOK=$autotok > /run/pantavisor/pv/phconfig/unclaimed.config"
 pvcontrol commands reboot > /dev/null 2>&1
 
 echo "== wait for auto-claim =="
