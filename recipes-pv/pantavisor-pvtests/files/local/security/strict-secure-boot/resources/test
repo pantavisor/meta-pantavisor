@@ -2,22 +2,28 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
+echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# Per-test isolation: private $HOME + temp checkout dir (see automated-workflow.md § Test authoring rules).
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$HOME/checkout"
 
-# check secureboot mode and signature JSON
+echo "== secureboot mode and factory signatures =="
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
-cd /storage/trails/0/; echo "yes" | pvr sig ls; cd -
+# Read signatures from the cloned checkout (carries the same _sigs/*); the
+# script runs in the tester, so the device path /storage/trails/0 is not here.
+echo "yes" | pvr sig ls
 
-# post a new change that breaks strict mode
+echo "== post unsigned update (expect rejection) =="
 rm _sigs/pvr-sdk.json
 pvr add .
 pvr commit > /dev/null 2>&1
-pvr post --rev "locals/error" > /dev/null
+# No reset between tests: drop the non-deterministic "Posting object info" line, keep the rejection.
+pvr post --rev "locals/error" 2>&1 >/dev/null | grep -v 'Posting object info for:'
 
-# after posting evaluation
+echo "== step progress after rejection =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
 pvcontrol steps show-progress locals/error

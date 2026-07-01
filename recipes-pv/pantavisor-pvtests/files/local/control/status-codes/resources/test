@@ -59,14 +59,3 @@ code -X POST -H "$CT" --data '{"type":"alive","payload":""}' http://localhost/si
 
 echo "== command run-gc =="
 post_cmd '{"op":"RUN_GC","payload":""}'
-
-echo "== command enable-ssh =="
-post_cmd '{"op":"ENABLE_SSH","payload":""}'
-
-echo "== command disable-ssh =="
-post_cmd '{"op":"DISABLE_SSH","payload":""}'
-
-# Let the last queued command finish processing so the harness teardown's
-# own `commands poweroff` is not rejected by a busy command slot (503),
-# which would otherwise stall shutdown until the 120s force-kill timeout.
-sleep 3

@@ -1,9 +1,18 @@
 #!/bin/sh
 
+echo "== containers =="
 pvcontrol ls | jq -M | tr -d '\r'
+echo "== groups =="
 pvcontrol groups ls | jq -M | tr -d '\r'
+echo "== user-meta =="
 pvcontrol usrmeta ls | jq -M | tr -d '\r'
-pvcontrol devmeta ls | jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"]) | to_entries | sort_by(.key) | from_entries' | tr -d '\r'
-echo "object count: $(pvcontrol objects ls | jq -M 'length' | tr -d '\r')"
-pvcontrol steps ls | jq -M 'map(del(.date))' | tr -d '\r'
+echo "== device-meta =="
+pvcontrol devmeta ls | jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"], .["pantavisor.arch"]) | to_entries | sort_by(.key) | from_entries' | tr -d '\r'
+echo "object count > 0: $(pvcontrol objects ls | jq -M 'length > 0' | tr -d '\r')"
+echo "== steps (current revision) =="
+current_rev=$(pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]' | tr -d '\r')
+# No reset between tests: rollback-point status (DONE) vs UPDATED is position-dependent,
+# so drop status/status-msg and keep only the deterministic progress/retries.
+pvcontrol steps ls | jq -M --arg r "$current_rev" 'map(select(.name == $r) | del(.date) | del(.progress.status, .progress["status-msg"]))' | tr -d '\r'
+echo "== config =="
 pvcontrol conf ls | jq -M | tr -d '\r'

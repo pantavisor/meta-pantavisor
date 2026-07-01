@@ -1,6 +1,16 @@
 #!/bin/sh
 
-source /work/scripts/utils
-. /opt/pantavisor/set_env
+source /usr/share/pantavisor/pvtest/utils
 
-# write your test here
+# Per-test isolation: private $HOME + temp checkout dir (see automated-workflow.md §
+# Test authoring rules). Delete this block if the test does not clone.
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$HOME/checkout"
+
+# write your test here. Post local revisions by name and wait for them, e.g.:
+#   pvr post --rev "locals/example" > /dev/null 2>&1
+#   wait_for_revision_state "pvr-sdk" "locals/example" "UPDATED"
+# Output is diffed byte-for-byte: pipe JSON through `jq -M`, strip `\r`, and mask
+# volatile fields (timestamps, PIDs, object hashes, $HOME paths).

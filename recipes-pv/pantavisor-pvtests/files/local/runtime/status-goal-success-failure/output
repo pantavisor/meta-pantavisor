@@ -1,25 +1,10 @@
-+ control_container=pvr-sdk
-+ pventer -c pvr-sdk pvcontrol devmeta ls
-+ jq -M -r '.["pantavisor.revision"]'
-0
-+ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
-+ cd /home/checkout
-+ pvr get https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/3#container-ready-demo/
-+ pvr checkout
-+ pvr post --rev locals/success
-+ wait_for_revision_state pvr-sdk locals/success DONE
-+ pventer -c pvr-sdk pvcontrol steps show-progress locals/success
+== initial revision ==
+locals/local_runtime_status_goal_success_failure
+== post revision with container that signals READY ==
+== locals/success: DONE ==
 {"status":"DONE","status-msg":"Update finished, revision set as rollback point","progress":100,"retries":0}
-+ pventer -c pvr-sdk pvcontrol devmeta ls
-+ jq -M -r '.["pantavisor.revision"]'
 locals/success
-+ pvr get https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/5#pvr-sdk_ready/
-+ pvr checkout
-+ pvr post --rev locals/failure
-+ wait_for_revision_state pvr-sdk locals/failure DONE
-+ pventer -c pvr-sdk pvcontrol steps show-progress locals/failure
-+ sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
+== post revision where container never signals READY (triggers rollback) ==
+== locals/failure: ERROR (rolled back) ==
 {"status":"ERROR","status-msg":"Status goal not reached","progress":100,"retries":0,"logs":"{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"platforms\",\"msg\":\"platform 'pvr-sdk_ready' status goal timed out after waiting for more than 30 secs\"}\n{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"controller\",\"msg\":\"timed out before all goals were met. Rolling back...\"}\n"}
-+ pventer -c pvr-sdk pvcontrol devmeta ls
-+ jq -M -r '.["pantavisor.revision"]'
 locals/success

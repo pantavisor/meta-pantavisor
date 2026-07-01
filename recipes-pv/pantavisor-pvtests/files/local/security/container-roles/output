@@ -1,6 +1,6 @@
+== pvr-sdk (control role): pvcontrol access ==
 [{"name":"pv-example-norole","group":"root","status":"STARTED","status_goal":"STARTED","restart_policy":"system","roles":[]},{"name":"pvr-sdk","group":"platform","status":"STARTED","status_goal":"STARTED","restart_policy":"system","roles":["mgmt"]}]
-+ pventer -c pvr-sdk find /pantavisor -not -name console.log
-+ sort
+== pvr-sdk: /pantavisor contents ==
 /pantavisor
 /pantavisor/challenge
 /pantavisor/device-id
@@ -33,24 +33,24 @@
 /pantavisor/device-meta/sysinfo
 /pantavisor/device-meta/time
 /pantavisor/logs
-/pantavisor/logs/0
-/pantavisor/logs/0/pantavisor
-/pantavisor/logs/0/pantavisor/pantavisor.log
-/pantavisor/logs/0/pv-example-norole
-/pantavisor/logs/0/pv-example-norole/lxc
-/pantavisor/logs/0/pv-example-norole/lxc/lxc.log
-/pantavisor/logs/0/pv-example-norole/var
-/pantavisor/logs/0/pv-example-norole/var/log
-/pantavisor/logs/0/pv-example-norole/var/log/messages
-/pantavisor/logs/0/pv-example-norole/var/log/syslog
-/pantavisor/logs/0/pvr-sdk
-/pantavisor/logs/0/pvr-sdk/lxc
-/pantavisor/logs/0/pvr-sdk/lxc/lxc.log
-/pantavisor/logs/0/pvr-sdk/var
-/pantavisor/logs/0/pvr-sdk/var/log
-/pantavisor/logs/0/pvr-sdk/var/log/messages
-/pantavisor/logs/0/pvr-sdk/var/log/syslog
-/pantavisor/logs/current
+/pantavisor/logs/locals
+/pantavisor/logs/locals/local_security_container_roles
+/pantavisor/logs/locals/local_security_container_roles/pantavisor
+/pantavisor/logs/locals/local_security_container_roles/pantavisor/pantavisor.log
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/lxc
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/lxc/lxc.log
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/var
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/var/log
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/var/log/messages
+/pantavisor/logs/locals/local_security_container_roles/pv-example-norole/var/log/syslog
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/lxc
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/lxc/lxc.log
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/var
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/var/log
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/var/log/messages
+/pantavisor/logs/locals/local_security_container_roles/pvr-sdk/var/log/syslog
 /pantavisor/pantahub-host
 /pantavisor/phconfig
 /pantavisor/pv-ctrl
@@ -58,10 +58,9 @@
 /pantavisor/pv-fd-log
 /pantavisor/user-meta
 /pantavisor/user-meta.pv-example-norole
-+ pventer -c pv-example-norole pvcontrol ls
+== pv-example-norole (no role): pvcontrol access (expected to fail) ==
 {"Error":"Request not sent from a mgmt platform"}
-+ pventer -c pv-example-norole find /pantavisor -not -name console.log
-+ sort
+== pv-example-norole: /pantavisor contents ==
 /pantavisor
 /pantavisor/device-meta
 /pantavisor/logs

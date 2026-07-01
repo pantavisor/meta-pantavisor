@@ -2,45 +2,45 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(cat /var/run/pantavisor/pv/device-id)
-pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
-cd /home/checkout
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 
-# Step 1: post same revision (no new objects → no space needed even with GC_RESERVED=100)
-pvr post -m "same revision to make rev 0 GC-able" > /dev/null 2>&1
+# Per-test isolation: clone into a temp checkout dir; never override $HOME (see
+# automated-workflow.md § Test authoring rules).
+checkout="$(mktemp -d)/checkout"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$checkout"
 
-# Wait for PV to pick up and apply step 1
-wait_for_revision_state "pvr-sdk" "1" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 1 to reach UPDATED" >&2; exit 1; }
+trail_url="https://api.pantahub.com/trails/$device_id"
 
-# Reboot PV to commit revision 1 as current (making revision 0 the old trail)
+echo "== post revision (same content, makes factory rev GC-able) =="
+revA=$(pvr_post_rev -m "same revision to make factory rev GC-able" "$trail_url")
+[ -n "$revA" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+wait_for_revision_state "pvr-sdk" "$revA" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for revision $revA to reach UPDATED" >&2; exit 1; }
+
+echo "== reboot to commit revision as current =="
 pvcontrol commands reboot > /dev/null 2>&1
+wait_for_revision_state "pvr-sdk" "$revA" "DONE" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for revision $revA to reach DONE" >&2; exit 1; }
 
-# Wait for PV to be READY again and step 1 to be DONE
-wait_for_revision_state "pvr-sdk" "1" "DONE" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 1 to reach DONE" >&2; exit 1; }
-
-# Step 2: large file — PV_STORAGE_GC_RESERVED=100 means 0 bytes available on any disk
-# PV will auto-trigger GC (cleaning revision 0 trail), then still fail → WONTGO
+echo "== post large file (GC_RESERVED=100 ensures WONTGO after GC) =="
 dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=50 2>/dev/null
 pvr add pvr-sdk/bigfile.bin > /dev/null 2>&1
 pvr commit -m "add large file to trigger insufficient space" > /dev/null 2>&1
-pvr post -m "trigger insufficient space" > /dev/null 2>&1
+revB=$(pvr_post_rev -m "trigger insufficient space" "$trail_url")
+[ -n "$revB" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
 
-cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/2"
-
-# Wait for GC to run — revision 0 trail directory should disappear
 wait_for_path "pvr-sdk" "/storage/trails/0" "-d" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for /storage/trails/0 to be GC'd" >&2; exit 1; }
+wait_for_value "pvcontrol steps show-progress $revB | jq -r '.status'" "WONTGO" 120 \
+    || { echo "ERROR: timeout waiting for revision $revB to reach WONTGO" >&2; exit 1; }
 
-# Wait for WONTGO locally
-wait_for_value "pvcontrol steps show-progress 2 | jq -r '.status'" "WONTGO" 120 \
-    || { echo "ERROR: timeout waiting for revision 2 to reach WONTGO" >&2; exit 1; }
+echo "== local step progress =="
+pvcontrol steps show-progress $revB | jq -Mc 'del(.logs, .downloads)'
 
-# Show local step progress (strip volatile logs and downloads)
-pvcontrol steps show-progress 2 | jq -Mc 'del(.logs, .downloads)'
-
-# Wait for cloud to reflect WONTGO, then show status and message
+echo "== cloud step status =="
+cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/$revB"
 wait_for_value "pvr stepinfo $cloud_step_url 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "WONTGO" 60 \
     || { echo "ERROR: timeout waiting for cloud to reflect WONTGO" >&2; exit 1; }
 pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'

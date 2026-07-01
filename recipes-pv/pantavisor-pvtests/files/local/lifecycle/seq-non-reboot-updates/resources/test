@@ -2,16 +2,19 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# Per-test isolation: private $HOME + temp checkout dir (see automated-workflow.md § Test authoring rules).
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$HOME/checkout"
 
-# Function to get PID
+# Container init PIDs live on the device host, not the tester, so route lxc-info
+# via _pv_exec (falls back to local exec when PVTEST_EXEC is unset).
 get_pid() {
-    lxc-info -n "$1" -p 2>/dev/null | awk '{print $2}'
+    _pv_exec lxc-info -P /usr/var/lib/lxc -n "$1" -p 2>/dev/null | awk '{print $2}' | tr -d '\r'
 }
 
-# Initial PIDs
+echo "== initial state =="
 PID_SDK_0=$(get_pid "pvr-sdk")
 PID_WEB_0=$(get_pid "pv-example-app")
 
@@ -26,7 +29,7 @@ fi
 
 echo "Initial state: SDK=running WEB=running"
 
-# 1. Update modifies pv-example-app
+echo "== update 1: modify pv-example-app =="
 sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
 pvr add .
 pvr commit -m "update pv-example-app" > /dev/null 2>&1
@@ -49,11 +52,9 @@ fi
 
 echo "Update 1: SDK=stable WEB=restarted"
 
-# 2. Update adds a new pv-example-app1
+echo "== update 2: add pv-example-app1 =="
 cp -r pv-example-app/ pv-example-app1/
-# Substitute all appearances of "pv-example-app" in pv-example-app1 dir into "pv-example-app1"
 grep -rl "pv-example-app" pv-example-app1/ | xargs sed -i 's/pv-example-app/pv-example-app1/g'
-# Avoid port conflict by not sharing net namespace
 sed -i 's/\bnet\b//g' pv-example-app1/lxc.container.conf
 pvr add .
 pvr commit -m "add pv-example-app1" > /dev/null 2>&1
@@ -81,7 +82,7 @@ fi
 
 echo "Update 2: SDK=stable WEB=stable WEB1=started"
 
-# 3. Update modifies pv-example-app
+echo "== update 3: modify pv-example-app again =="
 sed -i 's/lxc\.tty\.max = 4/lxc.tty.max = 2/g' pv-example-app/lxc.container.conf
 pvr add .
 pvr commit -m "update pv-example-app again" > /dev/null 2>&1

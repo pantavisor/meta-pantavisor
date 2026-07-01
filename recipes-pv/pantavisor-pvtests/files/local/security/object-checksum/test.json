@@ -2,10 +2,8 @@
 	"#spec": "pv-test@1",
 	"description": "checksum validation",
 	"setup": {
-		"cmdline": "",
-		"env": "PV_CONTROL_REMOTE=0 PV_LOG_CAPTURE_DMESG=0 PV_UPDATER_GOALS_TIMEOUT=10 PV_UPDATER_COMMIT_DELAY=5 PV_SECUREBOOT_MODE=disabled PV_WDT_MODE=disabled PV_DEBUG_SSH=0 PV_LOG_DIR_MAXSIZE=2147483647",
-		"pantavisor.config": "",
-		"pvs": "../../common/pvs/*.tar.gz",
+		"required-config": "PV_CONTROL_REMOTE=0",
+		"usrmeta": "",
 		"containers": {
 			"control": "pvr-sdk",
 			"tarballs": [
@@ -14,8 +12,9 @@
 			],
 			"urls": []
 		},
-		"ready-script": ""
+		"self-claim": "false"
 	},
 	"test-script": "resources/test",
-	"skip": "false"
+	"skip": "false",
+	"devices": []
 }

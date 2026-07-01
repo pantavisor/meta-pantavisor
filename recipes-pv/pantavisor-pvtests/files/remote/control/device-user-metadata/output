@@ -1,50 +1,8 @@
-+ USRMETA_KEY=pvtest-usrmeta-key
-+ USRMETA_VALUE=pvtest-usrmeta-value
-+ DEVMETA_KEY=pvtest-devmeta-key
-+ DEVMETA_VALUE=pvtest-devmeta-value
-++ cat /var/run/pantavisor/pv/device-id
-+ device_id=6a1566ded89e0d0009860480
-+ wait_for_value 'pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\''' idle 120
-+ local 'cmd=pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
-+ local value=idle
-+ local timeout=120
-+ local counter=0
-+ '[' 0 -lt 120 ']'
-++ eval 'pvcontrol devmeta ls | jq -r '\''."pantahub.state"'\'''
-+ local result=idle
-+ '[' idle = idle ']'
-+ return 0
-+ curl -s -X PUT -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODAyMTk1MTcsImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc5Nzg3NTE3LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.ThfH_QuTAaW8a6dpIbr6s8CcDxX23mQumwMxt4od6DpEivp4GbxxlQwtbCZATC08AZzdoF9Ww4Zv03plqICl795XBo5XP1AW4oOr_VluWhSHaWGBcHxXDpReS68fk4ESmTAkC-h16WxtzF92j73D5SZ9eI_L_J8icIwKDy7MURSyFpz6vT0wUGkWv0SfqJut9yPlG8gu2Edo9P-Ij46C4sQVPb98zrTMJNHzosoGzP3rfg9i7ZILnARV-Nx3wMAUTinO91T8Uo3gQ6g8qZ5J31KOYeTLa7zKEerUSAiYYzCltgkiaJyvOMA-hTlN04tI5To-J2d0YIFBdKYXbLj-7Q' -H 'Content-Type: application/json' -d '{"pvtest-usrmeta-key": "pvtest-usrmeta-value"}' https://api.pantahub.com/devices/6a1566ded89e0d0009860480/user-meta
-+ pvcontrol devmeta save pvtest-devmeta-key pvtest-devmeta-value
+== wait for device idle ==
+== push user-meta from cloud and device-meta from device ==
 
-+ i=0
-+ hub_devmeta=
-+ '[' 0 -lt 3 ']'
-++ curl -s -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODAyMTk1MTcsImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc5Nzg3NTE3LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.ThfH_QuTAaW8a6dpIbr6s8CcDxX23mQumwMxt4od6DpEivp4GbxxlQwtbCZATC08AZzdoF9Ww4Zv03plqICl795XBo5XP1AW4oOr_VluWhSHaWGBcHxXDpReS68fk4ESmTAkC-h16WxtzF92j73D5SZ9eI_L_J8icIwKDy7MURSyFpz6vT0wUGkWv0SfqJut9yPlG8gu2Edo9P-Ij46C4sQVPb98zrTMJNHzosoGzP3rfg9i7ZILnARV-Nx3wMAUTinO91T8Uo3gQ6g8qZ5J31KOYeTLa7zKEerUSAiYYzCltgkiaJyvOMA-hTlN04tI5To-J2d0YIFBdKYXbLj-7Q' https://api.pantahub.com/devices/6a1566ded89e0d0009860480
-++ jq -r '."device-meta"."pvtest-devmeta-key"'
-+ hub_devmeta=null
-+ '[' null = pvtest-devmeta-value ']'
-+ sleep 10
-+ i=1
-+ '[' 1 -lt 3 ']'
-++ curl -s -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODAyMTk1MTcsImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc5Nzg3NTE3LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.ThfH_QuTAaW8a6dpIbr6s8CcDxX23mQumwMxt4od6DpEivp4GbxxlQwtbCZATC08AZzdoF9Ww4Zv03plqICl795XBo5XP1AW4oOr_VluWhSHaWGBcHxXDpReS68fk4ESmTAkC-h16WxtzF92j73D5SZ9eI_L_J8icIwKDy7MURSyFpz6vT0wUGkWv0SfqJut9yPlG8gu2Edo9P-Ij46C4sQVPb98zrTMJNHzosoGzP3rfg9i7ZILnARV-Nx3wMAUTinO91T8Uo3gQ6g8qZ5J31KOYeTLa7zKEerUSAiYYzCltgkiaJyvOMA-hTlN04tI5To-J2d0YIFBdKYXbLj-7Q' https://api.pantahub.com/devices/6a1566ded89e0d0009860480
-++ jq -r '."device-meta"."pvtest-devmeta-key"'
-+ hub_devmeta=pvtest-devmeta-value
-+ '[' pvtest-devmeta-value = pvtest-devmeta-value ']'
-+ break
-+ '[' pvtest-devmeta-value '!=' pvtest-devmeta-value ']'
-+ i=0
-+ local_usrmeta=
-+ '[' 0 -lt 3 ']'
-++ pvcontrol usrmeta ls
-++ jq -r '."pvtest-usrmeta-key"'
-+ local_usrmeta=pvtest-usrmeta-value
-+ '[' pvtest-usrmeta-value = pvtest-usrmeta-value ']'
-+ break
-+ '[' pvtest-usrmeta-value '!=' pvtest-usrmeta-value ']'
-+ pvcontrol usrmeta ls
-+ jq -r '."pvtest-usrmeta-key"'
+== poll Hub for device-meta sync ==
+== poll device for user-meta sync ==
+== verified values ==
 pvtest-usrmeta-value
-+ curl -s -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODAyMTk1MTcsImlkIjoiYW5pYmFsIiwibmljayI6ImFuaWJhbCIsIm9yaWdfaWF0IjoxNzc5Nzg3NTE3LCJwcm4iOiJwcm46OjphY2NvdW50czovNWJmMWI4NDA0MWIyZGQwMDA5YTg5ZjRhIiwicm9sZXMiOiJ1c2VyIiwic2NvcGVzIjoicHJuOnBhbnRhaHViLmNvbTphcGlzOi9iYXNlL2FsbCIsInR5cGUiOiJVU0VSIn0.ThfH_QuTAaW8a6dpIbr6s8CcDxX23mQumwMxt4od6DpEivp4GbxxlQwtbCZATC08AZzdoF9Ww4Zv03plqICl795XBo5XP1AW4oOr_VluWhSHaWGBcHxXDpReS68fk4ESmTAkC-h16WxtzF92j73D5SZ9eI_L_J8icIwKDy7MURSyFpz6vT0wUGkWv0SfqJut9yPlG8gu2Edo9P-Ij46C4sQVPb98zrTMJNHzosoGzP3rfg9i7ZILnARV-Nx3wMAUTinO91T8Uo3gQ6g8qZ5J31KOYeTLa7zKEerUSAiYYzCltgkiaJyvOMA-hTlN04tI5To-J2d0YIFBdKYXbLj-7Q' https://api.pantahub.com/devices/6a1566ded89e0d0009860480
-+ jq -r '."device-meta"."pvtest-devmeta-key"'
 pvtest-devmeta-value

@@ -1,112 +1,14 @@
-+ SOCK=/run/pantavisor/pv/pv-ctrl
-+ CT='Content-Type: application/json'
-+ echo '== buildinfo (GET) =='
 == buildinfo (GET) ==
-+ code http://localhost/buildinfo
-+ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/buildinfo
-+ sed -n 's/^HTTP_CODE=//p'
-+ tr -d '\r'
 200
-+ echo '== drivers list =='
 == drivers list ==
-+ pvcurl -s --unix-socket /run/pantavisor/pv/pv-ctrl http://localhost/drivers
-+ jq -M
-+ tr -d '\r'
 {}
-+ echo '== drivers load =='
 == drivers load ==
-+ code -X PUT http://localhost/drivers/load
-+ sed -n 's/^HTTP_CODE=//p'
-+ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X PUT http://localhost/drivers/load
-+ tr -d '\r'
 200
-+ echo '== drivers unload =='
 == drivers unload ==
-+ code -X PUT http://localhost/drivers/unload
-+ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X PUT http://localhost/drivers/unload
-+ sed -n 's/^HTTP_CODE=//p'
-+ tr -d '\r'
 200
-+ echo '== signal ready =='
 == signal ready ==
-+ code -X POST -H 'Content-Type: application/json' --data '{"type":"ready","payload":""}' http://localhost/signal
-+ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"type":"ready","payload":""}' http://localhost/signal
-+ sed -n 's/^HTTP_CODE=//p'
-+ tr -d '\r'
 500
-+ echo '== signal alive =='
 == signal alive ==
-+ code -X POST -H 'Content-Type: application/json' --data '{"type":"alive","payload":""}' http://localhost/signal
-+ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"type":"alive","payload":""}' http://localhost/signal
-+ tr -d '\r'
-+ sed -n 's/^HTTP_CODE=//p'
 500
-+ echo '== command run-gc =='
 == command run-gc ==
-+ post_cmd '{"op":"RUN_GC","payload":""}'
-+ i=0
-+ '[' 0 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"RUN_GC","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"RUN_GC","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=200
-+ '[' 200 '!=' 503 ']'
-+ break
-+ echo 200
-200
-+ echo '== command enable-ssh =='
-== command enable-ssh ==
-+ post_cmd '{"op":"ENABLE_SSH","payload":""}'
-+ i=0
-+ '[' 0 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"ENABLE_SSH","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"ENABLE_SSH","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=503
-+ '[' 503 '!=' 503 ']'
-+ sleep 1
-+ i=1
-+ '[' 1 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"ENABLE_SSH","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"ENABLE_SSH","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=200
-+ '[' 200 '!=' 503 ']'
-+ break
-+ echo 200
-200
-+ echo '== command disable-ssh =='
-== command disable-ssh ==
-+ post_cmd '{"op":"DISABLE_SSH","payload":""}'
-+ i=0
-+ '[' 0 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=503
-+ '[' 503 '!=' 503 ']'
-+ sleep 1
-+ i=1
-+ '[' 1 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=503
-+ '[' 503 '!=' 503 ']'
-+ sleep 1
-+ i=2
-+ '[' 2 -lt 30 ']'
-++ code -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ pvcurl -s -w '\nHTTP_CODE=%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X POST -H 'Content-Type: application/json' --data '{"op":"DISABLE_SSH","payload":""}' http://localhost/commands
-++ sed -n 's/^HTTP_CODE=//p'
-++ tr -d '\r'
-+ c=200
-+ '[' 200 '!=' 503 ']'
-+ break
-+ echo 200
 200

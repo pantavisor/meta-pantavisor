@@ -3,19 +3,28 @@
 source /usr/share/pantavisor/pvtest/utils
 PVR_USERNAME="$PH_USER" PVR_PASSWORD="$PH_PASS" pvr login > /dev/null 2>&1
 
-wait_for_pantahub_state "pvr-sdk" "claim" \
+echo "== reboot so the installed base becomes the running (DONE) revision =="
+pvcontrol commands reboot > /dev/null 2>&1
+sleep 10
+wait_for_status "pvcontrol devmeta ls > /dev/null 2>&1" 0 120 \
+    || { echo "ERROR: timeout waiting for pv-ctrl after reboot" >&2; exit 1; }
+
+echo "== wait for unclaimed state =="
+wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantahub.state\"'" "claim" 120 \
     || { echo "ERROR: timeout waiting for pantahub.state claim" >&2; exit 1; }
 pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
-device_id=`cat /var/run/pantavisor/pv/device-id`
-challenge=`cat /var/run/pantavisor/pv/challenge`
-
+echo "== claim device =="
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+challenge=$(_pv_exec cat /run/pantavisor/pv/challenge)
 pvr claim -c "$challenge" "$device_id"
 
-wait_for_pantahub_state "pvr-sdk" "idle" \
+echo "== wait for idle (claimed) =="
+wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantahub.state\"'" "idle" 120 \
     || { echo "ERROR: timeout waiting for pantahub.state idle" >&2; exit 1; }
 pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
+echo "== cleanup =="
 if [ -n "$device_id" ]; then
 	pvr dev delete -y $device_id
 fi

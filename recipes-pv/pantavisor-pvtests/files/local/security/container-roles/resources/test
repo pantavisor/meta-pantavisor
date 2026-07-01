@@ -1,11 +1,23 @@
 #!/bin/sh
 
-# this should succeed
+echo "== pvr-sdk (control role): pvcontrol access =="
 pventer -c "pvr-sdk" pvcontrol ls
-# full mounted /pantavisor
-pventer -c "pvr-sdk" find /pantavisor -not -name console.log | sort
+echo "== pvr-sdk: /pantavisor contents =="
+# No reset between tests: /pantavisor/logs accumulates other tests' log trees, so
+# keep only structural parents + this test's own subtree. Also drop unknown-platform
+# /dropbear (nondeterministic: only appears if dropbear logged during the window).
+pventer -c "pvr-sdk" find /pantavisor -not -name console.log | sort | awk '
+/^\/pantavisor\/logs(\/|$)/ {
+    if (($0 == "/pantavisor/logs" || $0 == "/pantavisor/logs/locals" || $0 ~ /^\/pantavisor\/logs\/locals\/local_security_container_roles(\/|$)/) && $0 !~ /\/unknown-platform(\/|$)/)
+        print
+    next
+}
+# user-meta is device-persistent; drop leaf keys left by other tests (this test creates none).
+/^\/pantavisor\/user-meta\// { next }
+{ print }
+'
 
-# this should fail
+echo "== pv-example-norole (no role): pvcontrol access (expected to fail) =="
 pventer -c "pv-example-norole" pvcontrol ls
-# limited mounted /pantavisor
+echo "== pv-example-norole: /pantavisor contents =="
 pventer -c "pv-example-norole" find /pantavisor -not -name console.log | sort

@@ -5,10 +5,18 @@
 # 13 (put large / chunked), 14 (get + integrity), 15 (bad checksum -> 422),
 # 16 (duplicate put idempotency).
 #
-# Object content is fixed (never random) so SHA256 hashes are stable; we
-# assert booleans/counts/codes rather than the hashes themselves.
+# Object content is fixed (never random); we assert type/booleans/deltas/codes, not hashes.
+# pvcontrol/pvcurl file-path args are read/written ON THE DEVICE (forwarded over SSH); create
+# and hash payload files there via _pv_exec.
+# No reset between tests: object store is device-persistent, so assert deltas/presence, not
+# absolute counts.
+
+source /usr/share/pantavisor/pvtest/utils
 
 SOCK=/run/pantavisor/pv/pv-ctrl
+
+# Run a shell snippet on the device (same target pvcontrol/pvcurl reach).
+dev() { _pv_exec sh -c "$1"; }
 
 present() {
 	# present <sha> -> "true"/"false" whether sha is in objects ls
@@ -16,34 +24,37 @@ present() {
 	pvcontrol objects ls | jq -r --arg s "$1" 'any(.[]; .sha256 == $s)' | tr -d '\r'
 }
 
-echo "== initial object count =="
-pvcontrol objects ls | jq -M 'length' | tr -d '\r'
+count() { pvcontrol objects ls | jq 'length' | tr -d '\r'; }
+
+echo "== objects ls returns an array =="
+pvcontrol objects ls | jq -M 'type' | tr -d '\r'
 
 echo "== put small object (fixed content) =="
-printf 'hello pvctrl object test\n' > /tmp/small.txt
-SHA_SMALL=$(sha256sum /tmp/small.txt | awk '{print $1}')
+dev 'printf "hello pvctrl object test\n" > /tmp/small.txt'
+SHA_SMALL=$(dev 'sha256sum /tmp/small.txt | cut -d" " -f1')
+CNT_BEFORE=$(count)
 pvcontrol objects put /tmp/small.txt "$SHA_SMALL"
 echo "small object present: $(present "$SHA_SMALL")"
+echo "object count increased by one: $([ "$(count)" = "$((CNT_BEFORE + 1))" ] && echo yes || echo no)"
 
 echo "== put large object (2MB, chunked upload) =="
-head -c 2097152 /dev/zero | tr '\0' 'x' > /tmp/large.bin
-SHA_LARGE=$(sha256sum /tmp/large.bin | awk '{print $1}')
+dev 'head -c 2097152 /dev/zero | tr "\0" "x" > /tmp/large.bin'
+SHA_LARGE=$(dev 'sha256sum /tmp/large.bin | cut -d" " -f1')
 pvcontrol objects put /tmp/large.bin "$SHA_LARGE"
 echo "large object present: $(present "$SHA_LARGE")"
 
 echo "== get large object + verify integrity =="
 pvcontrol -f /tmp/large-dl.bin objects get "$SHA_LARGE"
-SHA_DL=$(sha256sum /tmp/large-dl.bin | awk '{print $1}')
+SHA_DL=$(dev 'sha256sum /tmp/large-dl.bin | cut -d" " -f1')
 echo "download integrity ok: $([ "$SHA_DL" = "$SHA_LARGE" ] && echo yes || echo no)"
 
 echo "== put with wrong checksum (expect 422) =="
-printf 'checksum mismatch payload\n' > /tmp/bad.txt
+dev 'printf "checksum mismatch payload\n" > /tmp/bad.txt'
 pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket "$SOCK" \
 	-X PUT -T /tmp/bad.txt \
 	http://localhost/objects/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 echo "== duplicate put is idempotent =="
-CNT_BEFORE=$(pvcontrol objects ls | jq 'length' | tr -d '\r')
+CNT_BEFORE=$(count)
 pvcontrol objects put /tmp/small.txt "$SHA_SMALL"
-CNT_AFTER=$(pvcontrol objects ls | jq 'length' | tr -d '\r')
-echo "object count unchanged on duplicate: $([ "$CNT_BEFORE" = "$CNT_AFTER" ] && echo yes || echo no)"
+echo "object count unchanged on duplicate: $([ "$CNT_BEFORE" = "$(count)" ] && echo yes || echo no)"

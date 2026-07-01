@@ -1,12 +1,13 @@
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq '.[] | select(.key == "PV_STORAGE_PHCONFIG_VOL")'
+== phconfig volume config key ==
 [1;39m{
   [0m[1;34m"key"[0m[1;39m: [0m[0;32m"PV_STORAGE_PHCONFIG_VOL"[0m[1;39m,
   [0m[1;34m"value"[0m[1;39m: [0m[0;32m"1"[0m[1;39m,
   [0m[1;34m"modified"[0m[1;39m: [0m[0;32m"env"[0m[1;39m
 [1;39m}[0m
-+ ls /storage/config/
-+ ls /volumes/bsp/pv--phconfig/
-pantahub.config  unclaimed.config
-+ ls /var/run/pantavisor/pv/phconfig/
-pantahub.config  unclaimed.config
+== /storage/config contents ==
+== /volumes/bsp/pv--phconfig contents ==
+pantahub.config
+unclaimed.config
+== /var/run/pantavisor/pv/phconfig contents ==
+pantahub.config
+unclaimed.config
