@@ -16,34 +16,16 @@ ALLOW_EMPTY:${PN} = "1"
 # docker-x86_64) sets this to "" — no container is booted against a real device,
 # so the arm appengine/netsim/tester images aren't built; only the
 # BSP/pvr-sdk/example-app/pvtests tarballs are. The host-side tester it still needs
-# comes from PV_APPENGINE_TESTER_MC below instead.
+# (which runs on the build/CI host, not the arm device) is produced by a separate
+# same-branch x86-appengine build and bundled by the install tooling, not here —
+# multiconfig can't cross-build it in-tree (the i.MX layers' dynamic arm-kernel
+# recipe fails to parse for MACHINE=docker-x86_64).
 PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pantavisor-appengine-tester"
-
-# Device-target only: the tester/netsim run on the host (x86_64), not the arm
-# device, so they can't be built for the device MACHINE. Set this to the name of a
-# docker-x86_64 multiconfig (see the m2-pvtest build's conf/multiconfig/) to build
-# those images there instead and copy them in from its (shared) deploy dir. Empty
-# (default) = normal same-arch appengine build, tester comes from
-# PV_APPENGINE_CONTAINERS. The multiconfig name is also used as its MACHINE/deploy
-# subdir (our multiconfig sets MACHINE = the mc name).
-PV_APPENGINE_TESTER_MC ?= ""
-PV_APPENGINE_TESTER_CONTAINERS ?= "pantavisor-appengine-netsim pantavisor-appengine-tester"
 
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
 do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
-
-# When a host-tester multiconfig is set, cross-build its tester/netsim images in
-# that multiconfig (mcdepends: mc:<from>:<to>:<recipe>:<task>; <from> empty = the
-# default/primary config this recipe runs in).
-python () {
-    mc = d.getVar('PV_APPENGINE_TESTER_MC')
-    if mc:
-        for img in (d.getVar('PV_APPENGINE_TESTER_CONTAINERS') or '').split():
-            d.appendVarFlag('do_create_tarball', 'mcdepends',
-                            ' mc::%s:%s:do_image_complete' % (mc, img))
-}
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
@@ -87,23 +69,6 @@ do_create_tarball() {
             done
             if [ -z "$found_files" ]; then
                 bbwarn "No deploy files found matching pattern: $pattern"
-            fi
-        done
-    fi
-
-    # Device-target: pull the host-native (x86_64) tester/netsim -docker.tar from
-    # the multiconfig's deploy dir. DEPLOY_DIR is shared with that multiconfig, and
-    # its image subdir is the mc name (== its MACHINE). The arm appengine image is
-    # intentionally not here — a real device replaces it, and install-docker
-    # tolerates its absence.
-    if [ -n "${PV_APPENGINE_TESTER_MC}" ]; then
-        for img in ${PV_APPENGINE_TESTER_CONTAINERS}; do
-            mc_tar="${DEPLOY_DIR}/images/${PV_APPENGINE_TESTER_MC}/${img}-docker.tar"
-            if [ -e "$mc_tar" ]; then
-                echo "Adding multiconfig deploy file: $mc_tar"
-                cp -v "$mc_tar" "${STAGING_DIR}/"
-            else
-                bbwarn "multiconfig tester image not found: $mc_tar"
             fi
         done
     fi
