@@ -22,8 +22,11 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
-	echo "  -p, --parallel N      Run up to N tests concurrently (default: 1)"
+	echo "  -p, --parallel N      Number of slots: the cap on concurrent appengine"
+	echo "                        containers a single tester keeps busy (default: nproc)."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
+	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
+	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
 	echo "  -V, --valgrind        Run Pantavisor with valgrind"
 	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
 	echo ""
@@ -39,9 +42,34 @@ usage() {
 	echo "  APPENGINE_PATH   Path to docker load for appengine container"
 	echo "  PVTEST_DIR       Directory to pvtest sources to run"
 	echo ""
+	echo "Target override environments (unset = local appengine container, set = external target):"
+	echo "  PVTEST_EXEC      Command prefix to run pvcontrol/pventer on the target."
+	echo "                     Unset (default): test.docker.sh starts a pantavisor-appengine"
+	echo "                     container and sets this to \"ssh _pv_@<container>\" (dropbear-pv)."
+	echo "                     Real device: \"ssh root@<ip>\" or \"ssh -p <port> user@<ip>\""
+	echo "  PVTEST_HOST      Hostname or IP for pvr/HTTP calls to the target (default: localhost)."
+	echo "                     Set automatically to the appengine container name when unset."
+	echo "  PVTEST_DEVICE    Device type tag used by the test filter (default: appengine)."
+	echo "                     Tests with a non-empty \"devices\" array only run when this"
+	echo "                     value matches one of the listed entries."
+	echo ""
 }
 
 pvtest_log() { local level=$1; shift; printf '[pvtest] %s %s -- [test.docker.sh]: %s\n' "$(date +%s)" "$level" "$*"; }
+
+# Runner-type = (normalized required-config, needs-claim); see docs/testing/device-target.md.
+
+# Normalize required-config: drop PV_LXC_LOG_LEVEL, sort tokens for a stable signature.
+normalize_reqcfg() {
+	local kv out=()
+	for kv in $1; do
+		[ -n "$kv" ] || continue
+		case "$kv" in PV_LXC_LOG_LEVEL=*) continue ;; esac
+		out+=("$kv")
+	done
+	[ ${#out[@]} -eq 0 ] && return 0
+	printf '%s\n' "${out[@]}" | sort | tr '\n' ' ' | sed 's/ *$//'
+}
 
 list_tests() {
 	printf "%-50s %-10s\n" "test" "description"
@@ -185,9 +213,7 @@ wait_for_status() {
 }
 
 setup_network0() {
-	# Serialize the inspect/remove/create dance so concurrent callers don't
-	# race on `docker network create` (which fails noisily if the network was
-	# created in the gap between the inspect and the create).
+	# flock serializes inspect/create so concurrent callers don't race on docker network create.
 	local lockfile=/tmp/pv_appengine.network0.lock
 	exec {NET0_FD}>"$lockfile"
 	flock "$NET0_FD"
@@ -199,16 +225,8 @@ setup_network0() {
 	eval "exec ${NET0_FD}>&-"
 }
 
-# Allocate the lowest free slot index by holding a per-slot OS file lock for
-# the lifetime of this invocation. Slot N is "free" if no other instance
-# currently holds an exclusive flock on /tmp/pv_appengine.slot.N.lock.
-#
-# The lock fd (SLOT_LOCK_FD) is kept open in the running shell — the kernel
-# drops the lock automatically when the process exits, even on crash, so no
-# stale-reservation bookkeeping is needed. Gaps from shut-down instances are
-# reused naturally because their lock fds are closed.
-#
-# Sets globals: slot, SLOT_LOCK_FD
+# Lowest free slot = lowest N with no other flock held on slot.N.lock (auto-released on exit/crash).
+# Sets: slot, SLOT_LOCK_FD
 allocate_slot() {
 	slot=0
 	while true; do
@@ -265,108 +283,30 @@ teardown_network() {
 	sudo -n modprobe -r mac80211_hwsim
 }
 
-exec_test() {
-	local json_path=$1
-	local interactive=$2
-	local manual=$3
-	local overwrite=$4
-	local work_path=$5
-	local netsim=$6
-	local valgrind=$7
-	local retry_index=${8:-0}
+# Slot-pool helpers: retype_service subshell snapshots run_test's locals (work_path, valgrind, pvtest_pubkey, slot, USER).
 
-	if [ ! -f "$json_path" ]; then
-		pvtest_log ERROR "'$json_path' missing"
-		exit 1
+# Boot appengine $1 with required-config $2 (detached); tester's init_device awaits readiness.
+_boot_appengine() {
+	local ae="$1" cfg="$2"
+	local _cfg_env=() _kv
+	for _kv in $cfg; do _cfg_env+=(-e "$_kv"); done
+	mkdir -p "$work_path/storage/$ae"
+	local ae_valgrind_args=()
+	if [ "$valgrind" = "true" ]; then
+		mkdir -p "$work_path/valgrind/$ae"
+		ae_valgrind_args=(-v "$work_path/valgrind/$ae":/tmp/valgrind)
 	fi
-
-	docker_it_opt=
-	if [ "$interactive" = "true" ]; then
-		docker_it_opt="-it"
-	fi
-
-	env=$(jq -r '.setup.env' "$json_path")
-
-	test_path=$(dirname "$json_path")
-	cd "$test_path"; abs_test_path=$(pwd); cd - > /dev/null
-	cd "$test_path/../../common"; abs_common_path=$(pwd); cd - > /dev/null
-
-	test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-	if [ "$retry_index" -gt 0 ]; then
-		test_id="${test_id}.${retry_index}"
-	fi
-
-	mkdir -p "$work_path/storage/$test_id/"
-	cd "$work_path/storage/$test_id/"; abs_storage_path=$(pwd); cd - > /dev/null
-	mkdir -p "$work_path/${test_id}/valgrind/"
-	cd "$work_path/${test_id}/valgrind/"; abs_valgrind_path=$(pwd); cd - > /dev/null
-
-	if [ "$interactive" = "false" ] && [ "$manual" = "false" ]; then
-		mkdir -p "$work_path/$test_id"
-		exec 3>&1 4>&2
-		exec >> "$work_path/${test_id}/test.log" 2>&1
-	fi
-
-	# Per-run slot used to disambiguate container names and host ports so
-	# multiple test.docker.sh invocations can run concurrently. Slot 0 keeps
-	# the original 8222 host port for backwards compatibility. allocate_slot
-	# sets `slot` and `SLOT_LOCK_FD` globals; the lock is held until
-	# release_slot or process exit.
-	allocate_slot
-	tester_name="pantavisor-tester-${slot}"
-	netsim_name="pantavisor-netsim-${slot}"
-	host_port=$((8222 + slot))
-
-	_script_dir="$(cd "$(dirname "$0")" && pwd)"
-	tester_image="pantavisor-appengine-tester"
-	[ -f "$_script_dir/tester.imgid" ] && tester_image=$(cat "$_script_dir/tester.imgid")
-	netsim_image="pantavisor-appengine-netsim"
-	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
-
-	start=$(date +%s)
-	local launch_line="[pvtest] $start DEBUG -- [test.docker.sh]: launching '$test_id'"
-	echo "$launch_line"
-	echo "$launch_line" >> "$work_path/run.log"
-	[ "$interactive" = "false" ] && [ "$manual" = "false" ] && \
-		echo "$launch_line" >&3
-
-	setup_network0
-
-	if [ "$netsim" = "true" ]; then
-
-		docker run \
-			--name "$netsim_name" \
-			--net=test-appengine-net \
-			-d \
-			-e VERBOSE="$verbose" \
-			--rm \
-			--cap-add NET_ADMIN \
-			"$netsim_image" > /dev/null
-
-		setup_network "$tester_name" "$netsim_name" &
-	fi
-	docker run \
+	touch "$work_path/appengine-${ae}.log"
+	if ! docker run \
+		--name "$ae" \
 		--net=test-appengine-net \
-		--name "$tester_name" \
-		-e TEST_PATH="/work/$test_path" \
-		-e INTERACTIVE="$interactive" \
-		-e MANUAL="$manual" \
-		-e OVERWRITE="$overwrite" \
-		-e VERBOSE="$verbose" \
-		-e NETSIM="$netsim" \
-		-e VALGRIND="$valgrind" \
-		-e PH_USER="$PH_USER" \
-		-e PH_PASS="$PH_PASS" \
-		-e PVR_DISABLE_SELF_UPGRADE=true \
-		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
-		--env-file <(echo "$env" | tr ' ' '\n') \
-		$docker_it_opt \
+		-d \
 		--rm \
 		--cgroupns host \
-		--cap-add MKNOD \
 		--cap-add NET_ADMIN \
 		--cap-add SYS_ADMIN \
 		--cap-add SYS_PTRACE \
+		--cap-add MKNOD \
 		--device /dev/kmsg \
 		--device /dev/hwrng \
 		--device /dev/loop-control \
@@ -377,140 +317,96 @@ exec_test() {
 		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
 		--mount type=tmpfs,target="/volumes" \
 		--mount type=tmpfs,target="/configs" \
-		-p ${host_port}:8222 \
-		-v "$abs_test_path":"/work/$test_path" \
-		-v "$abs_common_path":"/work/$test_path/../../common" \
-		-v "$abs_storage_path":/var/pantavisor/storage \
-		-v "$abs_valgrind_path":/tmp/valgrind \
-		"$tester_image"
-	res=$?
-
-	sudo -n chmod -R a+rX "$work_path/storage/$test_id/" 2>/dev/null || true
-
-	if [ "$netsim" = "true" ]; then
-		docker stop "$netsim_name" > /dev/null 2>&1
-		docker wait "$netsim_name" > /dev/null 2>&1
-
-		teardown_network
-	fi
-
-	release_slot "$slot"
-
-	end=$(date +%s)
-	runtime=$(echo "$end - $start" | bc)
-
-	if [ "$interactive" = "true" ] || [ "$manual" = "true" ]; then
-		return
-	fi
-
-	# Copy diff to the per-test dir so it lands in the GHA artifact (storage/ stays on disk)
-	diff_src="$work_path/storage/$test_id/diff"
-	if [ -s "$diff_src" ]; then
-		cp "$diff_src" "$work_path/${test_id}/diff"
-	fi
-
-	{
-		flock -x 200
-		exec 1>&3 3>&- 2>&4 4>&-
-		local ts
-		ts=$(date +%s)
-		if [ $res -eq 0 ]; then
-			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${GREEN}PASSED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' PASSED ($runtime s)" >> "$work_path/run.log"
-			return 0
-		elif [ $res -eq 2 ]; then
-			echo -e "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ${ORANGE}ABORTED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $ts INFO -- [test.docker.sh]: '$test_id' ABORTED ($runtime s)" >> "$work_path/run.log"
-			return 2
-		else
-			echo -e "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' ${RED}FAILED${NOCOLOR} ($runtime s)"
-			echo "[pvtest] $ts ERROR -- [test.docker.sh]: '$test_id' FAILED ($runtime s)" >> "$work_path/run.log"
-			diff_file="$work_path/${test_id}/diff"
-			if [ -s "$diff_file" ]; then
-				{
-				printf "\n--- diff: %s ---\n" "$test_id"
-				cat "$diff_file"
-				printf '%s\n' "--- end diff ---"
-				} | tee -a "$work_path/run.log"
-			else
-				errors=$(grep -E "^\[pvtest\] [0-9]+ ERROR --" "$work_path/$test_id/test.log" 2>/dev/null || true)
-				if [ -n "$errors" ]; then
-					printf '%s\n' "$errors" > "$diff_file"
-					{
-					printf "\n--- diff: %s ---\n" "$test_id"
-					printf '%s\n' "$errors"
-					printf '%s\n' "--- end diff ---"
-					} | tee -a "$work_path/run.log"
-				fi
-			fi
-			return 1
-		fi
-	} 200>"$work_path/.print.lock"
-}
-
-run_with_retry() {
-	local json_path=$1
-	local attempt=0
-	local result test_id
-	while true; do
-		exec_test "$json_path" "$interactive" "$manual" "$overwrite" "$work_path" "$netsim" "$valgrind" "$attempt"
-		result=$?
-		[ $result -eq 0 ] && return 0
-		attempt=$((attempt + 1))
-		if [ $result -ne 1 ] || [ $attempt -gt $max_retries ]; then
-			return 1
-		fi
-		test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-		local retry_msg="[pvtest] $(date +%s) INFO -- [test.docker.sh]: retry '$test_id' attempt $attempt/$max_retries after failure"
-		echo -e "$retry_msg"
-		echo "$retry_msg" >> "$work_path/run.log"
-		sleep 5
-	done
-}
-
-skip_test () {
-	local json_path="$1"
-	local work_path=$2
-
-	test_id=$(echo "$json_path" | sed 's|^\./||; s|/test\.json$||')
-
-	skip=$(jq -r '.skip' "$json_path")
-	if [ "$skip" = "true" ]; then
-		echo -e "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' ${ORANGE}SKIPPED${NOCOLOR}"
-		echo "[pvtest] $(date +%s) INFO -- [test.docker.sh]: '$test_id' SKIPPED" >> "$work_path/run.log"
+		-v "$work_path/storage/$ae":/var/pantavisor/storage \
+		"${ae_valgrind_args[@]}" \
+		-e VALGRIND="$valgrind" \
+		-e PV_DEBUG_SSH=1 \
+		-e PV_DEBUG_SSH_AUTHORIZED_KEYS="pvtest-authorized_keys" \
+		-e PV_DEBUG_SSH_PUBKEY="$pvtest_pubkey" \
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
+		"${_cfg_env[@]}" \
+		pantavisor-appengine \
+			/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null; then
 		return 1
 	fi
-
+	pvtest_log DEBUG "started appengine $ae (cfg=[${cfg:-<none>}])"
+	docker logs -f "$ae" 2>/dev/null \
+		| while IFS= read -r _pv_line; do printf '[%s] %s\n' "$ae" "$_pv_line"; done \
+		>> "$work_path/appengine-${ae}.log" &
+	echo $! > "$work_path/.logpid.$ae"
 	return 0
 }
 
-run_tests_parallel() {
-	local max_parallel="$1"
-	shift
-
-	local sem_fifo
-	sem_fifo=$(mktemp -u)
-	mkfifo "$sem_fifo"
-	exec {SEM_FD}<>"$sem_fifo"
-	rm "$sem_fifo"
-	local i
-	for ((i=0; i<max_parallel; i++)); do printf 'x' >&$SEM_FD; done
-
-	local json_path
-	for json_path in "$@"; do
-		read -r -n1 -u$SEM_FD _tok
-		(
-			skip_test "$json_path" "$work_path" || { printf 'x' >&$SEM_FD; exit 0; }
-			run_with_retry "$json_path"
-			[ $? -ne 0 ] && touch "$failed_flag"
-			printf 'x' >&$SEM_FD
-		) &
+# Stop appengine container $1: wait briefly for a graceful exit (the tester has
+# already powered it off), force-stop if still running, kill its log tail.
+_stop_appengine() {
+	local ae="$1"
+	local _grace=30 _elapsed=0 _status=
+	while _status=$(docker inspect -f '{{.State.Status}}' "$ae" 2>/dev/null) \
+	      && [ "$_status" = "running" ] && [ "$_elapsed" -lt "$_grace" ]; do
+		sleep 1
+		_elapsed=$((_elapsed + 1))
 	done
+	if [ "${_status:-}" = "running" ]; then
+		docker stop --time 5 "$ae" > /dev/null 2>&1 || true
+	fi
+	if [ -f "$work_path/.logpid.$ae" ]; then
+		kill "$(cat "$work_path/.logpid.$ae")" 2>/dev/null || true
+		rm -f "$work_path/.logpid.$ae"
+	fi
+}
 
-	for ((i=0; i<max_parallel; i++)); do
-		read -r -n1 -u$SEM_FD _tok
+# Handle one re-type request id=$2 for slot=$3 to config=$4 (empty = teardown).
+# Backgrounded by retype_service; per-slot current container in $1/state/slot<S>.ae.
+_retype_handle() {
+	local ctrl="$1" id="$2" S="$3" cfg="$4"
+	local stf="$ctrl/state/slot${S}.ae" old ae gen
+	old=$(cat "$stf" 2>/dev/null)
+	[ -n "$old" ] && _stop_appengine "$old"
+	: > "$stf"
+	if [ -z "$cfg" ] || [ "$cfg" = "__none__" ]; then
+		printf 'status=down\n' > "$ctrl/resp/.tmp.$id"
+		mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+		return 0
+	fi
+	gen=$( ( flock -x 8
+		local g; g=$(( $(cat "$ctrl/state/gen" 2>/dev/null || echo 0) + 1 ))
+		printf '%s' "$g" > "$ctrl/state/gen"; printf '%s' "$g"
+	) 8>"$ctrl/state/gen.lock" )
+	ae="pantavisor-appengine-${USER}-${slot}-w${S}-g${gen}"
+	if _boot_appengine "$ae" "$cfg"; then
+		printf '%s' "$ae" > "$stf"
+		printf 'ae=%s\nstatus=ready\n' "$ae" > "$ctrl/resp/.tmp.$id"
+	else
+		printf 'status=failed\n' > "$ctrl/resp/.tmp.$id"
+	fi
+	mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+}
+
+# Background re-type service: handles $1/req/slot<S> requests until $1/stop appears,
+# then tears down all slots.
+retype_service() {
+	local ctrl="$1"
+	mkdir -p "$ctrl/req" "$ctrl/resp" "$ctrl/state"
+	local req id S cfg
+	while [ ! -e "$ctrl/stop" ]; do
+		for req in "$ctrl"/req/slot*; do
+			[ -e "$req" ] || continue
+			id=$(basename "$req")
+			S=$(sed -n 's/^slot=//p' "$req")
+			cfg=$(sed -n 's/^cfg=//p' "$req")
+			rm -f "$req"
+			( _retype_handle "$ctrl" "$id" "$S" "$cfg" ) &
+		done
+		sleep 0.2
 	done
-	exec {SEM_FD}>&-
+	wait
+	local st ae
+	for st in "$ctrl"/state/slot*.ae; do
+		[ -e "$st" ] || continue
+		ae=$(cat "$st" 2>/dev/null)
+		[ -n "$ae" ] && _stop_appengine "$ae"
+	done
 }
 
 run_test() {
@@ -518,17 +414,21 @@ run_test() {
 	local overwrite="false"
 	local interactive="false"
 	local manual="false"
-	local parallel=1
+	local parallel=0
 	local work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 	local netsim="false"
 	local valgrind="false"
 	local max_retries=0
-	local failed_flag="$work_path/.failed"
+	local fail_on_skip="false"
+	local fail_on_skip_field="false"
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
 		shift
 	fi
+
+	# "all" -> empty target, so discovery searches both local/ and remote/.
+	[ "$target_path" = "all" ] && target_path=
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -565,6 +465,14 @@ run_test() {
 				max_retries="$2"
 				shift 2
 				;;
+			--fail-on-skip)
+				fail_on_skip="true"
+				shift
+				;;
+			--fail-on-skip-field)
+				fail_on_skip_field="true"
+				shift
+				;;
 			*)
 				pvtest_log ERROR "Unknown argument: $1"
 				usage
@@ -572,6 +480,19 @@ run_test() {
 				;;
 		esac
 	done
+
+	# -p is the global cap on concurrent runners across all types: -p 1 runs fully
+	# serial, -p N allows up to N concurrent runners (like a master pool). When
+	# unset it defaults to nproc (size to the box); modes that must run serially
+	# (interactive, manual, overwrite, netsim) default to 1 instead.
+	if [ "$parallel" -le 0 ] 2>/dev/null; then
+		if [ "$interactive" = "true" ] || [ "$manual" = "true" ] || \
+		   [ "$overwrite" = "true" ] || [ "$netsim" = "true" ]; then
+			parallel=1
+		else
+			parallel=$(nproc 2>/dev/null || echo 1)
+		fi
+	fi
 
 	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
 		pvtest_log ERROR "-p is incompatible with -i and -m"
@@ -581,6 +502,12 @@ run_test() {
 
 	if [ "$parallel" -gt 1 ] && [ "$overwrite" = "true" ]; then
 		pvtest_log ERROR "-p is incompatible with -o"
+		usage
+		exit 1
+	fi
+
+	if [ "$netsim" = "true" ] && [ "$parallel" -gt 1 ]; then
+		pvtest_log ERROR "-n netsim is incompatible with -p > 1"
 		usage
 		exit 1
 	fi
@@ -608,46 +535,340 @@ run_test() {
 	pvtest_log DEBUG "workspace=$work_path"
 	pvtest_log DEBUG "readme=$work_path/README.md"
 	pvtest_log DEBUG "run log=$work_path/run.log"
-	pvtest_log DEBUG "test log=$work_path/<scope>/<category>/<name>/test.log"
+	pvtest_log DEBUG "test log=$work_path/results/<scope>/<category>/<name>/test.log"
 	if [ "$valgrind" = "true" ]; then
-		pvtest_log DEBUG "valgrind log=$work_path/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
+		pvtest_log DEBUG "valgrind log=$work_path/storage/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
 	fi
-	pvtest_log DEBUG "diff=$work_path/<scope>/<category>/<name>/diff"
+	pvtest_log DEBUG "diff=$work_path/results/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
-	local _tests=()
-	if [ -z "$target_path" ]; then
-		mapfile -t _tests < <(find $test_dir/ -name "test.json" | sort)
-	elif [ -f "$test_dir/$target_path/test.json" ]; then
-		_tests=("$test_dir/$target_path/test.json")
-	else
-		mapfile -t _tests < <(find "$test_dir/$target_path" -name "test.json" | sort)
+	# Allocate slot for all containers in this invocation.
+	allocate_slot
+	local tester_name="pantavisor-tester-${USER}-${slot}"
+	local netsim_name="pantavisor-netsim-${USER}-${slot}"
+
+	# Slot is exclusively ours; any containers with this slot's names are stale
+	# from an aborted run — remove them.
+	docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
+	docker ps -aq --filter "name=pantavisor-tester-${USER}-${slot}" | xargs -r docker rm -f 2>/dev/null || true
+	docker rm -f "$netsim_name" 2>/dev/null || true
+
+	# Resolve absolute paths for test scope dirs (local/ and remote/)
+	local abs_local_path= abs_remote_path=
+	if [ -d "$test_dir/local" ]; then
+		cd "$test_dir/local"; abs_local_path=$(pwd); cd - > /dev/null
 	fi
-	run_tests_parallel "$parallel" "${_tests[@]}"
+	if [ -d "$test_dir/remote" ]; then
+		cd "$test_dir/remote"; abs_remote_path=$(pwd); cd - > /dev/null
+	fi
+
+	local _script_dir
+	_script_dir="$(cd "$(dirname "$0")" && pwd)"
+	local tester_image="pantavisor-appengine-tester"
+	[ -f "$_script_dir/tester.imgid" ] && tester_image=$(cat "$_script_dir/tester.imgid")
+	local netsim_image="pantavisor-appengine-netsim"
+	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
+
+	# Non-interactive: tee stdout/stderr to run.log so terminal and log stay in sync.
+	if [ "$interactive" = "false" ] && [ "$manual" = "false" ]; then
+		exec > >(tee -a "$work_path/run.log") 2>&1
+	fi
+
+	setup_network0
+
+	if [ "$netsim" = "true" ]; then
+		docker run \
+			--name "$netsim_name" \
+			--net=test-appengine-net \
+			-d \
+			-e VERBOSE="$verbose" \
+			--rm \
+			--cap-add NET_ADMIN \
+			"$netsim_image" > /dev/null
+
+		setup_network "$tester_name" "$netsim_name" &
+	fi
+
+	# Manual mode: single appengine in interactive shell, booted with the target test's required-config; no tester.
+	if [ "$manual" = "true" ]; then
+		local manual_cfg_args=() _mkv
+		for _mkv in $(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")"); do
+			manual_cfg_args+=(-e "$_mkv")
+		done
+		docker run -it --rm \
+			--name "pantavisor-appengine-${USER}-${slot}-0" \
+			--net=test-appengine-net \
+			--cgroupns host \
+			--cap-add NET_ADMIN \
+			--cap-add SYS_ADMIN \
+			--cap-add SYS_PTRACE \
+			--cap-add MKNOD \
+			--device /dev/kmsg \
+			--device /dev/hwrng \
+			--device /dev/loop-control \
+			--device-cgroup-rule 'b 7:* rmw' \
+			--security-opt apparmor=unconfined \
+			--security-opt seccomp=unconfined \
+			--volume "/sys/fs":"/sys/fs" \
+			--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
+			--mount type=tmpfs,target="/volumes" \
+			--mount type=tmpfs,target="/configs" \
+			-v "$work_path/storage/0":/var/pantavisor/storage \
+			"${manual_cfg_args[@]}" \
+			pantavisor-appengine \
+			/usr/bin/pv-appengine -m
+		release_slot
+		return
+	fi
+
+	# Generate SSH keypair once; shared by all appengine containers for this run.
+	local shared_ssh_dir= pvtest_pubkey=
+	if [ -z "$PVTEST_EXEC" ]; then
+		shared_ssh_dir=$(mktemp -d)
+		ssh-keygen -t ed25519 -f "$shared_ssh_dir/id_ed25519" -N "" -q
+		chmod 600 "$shared_ssh_dir/id_ed25519"
+		# Public key is passed as PV_DEBUG_SSH_PUBKEY env var; pv-appengine writes
+		# it to /etc/pantavisor/ssh/ as root, avoiding the need for host sudo.
+		pvtest_pubkey=$(cat "$shared_ssh_dir/id_ed25519.pub")
+	fi
+
+	# Tester-shared mounts (SSH key) and scope mounts (local/remote test trees)
+	# are the same for every slot — compute once.
+	local tester_shared_args=()
+	if [ -z "$PVTEST_EXEC" ]; then
+		tester_shared_args=(-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro)
+	fi
+	local tester_scope_args=()
+	[ -n "$abs_local_path" ] && tester_scope_args+=(-v "$abs_local_path":/work/local)
+	[ -n "$abs_remote_path" ] && tester_scope_args+=(-v "$abs_remote_path":/work/remote)
+
+	local docker_it_opt=
+	[ "$interactive" = "true" ] && docker_it_opt="-it"
+
+	# Interactive (non-manual): boot one container for the target test and drop into
+	# the tester's single-device shell; the slot-pool path below is automated-runs only.
+	if [ "$interactive" = "true" ]; then
+		local _icfg _iae
+		_icfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")")
+		_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
+		_boot_appengine "$_iae" "$_icfg"
+		docker run -it --rm \
+			--net=test-appengine-net \
+			--name "$tester_name" \
+			-e TEST_PATH="/work/$target_path" \
+			-e INTERACTIVE=true \
+			-e MANUAL="$manual" \
+			-e VERBOSE="$verbose" \
+			-e VALGRIND="$valgrind" \
+			-e PH_USER="$PH_USER" \
+			-e PH_PASS="$PH_PASS" \
+			-e PVR_DISABLE_SELF_UPGRADE=true \
+			-e PVTEST_APPENGINES="$_iae" \
+			-e PVTEST_SSH_KEY="/tmp/pvtest_id" \
+			-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}" \
+			"${tester_shared_args[@]}" \
+			"${tester_scope_args[@]}" \
+			"$tester_image"
+		_stop_appengine "$_iae"
+		release_slot
+		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		return
+	fi
+
+	local ctrl_dir="$work_path/ctrl"
+	mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
+
+	# Flat queue of /work test.json paths (stable order; the tester regroups by
+	# runner-type and schedules them across slots).
+	local pvtest_queue="" _json _rel
+	while IFS= read -r _json; do
+		[ -n "$_json" ] || continue
+		_rel=${_json#"$test_dir"/}; _rel=${_rel#./}
+		pvtest_queue="${pvtest_queue:+$pvtest_queue }/work/$_rel"
+	done < <(find "$test_dir/${target_path:-.}" -name test.json 2>/dev/null | sort)
+
+	if [ -z "$pvtest_queue" ]; then
+		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
+		release_slot
+		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		return 0
+	fi
+
+	local _nq res=0
+	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
+	pvtest_log INFO "=== slot pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
+
+	# Start the host re-type service (container runs only).
+	local svc_pid=""
+	if [ -z "$PVTEST_EXEC" ]; then
+		retype_service "$ctrl_dir" &
+		svc_pid=$!
+	fi
+
+	mkdir -p "$work_path/results/main"
+
+	local -a tester_run_args=(
+		--net=test-appengine-net
+		--name "${tester_name}"
+		-e TEST_PATH="/work/$target_path"
+		-e PVTEST_QUEUE="$pvtest_queue"
+		-e PVTEST_SLOTS="$parallel"
+		-e PVTEST_CTRL="/work/ctrl"
+		-e INTERACTIVE="$interactive"
+		-e MANUAL="$manual"
+		-e OVERWRITE="$overwrite"
+		-e VERBOSE="$verbose"
+		-e NETSIM="$netsim"
+		-e VALGRIND="$valgrind"
+		-e PH_USER="$PH_USER"
+		-e PH_PASS="$PH_PASS"
+		-e PVR_DISABLE_SELF_UPGRADE=true
+		-e PVTEST_SSH_KEY="/tmp/pvtest_id"
+		-e PVTEST_EXEC="${PVTEST_EXEC:-}"
+		-e PVTEST_HOST="${PVTEST_HOST:-}"
+		-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
+		-e MAX_RETRIES="$max_retries"
+		-e FAIL_ON_SKIP_FIELD="$fail_on_skip_field"
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
+		-e RUN_DIR=/work/results
+		--rm
+		"${tester_shared_args[@]}"
+		"${tester_scope_args[@]}"
+		-v "$work_path/results/main":/work/results
+		-v "$ctrl_dir":/work/ctrl
+	)
+
+	docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.main.log"
+	res=${PIPESTATUS[0]}
+
+	# Stop the re-type service and tear down any remaining slot containers.
+	if [ -n "$svc_pid" ]; then
+		touch "$ctrl_dir/stop"
+		wait "$svc_pid" 2>/dev/null || true
+	fi
+	if [ -z "$PVTEST_EXEC" ]; then
+		docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
+	fi
+
+	[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+
+	# Storage is written as root inside the container; chown back to the caller
+	# (best-effort) so the host user can read it.
+	if [ -z "$PVTEST_EXEC" ] && [ -d "$work_path/storage" ]; then
+		docker run --rm -v "$work_path/storage":/storage pantavisor-appengine \
+			-c "chown -R $(id -u):$(id -g) /storage" > /dev/null 2>&1 || true
+	fi
+
+	if [ "$netsim" = "true" ]; then
+		docker stop "$netsim_name" > /dev/null 2>&1
+		docker wait "$netsim_name" > /dev/null 2>&1
+		teardown_network
+	fi
+
+	release_slot
+
+	if [ "$interactive" = "true" ]; then
+		return
+	fi
 
 	set +x
-	{
+
+	# Collect results. The single tester run writes per-test result lines to
+	# run.main.log and per-test diffs under results/main/<tid>/; the rank()
+	# precedence is a harmless tie-break. wtag ("main") gives the diff path.
+	#   FAILED > ABORTED > PASSED > SKIPPED > RECORDED
+	local merged_file
+	merged_file=$(mktemp)
+	awk '
+		BEGIN { sq = sprintf("%c", 39) }       # single quote
+		function rank(r){ if(r=="FAILED")return 5; if(r=="ABORTED")return 4;
+			if(r=="PASSED")return 3; if(r=="SKIPPED")return 2;
+			if(r=="RECORDED")return 1;
+			# Slot device claims show in the SUMMARY next to the test results too.
+			if(r=="claimed")return 1; return 0 }
+		{
+			n = split($0, q, sq)               # "...: \x27tid\x27 RESULT (..)"
+			if (n >= 3) {
+				tid = q[2]
+				split(q[3], a, " ")            # " RESULT (..)" -> a[1]=RESULT
+				res = a[1]
+				# Keep the parenthetical only when it is a duration "(N s)", so a
+				# reason like "(claim failed: ...)" is never shown as a time.
+				if (match(q[3], /\([0-9]+ s\)/)) tm = substr(q[3], RSTART, RLENGTH)
+				else tm = ""
+				rk = rank(res)
+				if (rk > 0) {
+					tag = FILENAME
+					sub(/.*\/run\./, "", tag)
+					sub(/\.log$/, "", tag)
+					if (rk > best[tid]) { best[tid]=rk; result[tid]=res; wtag[tid]=tag; time[tid]=tm }
+				}
+			}
+		}
+		END { for (t in result) printf "%s\t%s\t%s\t%s\n", t, result[t], wtag[t], time[t] }
+	' "$work_path"/run.*.log 2>/dev/null | sort > "$merged_file"
+
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
 	echo "======================================================="
-	while IFS= read -r line; do
-		echo "$line"
-		if echo "$line" | grep -q " FAILED "; then
-			test_id=$(echo "$line" | sed "s/.*'\(.*\)' FAILED.*/\1/")
-			diff_file="$work_path/$test_id/diff"
-			if [ -s "$diff_file" ]; then
-				printf "\n--- diff: %s ---\n" "$test_id"
-				cat "$diff_file"
-				printf '%s\n' "--- end diff ---"
+
+	# Run-level (non-per-test) ERRORs only — excludes anything already mirrored
+	# into a test.log or a per-test result line; timestamps stripped before de-dup.
+	local runerr_file test_errs
+	runerr_file=$(mktemp); test_errs=$(mktemp)
+	find "$work_path/results" -name test.log -exec \
+		grep -hE '^\[pvtest\] .* ERROR -- ' {} + 2>/dev/null \
+		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u > "$test_errs"
+	grep -hE '^\[pvtest\] .* ERROR -- ' "$work_path"/run.*.log 2>/dev/null \
+		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u \
+		| grep -vxF -f "$test_errs" 2>/dev/null \
+		| grep -vE "ERROR -- \[[^]]*\]: '[^']*' (FAILED|ABORTED|PASSED|SKIPPED|RECORDED)" \
+		> "$runerr_file" || true
+	if [ -s "$runerr_file" ]; then
+		printf -- "--- run errors ---\n"
+		cat "$runerr_file"
+		printf '%s\n\n' "--- end run errors ---"
+	fi
+	rm -f "$runerr_file" "$test_errs"
+
+	local skip_fail=0 skip_fail_seen=0
+	if [ -s "$merged_file" ]; then
+		# Single pass in test order: print each test's diff/error block right before its result line.
+		while IFS=$'\t' read -r test_id result wtag time; do
+			[ -n "$test_id" ] || continue
+			if [ "$result" = "FAILED" ] || [ "$result" = "ABORTED" ]; then
+				local diff_file="$work_path/results/$wtag/$test_id/diff"
+				local tlog="$work_path/results/$wtag/$test_id/test.log"
+				if [ -s "$diff_file" ]; then
+					printf -- "--- diff: %s ---\n" "$test_id"
+					cat "$diff_file"
+					printf '%s\n\n' "--- end diff ---"
+				elif [ -s "$tlog" ]; then
+					# No diff (the ABORT case, or a FAILED with no diff): surface the
+					# test's own pvtest_log ERROR lines so the reason is inline.
+					printf -- "--- errors: %s ---\n" "$test_id"
+					grep -E '^\[pvtest\] .* ERROR -- ' "$tlog" 2>/dev/null
+					printf '%s\n\n' "--- end errors ---"
+				fi
 			fi
-		fi
-	done < <(grep "\(PASSED\|FAILED\|ABORTED\|SKIPPED\)" "$work_path/run.log" | grep -v "^Retry:")
+			printf "'%s' %s%s\n" "$test_id" "$result" "${time:+ $time}"
+			# --fail-on-skip: a SKIPPED result is final (the test ran once and the
+			# runner skipped it, e.g. device filter or missing Hub creds).
+			[ "$result" = "SKIPPED" ] && skip_fail_seen=1
+		done < "$merged_file"
+	fi
+	# Nothing dispatched (claim/setup failure before any test ran) is covered by
+	# the run-errors block above, which surfaces the ERROR messages regardless.
+	rm -f "$merged_file"
 	echo "======================================================="
-	} | tee -a "$work_path/run.log"
-	set -h
+
+	if [ "$fail_on_skip" = "true" ] && [ "${skip_fail_seen:-0}" = "1" ]; then
+		skip_fail=1
+		pvtest_log ERROR "--fail-on-skip: one or more tests were SKIPPED"
+	fi
 
 	# make summary available to the run path for the CI
-	cp $work_path/run.log ./run.log
+	[ "${CI:-false}" = "true" ] && cp "$work_path/run.log" ./run.log
 
 	cat > "$work_path/README.md" << 'EOF'
 # Test Run Results
@@ -656,17 +877,27 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- per-test result lines + inline diffs + SUMMARY
+  run.log                           <- aggregate output + SUMMARY
+  run.main.log                      <- the tester run's per-test result lines
+  appengine-<container>.log         <- full pantavisor stdout_direct for one appengine
+                                       container (keyed by its full name)
   README.md
-  <scope>/<category>/<name>/
-    test.log                        <- full verbose output (see below)
-    diff                            <- diff (expected vs actual), present only when test failed
-    valgrind/
-      valgrind.log.<pid>            <- present only when run with -V
-  storage/                          <- kept on disk, not uploaded to CI artifacts
-    <scope>/<category>/<name>/
+  results/
+    main/<scope>/<category>/<name>/
+      test.log     <- test script output interleaved with pantavisor logs during exec_test
+      diff         <- diff (expected vs actual), present only when test failed
+  storage/
+    <container>/   <- per-appengine pantavisor storage (keyed by container name)
       trails/ objects/ logs/ ...
+  valgrind/
+    <container>/   <- per-appengine valgrind output
+      valgrind.log.<pid>   <- present only when run with -V
 ```
+
+One tester (`pvtest-run`) dispatches the test queue across `-p` slots, re-typing
+each slot's appengine container as needed; see `docs/testing/device-target.md`
+for the full slot-pool model. Each test runs exactly once; the SUMMARY collects
+the per-test results.
 
 ## Log Format
 
@@ -691,7 +922,7 @@ Log levels used in `run.log`:
 | `ERROR` | FAILED |
 
 On failure the diff is printed inline after the `ERROR` line, and also saved to
-`<scope>/<category>/<name>/diff`. Retry attempts get their own directory
+`results/<scope>/<category>/<name>/diff`. Retry attempts get their own directory
 (`<name>.1/`, `<name>.2/`).
 
 Quick scan for failures:
@@ -709,13 +940,13 @@ Host-side orchestrator. With `-v` produces `set -x` traces (`++ docker run ...`,
 Structured messages use `[pvtest] LEVEL -- [test.docker.sh]: message`.
 
 **2. `pvtest-run` + `resources/test`**
-Inner test runner inside the tester container. Parses `test.json`, initialises storage,
-starts Pantavisor via `pv-appengine`, then runs `resources/test` (with `set -x` injected).
+Inner test runner inside the tester container. Parses `test.json`, connects to the
+appengine via PVTEST_EXEC (SSH), then runs the test script (with `set -x` injected).
 Structured messages use `[pvtest] LEVEL -- [pvtest-run]: message`.
 The test script output is captured and diffed against the stored `output` file.
 
 **3. `pv-appengine`**
-Pantavisor runtime launcher inside the tester container. Sets up cgroups and storage
+Pantavisor runtime launcher inside the appengine container. Sets up cgroups and storage
 mounts, then runs the `pantavisor` binary in a restart loop (simulating device reboots).
 Structured messages use `[pvtest] LEVEL -- [pv-appengine]: message`.
 
@@ -736,18 +967,17 @@ job step summary under **Test log issues**.
 
 ## Valgrind Logs
 
-Each test's valgrind output is under `<scope>/<category>/<name>/valgrind/valgrind.log.<pid>`.
-The main Pantavisor worker is typically the largest file:
+Valgrind output is under `valgrind/<N>/valgrind.log.<pid>`. The main worker is typically
+the largest file. Check with:
 
-    ls -S <scope>/<category>/<name>/valgrind/ | head -3
-    grep -E "definitely lost|possibly lost|ERROR SUMMARY" valgrind.log.<largest-pid>
+    grep -E "definitely lost|possibly lost|ERROR SUMMARY" valgrind/<N>/valgrind.log.<largest-pid>
 
 - `definitely lost` — real leaks, investigate
 - `possibly lost` — typically PV buffer pools; consistent at ~3.7 MB, not a regression
 - `ERROR SUMMARY` — mostly `Syscall param` warnings from liblxc, not pantavisor code
 EOF
 
-	if [ -f "$failed_flag" ]; then
+	if [ $res -ne 0 ] || [ "${skip_fail:-0}" -ne 0 ]; then
 		return 1
 	fi
 	return 0
