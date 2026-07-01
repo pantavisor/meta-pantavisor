@@ -54,8 +54,8 @@ do_unpack[postfuncs] += "do_unpack_pvr"
 do_unpack_pvr() {
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
-	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
+	if [ -d ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME} ]; then
+		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVS_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz
 	fi
 	echo "do_unpack_pvr: $PWD ${B}/pvrrepo"
 	mkdir -p ${B}/pvrrepo
