@@ -31,7 +31,7 @@ do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvt
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
 # Define files from WORKDIR (SRC_URI files) to include
-WORKDIR_FILES ?= "test.docker.sh"
+WORKDIR_FILES ?= "test.docker.sh devices.txt.sample"
 
 # Build suffix (using variables available in all recipes)
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"

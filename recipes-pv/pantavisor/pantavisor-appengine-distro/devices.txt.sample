@@ -1,0 +1,28 @@
+# pvtest --devices manifest (single real device).
+#
+#   ./test.docker.sh run <test> --devices devices.txt        # run the suite on the device
+#   ./test.docker.sh run <test> -i --devices devices.txt     # open the tester console on it
+#
+# Exactly ONE device stanza is allowed (more than one is a hard error). The tester
+# reaches the device over exec= (becomes PVTEST_EXEC, used to run pvcontrol/pventer)
+# and ip= (becomes PVTEST_HOST, used for the pvr HTTP endpoint at
+# http://<ip>:12368/cgi-bin/pvr). Tests whose setup.required-config the live device
+# does not already satisfy are SKIPPED (a device's config can't be injected the way
+# an appengine container's is). See docs/testing/device-target.md.
+#
+# Fields (blank-line-separated key=value; '#' lines are comments):
+#   name=  slot/log name; the run's serial console capture is appengine-<name>.log
+#   ip=    device IP for pvr HTTP calls            -> PVTEST_HOST
+#   exec=  command prefix to run commands on it    -> PVTEST_EXEC
+#   tty=   host-local serial console device path (read directly for the console log)
+#   baud=  optional serial baud rate (default 115200)
+#
+# Prefer stable /dev/serial/by-id/... symlinks over raw /dev/ttyUSBN (USB
+# enumeration order isn't stable across host reboots). Copy this file, fill in your
+# device's ip/exec/tty, and drop the leading '#' below.
+
+#name=m2-01
+#ip=192.168.1.50
+#exec=ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -i /keys/m2.pem root@192.168.1.50
+#tty=/dev/serial/by-id/usb-FTDI_FT232R_USB_UART-if00-port0
+#baud=115200
