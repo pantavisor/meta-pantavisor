@@ -136,6 +136,7 @@ Authoring a container to add here is covered in
 | `pantavisor-initramfs.bb` | The Pantavisor-as-init initramfs the BSP wraps |
 | `empty-image.bb` | Empty proto rootfs used as a BSP modules/firmware source |
 | `pantavisor-appengine` | Docker-based image for local appengine testing (not a flashable device image) |
+| `pv-flash-bundle.bb` | Factory flash archive (UUU) wrapping this image for boards without native `.wic` flashing — see [pv-flash-bundle](pv-flash-bundle.md) |
 
 ## Related
 

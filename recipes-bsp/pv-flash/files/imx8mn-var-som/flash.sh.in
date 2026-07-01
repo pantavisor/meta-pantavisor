@@ -1,0 +1,9 @@
+#!/bin/sh
+# Decompress the WIC image before flashing: uuu's -raw2sparse requires an
+# uncompressed input.  The .wic is removed on exit whether flash succeeds or not.
+wic=@WIC@
+trap 'rm -f "$wic"' EXIT INT TERM
+echo "Downloading Pantavisor Image..."
+echo "Decompressing @WIC_GZ@..."
+zcat @WIC_GZ@ > "$wic"
+sudo ./uuu ./

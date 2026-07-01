@@ -19,6 +19,17 @@ PV_FLASH_RECOVERY_RECIPE ?= ""
 # Filename of the recovery U-Boot image in the recovery multiconfig deploy dir.
 PV_FLASH_RECOVERY_IMAGE ?= ""
 
+# Glob for a boot binary sourced directly from the main build's
+# DEPLOY_DIR_IMAGE instead of a separate recovery multiconfig — for machines
+# whose production bootloader already enters SDP/fastboot download mode on
+# its own (e.g. NXP-standard i.MX8M ROM boot-source detection), unlike
+# Toradex's distro_bootcmd override which requires a stripped recovery build.
+# Installed into the bundle as the fixed name "imx-boot.bin".
+PV_FLASH_BOOT_IMAGE ?= ""
+PV_FLASH_BOOT_IMAGE:imx8mm-var-dart = "imx-boot-imx8mm-var-dart*.bin"
+PV_FLASH_BOOT_IMAGE:imx8mn-var-som = "imx-boot-imx8mn-var-som*.bin"
+PV_FLASH_BOOT_IMAGE:imx8qxp-b0-mek = "imx-boot-imx8qxp-b0-mek*.bin"
+
 # For NAND machines: production NAND U-Boot binary filename in the recovery
 # multiconfig deploy dir (the same tezi-recovery build also produces the rawnand
 # config; set to "" on eMMC machines).
@@ -34,10 +45,16 @@ PV_FLASH_UBIFS:colibri-imx6ull = "${PV_FLASH_IMAGE}-${MACHINE}.rootfs.ubifs"
 PV_FLASH_UUU_SCRIPT_IN ?= ""
 PV_FLASH_UUU_SCRIPT_IN:verdin-imx8mm = "file://uuu.auto.in"
 PV_FLASH_UUU_SCRIPT_IN:colibri-imx6ull = "file://uuu.auto.in"
+PV_FLASH_UUU_SCRIPT_IN:imx8mm-var-dart = "file://uuu.auto.in"
+PV_FLASH_UUU_SCRIPT_IN:imx8mn-var-som = "file://uuu.auto.in"
+PV_FLASH_UUU_SCRIPT_IN:imx8qxp-b0-mek = "file://uuu.auto.in"
 
 PV_FLASH_FLASH_SCRIPT_IN ?= ""
 PV_FLASH_FLASH_SCRIPT_IN:verdin-imx8mm = "file://flash.sh.in"
 PV_FLASH_FLASH_SCRIPT_IN:colibri-imx6ull = "file://flash.sh.in"
+PV_FLASH_FLASH_SCRIPT_IN:imx8mm-var-dart = "file://flash.sh.in"
+PV_FLASH_FLASH_SCRIPT_IN:imx8mn-var-som = "file://flash.sh.in"
+PV_FLASH_FLASH_SCRIPT_IN:imx8qxp-b0-mek = "file://flash.sh.in"
 
 SRC_URI = "${PV_FLASH_UUU_SCRIPT_IN} ${PV_FLASH_FLASH_SCRIPT_IN}"
 
@@ -84,6 +101,12 @@ do_deploy() {
         install -m 644 \
             "${RECOVERY_DEPLOY_DIR_IMAGE}/${PV_FLASH_NAND_UBOOT}" \
             "${bundle_dir}/${PV_FLASH_NAND_UBOOT}"
+    fi
+
+    if [ -n "${PV_FLASH_BOOT_IMAGE}" ]; then
+        install -m 644 \
+            $(ls ${DEPLOY_DIR_IMAGE}/${PV_FLASH_BOOT_IMAGE} | head -n1) \
+            "${bundle_dir}/imx-boot.bin"
     fi
 
     install -m 755 "${STAGING_BINDIR_NATIVE}/uuu" "${bundle_dir}/uuu"

@@ -1,0 +1,18 @@
+uuu_version 1.4.149
+
+# Factory flash for Pantavisor on NXP i.MX8QXP MEK
+# i.MX8QXP/8QM ROM supports "stream" SDP mode (SDPS:) instead of the
+# discrete SDP:/SDPU:/SDPV: negotiation used by i.MX8MM/8MN/8MQ: the SCU
+# loads the whole boot container (SCFW + ATF + [OP-TEE] + U-Boot) in one
+# transfer, so there's no separate SPL jump step to script here (mirrors
+# mfgtools' built-in "emmc_all"/"sd_all" scripts).
+# Usage (from inside the extracted bundle directory):
+#   sudo ./uuu ./
+
+SDPS: boot -scanterm -f imx-boot.bin -scanlimited 0x800000
+FB: ucmd setenv fastboot_dev mmc
+FB: ucmd setenv mmcdev 0
+FB: ucmd mmc dev 0
+FB: flash -raw2sparse all @WIC@
+FB: acmd reset
+FB: done

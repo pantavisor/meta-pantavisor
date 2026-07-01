@@ -16,3 +16,4 @@ Conceptual documentation for the Pantavisor runtime and the meta-pantavisor laye
 4. [Starter Image](images.md) — what `pantavisor-starter` is, how the initial trail is composed from core containers + the BSP, and how to customize the mix
 5. [Boot Flow](boot-flow.md) — how `boot.cmd.pvgeneric` boots Pantavisor: FIT/trail loading, try-boot, MMC vs NAND/UBIFS, and `PV_BOOT_OEMARGS`
 6. [CI](ci.md) — how CI machines, workflows, and build matrix relate to the layer structure
+7. [pv-flash-bundle](pv-flash-bundle.md) — the UUU factory-flash archive recipe: design, `PV_FLASH_*` variables, and how to wire up a new machine

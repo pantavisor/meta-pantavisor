@@ -112,6 +112,7 @@ defaults:
         branch: scarthgap
 target:
 - pantavisor-starter
+- pv-flash-bundle
 build_system: oe
 distro: panta-distro
 env:
