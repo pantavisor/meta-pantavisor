@@ -49,25 +49,91 @@ mode.)
  └────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Tester + real device** *(runner integration is future work — see PR TODO)*
+**Tester + real device**
 ```
  HOST
  ┌────────────────────────────────────────────────────────────────────────┐
- │  test.docker.sh   PVTEST_EXEC="ssh …"  PVTEST_HOST=<device-ip>          │
+ │  test.docker.sh   --devices devices.txt   PVTEST_DEVICE=m2              │
  │                                                                         │
  │  ┌────────────────────┐        ┌──────────────────────────┐            │
  │  │  pantavisor-tester │──SSH───►│   arm32 / arm64 device   │            │
- │  │                    │ (EXEC) │  ├─ pantavisor (init/PID1)│            │
- │  │  pvtest-run        │──HTTP──►│  ├─ pvr-sdk (LXC)        │            │
- │  │  pvr  curl  jq     │ :12368 │  ├─ pvcontrol / pventer   │            │
- │  └────────────────────┘ (HOST) │  └─ sshd                  │            │
- │                                 └──────────────────────────┘            │
+ │  │   (x86_64, runs on │ (EXEC) │  ├─ pantavisor (init/PID1)│            │
+ │  │    host/CI runner) │──HTTP──►│  ├─ pvr-sdk (LXC)        │            │
+ │  │  pvtest-run        │ :12368 │  ├─ pvcontrol / pventer   │            │
+ │  │  pvr  curl  jq     │ (HOST) │  └─ sshd                  │            │
+ │  └────────────────────┘         └──────────────────────────┘            │
+ │           │  device console (tty, read directly on the host,           │
+ │           │  same convention as `docker logs -f` for an appengine)      │
+ │           ▼                                                            │
+ │  appengine-<name>.log                                                  │
  └────────────────────────────────────────────────────────────────────────┘
 ```
 
 Each `test.json` may carry a `"devices"` array. Absent/empty means "run everywhere" (the default for
 all tests). When a test is incompatible with a target, its `"devices"` field restricts it; the runner
 sets `PVTEST_DEVICE` and skips tests that exclude that target.
+
+### Real-device mode (`--devices`)
+
+`test.docker.sh run ... --devices FILE` replaces the Docker appengine pool with a **single** real
+hardware target. It is mutually exclusive with `-p>1`/`-m`/`-n`/`-V`; `-i` **is** supported (it opens
+the tester console wired to the device — see below). This is a deliberate downgrade from an earlier
+multi-device pool: the manifest keeps the same format but must contain exactly one device (more than
+one is a hard error), and there is no pool/dispatcher — one tester runs every selected test against the
+one device sequentially. `FILE` is a blank-line-separated list of `key=value` stanzas (only one is
+allowed):
+
+```
+name=m2-01
+ip=192.168.1.50
+exec=ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /keys/m2.pem root@192.168.1.50
+tty=/dev/serial/by-id/usb-FTDI_FT232R-if00-port0
+baud=115200
+```
+
+`name` (slot binding + log filename), `ip` (→ `PVTEST_HOST`), `exec` (→ `PVTEST_EXEC`), `tty`
+(host-local serial device path, read directly the same way `_boot_appengine` backgrounds `docker logs
+-f`), `baud` (optional, default 115200). Prefer `/dev/serial/by-id/...` stable symlinks over raw
+`/dev/ttyUSBN` paths, since USB enumeration order isn't guaranteed across host reboots.
+
+A real device can't be re-typed/rebooted with new config the way a Docker appengine container can, so
+device mode uses a **single-device runner** (`run_single_device` in `pvtest-run.in`, separate from the
+appengine `run_slot_pool`/`slot_worker`): the one device binds once, inits once, then every selected
+test runs against it sequentially through `run_test_attempt` — no pool, no runner-type/claim-batching,
+no re-type. Claims (`setup.self-claim`) are handled per-test via `handle_self_claim()`, the same call
+the legacy single-device path already uses. At the end of the run, device mode releases the tty capture
+and the device lock but does **not** power off the device by default — unlike a disposable container, a
+real board should stay reachable after CI.
+
+**Interactive (`-i`) against a device.** `test.docker.sh run <test> -i --devices FILE` boots nothing and
+drops you into the tester console with `PVTEST_EXEC`/`PVTEST_HOST` pointing at the device, so
+`pvcontrol`, `pventer` and `pvr` in that shell act on the real board. (No `PVTEST_QUEUE` is passed, so
+`pvtest-run` runs `exec_interactive` instead of the test loop.)
+
+Device console/tty logs reuse the `appengine-<name>.log` naming convention (keyed by the manifest's
+`name=` instead of a container name), so `run_test_attempt`'s per-test log interleaving needs no
+device-specific branching — the tester reads `$APPENGINE_LOGS/appengine-<name>.log` (a host directory
+mounted read-only into the tester at `/work/hostlogs`) exactly the same way for a device or a
+container.
+
+**`required-config` vs. live-device matching (implemented).** A device's config can't be injected the
+way an appengine container's is at boot, so `run_test_attempt` now matches each test's declared
+`setup.required-config` against the device's actual `conf ls` (captured once by `init_device`) and
+**SKIPs** the test on mismatch. It's gated on `PVTEST_MATCH_REQCFG` (set only by device mode) so the
+appengine slot pool — which *does* inject required-config — never skips on it. See `_reqcfg_satisfied`
+in `pvtest-run.in`.
+
+**Still manual/future work, not solved by this iteration:**
+
+- **Populating `"devices"` arrays.** Every existing `test.json` currently ships `"devices": []`
+  (unrestricted). A real-device run will attempt every test whose `required-config` the device happens
+  to satisfy unless someone first audits the suite and tags appengine-only tests (e.g. ones relying on
+  injected `PV_DEBUG_SSH`, valgrind, or loop-device internals that don't apply to a real board).
+- **Automated flashing.** Device mode assumes the device is already running whatever Pantavisor config
+  it currently has; there is no flashing/provisioning step.
+
+Because of the `"devices"` gap above, run device-mode suites **without** `--fail-on-skip` — SKIPPED
+results are still expected until the suite has been triaged for hardware safety.
 
 ---
 

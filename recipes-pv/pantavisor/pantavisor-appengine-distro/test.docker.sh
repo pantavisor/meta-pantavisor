@@ -24,6 +24,12 @@ usage() {
 	echo "  -o, --overwrite       Create or overwrite the test output"
 	echo "  -p, --parallel N      Number of slots: the cap on concurrent appengine"
 	echo "                        containers a single tester keeps busy (default: 1)."
+	echo "  --devices FILE        Run against a single real device instead of a Docker"
+	echo "                        appengine pool. Incompatible with -p>1, -m, -n, -V (but"
+	echo "                        -i IS supported: opens the tester console on the device)."
+	echo "                        FILE is a 'key=value' stanza (exactly one device):"
+	echo "                        name=, ip=, exec=, tty=, baud= (optional, default 115200)."
+	echo "                        See docs/testing/device-target.md."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
 	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
@@ -356,6 +362,110 @@ _stop_appengine() {
 	fi
 }
 
+# --- Device-target helpers (real hardware, --devices FILE) ---
+# Unlike an appengine container, a device is fixed (no boot/re-type/env-injection);
+# these helpers parse a device manifest, lock each device against concurrent runs,
+# and capture its serial console the same way _boot_appengine tails `docker logs -f`.
+
+# flush a manifest stanza's accumulated key=value locals (name/ip/exec_cmd/tty/baud,
+# read from the caller's scope via bash's dynamic scoping) into the _dev_* arrays.
+_dev_flush_stanza() {
+	[ -n "$name" ] || return 0
+	if [ -z "$ip" ] || [ -z "$exec_cmd" ] || [ -z "$tty" ]; then
+		pvtest_log ERROR "device '$name' in '$file' missing required field(s) (need name/ip/exec/tty)"
+		return 1
+	fi
+	_dev_name+=("$name"); _dev_ip+=("$ip"); _dev_exec+=("$exec_cmd")
+	_dev_tty+=("$tty"); _dev_baud+=("${baud:-115200}")
+	name=; ip=; exec_cmd=; tty=; baud=
+	return 0
+}
+
+# Parse a --devices manifest (blank-line separated key=value stanzas) into
+# parallel arrays: _dev_name, _dev_ip, _dev_exec, _dev_tty, _dev_baud.
+_parse_device_manifest() {
+	local file="$1"
+	local name= ip= exec_cmd= tty= baud= line
+	_dev_name=(); _dev_ip=(); _dev_exec=(); _dev_tty=(); _dev_baud=()
+
+	if [ ! -f "$file" ]; then
+		pvtest_log ERROR "--devices file '$file' not found"
+		return 1
+	fi
+
+	while IFS= read -r line || [ -n "$line" ]; do
+		if [ -z "$line" ]; then
+			_dev_flush_stanza || return 1
+			continue
+		fi
+		case "$line" in
+			name=*) name="${line#name=}" ;;
+			ip=*) ip="${line#ip=}" ;;
+			exec=*) exec_cmd="${line#exec=}" ;;
+			tty=*) tty="${line#tty=}" ;;
+			baud=*) baud="${line#baud=}" ;;
+			\#*) ;;
+			*) pvtest_log WARN "ignoring unrecognized line in '$file': $line" ;;
+		esac
+	done < "$file"
+	_dev_flush_stanza || return 1
+
+	if [ ${#_dev_name[@]} -eq 0 ]; then
+		pvtest_log ERROR "no devices found in '$file'"
+		return 1
+	fi
+	return 0
+}
+
+# Acquire an exclusive flock for device $1 (fails fast if another test.docker.sh
+# run already holds it — a physical board can't be double-booked like an
+# ephemeral Docker container). Releases nothing on failure other than its own fd.
+_lock_device() {
+	local name="$1" safe lockfile fd
+	safe=$(printf '%s' "$name" | tr -c 'A-Za-z0-9_' '_')
+	lockfile="/tmp/pvtest_device.${safe}.lock"
+	exec {fd}>"$lockfile"
+	if ! flock -n "$fd"; then
+		eval "exec ${fd}>&-"
+		pvtest_log ERROR "device '$name' is already locked by another test.docker.sh run"
+		return 1
+	fi
+	eval "_dev_lock_fd_${safe}=${fd}"
+	return 0
+}
+
+_unlock_device() {
+	local name="$1" safe fd
+	safe=$(printf '%s' "$name" | tr -c 'A-Za-z0-9_' '_')
+	eval "fd=\${_dev_lock_fd_${safe}:-}"
+	[ -n "$fd" ] || return 0
+	eval "exec ${fd}>&-"
+	eval "unset _dev_lock_fd_${safe}"
+}
+
+# Configure the tty and background a raw read into $work_path/appengine-<name>.log
+# — same file-naming convention _boot_appengine uses for `docker logs -f`, so
+# pvtest-run's log lookup needs no device-specific branching.
+_start_device_capture() {
+	local name="$1" tty="$2" baud="$3"
+	touch "$work_path/appengine-${name}.log"
+	if ! stty -F "$tty" "${baud:-115200}" raw -echo 2>/dev/null; then
+		pvtest_log ERROR "failed to configure tty '$tty' for device '$name'"
+		return 1
+	fi
+	cat "$tty" >> "$work_path/appengine-${name}.log" 2>/dev/null &
+	echo $! > "$work_path/.logpid.$name"
+	return 0
+}
+
+_stop_device_capture() {
+	local name="$1"
+	if [ -f "$work_path/.logpid.$name" ]; then
+		kill "$(cat "$work_path/.logpid.$name")" 2>/dev/null || true
+		rm -f "$work_path/.logpid.$name"
+	fi
+}
+
 # Handle one re-type request id=$2 for slot=$3 to config=$4 (empty = teardown).
 # Backgrounded by retype_service; per-slot current container in $1/state/slot<S>.ae.
 _retype_handle() {
@@ -421,6 +531,7 @@ run_test() {
 	local max_retries=0
 	local fail_on_skip="false"
 	local fail_on_skip_field="false"
+	local devices_file=
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
@@ -459,6 +570,10 @@ run_test() {
 				;;
 			-p|--parallel)
 				parallel="$2"
+				shift 2
+				;;
+			--devices)
+				devices_file="$2"
 				shift 2
 				;;
 			-r|--retry)
@@ -501,6 +616,24 @@ run_test() {
 	if [ "$netsim" = "true" ] && [ "$parallel" -gt 1 ]; then
 		pvtest_log ERROR "-n netsim is incompatible with -p > 1"
 		usage
+		exit 1
+	fi
+
+	# -i IS supported against a device (opens the tester console wired to it); -m
+	# boots a container so it isn't, and -p>1/-n/-V don't apply to a single board.
+	if [ -n "$devices_file" ] && { [ "$parallel" -gt 1 ] || [ "$manual" = "true" ] || [ "$netsim" = "true" ] || [ "$valgrind" = "true" ]; }; then
+		pvtest_log ERROR "--devices is incompatible with -p>1, -m, -n, -V"
+		usage
+		exit 1
+	fi
+
+	if [ -n "$devices_file" ] && { [ -n "$PVTEST_EXEC" ] || [ -n "$PVTEST_HOST" ]; }; then
+		pvtest_log ERROR "--devices is incompatible with pre-set PVTEST_EXEC/PVTEST_HOST"
+		exit 1
+	fi
+
+	if [ -n "$devices_file" ] && [ ! -f "$devices_file" ]; then
+		pvtest_log ERROR "--devices file '$devices_file' not found"
 		exit 1
 	fi
 
@@ -614,8 +747,10 @@ run_test() {
 	fi
 
 	# Generate SSH keypair once; shared by all appengine containers for this run.
+	# Not needed in device mode — real devices are reached via each manifest
+	# entry's own exec=, not a bootstrap key we generate and inject at boot.
 	local shared_ssh_dir= pvtest_pubkey=
-	if [ -z "$PVTEST_EXEC" ]; then
+	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
 		shared_ssh_dir=$(mktemp -d)
 		ssh-keygen -t ed25519 -f "$shared_ssh_dir/id_ed25519" -N "" -q
 		chmod 600 "$shared_ssh_dir/id_ed25519"
@@ -627,23 +762,78 @@ run_test() {
 	# Tester-shared mounts (SSH key) and scope mounts (local/remote test trees)
 	# are the same for every slot — compute once.
 	local tester_shared_args=()
-	if [ -z "$PVTEST_EXEC" ]; then
+	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
 		tester_shared_args=(-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro)
 	fi
 	local tester_scope_args=()
 	[ -n "$abs_local_path" ] && tester_scope_args+=(-v "$abs_local_path":/work/local)
 	[ -n "$abs_remote_path" ] && tester_scope_args+=(-v "$abs_remote_path":/work/remote)
 
+	# Device mode (downgraded to a single device): parse the manifest, require
+	# exactly one device, lock it and start its tty capture. The tester reaches it
+	# via PVTEST_EXEC/PVTEST_HOST taken straight from the manifest — no stripped map
+	# is staged anymore. Bind-mount the manifest's directory read-only at the same
+	# absolute path so any key path referenced in exec= resolves unchanged inside
+	# the tester container.
+	local dev_name= dev_ip= dev_exec= tester_device_args=()
+	if [ -n "$devices_file" ]; then
+		if ! _parse_device_manifest "$devices_file"; then
+			release_slot
+			return 1
+		fi
+		if [ "${#_dev_name[@]}" -ne 1 ]; then
+			pvtest_log ERROR "--devices supports exactly one device (found ${#_dev_name[@]} in '$devices_file')"
+			release_slot
+			return 1
+		fi
+
+		dev_name="${_dev_name[0]}"; dev_ip="${_dev_ip[0]}"; dev_exec="${_dev_exec[0]}"
+
+		if ! _lock_device "$dev_name"; then
+			release_slot
+			return 1
+		fi
+
+		_start_device_capture "$dev_name" "${_dev_tty[0]}" "${_dev_baud[0]}" \
+			|| pvtest_log ERROR "failed to start tty capture for device '$dev_name'"
+
+		local _devfile_abs_dir
+		_devfile_abs_dir="$(cd "$(dirname "$devices_file")" && pwd)"
+		tester_device_args=(-v "$_devfile_abs_dir":"$_devfile_abs_dir":ro)
+	fi
+
 	local docker_it_opt=
 	[ "$interactive" = "true" ] && docker_it_opt="-it"
 
-	# Interactive (non-manual): boot one container for the target test and drop into
-	# the tester's single-device shell; the slot-pool path below is automated-runs only.
+	# Interactive (non-manual): drop into the tester's single-target console. The
+	# only difference between an appengine and a real device is what the tester
+	# talks to: an appengine we boot here and reach over the shared SSH key, a
+	# device is already up and reached over PVTEST_EXEC/PVTEST_HOST from the
+	# manifest. So it's one docker run parameterised by a target-specific arg set,
+	# not a second copy. No PVTEST_QUEUE is passed, so pvtest-run runs
+	# exec_interactive instead of the test loop.
 	if [ "$interactive" = "true" ]; then
-		local _icfg _iae
-		_icfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")")
-		_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
-		_boot_appengine "$_iae" "$_icfg"
+		local _iae= iface_args=()
+		if [ -n "$devices_file" ]; then
+			iface_args=(
+				-e PVTEST_EXEC="$dev_exec"
+				-e PVTEST_HOST="$dev_ip"
+				-e PVTEST_DEVICE="${PVTEST_DEVICE:-$dev_name}"
+				-e PVTEST_DEVICE_TARGET="$dev_name"
+				"${tester_device_args[@]}"
+			)
+		else
+			local _icfg
+			_icfg=$(normalize_reqcfg "$(jq -r '.setup."required-config" // ""' "$test_dir/$target_path/test.json")")
+			_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
+			_boot_appengine "$_iae" "$_icfg"
+			iface_args=(
+				-e PVTEST_APPENGINES="$_iae"
+				-e PVTEST_SSH_KEY="/tmp/pvtest_id"
+				-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
+				"${tester_shared_args[@]}"
+			)
+		fi
 		docker run -it --rm \
 			--net=test-appengine-net \
 			--name "$tester_name" \
@@ -655,23 +845,27 @@ run_test() {
 			-e PH_USER="$PH_USER" \
 			-e PH_PASS="$PH_PASS" \
 			-e PVR_DISABLE_SELF_UPGRADE=true \
-			-e PVTEST_APPENGINES="$_iae" \
-			-e PVTEST_SSH_KEY="/tmp/pvtest_id" \
-			-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}" \
-			"${tester_shared_args[@]}" \
+			"${iface_args[@]}" \
 			"${tester_scope_args[@]}" \
 			"$tester_image"
-		_stop_appengine "$_iae"
+		if [ -n "$devices_file" ]; then
+			_stop_device_capture "$dev_name"
+			_unlock_device "$dev_name"
+		else
+			_stop_appengine "$_iae"
+			[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		fi
 		release_slot
-		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
 		return
 	fi
 
 	local ctrl_dir="$work_path/ctrl"
-	mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
+	if [ -z "$devices_file" ]; then
+		mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
+	fi
 
 	# Flat queue of /work test.json paths (stable order; the tester regroups by
-	# runner-type and schedules them across slots).
+	# runner-type and schedules them across slots, or across devices in device mode).
 	local pvtest_queue="" _json _rel
 	while IFS= read -r _json; do
 		[ -n "$_json" ] || continue
@@ -681,18 +875,28 @@ run_test() {
 
 	if [ -z "$pvtest_queue" ]; then
 		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
+		if [ -n "$devices_file" ]; then
+			for _i in "${!_dev_name[@]}"; do
+				_stop_device_capture "${_dev_name[$_i]}"
+				_unlock_device "${_dev_name[$_i]}"
+			done
+		fi
 		release_slot
-		[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+		[ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && rm -rf "$shared_ssh_dir"
 		return 0
 	fi
 
 	local _nq res=0
 	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
-	pvtest_log INFO "=== slot pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
+	if [ -n "$devices_file" ]; then
+		pvtest_log INFO "=== single device: ${_nq} test(s) against ${dev_name} ==="
+	else
+		pvtest_log INFO "=== slot pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
+	fi
 
-	# Start the host re-type service (container runs only).
+	# Start the host re-type service (container runs only; never for real devices).
 	local svc_pid=""
-	if [ -z "$PVTEST_EXEC" ]; then
+	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
 		retype_service "$ctrl_dir" &
 		svc_pid=$!
 	fi
@@ -704,8 +908,6 @@ run_test() {
 		--name "${tester_name}"
 		-e TEST_PATH="/work/$target_path"
 		-e PVTEST_QUEUE="$pvtest_queue"
-		-e PVTEST_SLOTS="$parallel"
-		-e PVTEST_CTRL="/work/ctrl"
 		-e INTERACTIVE="$interactive"
 		-e MANUAL="$manual"
 		-e OVERWRITE="$overwrite"
@@ -715,20 +917,42 @@ run_test() {
 		-e PH_USER="$PH_USER"
 		-e PH_PASS="$PH_PASS"
 		-e PVR_DISABLE_SELF_UPGRADE=true
-		-e PVTEST_SSH_KEY="/tmp/pvtest_id"
-		-e PVTEST_EXEC="${PVTEST_EXEC:-}"
-		-e PVTEST_HOST="${PVTEST_HOST:-}"
 		-e PVTEST_DEVICE="${PVTEST_DEVICE:-appengine}"
 		-e MAX_RETRIES="$max_retries"
 		-e FAIL_ON_SKIP_FIELD="$fail_on_skip_field"
 		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
 		-e RUN_DIR=/work/results
+		-e APPENGINE_LOGS=/work/hostlogs
 		--rm
-		"${tester_shared_args[@]}"
 		"${tester_scope_args[@]}"
 		-v "$work_path/results/main":/work/results
-		-v "$ctrl_dir":/work/ctrl
+		-v "$work_path":/work/hostlogs:ro
 	)
+
+	if [ -n "$devices_file" ]; then
+		# Single-device run: pvtest-run's run_single_device drains PVTEST_QUEUE against
+		# the one device over PVTEST_EXEC/PVTEST_HOST and SKIPs tests whose required-
+		# config the device doesn't satisfy (PVTEST_MATCH_REQCFG). The later PVTEST_DEVICE
+		# -e overrides the "appengine" default set in the shared args above.
+		tester_run_args+=(
+			-e PVTEST_EXEC="$dev_exec"
+			-e PVTEST_HOST="$dev_ip"
+			-e PVTEST_DEVICE="${PVTEST_DEVICE:-$dev_name}"
+			-e PVTEST_DEVICE_TARGET="$dev_name"
+			-e PVTEST_MATCH_REQCFG=true
+			"${tester_device_args[@]}"
+		)
+	else
+		tester_run_args+=(
+			-e PVTEST_SLOTS="$parallel"
+			-e PVTEST_CTRL="/work/ctrl"
+			-e PVTEST_SSH_KEY="/tmp/pvtest_id"
+			-e PVTEST_EXEC="${PVTEST_EXEC:-}"
+			-e PVTEST_HOST="${PVTEST_HOST:-}"
+			"${tester_shared_args[@]}"
+			-v "$ctrl_dir":/work/ctrl
+		)
+	fi
 
 	# Tester output (incl. the '<tid>' RESULT lines) lands in run.log via the exec
 	# redirect above — only the non-interactive/non-manual path reaches the SUMMARY.
@@ -740,17 +964,26 @@ run_test() {
 		touch "$ctrl_dir/stop"
 		wait "$svc_pid" 2>/dev/null || true
 	fi
-	if [ -z "$PVTEST_EXEC" ]; then
+	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
 		docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
 	fi
 
-	[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
+	[ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && rm -rf "$shared_ssh_dir"
 
 	# Storage is written as root inside the container; chown back to the caller
 	# (best-effort) so the host user can read it.
-	if [ -z "$PVTEST_EXEC" ] && [ -d "$work_path/storage" ]; then
+	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && [ -d "$work_path/storage" ]; then
 		docker run --rm -v "$work_path/storage":/storage pantavisor-appengine \
 			-c "chown -R $(id -u):$(id -g) /storage" > /dev/null 2>&1 || true
+	fi
+
+	# Device mode: no docker teardown/poweroff — release the tty capture and the
+	# device lock only, so the board stays reachable after the run.
+	if [ -n "$devices_file" ]; then
+		for _i in "${!_dev_name[@]}"; do
+			_stop_device_capture "${_dev_name[$_i]}"
+			_unlock_device "${_dev_name[$_i]}"
+		done
 	fi
 
 	if [ "$netsim" = "true" ]; then
@@ -860,7 +1093,36 @@ run_test() {
 	# make summary available to the run path for the CI
 	[ "${CI:-false}" = "true" ] && cp "$work_path/run.log" ./run.log
 
-	cat > "$work_path/README.md" << 'EOF'
+	if [ -n "$devices_file" ]; then
+		cat > "$work_path/README.md" << 'EOF'
+# Test Run Results (device mode)
+
+## Workspace Layout
+
+```
+<workspace>/
+  run.log                           <- aggregate output (host + tester) + SUMMARY
+  appengine-<name>.log              <- raw serial console capture for one device
+                                       (keyed by its manifest name=, read from its tty)
+  README.md
+  results/
+    main/<scope>/<category>/<name>/
+      test.log     <- test script output interleaved with device console logs during exec_test
+      diff         <- diff (expected vs actual), present only when test failed
+```
+
+One tester (`pvtest-run`) runs every selected test sequentially against the
+single device in the `--devices` manifest; it binds once for the whole run (no
+pool, no re-typing, no env injection at boot — see
+`docs/testing/device-target.md`). There is no `storage/<container>/` directory in
+device mode (a real device keeps its own on-device storage; nothing is mirrored
+to the host). Tests whose `required-config` the live device doesn't satisfy are
+SKIPPED (the device's config can't be injected), so run device mode **without**
+`--fail-on-skip` until every test's `"devices"` array has been audited for
+hardware safety.
+EOF
+	else
+		cat > "$work_path/README.md" << 'EOF'
 # Test Run Results
 
 ## Workspace Layout
@@ -887,6 +1149,10 @@ One tester (`pvtest-run`) dispatches the test queue across `-p` slots, re-typing
 each slot's appengine container as needed; see `docs/testing/device-target.md`
 for the full slot-pool model. Each test runs exactly once; the SUMMARY collects
 the per-test results.
+EOF
+	fi
+
+	cat >> "$work_path/README.md" << 'EOF'
 
 ## Log Format
 
@@ -955,6 +1221,10 @@ To filter by source:
 
 In GHA, WARN and ERROR lines from `test.log` are automatically surfaced in the
 job step summary under **Test log issues**.
+EOF
+
+	if [ -z "$devices_file" ]; then
+		cat >> "$work_path/README.md" << 'EOF'
 
 ## Valgrind Logs
 
@@ -967,6 +1237,7 @@ the largest file. Check with:
 - `possibly lost` — typically PV buffer pools; consistent at ~3.7 MB, not a regression
 - `ERROR SUMMARY` — mostly `Syscall param` warnings from liblxc, not pantavisor code
 EOF
+	fi
 
 	if [ $res -ne 0 ] || [ "${skip_fail:-0}" -ne 0 ]; then
 		return 1
