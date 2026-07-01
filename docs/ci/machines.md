@@ -80,13 +80,21 @@ Some machines add extra fragments:
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
 - `kas/with-lxc-next.yaml` — LXC 6.x instead of LXC 3.x
 - `kas/build-configs/build-base-toradex-starter.yaml` — Toradex-specific targets (see below)
+- `kas/build-configs/build-base-uuu-starter.yaml` — Variscite/NXP-MEK UUU targets (see below)
 
 `makemachines` resolves each fragment's `SRCREV` pins and writes a single self-contained `kas/build-configs/release/<name>-scarthgap.yaml` that can reproduce the build without network access to layer repos.
 
-## Toradex Machines
+## UUU Factory-Flash Machines (Toradex, Variscite, NXP MEK)
+
+These machines build `pv-flash-bundle`, a self-contained UUU factory-flash
+archive, instead of shipping a bare `.wic`. See
+[pv-flash-bundle](../overview/pv-flash-bundle.md) for how the recipe itself
+works.
 
 `verdin-imx8mm` and `colibri-imx6ull` replace `build-base-starter.yaml` with
-`build-base-toradex-starter.yaml`, which specifies three build targets:
+`build-base-toradex-starter.yaml`, which specifies three build targets — a
+recovery U-Boot is needed because meta-pantavisor's `pv.distroboot.cfg`
+overrides the production bootcmd:
 
 ```yaml
 target:
@@ -99,20 +107,36 @@ The `tezi-recovery` multiconfig (`DISTRO = "tezi"`) builds the recovery U-Boot
 used to enter fastboot mode during UUU flashing. Its output lands in
 `tmp-scarthgap-tezi-recovery/` and is picked up by `pv-flash-bundle`.
 
-Because the `output` field accepts space-separated globs, Toradex machines set
-it to capture both the main WIC image and the flash bundle:
+`imx8mm-var-dart`, `imx8mn-var-som`, and `imx8qxp-b0-mek` replace
+`build-base-starter.yaml` with `build-base-uuu-starter.yaml` instead — just
+two targets, no recovery multiconfig, since these boards' production
+bootloaders already self-enter SDP/fastboot download mode:
 
-```json
-"output": "pantavisor-starter*.rootfs.wic* pv-flash-bundle-colibri-imx6ull.tar.gz"
+```yaml
+target:
+  - pantavisor-starter
+  - pv-flash-bundle
 ```
 
-For `verdin-imx8mm` the default `output` (`pantavisor-starter*.rootfs.wic*`)
-is used; the flash bundle is archived separately by the dedicated "Archive
-pv-flash-bundle artifacts" step in `buildkas-upload.yaml`.
+All five machines set `"build_target": ""` (so `kas build` runs with no
+`--target` override and builds every target in the config's `target:` list)
+and `"output"` to just the bundle's own glob, e.g.:
 
-See [docs/ci/builds.md — Toradex Builds](builds.md#toradex-builds) and
-[docs/how-to-install/toradex.md](../how-to-install/toradex.md) for details on
-the flash bundle contents and flashing procedure.
+```json
+"output": "pv-flash-bundle-colibri-imx6ull.tar.gz"
+```
+
+The plain `.wic` is not archived or uploaded to S3 separately for these
+machines — it's already inside the bundle (as `.wic.gz`), so a standalone
+copy would be redundant. The "Archive pv-flash-bundle artifacts" step in
+`buildkas-upload.yaml` picks up whatever `output` copied into `images/`
+before uploading; it isn't an independent capture, it depends on `output`
+including the bundle's glob.
+
+See [docs/ci/builds.md — UUU Factory-Flash Builds](builds.md#uuu-factory-flash-builds-toradex-variscite-nxp-mek),
+[docs/how-to-install/toradex.md](../how-to-install/toradex.md), and
+[docs/how-to-install/uuu.md](../how-to-install/uuu.md) for the flash bundle
+contents and flashing procedures.
 
 ## Automated Machine Updates
 

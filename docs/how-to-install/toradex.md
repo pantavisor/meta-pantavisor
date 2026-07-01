@@ -26,7 +26,9 @@ Both machines now use the `pv-flash-bundle` recipe, which:
 ## pv-flash-bundle overview
 
 `pv-flash-bundle` (`recipes-bsp/pv-flash/pv-flash-bundle.bb`) assembles a
-self-contained factory flash archive. The exact contents differ by machine:
+self-contained factory flash archive. The exact contents differ by machine.
+For the recipe's design, `PV_FLASH_*` variables, and how to add a new
+UUU-flashable machine, see [pv-flash-bundle](../overview/pv-flash-bundle.md).
 
 ### Verdin iMX8MM (eMMC)
 

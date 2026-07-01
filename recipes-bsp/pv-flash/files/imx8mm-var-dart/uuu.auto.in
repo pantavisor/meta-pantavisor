@@ -1,0 +1,20 @@
+uuu_version 1.4.149
+
+# Factory flash for Pantavisor on Variscite DART-MX8M-Mini
+# Standard NXP i.MX8MM SDP -> fastboot flow (mirrors mfgtools' built-in
+# "emmc_all" script). No CFG: VID/PID overrides needed: the module keeps
+# NXP's default IDs at every stage (unlike Toradex, which rebrands the
+# fastboot stage).
+# Usage (from inside the extracted bundle directory):
+#   sudo ./uuu ./
+
+SDP: boot -f imx-boot.bin
+SDPV: delay 1000
+SDPV: write -f imx-boot.bin -skipspl
+SDPV: jump
+FB: ucmd setenv fastboot_dev mmc
+FB: ucmd setenv mmcdev 0
+FB: ucmd mmc dev 0
+FB: flash -raw2sparse all @WIC@
+FB: acmd reset
+FB: done
