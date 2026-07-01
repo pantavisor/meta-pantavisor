@@ -11,7 +11,7 @@ AWS_S3_URL="https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor"
 RELEASE_FILE="releases.json"
 
 TAR_IMAGES="$MACHINE_NAME-$TAG.tar.gz"
-TAR_PVEXPORTS="pvexports-$MACHINE_NAME-$TAG.tar.gz"
+ZIP_PVEXPORTS="pvexports-$MACHINE_NAME-$TAG.zip"
 
 aws configure set aws_access_key_id $AWS_KEY_ID
 aws configure set aws_secret_access_key $AWS_SECRET_KEY
@@ -31,14 +31,36 @@ if [ -d "images" ]; then
 fi
 
 if [ -d "pvexports" ]; then
+    # Each container's pvrexport is deployed twice: a versioned real file and an
+    # unversioned "latest" symlink pointing at it (classes/pvrexport.bbclass
+    # do_deploy). cp dereferences the symlink, so both land here as separate
+    # regular files with identical content. Dedupe by checksum, keeping the
+    # longer (versioned) filename.
+    declare -A CSUM_TO_FILE
+    for f in pvexports/*pvrexport.tgz; do
+        [ -f "$f" ] || continue
+        csum=$(sha256sum "$f" | cut -d' ' -f1)
+        existing="${CSUM_TO_FILE[$csum]}"
+        if [ -z "$existing" ]; then
+            CSUM_TO_FILE[$csum]="$f"
+        elif [ ${#f} -gt ${#existing} ]; then
+            rm -f "$existing"
+            CSUM_TO_FILE[$csum]="$f"
+        else
+            rm -f "$f"
+        fi
+    done
+
     FILES_PVEXPORTS=( $(ls pvexports) )
-    
+
     if [ ${#FILES_PVEXPORTS[@]} -gt 0 ]; then
         echo "processing: ${FILES_PVEXPORTS[*]}"
-        tar -czf "$TAR_PVEXPORTS" -C pvexports "${FILES_PVEXPORTS[@]}"
-        
-        PVEXPORTS_CSUM=$(sha256sum "$TAR_PVEXPORTS" | cut -d' ' -f1)
-        aws s3 cp "$TAR_PVEXPORTS" "s3://$AWS_S3_BUCKET/$TAG/$MACHINE_NAME/$TAR_PVEXPORTS"
+        # zip is not installed in the kas container image; python3's zipfile
+        # module is, and its CLI stores members under their basename.
+        python3 -m zipfile -c "$ZIP_PVEXPORTS" "${FILES_PVEXPORTS[@]/#/pvexports/}"
+
+        PVEXPORTS_CSUM=$(sha256sum "$ZIP_PVEXPORTS" | cut -d' ' -f1)
+        aws s3 cp "$ZIP_PVEXPORTS" "s3://$AWS_S3_BUCKET/$TAG/$MACHINE_NAME/$ZIP_PVEXPORTS"
     else
         echo "warning: folder pvrexports is empty"
     fi
@@ -83,7 +105,7 @@ aws s3 cp s3://$AWS_S3_BUCKET/$RELEASE_FILE $RELEASE_FILE || echo "{}" > $RELEAS
 NEW_DEVICE=$(jq -n \
   --arg name "$MACHINE_NAME" \
   --arg url1 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$TAR_IMAGES" \
-  --arg url2 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$TAR_PVEXPORTS" \
+  --arg url2 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$ZIP_PVEXPORTS" \
   --arg url3 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$BSP_FILE" \
   --arg IMAGES_CSUM "$IMAGES_CSUM" \
   --arg PVEXPORTS_CSUM "$PVEXPORTS_CSUM" \

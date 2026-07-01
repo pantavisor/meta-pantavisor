@@ -93,45 +93,6 @@ jobs:
           path: pvtest-distro/
           if-no-files-found: ignore
 
-      - name: Archive wic artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ inputs.build_target || 'pantavisor-starter' }}-${{ inputs.machine_name }}
-          path: |
-             images/${{ inputs.output }}
-          if-no-files-found: ignore
-
-      - name: Archive all pvrexport artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: pvrexports-${{ inputs.machine_name }}
-          path: |
-            pvexports/*pvrexport.tgz
-          if-no-files-found: ignore
-
-      - name: Archive bsp pvrexport artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: pantavisor-bsp-${{ inputs.machine_name }}
-          path: |
-            pvexports/pantavisor-bsp*
-          if-no-files-found: ignore
-
-      - name: Archive pv-flash-bundle artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: pv-flash-bundle-${{ inputs.machine_name }}
-          path: |
-            images/pv-flash-bundle-*.tar.gz
-          if-no-files-found: ignore
-
-      - name: Archive sdk tar artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: sdk-artifact-${{ inputs.machine_name }}
-          path: sdk/panta*.sh
-          if-no-files-found: ignore
-
       - name: Upload to S3
         run: |
           .github/scripts/upload.sh \
