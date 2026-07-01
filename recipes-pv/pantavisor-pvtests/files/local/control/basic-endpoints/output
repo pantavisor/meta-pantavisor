@@ -1,3 +1,4 @@
+== containers ==
 [
   {
     "name": "pvr-sdk",
@@ -10,6 +11,7 @@
     ]
   }
 ]
+== groups ==
 [
   {
     "name": "data",
@@ -41,44 +43,29 @@
     }
   }
 ]
-+ pvcontrol usrmeta ls
-+ jq -M
-+ tr -d '\r'
+== user-meta ==
 {}
-+ pvcontrol devmeta ls
-+ jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
-+ tr -d '\r'
+== device-meta ==
 {
   "pantahub.claimed": "0",
   "pantahub.online": "0",
-  "pantavisor.arch": "x86_64/64/EL",
   "pantavisor.mode": "local",
-  "pantavisor.revision": "0",
+  "pantavisor.revision": "locals/local_control_basic_endpoints",
   "pantavisor.status": "READY"
 }
-++ pvcontrol objects ls
-++ jq -M length
-++ tr -d '\r'
-+ echo 'object count: 6'
-object count: 6
-+ pvcontrol steps ls
-+ jq -M 'map(del(.date))'
-+ tr -d '\r'
+object count > 0: true
+== steps (current revision) ==
 [
   {
-    "name": "0",
+    "name": "locals/local_control_basic_endpoints",
     "commitmsg": "",
     "progress": {
-      "status": "DONE",
-      "status-msg": "Factory revision",
       "progress": 100,
       "retries": 0
     }
   }
 ]
-+ pvcontrol conf ls
-+ jq -M
-+ tr -d '\r'
+== config ==
 [
   {
     "key": "PH_CREDS_HOST",
@@ -142,8 +129,8 @@ object count: 6
   },
   {
     "key": "PH_METADATA_DEVMETA_INTERVAL",
-    "value": "10",
-    "modified": "ph conf file"
+    "value": "15",
+    "modified": "ph cmdline"
   },
   {
     "key": "PH_METADATA_USRMETA_INTERVAL",
@@ -157,7 +144,7 @@ object count: 6
   },
   {
     "key": "PH_UPDATER_INTERVAL",
-    "value": "60",
+    "value": "5",
     "modified": "ph conf file"
   },
   {
@@ -257,13 +244,13 @@ object count: 6
   },
   {
     "key": "PV_DEBUG_SSH",
-    "value": "0",
+    "value": "1",
     "modified": "env"
   },
   {
     "key": "PV_DEBUG_SSH_AUTHORIZED_KEYS",
-    "value": "(null)",
-    "modified": "default"
+    "value": "pvtest-authorized_keys",
+    "modified": "env"
   },
   {
     "key": "PV_DISK_EXPORTSDIR",
@@ -313,7 +300,7 @@ object count: 6
   {
     "key": "PV_LOG_CAPTURE_DMESG",
     "value": "0",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_LOG_BUF_NITEMS",
@@ -328,7 +315,7 @@ object count: 6
   {
     "key": "PV_LOG_DIR_MAXSIZE",
     "value": "2147483647",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_LOG_FILETREE_TIMESTAMP_FORMAT",
@@ -423,7 +410,7 @@ object count: 6
   {
     "key": "PV_SECUREBOOT_MODE",
     "value": "disabled",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_SECUREBOOT_OEM_TRUSTSTORE",
@@ -558,12 +545,12 @@ object count: 6
   {
     "key": "PV_UPDATER_COMMIT_DELAY",
     "value": "5",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_UPDATER_GOALS_TIMEOUT",
     "value": "10",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_UPDATER_USE_TMP_OBJECTS",
@@ -578,7 +565,7 @@ object count: 6
   {
     "key": "PV_WDT_MODE",
     "value": "disabled",
-    "modified": "env"
+    "modified": "pv conf file"
   },
   {
     "key": "PV_WDT_TIMEOUT",

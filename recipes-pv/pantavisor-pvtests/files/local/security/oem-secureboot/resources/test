@@ -2,20 +2,25 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
+echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+# Per-test isolation: private $HOME + temp checkout dir (see automated-workflow.md § Test authoring rules).
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$HOME/checkout"
 
-# check secureboot mode
+echo "== secureboot mode =="
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
 
-# post a new change with a new oem config signed by oem
-pvr get /work/local/common/tarballs/pv-oem-developer-001_oemsigned.tgz
+echo "== post OEM-signed config (expect rejection) =="
+# Normalize $HOME back to a stable path so the "Imported N objects to <HOME>/..." line is deterministic.
+pvr get /work/local/common/tarballs/pv-oem-developer-001_oemsigned.tgz 2>&1 | sed "s#$HOME#/home/root#g"
 pvr checkout
-pvr post --rev "locals/error" > /dev/null
+# No reset between tests: drop the non-deterministic "Posting object info" line, keep the rejection.
+pvr post --rev "locals/error" 2>&1 >/dev/null | grep -v 'Posting object info for:'
 
-# after posting evaluation
+echo "== step progress after rejection =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 pvcontrol conf ls | jq -M '.[] | select(.key == "PV_SECUREBOOT_MODE")'
 pvcontrol steps show-progress locals/error

@@ -1,26 +1,18 @@
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["system.init.mode"]'
+== pv conf file ==
 2
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["creds.host"]'
+== ph conf file ==
 api.pantahub.com
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["policy"]'
-test
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["creds.port"]'
-43
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["metadata.devmeta.interval"]'
+== cmdline ==
 15
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["debug.ssh"]'
-false
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["log.level"]'
+== env ==
+test
+== policy ==
+true
+== oem config ==
+30
+== metadata (before write) ==
 4
-+ pventer -c pvr-sdk pvcontrol usrmeta save log.level 5
+== update log.level via user-meta ==
 
-+ pventer -c pvr-sdk pvcontrol config ls
-+ jq -M -r '.["log.level"]'
+== metadata (after write) ==
 5

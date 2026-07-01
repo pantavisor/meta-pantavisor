@@ -1,75 +1,30 @@
-+ SOCK=/run/pantavisor/pv/pv-ctrl
-+ DEVFILTER='del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
-+ echo '== device-meta initial =='
 == device-meta initial ==
-+ pvcontrol devmeta ls
-+ jq -M 'del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
-+ tr -d '\r'
 {
-  "pantavisor.status": "READY",
   "pantahub.claimed": "0",
   "pantahub.online": "0",
   "pantavisor.mode": "local",
-  "pantavisor.revision": "0",
-  "pantavisor.arch": "x86_64/64/EL"
+  "pantavisor.revision": "locals/local_services_metadata_crud",
+  "pantavisor.status": "READY"
 }
-+ echo '== device-meta save =='
 == device-meta save ==
-+ pvcontrol devmeta save test-key test-value-123
 
-+ pvcontrol devmeta ls
-+ jq -M '.["test-key"]'
-+ tr -d '\r'
 "test-value-123"
-+ echo '== device-meta update =='
 == device-meta update ==
-+ pvcontrol devmeta save test-key updated-value-456
 
-+ pvcontrol devmeta ls
-+ jq -M '.["test-key"]'
-+ tr -d '\r'
 "updated-value-456"
-+ echo '== device-meta delete =='
 == device-meta delete ==
-+ pvcontrol devmeta delete test-key
 
-++ pvcontrol devmeta ls
-++ jq -M 'has("test-key")'
-++ tr -d '\r'
-+ echo 'test-key present after delete: false'
 test-key present after delete: false
-+ echo '== device-meta delete non-existent key (expect 404) =='
 == device-meta delete non-existent key (expect 404) ==
-+ pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X DELETE http://localhost/device-meta/nonexistent-key-xyz
 404
-+ echo '== user-meta initial =='
 == user-meta initial ==
-+ pvcontrol usrmeta ls
-+ jq -M
-+ tr -d '\r'
-{}
-+ echo '== user-meta save =='
+my-key present initially: false
 == user-meta save ==
-+ pvcontrol usrmeta save my-key my-value
 
-+ pvcontrol usrmeta ls
-+ jq -M '.["my-key"]'
-+ tr -d '\r'
 "my-value"
-+ echo '== user-meta update =='
 == user-meta update ==
-+ pvcontrol usrmeta save my-key new-value
 
-+ pvcontrol usrmeta ls
-+ jq -M '.["my-key"]'
-+ tr -d '\r'
 "new-value"
-+ echo '== user-meta delete =='
 == user-meta delete ==
-+ pvcontrol usrmeta delete my-key
 
-++ pvcontrol usrmeta ls
-++ jq -M 'has("my-key")'
-++ tr -d '\r'
-+ echo 'my-key present after delete: false'
 my-key present after delete: false

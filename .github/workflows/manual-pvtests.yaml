@@ -13,7 +13,7 @@ on:
         description: 'Number of tests to run in parallel'
         required: false
         type: string
-        default: "4"
+        default: "6"
 
 jobs:
 

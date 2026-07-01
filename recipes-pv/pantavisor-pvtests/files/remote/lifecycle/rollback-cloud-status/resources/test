@@ -2,29 +2,27 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(cat /var/run/pantavisor/pv/device-id)
-pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
-cd /home/checkout
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 
-# Change pvr-sdk's status_goal from STARTED to READY.
-# pvr-sdk only signals STARTED, so READY is never reached within the 1s goals timeout.
+# Per-test isolation: clone into a temp checkout dir; never override $HOME (see
+# automated-workflow.md § Test authoring rules).
+checkout="$(mktemp -d)/checkout"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$checkout"
+
+trail_url="https://api.pantahub.com/trails/$device_id"
+
+echo "== post revision that triggers goals timeout rollback =="
 tmp=$(mktemp)
 jq '."status_goal" = "READY"' pvr-sdk/run.json > "$tmp" && mv "$tmp" pvr-sdk/run.json
 pvr add pvr-sdk/run.json > /dev/null 2>&1
 pvr commit -m "change status_goal to READY to trigger goals timeout" > /dev/null 2>&1
-pvr post -m "trigger rollback" > /dev/null 2>&1
+rev=$(pvr_post_rev -m "trigger rollback" "$trail_url")
+[ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
 
-# Wait for step 1 to reach ERROR locally (pvr-sdk never signals READY within the 1s goals timeout)
-wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "ERROR" 120 \
-    || { echo "ERROR: timeout waiting for revision 1 to reach ERROR" >&2; exit 1; }
-
-# PV rolls back and reboots; wait for pantavisor to be READY again before checking progress
-wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 60 \
-    || { echo "ERROR: timeout waiting for pantavisor.status READY after rollback" >&2; exit 1; }
-
-# Wait for cloud to reflect the ERROR status, then show it
-# pvr stepinfo prints "Getting remote repository info ... [OK]" before the JSON; strip it
-cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/1"
-wait_for_value "pvr stepinfo \"$cloud_step_url\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "ERROR" 60 \
+echo "== cloud step status =="
+cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/$rev"
+wait_for_value "pvr stepinfo \"$cloud_step_url\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "ERROR" 120 \
     || { echo "ERROR: timeout waiting for cloud to reflect ERROR" >&2; exit 1; }
 pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'

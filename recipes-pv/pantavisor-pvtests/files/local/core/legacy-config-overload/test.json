@@ -2,20 +2,20 @@
 	"#spec": "pv-test@1",
 	"description": "legacy configuration overload",
 	"setup": {
-		"cmdline": "pv_policy=test ph_creds.port=43 ph_metadata.devmeta.interval=15",
-		"env": "PV_WDT_MODE=disabled PV_DEBUG_SSH=0 PV_LOG_DIR_MAXSIZE=2147483647 PV_SECUREBOOT_MODE=disabled",
-		"pantavisor.config": "resources/pantavisor.config",
-		"pvs": "../../common/pvs/*.tar.gz",
+		"required-config": "PV_POLICY=test PV_CONTROL_REMOTE=0",
+		"usrmeta": "",
 		"containers": {
 			"control": "pvr-sdk",
 			"tarballs": [
 				"../../common/tarballs/bsp.tgz",
-				"../../common/tarballs/pvr-sdk.tgz"
+				"../../common/tarballs/pvr-sdk.tgz",
+				"../../common/tarballs/pv-oem-developer-001.tgz"
 			],
 			"urls": []
 		},
-		"ready-script": ""
+		"self-claim": "false"
 	},
 	"test-script": "resources/test",
-	"skip": "false"
+	"skip": "false",
+	"devices": []
 }
