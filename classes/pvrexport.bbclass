@@ -20,6 +20,10 @@ PVR_SRC_URI ?= ""
 PVR_DOCKER_REF ?= ""
 PVR_APP_ADD_EXTRA_ARGS ?= ""
 
+# vendor whose developer CA keys are unpacked before signing; distros
+# opt in to per-vendor keys with PVREXPORT_VENDOR_NAME = "${PVS_VENDOR_NAME}"
+PVREXPORT_VENDOR_NAME ??= "generic"
+
 do_fetch_pvr[dirs] += "${PVR_HOME_DIR}"
 do_fetch_pvr[cleandirs] += "${PVR_CONFIG_DIR} ${PVR_SRC_DIR} ${PVR_TMPDIR}"
 do_fetch_pvr[depends] += "pvr-native:do_populate_sysroot squashfs-tools-native:do_populate_sysroot virtual/fakeroot-native:do_populate_sysroot"
@@ -54,8 +58,8 @@ do_unpack[postfuncs] += "do_unpack_pvr"
 do_unpack_pvr() {
 	export PVR_DISABLE_SELF_UPGRADE=true
 	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
-	if [ -d ${WORKDIR}/pv-developer-ca_generic ]; then
-		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_generic/pvs/pvs.defaultkeys.tar.gz
+	if [ -d ${WORKDIR}/pv-developer-ca_${PVREXPORT_VENDOR_NAME} ]; then
+		tar -C ${PVR_CONFIG_DIR}/ -xf ${WORKDIR}/pv-developer-ca_${PVREXPORT_VENDOR_NAME}/pvs/pvs.defaultkeys.tar.gz
 	fi
 	echo "do_unpack_pvr: $PWD ${B}/pvrrepo"
 	mkdir -p ${B}/pvrrepo
