@@ -23,7 +23,7 @@ usage() {
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
 	echo "  -p, --parallel N      Number of slots: the cap on concurrent appengine"
-	echo "                        containers a single tester keeps busy (default: nproc)."
+	echo "                        containers a single tester keeps busy (default: 1)."
 	echo "  -r, --retry N         Retry failed tests up to N times (default: 0)"
 	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED (e.g. no matching runner)"
 	echo "      --fail-on-skip-field  Treat a test.json \"skip\":\"true\" as an ERROR (use on CI/master)"
@@ -481,17 +481,9 @@ run_test() {
 		esac
 	done
 
-	# -p is the global cap on concurrent runners across all types: -p 1 runs fully
-	# serial, -p N allows up to N concurrent runners (like a master pool). When
-	# unset it defaults to nproc (size to the box); modes that must run serially
-	# (interactive, manual, overwrite, netsim) default to 1 instead.
+	# -p caps concurrent runners; unset/<=0 defaults to 1 (serial).
 	if [ "$parallel" -le 0 ] 2>/dev/null; then
-		if [ "$interactive" = "true" ] || [ "$manual" = "true" ] || \
-		   [ "$overwrite" = "true" ] || [ "$netsim" = "true" ]; then
-			parallel=1
-		else
-			parallel=$(nproc 2>/dev/null || echo 1)
-		fi
+		parallel=1
 	fi
 
 	if [ "$parallel" -gt 1 ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then

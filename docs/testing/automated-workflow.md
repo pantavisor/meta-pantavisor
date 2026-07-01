@@ -214,7 +214,6 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 | `setup.containers.tarballs` | list of container pvrexport tarballs | always include `bsp.tgz` and `pvr-sdk.tgz`; add extra containers as needed |
 | `setup.containers.urls` | OTA container URLs (remote tests) | `[]` for local tests |
 | `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed | requires `PH_USER`/`PH_PASS` when `"true"` |
-| `setup.isolate` | `"true"`: run this test alone on its own container (never shared with a later same-config test), torn down afterward. Set it only for tests that leave the device unusable — e.g. GC tests that delete the factory revision. | optional; defaults to `"false"` |
 | `test-script` | path to the test script | `"resources/test"` |
 | `skip` | exclude test from runs | `"false"` normally; `"true"` to disable **for local iteration only** — `--fail-on-skip-field` (used on CI/master) turns `"true"` into a hard ERROR, so a skipped test must never be committed to master |
 
@@ -308,15 +307,16 @@ rules below are mandatory; they encode lessons that caused real cross-test failu
     `--fail-on-skip-field`, which turns a `skip:"true"` test into a hard ERROR.
     Tests that are not ready to run on master live in the [Todo list](#todo-list),
     not as skipped dirs in the tree.
-11. **Factory-destructive tests must isolate.** Most tests restore the device for
-    the next one via rule 7. A few *cannot* — a GC test that deletes the factory
-    revision (`/storage/trails/0`) leaves the container unable to clone the factory
-    for the next test, which then fails with `Resource does not exist`. Such a test
-    must set `setup.isolate: true`, so the slot pool runs it alone on its own
-    container and tears it down afterward instead of sharing it. Set this **only**
-    when the destruction is intrinsic to what the test verifies (e.g.
-    `local/services/on-demand-gc`, `remote/lifecycle/insufficient-disk-space`); for
-    everything else, clean up per rule 7.
+11. **Destructive tests must be state-independent.** There is no isolation
+    mechanism — every test shares a container with later same-config tests, so a
+    test that destroys device state (e.g. a GC test that deletes the factory
+    revision `/storage/trails/0`, or one that fills the disk) must be written to run
+    on a device in *any* prior state and must not assume a pristine factory. Build
+    the baseline the test needs from its own posted revisions, derive content-
+    addressed object names dynamically rather than hard-coding factory hashes (e.g.
+    `sha256sum pvr-sdk/lxc.container.conf`), and assert only on paths the test itself
+    creates/removes. See `local/services/on-demand-gc` and
+    `remote/lifecycle/insufficient-disk-space` for the pattern.
 
 Always source `utils` at the top (`source /usr/share/pantavisor/pvtest/utils`); it
 provides `pvcontrol`/`pventer`/`pvcurl`, `_pv_exec`, the `wait_for_*` helpers and

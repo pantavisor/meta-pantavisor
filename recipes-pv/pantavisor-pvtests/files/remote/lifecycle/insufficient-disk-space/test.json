@@ -12,8 +12,7 @@
 			],
 			"urls": []
 		},
-		"self-claim": "true",
-		"isolate": true
+		"self-claim": "true"
 	},
 	"test-script": "resources/test",
 	"skip": "false",
