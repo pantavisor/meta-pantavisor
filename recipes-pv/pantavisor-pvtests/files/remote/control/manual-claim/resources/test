@@ -15,9 +15,18 @@ wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantahub.state\"'" "claim" 120 
 pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
 echo "== claim device =="
+# state flips to "claim" before the hint files are written; wait for them so we
+# never call pvr claim with empty args (which blocks on its interactive prompt).
+wait_for_status "_pv_exec test -s /run/pantavisor/pv/device-id" 0 30 \
+    || { echo "ERROR: timeout waiting for device-id hint file" >&2; exit 1; }
+wait_for_status "_pv_exec test -s /run/pantavisor/pv/challenge" 0 30 \
+    || { echo "ERROR: timeout waiting for challenge hint file" >&2; exit 1; }
 device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 challenge=$(_pv_exec cat /run/pantavisor/pv/challenge)
-pvr claim -c "$challenge" "$device_id"
+if [ -z "$device_id" ] || [ -z "$challenge" ]; then
+    echo "ERROR: empty device-id or challenge in claim state" >&2; exit 1
+fi
+pvr claim -c "$challenge" "$device_id" </dev/null
 
 echo "== wait for idle (claimed) =="
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantahub.state\"'" "idle" 120 \
