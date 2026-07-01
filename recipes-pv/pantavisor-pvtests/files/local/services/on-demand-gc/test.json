@@ -1,6 +1,6 @@
 {
 	"#spec": "pv-test@1",
-	"description": "GC respects last DONE and UPDATED",
+	"description": "GC reclaims the initial revision but keeps the DONE rollback, the running revision, and their referenced objects",
 	"setup": {
 		"required-config": "PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=disabled",
 		"usrmeta": "",

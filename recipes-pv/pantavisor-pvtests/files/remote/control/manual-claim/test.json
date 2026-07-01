@@ -3,7 +3,6 @@
 	"description": "manual claim",
 	"setup": {
 		"required-config": "PV_CONTROL_REMOTE=1 PV_CONTROL_REMOTE_ALWAYS=1 PV_STORAGE_PHCONFIG_VOL=1",
-		"usrmeta": "PH_METADATA_DEVMETA_INTERVAL=10 PH_METADATA_USRMETA_INTERVAL=10 PH_UPDATER_INTERVAL=5",
 		"containers": {
 			"control": "pvr-sdk",
 			"tarballs": [

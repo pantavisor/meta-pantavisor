@@ -738,8 +738,10 @@ run_test() {
 		-v "$ctrl_dir":/work/ctrl
 	)
 
-	docker run "${tester_run_args[@]}" "$tester_image" 2>&1 | tee -a "$work_path/run.main.log"
-	res=${PIPESTATUS[0]}
+	# Tester output (incl. the '<tid>' RESULT lines) lands in run.log via the exec
+	# redirect above — only the non-interactive/non-manual path reaches the SUMMARY.
+	docker run "${tester_run_args[@]}" "$tester_image" 2>&1
+	res=$?
 
 	# Stop the re-type service and tear down any remaining slot containers.
 	if [ -n "$svc_pid" ]; then
@@ -773,9 +775,8 @@ run_test() {
 
 	set +x
 
-	# Collect results. The single tester run writes per-test result lines to
-	# run.main.log and per-test diffs under results/main/<tid>/; the rank()
-	# precedence is a harmless tie-break. wtag ("main") gives the diff path.
+	# Collect results from run.log; diffs live under results/main/<tid>/, so the
+	# tag is always "main". rank() is a tie-break:
 	#   FAILED > ABORTED > PASSED > SKIPPED > RECORDED
 	local merged_file
 	merged_file=$(mktemp)
@@ -798,15 +799,12 @@ run_test() {
 				else tm = ""
 				rk = rank(res)
 				if (rk > 0) {
-					tag = FILENAME
-					sub(/.*\/run\./, "", tag)
-					sub(/\.log$/, "", tag)
-					if (rk > best[tid]) { best[tid]=rk; result[tid]=res; wtag[tid]=tag; time[tid]=tm }
+					if (rk > best[tid]) { best[tid]=rk; result[tid]=res; wtag[tid]="main"; time[tid]=tm }
 				}
 			}
 		}
 		END { for (t in result) printf "%s\t%s\t%s\t%s\n", t, result[t], wtag[t], time[t] }
-	' "$work_path"/run.*.log 2>/dev/null | sort > "$merged_file"
+	' "$work_path/run.log" 2>/dev/null | sort > "$merged_file"
 
 	echo "======================================================="
 	echo "======================= SUMMARY ======================="
@@ -819,7 +817,7 @@ run_test() {
 	find "$work_path/results" -name test.log -exec \
 		grep -hE '^\[pvtest\] .* ERROR -- ' {} + 2>/dev/null \
 		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u > "$test_errs"
-	grep -hE '^\[pvtest\] .* ERROR -- ' "$work_path"/run.*.log 2>/dev/null \
+	grep -hE '^\[pvtest\] .* ERROR -- ' "$work_path/run.log" 2>/dev/null \
 		| sed -E 's/^\[pvtest\] [0-9]+ //' | sort -u \
 		| grep -vxF -f "$test_errs" 2>/dev/null \
 		| grep -vE "ERROR -- \[[^]]*\]: '[^']*' (FAILED|ABORTED|PASSED|SKIPPED|RECORDED)" \
@@ -877,8 +875,7 @@ run_test() {
 
 ```
 <workspace>/
-  run.log                           <- aggregate output + SUMMARY
-  run.main.log                      <- the tester run's per-test result lines
+  run.log                           <- aggregate output (host + tester) + SUMMARY
   appengine-<container>.log         <- full pantavisor stdout_direct for one appengine
                                        container (keyed by its full name)
   README.md
@@ -911,7 +908,9 @@ Sources: `test.docker.sh`, `pvtest-run`, `pv-appengine`.
 
 ## run.log
 
-Contains one structured line per test result plus a SUMMARY section at the end.
+The single aggregate log: host orchestrator (`test.docker.sh`) and tester
+(`pvtest-run`) output interleaved — distinguishable by the `[source]` tag — plus
+one structured line per test result and a SUMMARY section at the end.
 
 Log levels used in `run.log`:
 

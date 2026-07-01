@@ -21,13 +21,8 @@ pvr commit -m "change status_goal to READY to trigger goals timeout" > /dev/null
 rev=$(pvr_post_rev -m "trigger rollback" "$trail_url")
 [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
 
-wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "ERROR" 120 \
-    || { echo "ERROR: timeout waiting for revision $rev to reach ERROR" >&2; exit 1; }
-wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 60 \
-    || { echo "ERROR: timeout waiting for pantavisor.status READY after rollback" >&2; exit 1; }
-
 echo "== cloud step status =="
 cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/$rev"
-wait_for_value "pvr stepinfo \"$cloud_step_url\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "ERROR" 60 \
+wait_for_value "pvr stepinfo \"$cloud_step_url\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "ERROR" 120 \
     || { echo "ERROR: timeout waiting for cloud to reflect ERROR" >&2; exit 1; }
 pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'

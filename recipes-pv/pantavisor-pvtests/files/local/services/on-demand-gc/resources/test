@@ -2,48 +2,85 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup
-pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+INITIAL="locals/local_services_on_demand_gc"
+REBOOT="locals/on_demand_gc_reboot"
+NONREBOOT="locals/on_demand_gc_nonreboot"
 
-# post a new change that triggers a reboot update
+# present/absent check for a path inside the pvr-sdk container (which has
+# /storage bind-mounted).
+exists() { pventer -c pvr-sdk ls -d "$1" > /dev/null 2>&1 && echo present || echo absent; }
+
+echo "== initial revision =="
+pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+
+# Per-test isolation: private $HOME + temp checkout dir (see automated-workflow.md § Test authoring rules).
+export HOME="$(mktemp -d)"
+pvr clone http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr "$HOME/checkout" > /dev/null 2>&1 \
+    || { echo "ERROR: pvr clone failed" >&2; exit 1; }
+cd "$HOME/checkout"
+
+# pvr objects are content-addressed by sha256; capture conf object names before/after
+# each edit so GC assertions never hard-code factory hashes.
+#   sdk_orig: original pvr-sdk conf, referenced only by the initial revision
+#             (both updates supersede it) -> GC reclaims it.
+#   app_orig: original pv-example-app conf, still referenced by the retained
+#             reboot/DONE revision (which never changed it) -> GC keeps it.
+sdk_orig=$(sha256sum pvr-sdk/lxc.container.conf | cut -d' ' -f1)
+app_orig=$(sha256sum pv-example-app/lxc.container.conf | cut -d' ' -f1)
+
+echo "== post reboot update =="
 sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pvr-sdk/lxc.container.conf
+sdk_new=$(sha256sum pvr-sdk/lxc.container.conf | cut -d' ' -f1)
 pvr add .
 pvr commit > /dev/null 2>&1
-pvr post --rev "locals/done" > /dev/null 2>&1
+pvr post --rev "$REBOOT" > /dev/null 2>&1
 
-# after posting evaluation
-wait_for_revision_state "pvr-sdk" "locals/done" "DONE" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for locals/done to reach DONE" >&2; exit 1; }
-pvcontrol steps show-progress locals/done
-pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
+wait_for_revision_state "pvr-sdk" "$REBOOT" "DONE" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for $REBOOT to reach DONE" >&2; exit 1; }
+echo "== reboot update: DONE (rollback point) =="
+pvcontrol steps show-progress "$REBOOT"
 
-# post a new change that triggers a non-reboot update
+echo "== post non-reboot update =="
 sed -i 's/lxc\.tty\.max = 8/lxc.tty.max = 4/g' pv-example-app/lxc.container.conf
+app_new=$(sha256sum pv-example-app/lxc.container.conf | cut -d' ' -f1)
 pvr add .
 pvr commit > /dev/null 2>&1
-pvr post --rev "locals/updated" > /dev/null 2>&1
+pvr post --rev "$NONREBOOT" > /dev/null 2>&1
 
-# after posting evaluation
-wait_for_revision_state "pvr-sdk" "locals/updated" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for locals/updated to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress locals/updated
+wait_for_revision_state "pvr-sdk" "$NONREBOOT" "UPDATED" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for $NONREBOOT to reach UPDATED" >&2; exit 1; }
+echo "== non-reboot update: UPDATED (current) =="
+pvcontrol steps show-progress "$NONREBOOT"
+
+echo "== running revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 
-# run garbage collector, compare before and after
-OBJ_COUNT=$(pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1 | wc -l)
-pventer -c pvr-sdk find /storage -not -name console.log | grep -v '^/storage/objects/[0-9a-f]' | sort
-echo "object count: $OBJ_COUNT"
+echo "== storage before GC =="
+echo "initial trail:        $(exists /storage/trails/$INITIAL)"
+echo "initial logs:         $(exists /storage/logs/$INITIAL)"
+echo "orig pvr-sdk object:  $(exists /storage/objects/$sdk_orig)"
+
+echo "== run garbage collector =="
 pvcontrol commands run-gc
-wait_for_path "pvr-sdk" "/storage/logs/0" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for /storage/logs/0 to disappear" >&2; exit 1; }
-wait_for_path "pvr-sdk" "/storage/trails/0" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for /storage/trails/0 to disappear" >&2; exit 1; }
-wait_for_path "pvr-sdk" "/storage/objects/e5ee4b76420bf4d317221f081618eba2e68ab97d1b31a5fcfe6ce48b91e8562c" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for object e5ee4b76 to be GC'd" >&2; exit 1; }
-wait_for_path "pvr-sdk" "/storage/objects/2ef57a87c9044d9c828ed4efc9bff8fd67fa15b00abad6cb607f7ca3d47c1df8" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for object 2ef57a87 to be GC'd" >&2; exit 1; }
-OBJ_COUNT=$(pventer -c pvr-sdk find /storage/objects -mindepth 1 -maxdepth 1 | wc -l)
-pventer -c pvr-sdk find /storage -not -name console.log | grep -v '^/storage/objects/[0-9a-f]' | sort
-echo "object count: $OBJ_COUNT"
+# run-gc is processed asynchronously by the PV main loop; gate on the initial
+# trail and its orphaned object disappearing (object GC runs in the same pass).
+wait_for_path "pvr-sdk" "/storage/trails/$INITIAL" "-d" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for initial trail to be GC'd" >&2; exit 1; }
+wait_for_path "pvr-sdk" "/storage/objects/$sdk_orig" "-d" > /dev/null 2>&1 \
+    || { echo "ERROR: timeout waiting for orig pvr-sdk object to be GC'd" >&2; exit 1; }
+
+echo "== trails after GC =="
+echo "initial:    $(exists /storage/trails/$INITIAL)"
+echo "reboot:     $(exists /storage/trails/$REBOOT)"
+echo "nonreboot:  $(exists /storage/trails/$NONREBOOT)"
+
+echo "== logs after GC =="
+echo "initial:    $(exists /storage/logs/$INITIAL)"
+echo "reboot:     $(exists /storage/logs/$REBOOT)"
+echo "nonreboot:  $(exists /storage/logs/$NONREBOOT)"
+
+echo "== objects after GC =="
+echo "orig pvr-sdk (initial-only):       $(exists /storage/objects/$sdk_orig)"
+echo "new pvr-sdk (reboot+nonreboot):    $(exists /storage/objects/$sdk_new)"
+echo "orig pv-example-app (shared DONE): $(exists /storage/objects/$app_orig)"
+echo "new pv-example-app (nonreboot):    $(exists /storage/objects/$app_new)"

@@ -32,6 +32,8 @@ wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 1
     || { echo "ERROR: timeout waiting for pantavisor.status READY after kill (1)" >&2; exit 1; }
 wait_for_value "pvcontrol steps show-progress $rev | jq -r '.retries'" "2" 120 \
     || { echo "ERROR: timeout waiting for revision $rev retries to reach 2" >&2; exit 1; }
+wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "DOWNLOADING" 120 \
+    || { echo "ERROR: timeout waiting for revision $rev to start DOWNLOADING" >&2; exit 1; }
 pvcontrol steps show-progress $rev | jq -Mc 'del(.logs, .downloads)'
 
 echo "== kill PV (crash 2, triggers WONTGO via cloud) =="
