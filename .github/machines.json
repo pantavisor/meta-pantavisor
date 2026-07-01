@@ -18,8 +18,10 @@
 			"sdk": 1
 		},
 		{
-			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8qxp-b0-mek",
+			"build_target": "",
+			"output": "pv-flash-bundle-imx8qxp-b0-mek.tar.gz",
 			"workflows": ["manual", "tag"]
 		},
 		{
@@ -46,13 +48,17 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8mn-var-som",
+			"build_target": "",
+			"output": "pv-flash-bundle-imx8mn-var-som.tar.gz",
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8mm-var-dart",
+			"build_target": "",
+			"output": "pv-flash-bundle-imx8mm-var-dart.tar.gz",
 			"workflows": ["manual", "tag"]
 		},
 		{

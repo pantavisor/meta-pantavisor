@@ -1,8 +1,9 @@
 # Flashing: Variscite DART-MX8M-MINI
 
-**Flash methods:** uuu (eMMC) | SD card — see the sections above
+**Flash methods:** pv-flash-bundle / uuu (eMMC) | SD card — see the sections above
 
-**Image artifact:** `pantavisor-starter-imx8mm-var-dart*.wic`
+**Image artifact:** `pv-flash-bundle-imx8mm-var-dart.tar.gz` (eMMC) or
+`pantavisor-starter-imx8mm-var-dart*.wic` (SD card)
 
 ## Hardware overview
 
@@ -42,13 +43,23 @@ depending on the carrier board revision) to your host PC.
 
 ### 3. Flash
 
+Using the self-contained bundle (recommended — no `uuu` install needed):
+
+```bash
+tar xzf pv-flash-bundle-imx8mm-var-dart.tar.gz
+cd pv-flash-bundle-imx8mm-var-dart
+./flash.sh
+```
+
+Or manually, with `uuu` already installed on the host:
+
 ```bash
 sudo uuu -b emmc_all \
     imx-boot-imx8mm-var-dart*.bin \
     pantavisor-starter-imx8mm-var-dart*.wic
 ```
 
-See the uuu section above for full details and troubleshooting.
+See the [uuu section above](../uuu.md) for full details and troubleshooting.
 
 ### 4. Restore boot-mode to eMMC
 

@@ -34,8 +34,8 @@ jobs:
             sdk: 1
           - machine_name: imx8qxp-b0-mek-scarthgap
             configs: kas/build-configs/release/imx8qxp-b0-mek-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-starter
-            output: "pantavisor-starter*.rootfs.wic*"
+            build_target: 
+            output: "pv-flash-bundle-imx8qxp-b0-mek.tar.gz"
             sdk: 0
           - machine_name: raspberrypi-armv8-scarthgap
             configs: kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml
@@ -50,7 +50,7 @@ jobs:
           - machine_name: colibri-imx6ull-scarthgap
             configs: kas/build-configs/release/colibri-imx6ull-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
-            output: "pantavisor-starter*.rootfs.wic* pv-flash-bundle-colibri-imx6ull.tar.gz"
+            output: "pv-flash-bundle-colibri-imx6ull.tar.gz"
             sdk: 0
           - machine_name: radxa-rock5a-scarthgap
             configs: kas/build-configs/release/radxa-rock5a-scarthgap.yaml:kas/build-configs/shared-vols.yaml
@@ -59,18 +59,18 @@ jobs:
             sdk: 0
           - machine_name: imx8mn-var-som-scarthgap
             configs: kas/build-configs/release/imx8mn-var-som-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-starter
-            output: "pantavisor-starter*.rootfs.wic*"
+            build_target: 
+            output: "pv-flash-bundle-imx8mn-var-som.tar.gz"
             sdk: 0
           - machine_name: imx8mm-var-dart-scarthgap
             configs: kas/build-configs/release/imx8mm-var-dart-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-starter
-            output: "pantavisor-starter*.rootfs.wic*"
+            build_target: 
+            output: "pv-flash-bundle-imx8mm-var-dart.tar.gz"
             sdk: 0
           - machine_name: verdin-imx8mm-scarthgap
             configs: kas/build-configs/release/verdin-imx8mm-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
-            output: "pantavisor-starter*.rootfs.wic* pv-flash-bundle-verdin-imx8mm.tar.gz"
+            output: "pv-flash-bundle-verdin-imx8mm.tar.gz"
             sdk: 0
           - machine_name: docker-x86_64-scarthgap
             configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml

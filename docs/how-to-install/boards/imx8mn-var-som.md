@@ -1,8 +1,9 @@
 # Flashing: Variscite VAR-SOM-MX8M-NANO
 
-**Flash methods:** uuu (eMMC) | SD card — see the sections above
+**Flash methods:** pv-flash-bundle / uuu (eMMC) | SD card — see the sections above
 
-**Image artifact:** `pantavisor-starter-imx8mn-var-som*.wic`
+**Image artifact:** `pv-flash-bundle-imx8mn-var-som.tar.gz` (eMMC) or
+`pantavisor-starter-imx8mn-var-som*.wic` (SD card)
 
 ## Hardware overview
 
@@ -40,13 +41,23 @@ Connect a USB cable from the board's **USB OTG** port to your host PC.
 
 ### 3. Flash
 
+Using the self-contained bundle (recommended — no `uuu` install needed):
+
+```bash
+tar xzf pv-flash-bundle-imx8mn-var-som.tar.gz
+cd pv-flash-bundle-imx8mn-var-som
+./flash.sh
+```
+
+Or manually, with `uuu` already installed on the host:
+
 ```bash
 sudo uuu -b emmc_all \
     imx-boot-imx8mn-var-som*.bin \
     pantavisor-starter-imx8mn-var-som*.wic
 ```
 
-See the uuu section above for full details and troubleshooting.
+See the [uuu section above](../uuu.md) for full details and troubleshooting.
 
 ### 4. Restore boot-mode to eMMC
 

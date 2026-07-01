@@ -21,6 +21,7 @@ on:
       # itself ARE part of what's built; re-include them so
       # changes to the build pipeline retrigger CI.
       - '.github/workflows/buildkas-target.yaml'
+      - '.github/workflows/call-pvtests.yaml'
       - '.github/workflows/onpush-scarthgap.yaml'
   pull_request:
     types: [ready_for_review]
@@ -60,11 +61,6 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 1
-          - machine_name: docker-x86_64-scarthgap
-            configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-appengine-distro
-            output: "pantavisor-appengine-distro-*.tar.gz"
-            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}

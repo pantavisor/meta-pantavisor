@@ -43,10 +43,10 @@ Every build produces some subset of the following:
 | `pvrexports-<machine>` | pvrexport tarballs (`*pvrexport.tgz`) | both |
 | `pantavisor-bsp-<machine>` | BSP pvrexport only | both |
 | `pvtest-distro-<machine>` | unpacked appengine distro directory | both |
-| `pv-flash-bundle-<machine>` | Toradex factory flash bundle (`pv-flash-bundle-*.tar.gz`) | both |
+| `pv-flash-bundle-<machine>` | UUU factory flash bundle (`pv-flash-bundle-*.tar.gz`) — Toradex, Variscite, NXP MEK | both |
 | `sdk-artifact-<machine>` | Yocto SDK installer (`panta*.sh`) | both |
 
-## Toradex Builds
+## UUU Factory-Flash Builds (Toradex, Variscite, NXP MEK)
 
 Toradex machines (`verdin-imx8mm`, `colibri-imx6ull`) use a multi-target build
 that produces three artifacts in a single `kas build` invocation:
@@ -55,6 +55,17 @@ that produces three artifacts in a single `kas build` invocation:
 target:
   - pantavisor-starter          # main Pantavisor image (wic / ubifs)
   - mc:tezi-recovery:u-boot-toradex  # recovery U-Boot via tezi-recovery multiconfig
+  - pv-flash-bundle             # self-contained factory flash archive
+```
+
+Variscite machines (`imx8mm-var-dart`, `imx8mn-var-som`) and the NXP eval
+board (`imx8qxp-b0-mek`) only need two targets — no recovery multiconfig,
+since their production bootloader already works for UUU flashing (see the
+`pv-flash-bundle` section below):
+
+```
+target:
+  - pantavisor-starter          # main Pantavisor image (wic)
   - pv-flash-bundle             # self-contained factory flash archive
 ```
 
@@ -83,9 +94,25 @@ that operators use for factory flashing:
 |---|---|---|
 | verdin-imx8mm | `.wic.gz` (eMMC) | SDP + SDPV → fastboot → `FB: flash -raw2sparse all` |
 | colibri-imx6ull | `.ubifs` (NAND) | SDP → fastboot → `nand write` + `ubi write` |
+| imx8mm-var-dart | `.wic.gz` (eMMC) | SDP + SDPV → fastboot → `FB: flash -raw2sparse all` |
+| imx8mn-var-som | `.wic.gz` (eMMC) | SDP + SDPV → fastboot → `FB: flash -raw2sparse all` |
+| imx8qxp-b0-mek | `.wic.gz` (eMMC) | SDPS (stream mode) → fastboot → `FB: flash -raw2sparse all` |
 
-See [docs/how-to-install/toradex.md](../how-to-install/toradex.md) for the full
-flashing procedure and bundle contents.
+Toradex differs from the other three in where the boot binary comes from:
+Toradex needs a stripped recovery U-Boot from the `tezi-recovery` multiconfig
+(`PV_FLASH_RECOVERY_MC`/`_RECIPE`/`_IMAGE`), because its production bootcmd
+is overridden by meta-pantavisor's `pv.distroboot.cfg`. Variscite's
+`imx8mm-var-dart`/`imx8mn-var-som` and NXP's own `imx8qxp-b0-mek` don't need
+a second multiconfig — their production `imx-boot` already self-enters
+SDP/fastboot mode at the SPL/ROM level regardless of `bootcmd`, so
+`pv-flash-bundle` just globs it straight out of the main build's deploy dir
+via `PV_FLASH_BOOT_IMAGE`. `imx8qxp-b0-mek` additionally differs in
+*protocol*, not just boot-binary source: i.MX8QXP silicon uses `SDPS:`
+stream mode instead of `SDP:`/`SDPV:` (see
+[pv-flash-bundle](../overview/pv-flash-bundle.md) for why). See
+[docs/how-to-install/toradex.md](../how-to-install/toradex.md) for the
+Toradex flashing procedure, and
+[docs/how-to-install/uuu.md](../how-to-install/uuu.md) for Variscite/MEK.
 
 ## S3 Distribution (upload.sh)
 
