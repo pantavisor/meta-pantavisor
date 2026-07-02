@@ -14,7 +14,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 PACKAGES =+ "libthttp-certs"
 
 SRC_URI = "git://github.com/pantavisor/libthttp;protocol=https;branch=master"
-SRCREV = "7053ace96f3b4d37a0535d5bba491343cd41e591"
+SRCREV = "ce916c562c5b11bcb0b5165043ded543dfea322a"
 PE = "1"
 PKGV = "011+git0+${GITPKGV}"
 

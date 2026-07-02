@@ -1,3 +1,3 @@
 PANTAVISOR_BRANCH ??= "master"
 PANTAVISOR_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
-PANTAVISOR_SRCREV = "f39743dafc723cb71480171a0b1a60a5f6235d43"
+PANTAVISOR_SRCREV = "a4ab01fed0f209948f4b66a83108307055fb1ef1"
