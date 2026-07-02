@@ -107,9 +107,6 @@ local_conf_header:
         BB_DANGLINGAPPENDS_WARNONLY = "1"
         PANTAVISOR_FEATURES:append = " caam-nxp"
         PV_UBOOT_AUTOFDT = "1"
-    platform-imx8mn-var-som: |
-        PV_FLASH_README = "docs/flashing/boards/imx8mn-var-som.md"
-        PV_FLASH_README_DEPS = "docs/flashing/sdcard.md docs/flashing/uuu.md"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |

@@ -80,8 +80,6 @@ local_conf_header:
         \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
         \ \\\n    \"\n"
     platform-colibri-imx6ull: |
-        PV_FLASH_README = "docs/how-to-install/boards/colibri-imx6ull.md"
-        PV_FLASH_README_DEPS = "docs/how-to-install/toradex.md"
         include conf/machine/include/colibri-imx6ull.inc
         IMAGE_CLASSES:remove = " image_type_tezi"
         IMAGE_FSTYPES:remove = "teziimg"

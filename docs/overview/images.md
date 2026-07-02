@@ -82,21 +82,7 @@ After a build, in `build/tmp-${codename}/deploy/images/${machine}/`:
 |----------|-------------|
 | `pantavisor-starter-${machine}.wic[.bz2]` | Flashable disk image (partition layout from the machine's WKS file) |
 | `pantavisor-starter-${machine}.rootfs.*` | Rootfs tarball with the populated `/trails/0` |
-| `pantavisor-README.md` | Concatenated flashing guide (see below) |
 | `pantavisor-starter-*.docs.tar.zst` / `pantavisor-reference-documentation*.html.tar.zst` | Bundled docs (from `pantavisor-docs`) |
-
-### Flashing README
-
-Via the `pantavisor-docs` inherit and `do_deploy_readme`, the image emits a
-`pantavisor-README.md` by concatenating, in order:
-
-```
-docs/pantavisor.md  +  PV_FLASH_README_DEPS (e.g. toradex.md, uuu.md)  +  PV_FLASH_README
-```
-
-`PV_FLASH_README` and `PV_FLASH_README_DEPS` are set per machine in
-`kas/machines/<machine>.yaml` (via `local_conf_header`), so each board ships the
-right [install guide](../how-to-install/index.md) next to its image.
 
 ## Building
 
