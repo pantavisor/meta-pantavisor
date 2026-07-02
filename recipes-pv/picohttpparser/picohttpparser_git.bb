@@ -12,7 +12,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}_${PV}:"
 
 SRC_URI = "git://github.com/pantavisor/picohttpparser;protocol=https;branch=pv/master"
-SRCREV = "fbefe74fa3d7802de2396349ba7daa15a9e93745"
+SRCREV = "facd3dafae02558cddb751d9f64df03bb259d4d3"
 
 S = "${WORKDIR}/git"
 
