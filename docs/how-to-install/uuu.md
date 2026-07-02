@@ -32,12 +32,18 @@ cd pv-flash-bundle-<machine>
 ./flash.sh
 ```
 
-`flash.sh` decompresses the bundled `.wic.gz` and invokes `sudo ./uuu ./`,
-which reads `uuu.auto` and runs the full SDP/SDPS → fastboot → eMMC flash
-sequence (the MEK's i.MX8QXP silicon uses SDPS "stream" mode instead of
-plain SDP; see [pv-flash-bundle](../overview/pv-flash-bundle.md#per-machine-templates)
-for the difference). Put the board into USB download mode first (see the
+`flash.sh` decompresses the bundled WIC image — `.wic.zst` via `zstd` if
+present (Variscite boards), otherwise `.wic.gz` via `zcat` — and invokes
+`sudo ./uuu ./`, which reads `uuu.auto` and runs the full SDP/SDPS →
+fastboot → eMMC flash sequence (the MEK's i.MX8QXP silicon uses SDPS
+"stream" mode instead of plain SDP; see
+[pv-flash-bundle](../overview/pv-flash-bundle.md#per-machine-templates) for
+the difference). Put the board into USB download mode first (see the
 board-specific page linked above) and connect USB before running it.
+
+`zcat` (part of `gzip`) is virtually always present; `zstd` may need
+installing separately (`sudo apt install zstd`) if the bundle ships a
+`.wic.zst`.
 
 These boards' own production bootloaders already self-enter SDP/fastboot
 download mode — unlike Toradex, no separate recovery U-Boot build is needed

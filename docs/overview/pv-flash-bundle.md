@@ -40,13 +40,16 @@ matter of setting variables and dropping in templates, not editing the `.bb`.
 | `PV_FLASH_FLASH_SCRIPT_IN` | `file://flash.sh.in` template SRC_URI entry | *(none)* |
 
 Leaving `PV_FLASH_UBIFS`/`PV_FLASH_NAND_UBOOT` empty (the eMMC default) makes
-`do_deploy` bundle the `.wic.gz` (+ `.wic.bmap` if present) instead of a raw
+`do_deploy` bundle whichever compressed WIC image the main build produced —
+`.wic.zst` and/or `.wic.gz` (+ `.wic.bmap` if present) — instead of a raw
 UBIFS image.
 
 ## `do_deploy` steps
 
 1. **Rootfs artifact** — installs `${PV_FLASH_IMAGE}-${MACHINE}.rootfs.ubifs`
-   if `PV_FLASH_UBIFS` is set, otherwise the `.wic.gz` (+ `.wic.bmap`).
+   if `PV_FLASH_UBIFS` is set, otherwise whichever of `.wic.zst` / `.wic.gz`
+   is present in `DEPLOY_DIR_IMAGE` (+ `.wic.bmap`); both are installed if
+   both exist.
 2. **Recovery U-Boot** — installs `PV_FLASH_RECOVERY_IMAGE` from
    `RECOVERY_DEPLOY_DIR_IMAGE` (`tmp-${DISTRO_CODENAME}-${PV_FLASH_RECOVERY_MC}/deploy/images/${MACHINE}`),
    pulled in via `do_deploy[mcdepends]` on
@@ -65,7 +68,7 @@ UBIFS image.
    the bundle, then runs `patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath ""`
    so the binary runs on an arbitrary x86-64 Linux host regardless of its
    build sysroot.
-6. **Script generation** — `sed`-expands `@WIC@ @WIC_GZ@ @UBIFS@ @UBOOT_NAND@ @RECOVERY_IMAGE@`
+6. **Script generation** — `sed`-expands `@WIC@ @WIC_GZ@ @WIC_ZST@ @UBIFS@ @UBOOT_NAND@ @RECOVERY_IMAGE@`
    in `uuu.auto.in` and `flash.sh.in` (staged via `FILESEXTRAPATHS:prepend`
    from `files/${MACHINE}/`) into `uuu.auto` and `flash.sh` in the bundle.
    `imx-boot.bin` (from step 4) is referenced as a literal filename in those
@@ -101,7 +104,9 @@ machine.
   WKS (`wic/imx-imx-boot-singlepart.wks.in`) already embeds `imx-boot` as a
   raw-offset region inside the `.wic` itself, so flashing the whole `.wic`
   already writes the bootloader; there's no separate eMMC boot-partition
-  switch to make.
+  switch to make. `flash.sh.in` decompresses `@WIC_ZST@` (via `zstd`) to
+  `@WIC@` if present, falling back to `@WIC_GZ@` (via `zcat`) otherwise —
+  whichever compression `IMAGE_FSTYPES` actually produced for the main build.
 - **imx8qxp-b0-mek** (eMMC, NXP eval board): a single `SDPS: boot -scanterm`
   command instead of `SDP:`/`SDPV:` — i.MX8QXP/8QM silicon's ROM supports
   "stream" SDP mode, where the SCU loads the whole boot container (SCFW +
