@@ -4,6 +4,11 @@
 wic=@WIC@
 trap 'rm -f "$wic"' EXIT INT TERM
 echo "Downloading Pantavisor Image..."
-echo "Decompressing @WIC_GZ@..."
-zcat @WIC_GZ@ > "$wic"
+if [ -f "@WIC_ZST@" ]; then
+    echo "Decompressing @WIC_ZST@..."
+    zstd -dc @WIC_ZST@ > "$wic"
+else
+    echo "Decompressing @WIC_GZ@..."
+    zcat @WIC_GZ@ > "$wic"
+fi
 sudo ./uuu ./

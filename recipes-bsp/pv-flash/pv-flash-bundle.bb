@@ -77,6 +77,7 @@ do_deploy() {
     local bundle_dir="${WORKDIR}/${bundle_name}"
     local wic="${PV_FLASH_IMAGE}-${MACHINE}.rootfs.wic"
     local wic_gz="${PV_FLASH_IMAGE}-${MACHINE}.rootfs.wic.gz"
+    local wic_zst="${PV_FLASH_IMAGE}-${MACHINE}.rootfs.wic.zst"
     local wic_bmap="${PV_FLASH_IMAGE}-${MACHINE}.rootfs.wic.bmap"
 
     rm -rf "${bundle_dir}"
@@ -85,7 +86,14 @@ do_deploy() {
     if [ -n "${PV_FLASH_UBIFS}" ]; then
         install -m 644 "${DEPLOY_DIR_IMAGE}/${PV_FLASH_UBIFS}" "${bundle_dir}/${PV_FLASH_UBIFS}"
     else
-        install -m 644 "${DEPLOY_DIR_IMAGE}/${wic_gz}" "${bundle_dir}/${wic_gz}"
+        if [ -f "${DEPLOY_DIR_IMAGE}/${wic_zst}" ]; then
+            install -m 644 "${DEPLOY_DIR_IMAGE}/${wic_zst}" "${bundle_dir}/${wic_zst}"
+        fi
+
+        if [ -f "${DEPLOY_DIR_IMAGE}/${wic_gz}" ]; then
+            install -m 644 "${DEPLOY_DIR_IMAGE}/${wic_gz}" "${bundle_dir}/${wic_gz}"
+        fi
+
         if [ -f "${DEPLOY_DIR_IMAGE}/${wic_bmap}" ]; then
             install -m 644 "${DEPLOY_DIR_IMAGE}/${wic_bmap}" "${bundle_dir}/${wic_bmap}"
         fi
@@ -117,6 +125,7 @@ do_deploy() {
     if [ -f "${WORKDIR}/uuu.auto.in" ]; then
         sed -e "s|@WIC@|${wic}|g" \
             -e "s|@WIC_GZ@|${wic_gz}|g" \
+            -e "s|@WIC_ZST@|${wic_zst}|g" \
             -e "s|@UBIFS@|${PV_FLASH_UBIFS}|g" \
             -e "s|@UBOOT_NAND@|${PV_FLASH_NAND_UBOOT}|g" \
             -e "s|@RECOVERY_IMAGE@|${PV_FLASH_RECOVERY_IMAGE}|g" \
@@ -126,6 +135,7 @@ do_deploy() {
     if [ -f "${WORKDIR}/flash.sh.in" ]; then
         sed -e "s|@WIC@|${wic}|g" \
             -e "s|@WIC_GZ@|${wic_gz}|g" \
+            -e "s|@WIC_ZST@|${wic_zst}|g" \
             -e "s|@UBIFS@|${PV_FLASH_UBIFS}|g" \
             -e "s|@UBOOT_NAND@|${PV_FLASH_NAND_UBOOT}|g" \
             -e "s|@RECOVERY_IMAGE@|${PV_FLASH_RECOVERY_IMAGE}|g" \
