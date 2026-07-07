@@ -1,7 +1,7 @@
 ---
 title: "meta-pantavisor Documentation"
 description: "Build, install, and develop with Pantavisor on embedded Linux using the meta-pantavisor Yocto layer."
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # meta-pantavisor Documentation
