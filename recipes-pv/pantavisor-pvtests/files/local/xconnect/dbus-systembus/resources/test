@@ -51,6 +51,25 @@ else
 	echo "operator GetInfo: FAILED"
 fi
 
+# The same client also holds a second identity, role "stranger", on its own
+# injected socket. "stranger" is NOT in the server's allow list, so the
+# generated default-deny policy grants its masqueraded uid no send access to the
+# owned name. This proves the allow list actually restricts callers rather than
+# merely permitting the listed ones: the identical GetInfo must NOT succeed.
+dsend_stranger() {
+	# shellcheck disable=SC2086
+	pventer -c "pv-example-dbus-host-client" \
+		env DBUS_SYSTEM_BUS_ADDRESS="unix:path=/run/dbus/system_bus_socket_stranger" \
+		dbus-send --system --print-reply $* 2>&1
+}
+
+echo "== default-deny: non-allowed role 'stranger' may not call the service =="
+if dsend_stranger "--dest=$SVC $OBJ $SVC.GetInfo" | grep -q '"status": "active"'; then
+	echo "stranger GetInfo: ALLOWED (unexpected)"
+else
+	echo "stranger GetInfo: DENIED"
+fi
+
 echo "== default-deny: 'operator' may not own a well-known name =="
 if dsend "--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0" \
 	| grep -qE "AccessDenied|not allowed to own"; then

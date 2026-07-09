@@ -44,6 +44,13 @@ boolean true
 [pvtest] 1781530851 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket dbus-send --system --print-reply --dest=org.pantavisor.Example /org/pantavisor/Example org.pantavisor.Example.GetInfo
 [pvtest] 1781530851 DEBUG -- [test-script]: echo 'operator GetInfo: OK'
 operator GetInfo: OK
+[pvtest] 1783614999 DEBUG -- [test-script]: echo '== default-deny: non-allowed role '\''stranger'\'' may not call the service =='
+== default-deny: non-allowed role 'stranger' may not call the service ==
+[pvtest] 1783614999 DEBUG -- [test-script]: dsend_stranger '--dest=org.pantavisor.Example /org/pantavisor/Example org.pantavisor.Example.GetInfo'
+[pvtest] 1783614999 DEBUG -- [test-script]: grep -q '"status": "active"'
+[pvtest] 1783614999 DEBUG -- [test-script]: pventer -c pv-example-dbus-host-client env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket_stranger dbus-send --system --print-reply --dest=org.pantavisor.Example /org/pantavisor/Example org.pantavisor.Example.GetInfo
+[pvtest] 1783615024 DEBUG -- [test-script]: echo 'stranger GetInfo: DENIED'
+stranger GetInfo: DENIED
 [pvtest] 1781530851 DEBUG -- [test-script]: echo '== default-deny: '\''operator'\'' may not own a well-known name =='
 == default-deny: 'operator' may not own a well-known name ==
 [pvtest] 1781530851 DEBUG -- [test-script]: dsend '--dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.RequestName string:org.pantavisor.Rogue uint32:0'
