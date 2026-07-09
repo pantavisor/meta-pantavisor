@@ -7,15 +7,6 @@
 #
 # Outputs:
 #   ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.docs.tar.zst
-#   ${DEPLOY_DIR_IMAGE}/pantavisor-reference-documentation-<hash>[+<tag>].html.tar.zst
-#   ${DEPLOY_DIR_IMAGE}/pantavisor-reference-documentation.html.tar.zst  (stable symlink)
-#
-# HTML pipeline:
-#   pantavisor-docs-gen-html.py (stdlib only) merges all Markdown sources into
-#   a single RST file, following the reading order defined in each index.md,
-#   resolving internal links to RST :ref: labels, and prepending a full TOC.
-#   sphinx-build (python3-sphinx-native) converts that RST to singlehtml.
-#   No Markdown extension is needed — RST is Sphinx's native format.
 #
 # Tarball layout:
 #   index.md           ← root index linking both document sets
@@ -31,21 +22,16 @@ PANTACOR_LAYER_DOCS_NAME ?= "meta-pantavisor"
 
 do_create_pantacor_docs[dirs] = " \
     ${WORKDIR}/pantacor-docs-staging \
-    ${WORKDIR}/sphinx-src \
-    ${WORKDIR}/sphinx-html \
     ${DEPLOY_DIR_IMAGE} \
 "
 do_create_pantacor_docs[cleandirs] = " \
     ${WORKDIR}/pantacor-docs-staging \
-    ${WORKDIR}/sphinx-src \
-    ${WORKDIR}/sphinx-html \
 "
 do_create_pantacor_docs[depends] += " \
     zstd-native:do_populate_sysroot \
-    python3-sphinx-native:do_populate_sysroot \
     pantavisor:do_create_component_docs \
+    pvr:do_create_component_docs \
 "
-do_create_pantacor_docs[file-checksums] += "${META_PANTAVISOR_BASE}/classes/pantavisor-docs-gen-html.py:True"
 
 do_create_pantacor_docs() {
     staging="${WORKDIR}/pantacor-docs-staging"
@@ -70,6 +56,8 @@ do_create_pantacor_docs() {
         printf 'This archive bundles reference documentation shipped alongside the build artefacts.\n\n'
         [ -d "${staging}/pantavisor" ] && \
             printf -- '- **[Pantavisor](pantavisor/)** — the embedded Linux runtime that manages\n  the device lifecycle: booting containers, applying atomic OTA updates, and\n  exposing a REST API for local and cloud control.\n\n'
+        [ -d "${staging}/pvr" ] && \
+            printf -- '- **[PVR](pvr/)** — the Pantavisor command-line utility for creating,\n  managing, and deploying containerized applications to Pantavisor devices.\n\n'
         [ -d "${staging}/meta-pantavisor" ] && \
             printf -- '- **[meta-pantavisor](meta-pantavisor/)** — the Yocto/OpenEmbedded layer\n  used to build Pantavisor-based BSP images. Covers the build system, KAS\n  configurations, BitBake recipes, and the CI/release pipeline.\n\n'
         [ -d "${staging}/meta-pantavisor" ] && \
@@ -85,33 +73,6 @@ do_create_pantacor_docs() {
         version_str="${git_hash}"
     fi
 
-    # --- RST generation ----------------------------------------------------
-    # Python script merges all Markdown into one RST file, following index.md
-    # reading order, excluding index files, resolving cross-links.
-    python3 "${META_PANTAVISOR_BASE}/classes/pantavisor-docs-gen-html.py" \
-        "$staging" "${WORKDIR}/sphinx-src/merged.rst" "$version_str" \
-        || bbwarn "${PN}: RST merge step failed"
-
-    # Minimal Sphinx conf.py — RST only, no Markdown extension needed
-    cat > "${WORKDIR}/sphinx-src/conf.py" <<'CONFEOF'
-project = 'Pantavisor Reference Documentation'
-master_doc = 'merged'
-html_theme = 'alabaster'
-exclude_patterns = ['_build']
-CONFEOF
-
-    # --- HTML generation via Sphinx ----------------------------------------
-    sphinx-build -b singlehtml \
-        "${WORKDIR}/sphinx-src" "${WORKDIR}/sphinx-html" \
-        || bbwarn "${PN}: sphinx-build failed"
-
-    html_tar="${DEPLOY_DIR_IMAGE}/pantavisor-reference-documentation-${version_str}.html.tar.zst"
-    tar -C "${WORKDIR}/sphinx-html" \
-        --use-compress-program=zstd \
-        --exclude='.doctrees' \
-        -cf "$html_tar" .
-    ln -fsr "$html_tar" \
-        "${DEPLOY_DIR_IMAGE}/pantavisor-reference-documentation.html.tar.zst"
 
     # --- Markdown tarball --------------------------------------------------
     outfile="${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.docs.tar.zst"
