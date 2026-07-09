@@ -1,0 +1,4 @@
+{
+    "PV_RESTART_POLICY": "container",
+    "PV_STATUS_GOAL": "READY"
+}
