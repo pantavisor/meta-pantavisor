@@ -584,5 +584,10 @@ object count: 6
     "key": "PV_WDT_TIMEOUT",
     "value": "15",
     "modified": "default"
+  },
+  {
+    "key": "PV_XCONNECT_DBUS_SYSTEMBUS_ENABLED",
+    "value": "1",
+    "modified": "default"
   }
 ]
