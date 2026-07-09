@@ -23,6 +23,8 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.PANTAVISOR_TAG_SYNC_TOKEN }}
       - name: Install latest GitHub CLI
         run: |
           curl -sSL https://github.com/cli/cli/releases/download/v2.92.0/gh_2.92.0_linux_amd64.tar.gz | tar -xz -C /usr/bin --strip-components=2 gh_2.92.0_linux_amd64/bin/gh
@@ -45,4 +47,4 @@ jobs:
             --body "Automated update of kas meta layers to latest branch commits. See the commit message for the full per-repo changelog." || \
           gh pr edit autopr/machine-update-$GITHUB_REF_NAME-next --title "AutoPR: update kas meta layers to latest branch commits"
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PANTAVISOR_TAG_SYNC_TOKEN }}

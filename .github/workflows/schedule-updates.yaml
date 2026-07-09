@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          token: ${{ secrets.PANTAVISOR_TAG_SYNC_TOKEN }}
 
       - name: Run Update Script
         env:
@@ -24,7 +25,7 @@ jobs:
 
       - name: Create Pull Request
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.PANTAVISOR_TAG_SYNC_TOKEN }}
           COMMIT_MSG_FILE: /tmp/updates-commit-msg
         run: |
           git config user.email "pantavisor-meta@ci.pantavisor.io"
