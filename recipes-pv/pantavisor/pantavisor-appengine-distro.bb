@@ -16,6 +16,7 @@ PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pan
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
 do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
+do_create_tarball[depends] += "pv-example-ready:do_image_complete pv-example-ready-timeout:do_image_complete"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
@@ -108,6 +109,18 @@ do_create_tarball() {
     for f in ${DEPLOY_DIR_IMAGE}/pv-example-norole.pvrexport.tgz; do
         if [ -e "$f" ]; then
             cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-norole.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-ready.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-ready.tgz"
+            break
+        fi
+    done
+    for f in ${DEPLOY_DIR_IMAGE}/pv-example-ready-timeout.pvrexport.tgz; do
+        if [ -e "$f" ]; then
+            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-ready-timeout.tgz"
             break
         fi
     done

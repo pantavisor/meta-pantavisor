@@ -12,10 +12,7 @@
 				"../../common/tarballs/bsp.tgz",
 				"../../common/tarballs/pvr-sdk.tgz"
 			],
-			"urls": [
-				"https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/6#bsp/,device.json",
-				"https://pvr.pantahub.com/pantahub-ci/pv_tests_assets/6#pvr-sdk/"
-			]
+			"urls": []
 		},
 		"ready-script": ""
 	},
