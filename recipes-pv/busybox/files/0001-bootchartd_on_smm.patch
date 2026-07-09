@@ -1,3 +1,5 @@
+Upstream-Status: Inappropriate [pantavisor-specific initramfs/smm workaround]
+
 diff --git a/init/bootchartd.c b/init/bootchartd.c
 index ae1ee9d9a..6446ca598 100644
 --- a/init/bootchartd.c

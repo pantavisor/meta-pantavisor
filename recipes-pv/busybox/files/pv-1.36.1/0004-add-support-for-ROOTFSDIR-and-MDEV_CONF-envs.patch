@@ -1,0 +1,64 @@
+From e0dba9c91c53f215e134f5abc2827a6d60fa6af7 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Mon, 9 May 2022 13:13:07 +0200
+Subject: [PATCH] add support for ROOTFSDIR and MDEV_CONF envs
+
+Upstream-Status: Pending
+
+---
+ util-linux/mdev.c | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/util-linux/mdev.c b/util-linux/mdev.c
+index ebdc0c2..f41945d 100644
+--- a/util-linux/mdev.c
++++ b/util-linux/mdev.c
+@@ -893,6 +893,18 @@ static int FAST_FUNC dirAction(struct recursive_state *state,
+ 	return (state->depth >= MAX_SYSFS_DEPTH ? SKIP : TRUE);
+ }
+ 
++static const char *getdevdir() {
++	static char *devdir = NULL;
++
++	if (!devdir) {
++		const char *rootfsdir = getenv("ROOTFSDIR");
++		devdir = malloc (sizeof(char) * PATH_MAX);
++		sprintf(devdir, "%s%s", rootfsdir ? rootfsdir : "", "/dev");
++	}
++	return devdir;
++}
++
++
+ /* For the full gory details, see linux/Documentation/firmware_class/README
+  *
+  * Firmware loading works like this:
+@@ -953,7 +965,7 @@ static void load_firmware(const char *firmware, const char *sysfs_path)
+ 		full_write(loading_fd, "-1", 2);
+ 
+  out:
+-	xchdir("/dev");
++	xchdir(getdevdir());
+ 	if (ENABLE_FEATURE_CLEAN_UP) {
+ 		close(firmware_fd);
+ 		close(loading_fd);
+@@ -1256,7 +1268,7 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ 	/* Force the configuration file settings exactly */
+ 	umask(0);
+ 
+-	xchdir("/dev");
++	xchdir(getdevdir());
+ 
+ 	opt = getopt32(argv, "^"
+ 		"sS" IF_FEATURE_MDEV_DAEMON("df") "v"
+@@ -1265,7 +1277,7 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ 		&G.verbose);
+ 
+ #if ENABLE_FEATURE_MDEV_CONF
+-	G.filename = "/etc/mdev.conf";
++	G.filename = getenv("MDEV_CONF") ? getenv("MDEV_CONF") : "/etc/mdev.conf";
+ 	if (opt & (MDEV_OPT_SCAN|MDEV_OPT_DAEMON)) {
+ 		/* Same as xrealloc_vector(NULL, 4, 0): */
+ 		G.rule_vec = xzalloc((1 << 4) * sizeof(*G.rule_vec));
+-- 
+2.43.0
+
