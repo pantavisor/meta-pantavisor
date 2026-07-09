@@ -24,7 +24,7 @@ on:
       - '.github/workflows/call-pvtests.yaml'
       - '.github/workflows/onpush-scarthgap.yaml'
   pull_request:
-    types: [ready_for_review]
+    types: [opened, ready_for_review]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
