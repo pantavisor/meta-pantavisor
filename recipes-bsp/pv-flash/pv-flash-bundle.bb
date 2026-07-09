@@ -26,9 +26,9 @@ PV_FLASH_RECOVERY_IMAGE ?= ""
 # Toradex's distro_bootcmd override which requires a stripped recovery build.
 # Installed into the bundle as the fixed name "imx-boot.bin".
 PV_FLASH_BOOT_IMAGE ?= ""
-PV_FLASH_BOOT_IMAGE:imx8mm-var-dart = "imx-boot-imx8mm-var-dart*.bin"
-PV_FLASH_BOOT_IMAGE:imx8mn-var-som = "imx-boot-imx8mn-var-som*.bin"
-PV_FLASH_BOOT_IMAGE:imx8qxp-b0-mek = "imx-boot-imx8qxp-b0-mek*.bin"
+PV_FLASH_BOOT_IMAGE:imx8mm-var-dart = "imx-boot-imx8mm-var-dart*.bin-*"
+PV_FLASH_BOOT_IMAGE:imx8mn-var-som = "imx-boot-imx8mn-var-som*.bin-*"
+PV_FLASH_BOOT_IMAGE:imx8qxp-b0-mek = "imx-boot-imx8qxp-b0-mek*.bin-*"
 
 # For NAND machines: production NAND U-Boot binary filename in the recovery
 # multiconfig deploy dir (the same tezi-recovery build also produces the rawnand
