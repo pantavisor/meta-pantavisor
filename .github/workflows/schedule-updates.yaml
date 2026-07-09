@@ -53,9 +53,14 @@ jobs:
             PR_TITLE=$(head -n 1 "$COMMIT_MSG_FILE")
             PR_BODY=$(tail -n +3 "$COMMIT_MSG_FILE")
 
-            # Create or update the PR
-            gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base master --head "$BRANCH_NAME" || \
-            gh pr edit "$BRANCH_NAME" --title "$PR_TITLE" --body "$PR_BODY"
+            # Create the PR, or update it via the REST API if it already exists.
+            # (gh pr edit pulls in GraphQL fields — e.g. assignable users —
+            # that require the read:org scope on org-owned repos; the plain
+            # REST PATCH endpoint doesn't, so it works with a repo-scoped PAT.)
+            if ! gh pr create --title "$PR_TITLE" --body "$PR_BODY" --base master --head "$BRANCH_NAME"; then
+              PR_NUMBER=$(gh api "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME&state=open" --jq '.[0].number')
+              gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER" -X PATCH -f title="$PR_TITLE" -f body="$PR_BODY"
+            fi
 
             rm -f "$COMMIT_MSG_FILE" || true
           else
