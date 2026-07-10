@@ -34,13 +34,7 @@ PVR_APP_ADD_GROUP = "platform"
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
 
-# pvroot-image expects do_deploy to provide the .pvrexport.tgz
-# do_image_complete sstate also deploys it, so use symlink to avoid conflict
-fakeroot do_deploy() {
-    :
-}
-
-addtask deploy after do_image_complete before do_build
+# do_deploy hook for pvroot-image consumption is provided by container-pvrexport
 
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}
