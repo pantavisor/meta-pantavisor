@@ -513,7 +513,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/xconnect/unix-sockets` | Unix Sockets (UDS proxying) | |
 | `local/xconnect/rest-over-uds` | REST-over-UDS (Identity headers) | |
 | `local/xconnect/dbus` | D-Bus (Policy mediation) | |
-| `local/xconnect/dbus-systembus` | Hosted D-Bus system bus (owns/allow, generated default-deny policy): allowed role calls, non-allowed role denied, rogue name-ownership denied | ✓ |
+| `local/xconnect/dbus-systembus` | Hosted D-Bus system bus (owns/allow, generated default-deny policy): allowed `operator` client (`pv-example-system-dbus-client`) calls, separate non-allowed `stranger` client (`pv-example-system-dbus-client-denied`) refused, rogue name-ownership denied | ✓ |
 | `local/xconnect/avahi-systembus` | Hosted D-Bus system bus with a real daemon: avahi owns `org.freedesktop.Avahi`, monitor consumer roundtrips its API | ✓ |
 | `local/xconnect/dbus-collision` | Hosted D-Bus system bus name-collision validation: two apps owning the same well-known name on one bus fail `pv_dbus_daemon_validate` and the revision rolls back | ✓ |
 | `local/xconnect/drm` | DRM (Graphics node injection) | |

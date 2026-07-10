@@ -11,8 +11,9 @@
 			"tarballs": [
 				"../../common/tarballs/bsp.tgz",
 				"../../common/tarballs/pvr-sdk.tgz",
-				"../../common/tarballs/pv-example-dbus-host-server.tgz",
-				"../../common/tarballs/pv-example-dbus-host-client.tgz"
+				"../../common/tarballs/pv-example-system-dbus-server.tgz",
+				"../../common/tarballs/pv-example-system-dbus-client.tgz",
+				"../../common/tarballs/pv-example-system-dbus-client-denied.tgz"
 			],
 			"urls": []
 		},

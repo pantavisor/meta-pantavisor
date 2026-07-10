@@ -12,7 +12,7 @@ The `pv-examples` containers in `recipes-containers/pv-examples/` demonstrate pv
 | Unix Socket | `pv-example-unix-server` | `pv-example-unix-client` | Raw Unix domain socket proxy |
 | REST | `pv-example-rest-server` | `pv-example-rest-client` | HTTP-over-UDS with identity injection |
 | D-Bus | `pv-example-dbus-server` | `pv-example-dbus-client` | Policy-aware D-Bus proxy |
-| D-Bus (hosted) | `pv-example-dbus-host-server` | `pv-example-dbus-host-client` | Pantavisor-hosted system bus, single-pid apps |
+| D-Bus (hosted) | `pv-example-system-dbus-server` | `pv-example-system-dbus-client` | Pantavisor-hosted system bus, single-pid apps |
 | DRM | `pv-example-drm-provider` | `pv-example-drm-master`, `pv-example-drm-render` | Device node injection |
 | Wayland | `pv-example-wayland-server` | `pv-example-wayland-client` | Wayland compositor access |
 
@@ -191,7 +191,7 @@ consumer are single-pid containers — no `dbus-daemon`, policy XML or
 `xconnect-dbus-systembus` build feature and the `xconnect.dbus.systembus.enabled`
 config key, default on) and generates the bus policy from the manifests.
 
-**Provider** (`pv-example-dbus-host-server`) declares the name it owns and the
+**Provider** (`pv-example-system-dbus-server`) declares the name it owns and the
 caller roles allowed to reach it, in `services.json`:
 ```json
 {
@@ -203,25 +203,33 @@ caller roles allowed to reach it, in `services.json`:
 }
 ```
 
-Both provider and consumer attach to the bus with a `system-bus` requirement
-under their role (provider as `example-service`, consumer as `operator`):
+Provider and consumers attach to the bus with a `system-bus` requirement under
+their role (provider as `example-service`, consumer as `operator`):
 ```json
 { "name": "system-bus", "type": "dbus", "role": "operator",
   "target": "/run/dbus/system_bus_socket" }
 ```
 
+Two consumer containers demonstrate the allow list from both sides:
+- `pv-example-system-dbus-client` attaches under the `operator` role, which is
+  in the provider's `allow` list, so its calls are **permitted**.
+- `pv-example-system-dbus-client-denied` attaches under the `stranger` role,
+  which is **not** in the `allow` list, so the generated default-deny policy
+  **refuses** its otherwise-identical calls.
+
 ### Build and Verify
 
 ```bash
 ./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
-    --target pv-example-dbus-host-server --target pv-example-dbus-host-client
+    --target pv-example-system-dbus-server --target pv-example-system-dbus-client \
+    --target pv-example-system-dbus-client-denied
 ```
 
 Pantavisor allocates a stable UID per role, generates a default-deny policy
 under `/run/pv/dbus/policy.d`, and the proxy masquerades each connection to its
 role UID. Check the consumer logs for a successful call:
 ```bash
-docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-dbus-host-client/lxc/console.log
+docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-system-dbus-client/lxc/console.log
 # Expected: method return with org.pantavisor.Example response
 ```
 

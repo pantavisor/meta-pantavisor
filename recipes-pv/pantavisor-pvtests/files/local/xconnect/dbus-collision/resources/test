@@ -5,8 +5,8 @@
 # Two containers each declare ownership of the SAME well-known name
 # (org.pantavisor.Example) on the SAME hosted bus (system-bus), with different
 # roles:
-#   pv-example-dbus-host-server   role "example-service"
-#   pv-example-dbus-host-server2  role "example-service-2"
+#   pv-example-system-dbus-server            role "example-service"
+#   pv-example-system-dbus-server-collision  role "example-service-2"
 #
 # pv_dbus_daemon_validate() runs at the top of pv_state_run() and rejects a
 # state that has two owners of one name on one bus ("owned by more than one
@@ -23,8 +23,8 @@ pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
 cd /home/checkout
 
 # stage BOTH owners of org.pantavisor.Example into one checkout — the collision
-pvr get /work/local/common/tarballs/pv-example-dbus-host-server.tgz > /dev/null 2>&1
-pvr get /work/local/common/tarballs/pv-example-dbus-host-server2.tgz > /dev/null 2>&1
+pvr get /work/local/common/tarballs/pv-example-system-dbus-server.tgz > /dev/null 2>&1
+pvr get /work/local/common/tarballs/pv-example-system-dbus-server-collision.tgz > /dev/null 2>&1
 pvr checkout
 pvr post --rev "locals/collision" > /dev/null 2>&1
 
