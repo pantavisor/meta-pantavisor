@@ -1,7 +1,7 @@
 {
     "PV_SERVICES_REQUIRED": [
         {
-            "name": "system-bus",
+            "name": "example-system-bus",
             "type": "dbus",
             "role": "nobody",
             "interface": "org.pantavisor.Example",
