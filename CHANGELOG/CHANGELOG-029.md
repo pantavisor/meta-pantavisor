@@ -65,6 +65,72 @@ Changes since [`029-rc2`](https://github.com/pantavisor/meta-pantavisor/releases
 - **(uncategorized)**: recipes-pv: automated srcrev update
 - (refactor) **pv-examples**: rename hosted-bus examples to pv-example-system-dbus-* (#405)
 
+## v029-rc2
+
+Released: 2026-07-09
+
+
+### Downloads
+
+| Machine | Image | PV Exports | BSP | SDK |
+|---|---|---|---|---|
+| raspberrypi-armv8-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-029-rc2.tar.gz)<br>`68f310886440…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/raspberrypi-armv8-scarthgap/pvexports-raspberrypi-armv8-scarthgap-029-rc2.zip)<br>`a86c8bc2c03d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/raspberrypi-armv8-scarthgap/pantavisor-bsp-raspberrypi-armv8.pvrexport.tgz)<br>`f84685207bb7…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/raspberrypi-armv8-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa53-raspberrypi-armv8-toolchain-029-rc2.sh)<br>`40d50e8762d7…` |
+| rpi-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/rpi-scarthgap/rpi-scarthgap-029-rc2.tar.gz)<br>`5385857e9beb…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/rpi-scarthgap/pvexports-rpi-scarthgap-029-rc2.zip)<br>`645378d1e952…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/rpi-scarthgap/pantavisor-bsp-raspberrypi.pvrexport.tgz)<br>`9460729aad56…` | — |
+| docker-x86_64-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/docker-x86_64-scarthgap/docker-x86_64-scarthgap-029-rc2.tar.gz)<br>`174030647f77…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/docker-x86_64-scarthgap/pvexports-docker-x86_64-scarthgap-029-rc2.zip)<br>`8a24d2a9f615…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/docker-x86_64-scarthgap/pantavisor-bsp-docker-x86_64.pvrexport.tgz)<br>`cc767089e0f1…` | — |
+| radxa-rock5a-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/radxa-rock5a-scarthgap/radxa-rock5a-scarthgap-029-rc2.tar.gz)<br>`c2188a107834…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/radxa-rock5a-scarthgap/pvexports-radxa-rock5a-scarthgap-029-rc2.zip)<br>`62e93e808797…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/radxa-rock5a-scarthgap/pantavisor-bsp-rock-5a.pvrexport.tgz)<br>`e71d8a54e0cb…` | — |
+| colibri-imx6ull-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/colibri-imx6ull-scarthgap/colibri-imx6ull-scarthgap-029-rc2.tar.gz)<br>`f7d1eb50d33b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/colibri-imx6ull-scarthgap/pvexports-colibri-imx6ull-scarthgap-029-rc2.zip)<br>`7af2c13769b5…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/colibri-imx6ull-scarthgap/pantavisor-bsp-colibri-imx6ull.pvrexport.tgz)<br>`94bf5b93f107…` | — |
+| verdin-imx8mm-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/verdin-imx8mm-scarthgap/verdin-imx8mm-scarthgap-029-rc2.tar.gz)<br>`af3dba9d624e…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/verdin-imx8mm-scarthgap/pvexports-verdin-imx8mm-scarthgap-029-rc2.zip)<br>`df72ca652509…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/verdin-imx8mm-scarthgap/pantavisor-bsp-verdin-imx8mm.pvrexport.tgz)<br>`9fc6bc8127c0…` | — |
+| sunxi-orange-pi-r1-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-r1-scarthgap/sunxi-orange-pi-r1-scarthgap-029-rc2.tar.gz)<br>`5c4c754b2c23…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-r1-scarthgap/pvexports-sunxi-orange-pi-r1-scarthgap-029-rc2.zip)<br>`71d7714c7886…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-r1-scarthgap/pantavisor-bsp-orange-pi-r1.pvrexport.tgz)<br>`31a6bfe82707…` | — |
+| sunxi-orange-pi-3lts-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-3lts-scarthgap/sunxi-orange-pi-3lts-scarthgap-029-rc2.tar.gz)<br>`37db002cd5e5…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-3lts-scarthgap/pvexports-sunxi-orange-pi-3lts-scarthgap-029-rc2.zip)<br>`bdd61169b758…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-orange-pi-3lts-scarthgap/pantavisor-bsp-orange-pi-3lts.pvrexport.tgz)<br>`f2c4e1d2db56…` | — |
+| imx8mm-var-dart-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mm-var-dart-scarthgap/imx8mm-var-dart-scarthgap-029-rc2.tar.gz)<br>`3d246233577b…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mm-var-dart-scarthgap/pvexports-imx8mm-var-dart-scarthgap-029-rc2.zip)<br>`a41c9a933de2…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mm-var-dart-scarthgap/pantavisor-bsp-imx8mm-var-dart.pvrexport.tgz)<br>`26da546bafc9…` | — |
+| imx8mn-var-som-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mn-var-som-scarthgap/imx8mn-var-som-scarthgap-029-rc2.tar.gz)<br>`25aa30e836f8…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mn-var-som-scarthgap/pvexports-imx8mn-var-som-scarthgap-029-rc2.zip)<br>`489d4fad647d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8mn-var-som-scarthgap/pantavisor-bsp-imx8mn-var-som.pvrexport.tgz)<br>`6d143ff3d4e5…` | — |
+| imx8qxp-b0-mek-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8qxp-b0-mek-scarthgap/imx8qxp-b0-mek-scarthgap-029-rc2.tar.gz)<br>`3488cd3db89f…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8qxp-b0-mek-scarthgap/pvexports-imx8qxp-b0-mek-scarthgap-029-rc2.zip)<br>`c4a84ce30de8…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/imx8qxp-b0-mek-scarthgap/pantavisor-bsp-imx8qxp-b0-mek.pvrexport.tgz)<br>`dd764c06554c…` | — |
+| sunxi-bananapi-m2-berry-scarthgap | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-bananapi-m2-berry-scarthgap/sunxi-bananapi-m2-berry-scarthgap-029-rc2.tar.gz)<br>`178c98f7f43d…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-bananapi-m2-berry-scarthgap/pvexports-sunxi-bananapi-m2-berry-scarthgap-029-rc2.zip)<br>`82a71904dbe7…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-bananapi-m2-berry-scarthgap/pantavisor-bsp-bananapi-m2-berry.pvrexport.tgz)<br>`ed318dba42e1…` | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/029-rc2/sunxi-bananapi-m2-berry-scarthgap/panta-musl-x86_64-pantavisor-starter-cortexa7t2hf-neon-bananapi-m2-berry-toolchain-029-rc2.sh)<br>`52e995407cc9…` |
+
+Source: [`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json) (`release-candidate` → `029-rc2`).
+
+### Component versions
+
+| Component | Previous (029-rc1) | Current (029-rc2) | Compare |
+|---|---|---|---|
+| busybox-pv | `3bcf56d` | `3bcf56d` | _unchanged_ |
+| dropbear | `a5052fd` | `a5052fd` | _unchanged_ |
+| libthttp | `ce916c5` | `ce916c5` | _unchanged_ |
+| lxc6-pv | `c2017d4` | `c2017d4` | _unchanged_ |
+| pantavisor | `a4ab01f` | `feb08e7` | [`a4ab01f…feb08e7`](https://github.com/pantavisor/pantavisor/compare/a4ab01fed0f209948f4b66a83108307055fb1ef1...feb08e7fa802e863c2294da1011160d9638b58ff) |
+| picohttpparser | `facd3da` | `facd3da` | _unchanged_ |
+
+# Changes
+
+Changes since [`029-rc1`](https://github.com/pantavisor/meta-pantavisor/releases/tag/029-rc1):
+
+#### Features
+- **docs**: include pvr docs and drop HTML generation
+- **avahi**: expose mDNS D-Bus API on the hosted system bus
+- **kas**: enable hosted D-Bus system bus
+- **examples**: add hosted-bus dbus example containers
+- gate and ship the hosted xconnect dbus system bus
+
+#### Fixes
+- **pv-flash-bundle**: match imx-boot deploy filename suffix
+- **ci**: avoid gh pr edit's read:org requirement in scheduled workflows
+- **ci**: use PAT instead of GITHUB_TOKEN in scheduled update workflows
+- **pvtest**: local/runtime/status-goal-success-failure downloading test container from hub
+
+#### Docs
+- **testing**: pvtest output diff and unmerged-feature builds
+- **ci**: note makemachines sandbox limitation
+- add hosted-bus example walkthrough and pvtest entry
+- **index**: sort meta-pantavisor after pantavisor in reference sidebar
+
+#### Other
+- (test) **xconnect**: prove hosted-bus name collision fails validation and rolls back (#397)
+- (test) **xconnect**: prove hosted-bus policy denies a non-allowed caller
+- (test) **xconnect**: avahi hosted-bus pvtest with browse consumer
+- (test) **xconnect**: add hosted D-Bus system bus pvtest
+- (test) **pvtests**: record PV_XCONNECT_DBUS_SYSTEMBUS_ENABLED in basic-endpoints golden
+- **(uncategorized)**: recipes-pv: automated srcrev update
+
 ## v029-rc1
 
 Released: 2026-07-02
