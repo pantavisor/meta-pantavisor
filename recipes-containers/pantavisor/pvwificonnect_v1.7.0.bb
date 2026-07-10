@@ -89,10 +89,4 @@ do_image_pvrexportit:append() {
     pvr export ${IMGDEPLOYDIR}/${PN}.pvrexport.tgz
 }
 
-# pvroot-image expects do_deploy to provide the .pvrexport.tgz
-# do_image_complete sstate also deploys it, so use symlink to avoid conflict
-fakeroot do_deploy() {
-    :
-}
-
-addtask deploy after do_image_complete before do_build
+# do_deploy hook for pvroot-image consumption is provided by container-pvrexport

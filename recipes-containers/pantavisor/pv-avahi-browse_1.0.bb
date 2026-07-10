@@ -8,6 +8,8 @@ IMAGE_BASENAME = "pv-avahi-browse"
 
 PVRIMAGE_AUTO_MDEV = "0"
 
+IMAGE_FSTYPES = "pvrexportit"
+
 # Single-pid consumer: avahi client tools to browse over the injected bus, plus
 # dbus-send so the pvtest can drive an explicit D-Bus roundtrip. No dbus-daemon,
 # no policy XML, no /etc/passwd: identity is the 'monitor' role, masqueraded by

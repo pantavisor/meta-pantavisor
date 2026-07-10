@@ -23,6 +23,23 @@ python __anonymous() {
     d.appendVar("IMAGE_INSTALL", " pvcontrol")
     d.setVarFlag("do_image_pvrexportit", "dirs", " ${TOPDIR} ${PVSTATE} ${PVR_CONFIG_DIR} ")
     d.setVarFlag("do_image_pvrexportit", "cleandirs", " ${PVSTATE} ")
+
+    # A pvrexport container's sole deliverable is the pvrexport, so give it the
+    # no-op do_deploy that pvroot-image depends on. Schedule it only when the
+    # image is a container (IMAGE_FSTYPES is exactly pvrexportit): this class is
+    # applied to every image via IMAGE_CLASSES, and on a wic-building system
+    # image do_image_wic[recrdeps]=do_build would make the task loop.
+    if set((d.getVar("IMAGE_FSTYPES") or "").split()) == {"pvrexportit"}:
+        bb.build.addtask("do_deploy", "do_build", "do_image_complete", d)
+}
+
+# pvroot-image consumes each container as ${PN}.pvrexport.tgz from
+# DEPLOY_DIR_IMAGE and depends on its do_deploy as the "artifact ready" signal.
+# For image containers the tgz is already deployed by do_image_complete's
+# sstate, so this is a no-op ordering task (scheduled by __anonymous above). We
+# do NOT `inherit deploy`: a real deploy task would re-deploy the tgz and clash.
+fakeroot do_deploy() {
+    :
 }
 
 PVR_FORMAT_OPTS ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '-comp lz4 -Xhc', '-comp xz', d)}"
