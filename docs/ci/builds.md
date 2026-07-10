@@ -267,7 +267,7 @@ The `call-pvtests.yaml` reusable workflow:
 
 1. Downloads the `pvtest-distro-docker-x86_64-scarthgap` artifact.
 2. Installs Docker images via `test.docker.sh install-docker`.
-3. Runs `test.docker.sh run <test_path>` with `--retry 3` for remote tests.
+3. Runs `test.docker.sh run <test_path>` (no retries — failures surface directly).
 4. Appends the SUMMARY section of `test.docker.log` to the step summary.
 5. Uploads the pvtest workspace (logs, valgrind output) as an artifact.
 6. Cleans up Docker containers and images.
