@@ -6,13 +6,6 @@
             "role": "operator",
             "interface": "org.pantavisor.Example",
             "target": "/run/dbus/system_bus_socket"
-        },
-        {
-            "name": "system-bus",
-            "type": "dbus",
-            "role": "stranger",
-            "interface": "org.pantavisor.Example",
-            "target": "/run/dbus/system_bus_socket_stranger"
         }
     ]
 }

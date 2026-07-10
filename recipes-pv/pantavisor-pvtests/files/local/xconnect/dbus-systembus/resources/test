@@ -2,12 +2,14 @@
 #
 # Hosted D-Bus system bus end-to-end.
 #
-# Both the service owner (pv-example-dbus-host-server, role "example-service",
-# owns org.pantavisor.Example, allow ["operator","monitor"]) and the caller
-# (pv-example-dbus-host-client, role "operator") are single-pid containers on
-# the pantavisor-managed bus. There is no dbus-daemon, policy XML or passwd in
-# either container: the bus is hosted by pantavisor and the policy is generated
-# from the owns/allow declaration.
+# The service owner (pv-example-system-dbus-server, role "example-service",
+# owns org.pantavisor.Example, allow ["operator","monitor"]) and two callers are
+# single-pid containers on the pantavisor-managed bus:
+#   pv-example-system-dbus-client         role "operator" (in allow -> permitted)
+#   pv-example-system-dbus-client-denied  role "stranger" (not in allow -> denied)
+# There is no dbus-daemon, policy XML or passwd in any container: the bus is
+# hosted by pantavisor and the policy is generated from the owns/allow
+# declaration.
 #
 # The bus runs a generated default-deny policy, so a method call can only
 # succeed if (a) the proxy masqueraded the caller to its role's numeric uid and
@@ -19,12 +21,12 @@ SVC="org.pantavisor.Example"
 OBJ="/org/pantavisor/Example"
 
 dsend() {
-	# run dbus-send inside the client container against the injected bus socket.
-	# Exec dbus-send directly (via env for the address) rather than through
-	# "sh -c": under pventer a busybox "sh -c" wrapper swallows dbus-send's
-	# stdout, so the reply would be lost.
+	# run dbus-send inside the operator client container against the injected
+	# bus socket. Exec dbus-send directly (via env for the address) rather than
+	# through "sh -c": under pventer a busybox "sh -c" wrapper swallows
+	# dbus-send's stdout, so the reply would be lost.
 	# shellcheck disable=SC2086
-	pventer -c "pv-example-dbus-host-client" \
+	pventer -c "pv-example-system-dbus-client" \
 		env DBUS_SYSTEM_BUS_ADDRESS="$ADDR" \
 		dbus-send --system --print-reply $* 2>&1
 }
@@ -51,15 +53,15 @@ else
 	echo "operator GetInfo: FAILED"
 fi
 
-# The same client also holds a second identity, role "stranger", on its own
-# injected socket. "stranger" is NOT in the server's allow list, so the
-# generated default-deny policy grants its masqueraded uid no send access to the
-# owned name. This proves the allow list actually restricts callers rather than
-# merely permitting the listed ones: the identical GetInfo must NOT succeed.
+# A separate container holds the "stranger" identity, which is NOT in the
+# server's allow list, so the generated default-deny policy grants its
+# masqueraded uid no send access to the owned name. This proves the allow list
+# actually restricts callers rather than merely permitting the listed ones: the
+# identical GetInfo must NOT succeed.
 dsend_stranger() {
 	# shellcheck disable=SC2086
-	pventer -c "pv-example-dbus-host-client" \
-		env DBUS_SYSTEM_BUS_ADDRESS="unix:path=/run/dbus/system_bus_socket_stranger" \
+	pventer -c "pv-example-system-dbus-client-denied" \
+		env DBUS_SYSTEM_BUS_ADDRESS="$ADDR" \
 		dbus-send --system --print-reply $* 2>&1
 }
 

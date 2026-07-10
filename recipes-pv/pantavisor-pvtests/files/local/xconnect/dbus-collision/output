@@ -4,8 +4,8 @@
 0
 [pvtest] 1783621275 DEBUG -- [test-script]: pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
 [pvtest] 1783621275 DEBUG -- [test-script]: cd /home/checkout
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-dbus-host-server.tgz
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-dbus-host-server2.tgz
+[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-system-dbus-server.tgz
+[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-system-dbus-server-collision.tgz
 [pvtest] 1783621275 DEBUG -- [test-script]: pvr checkout
 [pvtest] 1783621276 DEBUG -- [test-script]: pvr post --rev locals/collision
 [pvtest] 1783621276 DEBUG -- [test-script]: wait_for_value 'pvcontrol steps show-progress locals/collision | jq -r '\''.status'\''' ERROR 90

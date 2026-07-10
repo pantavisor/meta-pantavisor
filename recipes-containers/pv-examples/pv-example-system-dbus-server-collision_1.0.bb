@@ -4,13 +4,13 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 inherit core-image container-pvrexport
 
-IMAGE_BASENAME = "pv-example-dbus-host-server2"
+IMAGE_BASENAME = "pv-example-system-dbus-server-collision"
 
 PVRIMAGE_AUTO_MDEV = "0"
 
 # Deliberately minimal: this container never runs a real D-Bus server. It only
 # ships a services.json that declares ownership of org.pantavisor.Example on the
-# hosted system-bus with a DIFFERENT role than pv-example-dbus-host-server.
+# hosted system-bus with a DIFFERENT role than pv-example-system-dbus-server.
 # Placing both owners in one revision makes pv_dbus_daemon_validate() reject the
 # state ("owned by more than one app") before any container runs — the revision
 # errors and rolls back. A busybox sleep loop is all the payload we need.
