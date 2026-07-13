@@ -1,0 +1,7 @@
+{
+    "PV_NETWORK_POOL": "internal",
+    "PV_LXC_NETWORK_TYPE": "veth",
+    "PV_LXC_NETWORK_LINK": "pvbr0",
+    "PV_LXC_NETWORK_IPV4_ADDRESS": "10.0.5.42/24",
+    "PV_LXC_NETWORK_IPV4_GATEWAY": "10.0.5.1"
+}

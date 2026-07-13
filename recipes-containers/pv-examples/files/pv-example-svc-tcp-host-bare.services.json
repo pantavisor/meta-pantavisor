@@ -1,0 +1,6 @@
+{
+  "#spec": "service-manifest-xconnect@2",
+  "services": [
+    {"name": "hello-tcp-host-bare", "type": "tcp", "port": 80}
+  ]
+}
