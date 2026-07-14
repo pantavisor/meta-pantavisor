@@ -102,6 +102,10 @@ Two files land in the image deploy dir for every build:
 | `${IMAGE_NAME}.manifest.txt`      | Always                                |
 | `${IMAGE_NAME}.manifest.patch`    | Only when there is a drift to record  |
 
+Each is accompanied by a stable, build-id-free symlink
+(`${IMAGE_LINK_NAME}.manifest.txt` / `.manifest.patch`) pointing at the latest
+versioned file, so tooling can reference a fixed path.
+
 The patch is also dumped in full into the bitbake log via `bb.plain` so it
 shows in CI output without any extra plumbing. Look for the banner:
 

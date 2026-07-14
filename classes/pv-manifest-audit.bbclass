@@ -39,9 +39,12 @@
 # Output:
 #   - Manifest is always written to
 #       ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.manifest.txt
+#     with a stable, build-id-free symlink alongside it:
+#       ${DEPLOY_DIR_IMAGE}/${IMAGE_LINK_NAME}.manifest.txt
 #   - On any deviation (missing reference or mismatch) a unified-diff patch
 #     is written next to the manifest as
 #       ${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.manifest.patch
+#     (also symlinked as ${IMAGE_LINK_NAME}.manifest.patch)
 #     and printed in full to the bitbake log via bb.plain (CI-visible).
 #     The patch headers use the reference's bare basename, so a maintainer
 #     can apply it with:
@@ -80,6 +83,24 @@ python do_pv_manifest_audit() {
     manifest_path = os.path.join(deploy_dir, image_name + '.manifest.txt')
     patch_path = os.path.join(deploy_dir, image_name + '.manifest.patch')
     ref_path = os.path.join(workdir, ref_name)
+
+    # Stable, build-id-free symlinks pointing at the latest versioned files.
+    link_name = d.getVar('IMAGE_LINK_NAME') or ''
+    manifest_link = os.path.join(deploy_dir, link_name + '.manifest.txt') if link_name else ''
+    patch_link = os.path.join(deploy_dir, link_name + '.manifest.patch') if link_name else ''
+
+    def _relink(link, target):
+        if not link:
+            return
+        try: os.remove(link)
+        except OSError: pass
+        os.symlink(os.path.basename(target), link)
+
+    def _rmlink(link):
+        if not link:
+            return
+        try: os.remove(link)
+        except OSError: pass
 
     # Render paths relative to TOPDIR so the strings are usable both inside
     # the kas/bitbake container and on the host (TOPDIR maps to build/).
@@ -164,6 +185,7 @@ python do_pv_manifest_audit() {
             f.write('# exclude: %s\n' % ' '.join(excludes))
         f.write(body)
 
+    _relink(manifest_link, manifest_path)
     bb.note('pv-manifest-audit: wrote %s (%d entries)' % (manifest_rel, len(entries)))
 
     have_ref = os.path.exists(ref_path)
@@ -179,6 +201,7 @@ python do_pv_manifest_audit() {
         if os.path.exists(patch_path):
             try: os.unlink(patch_path)
             except OSError: pass
+        _rmlink(patch_link)
         return
 
     # Build a patch whose headers carry the bare basename so it applies
@@ -191,6 +214,7 @@ python do_pv_manifest_audit() {
         tofile=ref_name))
     with open(patch_path, 'w') as f:
         f.write(patch)
+    _relink(patch_link, patch_path)
 
     if have_ref:
         headline = ("pv-manifest-audit: rootfs manifest for MACHINE '%s' "
