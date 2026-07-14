@@ -26,7 +26,6 @@ if test "${devtype}" = "ubi"; then
 	setenv pv_load_data ubifsload
 fi
 
-i
 pv_mmcdev=${devnum}
 if test -z "${pv_mmcdev}"; then
 	pv_mmcdev=${mmcdev}
@@ -162,10 +161,25 @@ if test -n "${addr_fit}" && ${pv_load_data} ${addr_fit} /trails/${boot_rev}/bsp/
 	echo Pantavisor bootargs: "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 ${fdtbootargs} ${configargs} ${oemargs} ${localargs}"
 	setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${oemargs} ${localargs}"
 
+	# Select the FIT configuration node. kernel-fitimage.bbclass names it
+	# in one of two ways depending on KERNEL_DTBVENDORED:
+	#   0/false (poky default): conf-<dtb-basename>       e.g. conf-rk3328-rock64.dtb
+	#   1/true               : conf-<path with / -> _>    e.g. conf-rockchip_rk3328-rock64.dtb
+	# ${name_fit_config} above is the vendored form (fdtfile with / -> _).
+	# bootm only returns on failure, so try each candidate in turn and fall
+	# back to the FIT's own default configuration last. This keeps a single
+	# boot script correct across every board regardless of the naming scheme.
 	echo "bootm ${addr_fit}${name_fit_config}"
 	bootm ${addr_fit}${name_fit_config}
-	echo "trying fallback: bootm ${addr_fit}"
-	bootm ${addr_fit}${name_fit_config}
+
+	# basename form: strip any vendor subdir from fdtfile (no-op if none)
+	setexpr pv_fit_conf_base gsub "^.*/" "" "${fdtfile}"
+	echo "trying basename config: bootm ${addr_fit}#conf-${pv_fit_conf_base}"
+	bootm ${addr_fit}#conf-${pv_fit_conf_base}
+
+	# last resort: boot the FIT's declared default configuration
+	echo "trying default config: bootm ${addr_fit}"
+	bootm ${addr_fit}
 	echo "failed to boot fit config ${addr_fit}${name_fit_config} ... resetting in 5"
 	sleep 5
 	reset
