@@ -193,9 +193,16 @@ Currently inherited by:
 
 ## Implementation
 
-`classes/pv-manifest-audit.bbclass` registers a `ROOTFS_POSTPROCESS_COMMAND`
-(`pv_manifest_audit_run`). It runs under pseudo, so the uid/gid recorded in
-the manifest are the same ones that end up in the cpio / tarball. The task is
-re-invalidated when `PANTAVISOR_FEATURES`, `PV_MANIFEST_PREFIX`,
-`PV_MANIFEST_REFERENCE_NAME`, or `PV_MANIFEST_EXCLUDES` change (declared via
-`vardeps`).
+`classes/pv-manifest-audit.bbclass` adds a dedicated `do_pv_manifest_audit`
+task that runs after `do_rootfs` and before `do_image`. It is marked
+`[fakeroot]`, so it runs under pseudo and the uid/gid recorded in the manifest
+are the same ones that end up in the cpio / tarball.
+
+The task is marked `[nostamp]`, so it re-runs on **every** build. This is
+deliberate: a `ROOTFS_POSTPROCESS_COMMAND` only executes while `do_rootfs`
+itself runs, so once the rootfs stamp is valid or the image is restored from
+sstate via setscene, the gate would be silently skipped — a strict-mode
+deviation would fail the first build but pass every rebuild. As a `nostamp`
+task consuming the live `IMAGE_ROOTFS`, it always runs (and forces `do_rootfs`
+to produce a real rootfs), so a strict deviation keeps failing until the
+reference is updated.

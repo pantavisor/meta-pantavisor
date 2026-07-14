@@ -58,7 +58,7 @@ PV_MANIFEST_REFERENCE_NAME ??= "${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}${@'-'
 # files themselves (binaries, libs, configs).
 PV_MANIFEST_EXCLUDES ??= "/var/lib/rpm /var/lib/dnf /var/lib/opkg /usr/lib/opkg /var/cache/ldconfig /var/cache/dnf /var/cache/yum"
 
-python pv_manifest_audit_run() {
+python do_pv_manifest_audit() {
     import os, stat, difflib
 
     rootfs = d.getVar('IMAGE_ROOTFS')
@@ -68,7 +68,7 @@ python pv_manifest_audit_run() {
     # manifest.txt + manifest.patch survive a bb.fatal in strict mode.
     # IMGDEPLOYDIR is per-recipe staging that bitbake only rsyncs to
     # DEPLOY_DIR_IMAGE on successful task completion — a strict-mode
-    # abort during ROOTFS_POSTPROCESS_COMMAND would otherwise leave the
+    # abort in do_pv_manifest_audit would otherwise leave the
     # diagnostic artifact stranded in WORKDIR where CI never finds it.
     deploy_dir = d.getVar('DEPLOY_DIR_IMAGE')
     workdir = d.getVar('WORKDIR') or ''
@@ -206,13 +206,14 @@ python pv_manifest_audit_run() {
               '# patch file: %s (relative to TOPDIR)' % patch_rel,
               '# manifest:   %s (relative to TOPDIR)' % manifest_rel,
               '# apply with: cd <layer>/files && patch < $TOPDIR/%s' % patch_rel,
+              '# or copy with: cd <layer>/files && cp $TOPDIR/%s' % patch_rel,
               '']
     bb.plain('\n'.join(banner) + patch + '=== end pv-manifest-audit PATCH ===\n')
 
-    advice = (" Patch: " + patch_rel +
+    advice = (" Manifest: " + manifest_rel + ". Patch: " + patch_rel +
               ". To adopt: ship the regenerated reference via "
               "SRC_URI += \"file://%s\" (or apply the patch under the "
-              "layer's files/ directory)." % ref_name)
+              "layer's files/ directory or copy the new manifest %s)." % (ref_name, manifest_rel))
 
     if strict:
         bb.fatal(headline + advice +
@@ -223,7 +224,13 @@ python pv_manifest_audit_run() {
                 "PANTAVISOR_FEATURES to gate the build)")
 }
 
-ROOTFS_POSTPROCESS_COMMAND += "pv_manifest_audit_run;"
+# Dedicated task, not a ROOTFS_POSTPROCESS_COMMAND: [nostamp] so it re-runs
+# every build (a postprocess is skipped whenever do_rootfs is served from
+# stamp/sstate, silently bypassing the gate).
+addtask do_pv_manifest_audit after do_rootfs before do_image
+do_pv_manifest_audit[nostamp] = "1"
+do_pv_manifest_audit[vardeps] += "PANTAVISOR_FEATURES PV_MANIFEST_PREFIX PV_MANIFEST_REFERENCE_NAME PV_MANIFEST_EXCLUDES"
 
-# Make the audit re-run when feature flags or naming inputs change.
-pv_manifest_audit_run[vardeps] += "PANTAVISOR_FEATURES PV_MANIFEST_PREFIX PV_MANIFEST_REFERENCE_NAME PV_MANIFEST_EXCLUDES"
+# Run under pseudo so os.lstat() records the image's uid/gid, not the builder's.
+do_pv_manifest_audit[fakeroot] = "1"
+do_pv_manifest_audit[depends] += "virtual/fakeroot-native:do_populate_sysroot"
