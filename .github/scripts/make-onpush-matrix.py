@@ -28,6 +28,8 @@ lines = [
     "",
     "on:",
     "  push:",
+    "    branches:",
+    "      - '**'",
     "    paths:",
     "      - '**'",
     "      # Skip pushes that only touch CI internals (generators,",
@@ -48,7 +50,7 @@ if pvtest_machines:
 lines += [
     f"      - '.github/workflows/onpush-{branch}.yaml'",
     "  pull_request:",
-    "    types: [opened, ready_for_review]",
+    "    types: [ready_for_review]",
     "",
     "concurrency:",
     "  group: ${{ github.workflow }}-${{ github.ref }}",
