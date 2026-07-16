@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 REPO = "pantavisor/meta-pantavisor"
+STATUS_DOC = "docs/overview/ci/status.md"
 SHIELDS = "https://img.shields.io/github/actions/workflow/status"
 GH_ACTIONS = f"https://github.com/{REPO}/actions/workflows"
 
@@ -58,7 +59,7 @@ for wf in workflows:
 
 table = "\n".join(rows)
 
-with open("docs/ci/status.md") as f:
+with open(STATUS_DOC) as f:
     content = f.read()
 
 content = re.sub(
@@ -68,7 +69,7 @@ content = re.sub(
     flags=re.DOTALL,
 )
 
-with open("docs/ci/status.md", "w") as f:
+with open(STATUS_DOC, "w") as f:
     f.write(content)
 
-print("docs/ci/status.md workflow table updated!")
+print(f"{STATUS_DOC} workflow table updated!")

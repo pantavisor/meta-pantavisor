@@ -18,25 +18,28 @@ Yocto/OpenEmbedded layer for building Pantavisor-based BSP images for embedded L
 
 ## Documentation Structure
 
-New documents should follow this layout:
+`docs/` is split into two top-level groups, each a sidebar category. Which one a
+new document belongs to depends on its audience:
 
 | Directory | Content type |
 |-----------|-------------|
-| `docs/overview/` | Architecture, design, layer overview |
-| `docs/how-to-build/` | Build recipes, workspace dev, container authoring |
-| `docs/how-to-install/` | Board-specific flashing guides |
-| `docs/examples/` | xconnect and other feature examples |
-| `docs/testing/` | Development and automated test workflows; test plans under `testplans/` |
-| `docs/ci/` | CI/release automation — workflow design, tag sync, secrets setup |
+| `docs/getting-started/` | **Using Pantavisor**, independent of this layer — install/flash guides (`how-to-install/`, incl. `boards/`), app development (`develop/`), device operation (`operate/`), plus `start/`, `migrate/`, `security/`, `benchmarks/`, `solutions/`, `troubleshooting/`, `licensing/`, `community/` |
+| `docs/overview/` | **Reference for the meta-pantavisor layer itself** — architecture, build system, and build guide as flat `overview/*.md`, with `examples/`, `testing/` (test plans under `testplans/`), and `ci/` as subdirectories |
+
+Rule of thumb: if it is about building or contributing to *this layer*, it goes
+in `overview/`; if it is about running Pantavisor on a device, it goes in
+`getting-started/`. Ordering within each group is set by `_category_.json` and
+`sidebar_position` front matter; `overview/index.md` carries a hand-ordered
+topic list, so add new `overview/` pages there too.
 
 Key documents:
-- [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-development.md) — local source development with workspace overlay
-- [docs/how-to-build/get-started.md](docs/how-to-build/get-started.md) — first build guide
-- [docs/how-to-build/manifest-audit.md](docs/how-to-build/manifest-audit.md) — rootfs manifest audit (`pv-manifest-audit` / `pv-manifest-strict`)
-- [docs/testing/development-workflow.md](docs/testing/development-workflow.md) — manual appengine testing during development
-- [docs/testing/automated-workflow.md](docs/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, todo list)
-- [docs/ci/tag-sync.md](docs/ci/tag-sync.md) — meta-pantavisor → pantavisor tag-sync workflow and PAT setup
-- [docs/ci/changelog.md](docs/ci/changelog.md) — per-release CHANGELOG generator, format, and regen procedure
+- [docs/overview/pantavisor-development.md](docs/overview/pantavisor-development.md) — local source development with workspace overlay
+- [docs/overview/get-started.md](docs/overview/get-started.md) — first build guide
+- [docs/overview/manifest-audit.md](docs/overview/manifest-audit.md) — rootfs manifest audit (`pv-manifest-audit` / `pv-manifest-strict`)
+- [docs/overview/testing/development-workflow.md](docs/overview/testing/development-workflow.md) — manual appengine testing during development
+- [docs/overview/testing/automated-workflow.md](docs/overview/testing/automated-workflow.md) — structured testing with test.docker.sh (valgrind, CI, todo list)
+- [docs/overview/ci/tag-sync.md](docs/overview/ci/tag-sync.md) — meta-pantavisor → pantavisor tag-sync workflow and PAT setup
+- [docs/overview/ci/changelog.md](docs/overview/ci/changelog.md) — per-release CHANGELOG generator, format, and regen procedure
 
 ## Key Pitfalls
 
@@ -60,4 +63,4 @@ PANTAVISOR_FEATURES:append = " appengine"
 - **Storage state**: Use fresh storage volumes when testing pvtx.d changes (`docker volume rm storage-test`)
 - **API testing**: Use `pvcurl`/`pvcontrol` (not `curl`) inside appengine containers
 - **Formatting**: Run `clang-format -i` on modified `.c`/`.h` pantavisor files before committing
-- **pvtest todo list**: Update the todo list in `docs/testing/automated-workflow.md` whenever a pvtest is added, modified, or removed — mark it `✓` when complete.
+- **pvtest todo list**: Update the todo list in `docs/overview/testing/automated-workflow.md` whenever a pvtest is added, modified, or removed — mark it `✓` when complete.
