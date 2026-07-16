@@ -1,18 +1,30 @@
 ---
-sidebar_position: 7
+sidebar_position: 17
 ---
-# pv-flash-bundle Recipe
+# Flashing NXP devices
 
-`pv-flash-bundle` (`recipes-bsp/pv-flash/pv-flash-bundle.bb`) assembles a
-self-contained factory flash archive for boards that flash via NXP's UUU tool
-instead of a standard `.wic` write. It bundles the image payload, a portable
-`uuu` binary, a recovery U-Boot, and generated flash scripts into a single
-`pv-flash-bundle-${MACHINE}.tar.gz`.
+`pv-flash-bundle` (`recipes-bsp/pv-flash/pv-flash-bundle.bb`) is meta-pantavisor's
+**preferred way to flash i.MX-based NXP devices**: it assembles a self-contained
+factory flash archive for boards that flash via NXP's UUU tool instead of a
+standard `.wic` write. It bundles the image payload, a portable `uuu` binary, a
+recovery U-Boot, and generated flash scripts into a single
+`pv-flash-bundle-${MACHINE}.tar.gz`, so flashing needs nothing beyond a USB
+cable and the extracted archive.
 
-For the end-user flashing procedure, see
-[Flashing Toradex Modules](../how-to-install/toradex.md) and
-[Flashing via NXP uuu](../how-to-install/uuu.md) (Variscite). This page covers
-how the recipe itself is built and how to wire up a new machine.
+Every currently supported NXP i.MX board in [Getting Started](../getting-started/how-to-install/index.md)
+uses this recipe:
+
+- **Toradex** — [Verdin iMX8MM](../getting-started/how-to-install/boards/verdin-imx8mm.md) and
+  [Colibri iMX6ULL](../getting-started/how-to-install/boards/colibri-imx6ull.md); see
+  [Flashing Toradex Modules](../getting-started/how-to-install/toradex.md) for the end-user procedure.
+- **Variscite** — [DART-MX8M-MINI](../getting-started/how-to-install/boards/imx8mm-var-dart.md) and
+  [VAR-SOM-MX8M-NANO](../getting-started/how-to-install/boards/imx8mn-var-som.md); see
+  [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md) for the end-user procedure.
+- **NXP i.MX8QXP MEK** — [Board Guide](../getting-started/how-to-install/boards/imx8qxp-b0-mek.md); also
+  covered by [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md).
+
+This page covers how the recipe itself is built and how to wire up a new
+machine.
 
 ## Design
 
@@ -133,8 +145,8 @@ ever evaluated — confirmed by Variscite's own `var-uuu-installer` recipe (in
 exists for exactly this case: pull the boot binary straight from the main
 build instead of standing up a second multiconfig.
 
-See [Flashing Toradex Modules](../how-to-install/toradex.md#how-the-flash-sequence-works)
-and [Flashing via NXP uuu](../how-to-install/uuu.md) for the full step-by-step
+See [Flashing Toradex Modules](../getting-started/how-to-install/toradex.md#how-the-flash-sequence-works)
+and [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md) for the full step-by-step
 sequences and hardware-specific notes (NAND geometry, udev rules, boot-mode
 switches, etc).
 
@@ -192,7 +204,7 @@ eMMC-boot-image, or NAND-UBIFS.
 
 ## Related
 
-- [Flashing Toradex Modules](../how-to-install/toradex.md) — end-user flashing
+- [Flashing Toradex Modules](../getting-started/how-to-install/toradex.md) — end-user flashing
   procedure, prerequisites, and troubleshooting
 - [Starter Image](images.md) — `pantavisor-starter`, the default `PV_FLASH_IMAGE`
 - [Build System](build-system.md) — KAS multiconfig mechanics behind

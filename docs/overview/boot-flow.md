@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 8
 ---
 # U-Boot Boot Flow
 
@@ -30,7 +30,7 @@ storage volume:
 U-Boot's only job is to pick the right revision, load that revision's
 kernel/initrd/dtb into RAM, assemble the kernel command line, and jump to
 it. Once running, Pantavisor mounts its storage volume and manages
-containers (see [Pantavisor](pantavisor.md) for the trail/revision model).
+containers (see [Pantavisor](../../pantavisor/overview/revisions.md) for the trail/revision model).
 
 ## How the boot script is built and deployed
 
@@ -159,5 +159,5 @@ that define partitions in the DT, the `mtdparts=` is unnecessary.)
 
 ## See also
 
-- [docs/how-to-install/boards/colibri-imx6ull.md](../how-to-install/boards/colibri-imx6ull.md) — a worked NAND/UBIFS boot example
+- [docs/how-to-install/boards/colibri-imx6ull.md](../getting-started/how-to-install/boards/colibri-imx6ull.md) — a worked NAND/UBIFS boot example
 - [Build System](build-system.md) — multiconfig architecture (the flashed NAND U-Boot is built in the `tezi-recovery` multiconfig)

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 6
 ---
 # Pantavisor Starter Image
 
@@ -43,7 +43,7 @@ The core containers in the starter mix:
 |-----------|---------|
 | `pv-pvr-sdk` | PVR SDK / local management container |
 | `pv-alpine-connman` | ConnMan network backend (the WiFi/networking stack) |
-| `pvwificonnect` | WiFi provisioning — AP, captive portal, tethering (see [pvwificonnect](../examples/pvwificonnect.md)) |
+| `pvwificonnect` | WiFi provisioning — AP, captive portal, tethering (see [pvwificonnect](examples/pvwificonnect.md)) |
 | `pv-avahi` | mDNS/zeroconf service discovery |
 
 The `pantavisor-bsp` pvrexport (kernel, initramfs, DTBs, modules, firmware) is
@@ -93,7 +93,7 @@ After a build, in `build/tmp-${codename}/deploy/images/${machine}/`:
 
 Because the starter aggregates the BSP and every core container, a full build
 also builds `pantavisor-bsp`, `pantavisor-initramfs`, and the core container
-recipes. See [Get Started](../how-to-build/get-started.md) for prerequisites and
+recipes. See [Get Started](get-started.md) for prerequisites and
 the KAS workflow.
 
 ## Customizing the mix
@@ -110,7 +110,7 @@ PVROOT_CONTAINERS = "my-optional-app"
 ```
 
 Authoring a container to add here is covered in
-[Container Development](../how-to-build/container-development.md).
+[Container Development](container-development.md).
 
 ## Related image recipes
 
@@ -129,4 +129,4 @@ Authoring a container to add here is covered in
 - [meta-pantavisor](meta-pantavisor.md) — layer layout and key recipes/classes
 - [Build System](build-system.md) — KAS hierarchy, multiconfig, and build targets
 - [Boot Flow](boot-flow.md) — how the BSP boots Pantavisor from U-Boot
-- [Install guides](../how-to-install/index.md) — flashing the starter image per board
+- [Install guides](../getting-started/how-to-install/index.md) — flashing the starter image per board
