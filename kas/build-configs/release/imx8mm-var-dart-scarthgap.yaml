@@ -5,7 +5,7 @@ repos:
     meta-freescale:
         url: https://github.com/Freescale/meta-freescale.git
         path: layers/meta-freescale
-        commit: 0c27c21cab57876474bb572e5d378b6707e41224
+        commit: 4143744bc82508f00395a0ffe30e624b2341176a
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: f07b87c58aaeaaafc352b272abb50b9a1398dd48
+        commit: 2a2d767fbf61a86ca86c0b6187a619e17c54af1d
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -28,7 +28,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: c3bf777ad74cb490ad020418ce18e84b2efd5e89
+        commit: 8541b76a56aefab0df9dab75bafdaa7cb4bd2dc4
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
@@ -62,11 +62,11 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
+        commit: 29a044218285fdc7fcdd63d5f0929cb3a27b6fed
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
-        commit: cb709b865a56be48cb17cbad149b69f793f3888b
+        commit: 438e8ea2d98aa5fd5f571f84db154dbe9062b37a
     meta-security:
         url: https://git.yoctoproject.org/meta-security
         path: layers/meta-security
@@ -80,7 +80,7 @@ repos:
         layers:
             meta-arm:
             meta-arm-toolchain:
-        commit: c4fd56386ee30f8b46f8e4eb1220edaf510d2ac0
+        commit: 23b572c40ea6709ab3f8bd7abbb5a795fc3631c2
     poky:
         patches:
             fit-image-multiconfig:
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b56134ff90dec996e8aae45ed7e6ad6b1d5a84a0
+        commit: e146cbbc73e10fecfb7f1c26e8567a5a2873c51b
     meta-pantavisor:
     meta-virtualization:
-        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+        commit: 31fb0a22e0aa65b430a40fbc59dbf239eb8745aa
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:

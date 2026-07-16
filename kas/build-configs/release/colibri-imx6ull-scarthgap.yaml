@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 0c27c21cab57876474bb572e5d378b6707e41224
+        commit: 4143744bc82508f00395a0ffe30e624b2341176a
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -16,17 +16,17 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: d24194128985c1c769446986a495f90e97e4545f
+        commit: 803ac6dab4bfd9dcdd9ef815b572d7f858785c82
         path: layers/meta-toradex-bsp-common
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: 7bbd2b25581a265a42ff04a7c66b5098e18fca2e
+        commit: 22921f05eb2aa2370f8748eabaecb587759322a7
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
     meta-toradex-tezi:
         branch: scarthgap-7.x.y
-        commit: 09d7800fcec48cd4880df14f1391a198b5867ad1
+        commit: d277864b1e0c1576a1e0aec3548eaf4e1ad211cc
         path: layers/meta-toradex-tezi
         url: https://github.com/toradex/meta-toradex-tezi.git
     meta-qt5:
@@ -47,14 +47,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b56134ff90dec996e8aae45ed7e6ad6b1d5a84a0
+        commit: e146cbbc73e10fecfb7f1c26e8567a5a2873c51b
     meta-pantavisor:
     meta-virtualization:
-        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+        commit: 31fb0a22e0aa65b430a40fbc59dbf239eb8745aa
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
+        commit: 29a044218285fdc7fcdd63d5f0929cb3a27b6fed
         layers:
             meta-filesystems:
             meta-networking:
@@ -79,38 +79,32 @@ local_conf_header:
         \ \\\n    meta-toradex-tezi/recipes-core/ \\\n    meta-toradex-tezi/recipes-kernel/\
         \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
         \ \\\n    \"\n"
-    platform-colibri-imx6ull: |
-        include conf/machine/include/colibri-imx6ull.inc
-        IMAGE_CLASSES:remove = " image_type_tezi"
-        IMAGE_FSTYPES:remove = "teziimg"
-        IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
-        MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
-        PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
-        # WiFi/BT (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes
-        # PV_UBOOT_AUTOFDT pick the non-WiFi imx6ull-colibri-aster.dtb, which never
-        # enables usdhc2, so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio
-        # loads but binds nothing, no wlan0). Pin the WiFi device tree for the Aster
-        # carrier and disable autofdt so it isn't overridden by the first DTB.
-        # Other carriers: imx6ull-colibri-wifi-{eval-v3,iris,iris-v2}.dtb
-        # NB: use a :colibri-imx6ull override to disable autofdt — a plain
-        # PV_UBOOT_AUTOFDT = "" loses to the platform-toradex "1" emitted later
-        # in local.conf; the machine override is applied at finalize and wins.
-        PV_INITIAL_DTB = "imx6ull-colibri-wifi-aster.dtb"
-        PV_UBOOT_AUTOFDT:colibri-imx6ull = ""
-        MACHINE_FEATURES:append = " wifi"
-        # 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type
-        # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.
-        # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key
-        # backend rejects the zeroed OTP key on open devices. To enable it on a
-        # secured device, set PANTAVISOR_FEATURES "dcp" (wires the DCP kernel
-        # backport patches + dcp.cfg + keyutils) and 'trusted.source=dcp' here,
-        # and switch the device-disks.json disk back to type dm-crypt-dcp.
-        PV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull = "file://pv.colibri-imx6ull.cfg"
-        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
-        PANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = "${MACHINE_FIRMWARE}"
-        PV_FLASH_RECOVERY_MC = "tezi-recovery"
-        PV_FLASH_RECOVERY_RECIPE = "u-boot-toradex"
-        PV_FLASH_RECOVERY_IMAGE = "u-boot.imx-recoverytezi"
+    platform-colibri-imx6ull: "include conf/machine/include/colibri-imx6ull.inc\n\
+        IMAGE_CLASSES:remove = \" image_type_tezi\"\nIMAGE_FSTYPES:remove = \"teziimg\"\
+        \nIMAGE_FSTYPES:pn-pantavisor-starter:append = \" ubifs\"\nMKUBIFS_ARGS =\
+        \ \"-m 2048 -e 126976 -c 4096\"\nPV_BOOT_OEMARGS = \"mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi)\
+        \ ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs\"\n\n# WiFi/BT\
+        \ (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes\n# PV_UBOOT_AUTOFDT\
+        \ pick the non-WiFi imx6ull-colibri-aster.dtb, which never\n# enables usdhc2,\
+        \ so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio\n# loads but\
+        \ binds nothing, no wlan0). Pin the WiFi device tree for the Aster\n# carrier\
+        \ and disable autofdt so it isn't overridden by the first DTB.\n# Other carriers:\
+        \ imx6ull-colibri-wifi-{eval-v3,iris,iris-v2}.dtb\n# NB: use a :colibri-imx6ull\
+        \ override to disable autofdt \u2014 a plain\n# PV_UBOOT_AUTOFDT = \"\" loses\
+        \ to the platform-toradex \"1\" emitted later\n# in local.conf; the machine\
+        \ override is applied at finalize and wins.\nPV_INITIAL_DTB = \"imx6ull-colibri-wifi-aster.dtb\"\
+        \nPV_UBOOT_AUTOFDT:colibri-imx6ull = \"\"\nMACHINE_FEATURES:append = \" wifi\"\
+        \n\n# 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type\n\
+        # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.\n\
+        # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key\n\
+        # backend rejects the zeroed OTP key on open devices. To enable it on a\n\
+        # secured device, set PANTAVISOR_FEATURES \"dcp\" (wires the DCP kernel\n\
+        # backport patches + dcp.cfg + keyutils) and 'trusted.source=dcp' here,\n\
+        # and switch the device-disks.json disk back to type dm-crypt-dcp.\nPV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull\
+        \ = \"file://pv.colibri-imx6ull.cfg\"\nUBOOT_CONFIG_BASENAME:colibri-imx6ull\
+        \ = \"colibri-imx6ull\"\nPANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = \"${MACHINE_FIRMWARE}\"\
+        \nPV_FLASH_RECOVERY_MC = \"tezi-recovery\"\nPV_FLASH_RECOVERY_RECIPE = \"\
+        u-boot-toradex\"\nPV_FLASH_RECOVERY_IMAGE = \"u-boot.imx-recoverytezi\"\n"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
