@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 ---
-# meta-pantavisor Overview
+# Overview
 
 meta-pantavisor is the Yocto/OpenEmbedded layer that builds Pantavisor-based BSP images for embedded Linux products. It provides recipes, BitBake classes, and KAS configurations for producing initramfs images and container pvrexport bundles.
 

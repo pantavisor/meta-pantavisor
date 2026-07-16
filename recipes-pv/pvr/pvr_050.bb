@@ -5,7 +5,12 @@ HOMEPAGE = "https://golang.org/"
 inherit pvgo_mod deploy pantacor-component-docs
 
 
-DOCS_FILES = "${WORKDIR}/README.md"
+# TODO: docs moved from the root README.md to a docs/ folder (pvr commit
+# fd286b27, "docs: add full command reference and simplify README"), but that
+# commit isn't in any tagged release yet (latest tag is 051; this recipe
+# pins 050). Neither a raw-URL fetch nor the release src tarball can reach
+# docs/ until pvr cuts a release that includes it. Re-wire DOCS_FILES/
+# DOCS_SRC_DIR to pull from docs/ once this recipe is bumped to such a tag.
 DOCS_COMPONENT_NAME = "pvr"
 
 LICENSE = "MIT"
@@ -16,12 +21,10 @@ S = "${WORKDIR}"
 SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
-        https://gitlab.com/pantacor/pvr/-/raw/${PV}/README.md;name=readme \
 "
 
 SRC_URI[pvr.sha256sum] = "9cba05717f2fd6e8d8fa2bd8aaef0e4b641f7ef81afebbf498c50eaf4bc83bf5"
 SRC_URI[vendor.sha256sum] = "019feba257ee70b0d10775cc1a8547e113f8adc07c66898e041d09f8a6413e6d"
-SRC_URI[readme.sha256sum] = "43d2280cbc105a2100aa352e24c2a9094fce70dcf1c2e7410fd5920e0414aa75"
 
 GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"

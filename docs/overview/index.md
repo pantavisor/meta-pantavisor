@@ -1,19 +1,37 @@
 ---
-title: "Overview"
-description: "Architecture and design of Pantavisor and the meta-pantavisor Yocto layer."
+title: "Structure"
+description: "How meta-pantavisor is organised: KAS configurations, Yocto layer layout, BitBake classes, and the build architecture."
 sidebar_position: 1
 ---
 
-# Overview
+# Structure
 
-Conceptual documentation for the Pantavisor runtime and the meta-pantavisor layer. Start here before reading the build or install guides.
+meta-pantavisor is the Yocto/OpenEmbedded layer that builds Pantavisor-based
+BSP images for embedded Linux. It provides recipes, BitBake classes, and KAS
+configurations for producing initramfs images and container pvrexport bundles.
+
+This section covers the project structure, build system architecture, and how
+the layer is organized. Start here, then follow the build guide below.
 
 ## Topics
 
-1. [Pantavisor](pantavisor.md) — what Pantavisor is: container model, atomic updates, cloud control, and the trail/revision system
-2. [meta-pantavisor](meta-pantavisor.md) — directory layout, key recipes, BitBake classes, KAS fragments, and layer conventions
-3. [Build System](build-system.md) — KAS configuration hierarchy, multiconfig architecture, and the relationship between build targets
-4. [Starter Image](images.md) — what `pantavisor-starter` is, how the initial trail is composed from core containers + the BSP, and how to customize the mix
+1. [Layer Layout](meta-pantavisor.md) — directory structure, key recipes, BitBake classes, `PANTAVISOR_FEATURES`, and Yocto compatibility
+2. [Build System](build-system.md) — KAS configuration hierarchy, multiconfig architecture, build outputs, and the relationship between targets
+3. [Starter Image](images.md) — how `pantavisor-starter` composes core containers with the BSP into the initial device trail
+4. [Flashing Images](flashing-images.md) — where to get a ready-made image (pantavisor.io/downloads), pvflasher, and which flashing method applies to your board
 5. [Boot Flow](boot-flow.md) — how `boot.cmd.pvgeneric` boots Pantavisor: FIT/trail loading, try-boot, MMC vs NAND/UBIFS, and `PV_BOOT_OEMARGS`
-6. [CI](ci.md) — how CI machines, workflows, and build matrix relate to the layer structure
-7. [pv-flash-bundle](pv-flash-bundle.md) — the UUU factory-flash archive recipe: design, `PV_FLASH_*` variables, and how to wire up a new machine
+6. [Flashing NXP devices](pv-flash-bundle.md) — the UUU factory-flash archive recipe (Toradex, Variscite, NXP MEK): design, `PV_FLASH_*` variables, and how to wire up a new machine
+
+## Build Guide
+
+7. [Get Started](get-started.md) — prerequisites, repository setup, git worktrees, and your first KAS build
+8. [Supported Devices](supported-device.md) — machines supported and built by CI
+9. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
+10. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
+11. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
+12. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
+13. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
+
+## Continuous Integration
+
+- [Continuous Integration](ci/index.md) — CI system overview, machine matrix, release builds, tag sync, and docs publishing
