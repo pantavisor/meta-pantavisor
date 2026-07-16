@@ -11,7 +11,7 @@ repos:
         path: layers/meta-rockchip-radxa
         url: https://github.com/radxa/meta-rockchip.git
     meta-arm:
-        commit: c4fd56386ee30f8b46f8e4eb1220edaf510d2ac0
+        commit: 23b572c40ea6709ab3f8bd7abbb5a795fc3631c2
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -30,14 +30,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b56134ff90dec996e8aae45ed7e6ad6b1d5a84a0
+        commit: e146cbbc73e10fecfb7f1c26e8567a5a2873c51b
     meta-pantavisor:
     meta-virtualization:
-        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+        commit: 31fb0a22e0aa65b430a40fbc59dbf239eb8745aa
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
+        commit: 29a044218285fdc7fcdd63d5f0929cb3a27b6fed
         layers:
             meta-filesystems:
             meta-networking:

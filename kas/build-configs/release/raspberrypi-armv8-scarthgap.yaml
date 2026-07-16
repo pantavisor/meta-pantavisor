@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-raspberrypi:
-        commit: 167703d5618498bb7feeaedf18e61be7a8246d1b
+        commit: 6ca1f75017cc5d5acdb8bb05634c4bc01fa049fd
         patches:
             uboot-env:
                 path: patches/meta-raspberrypi/0001-fix-conflicting-boot.scr-from-of-u-boot-and-u-boot-d.patch
@@ -27,14 +27,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b56134ff90dec996e8aae45ed7e6ad6b1d5a84a0
+        commit: e146cbbc73e10fecfb7f1c26e8567a5a2873c51b
     meta-pantavisor:
     meta-virtualization:
-        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+        commit: 31fb0a22e0aa65b430a40fbc59dbf239eb8745aa
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
+        commit: 29a044218285fdc7fcdd63d5f0929cb3a27b6fed
         layers:
             meta-filesystems:
             meta-networking:
