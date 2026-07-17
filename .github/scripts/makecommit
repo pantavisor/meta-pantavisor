@@ -5,9 +5,11 @@ set -xe
 changed=`git diff HEAD kas/build-configs/release | lsdiff | sed 's/.\///'`
 changed2=`git diff HEAD .github/workflows/ | lsdiff | sed 's/.\///'`
 
+# Exit code 3 means "nothing to commit" and is not an error; callers are
+# expected to distinguish it from a real failure.
 if [ -z "$changed" -a -z "$changed2" ]; then
 	echo "NO changes"
-	exit 1
+	exit 3
 fi
 
 echo "Changes: $changed $changed2"
