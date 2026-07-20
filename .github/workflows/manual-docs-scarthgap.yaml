@@ -28,7 +28,7 @@ jobs:
 
       - name: build docs
         run: |
-          su - builder -c "cd $GITHUB_WORKSPACE && kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine-distro"
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine"
 
       - name: collect docs tarball
         run: |
@@ -48,7 +48,7 @@ jobs:
           ORIG_FILEPATH=$(ls docs-out/*.rootfs.docs.tar.zst)
           ORIG_FILENAME=$(basename "${ORIG_FILEPATH}")
           NEW_FILENAME=$(echo "${ORIG_FILENAME}" \
-            | sed 's/pantavisor-appengine-distro-/pantavisor-/' \
+            | sed 's/pantavisor-appengine-/pantavisor-/' \
             | sed 's/\.rootfs\.docs\.tar\.zst$/.docs.tar.zst/')
           cp "${ORIG_FILEPATH}" "docs-out/${NEW_FILENAME}"
 
