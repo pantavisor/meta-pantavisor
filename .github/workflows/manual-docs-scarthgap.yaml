@@ -28,13 +28,13 @@ jobs:
 
       - name: build docs
         run: |
-          su - builder -c "cd $GITHUB_WORKSPACE && kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine"
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-starter"
 
       - name: collect docs tarball
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
           mkdir -p docs-out
-          find build/${{ env.TMPDIR }}/deploy/images/docker-x86_64 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
+          find build/${{ env.TMPDIR }}/deploy/images/raspberrypi-armv8 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
           ls -l docs-out
 
       - name: upload docs to S3 and update latest.json
@@ -48,7 +48,7 @@ jobs:
           ORIG_FILEPATH=$(ls docs-out/*.rootfs.docs.tar.zst)
           ORIG_FILENAME=$(basename "${ORIG_FILEPATH}")
           NEW_FILENAME=$(echo "${ORIG_FILENAME}" \
-            | sed 's/pantavisor-appengine-/pantavisor-/' \
+            | sed 's/pantavisor-starter-/pantavisor-/' \
             | sed 's/\.rootfs\.docs\.tar\.zst$/.docs.tar.zst/')
           cp "${ORIG_FILEPATH}" "docs-out/${NEW_FILENAME}"
 
