@@ -252,21 +252,23 @@ present on the default branch, this workflow takes effect once it is on
 `manual-docs-scarthgap.yaml` is a `workflow_dispatch` counterpart to
 `tag-docs-scarthgap.yaml`. It generates the latest documentation tarball from
 the `master` branch on demand (unlike the tag-triggered workflow, which only
-runs on push).
+runs on tagged releases).
+
+It uses the same build strategy as `tag-docs-scarthgap.yaml`:
+`raspberrypi-armv8-scarthgap.yaml` with `pantavisor-starter` as the target,
+which pulls in the full component set (pantavisor, pvr) needed for
+documentation.
 
 The job:
 
 1. Checks out the latest `master` commit (always ignores the triggering
    branch/ref).
-2. Runs `kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine`
-   inside the KAS container. `docker-x86_64-scarthgap` is used because
-   `pantavisor-appengine` inherits `pantavisor-docs` (via
-   `pantavisor-appengine.inc`) and pulls in the full component set needed
-   for documentation.
+2. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-starter`
+   inside the KAS container — identical to `tag-docs-scarthgap.yaml`.
 3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
-   `build/tmp-scarthgap/deploy/images/docker-x86_64/`.
-4. Renames the tarball: `pantavisor-appengine-<rest>.rootfs.docs.tar.zst` →
-   `pantavisor-<rest>.docs.tar.zst`.
+   `build/tmp-scarthgap/deploy/images/raspberrypi-armv8/`.
+4. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
+   `pantavisor-<rest>.docs.tar.zst` (strips `starter-` and `.rootfs`).
 5. Uploads the renamed tarball to the `docs/latest/` prefix in S3:
    ```
    s3://<BUCKET>/meta-pantavisor/docs/latest/pantavisor-<rest>.docs.tar.zst
