@@ -247,6 +247,47 @@ The tag is taken from `workflow_run.head_branch` (the tag that triggered
 present on the default branch, this workflow takes effect once it is on
 `master`.
 
+## Manual Documentation Build (manual-docs-scarthgap.yaml)
+
+`manual-docs-scarthgap.yaml` is a `workflow_dispatch` counterpart to
+`tag-docs-scarthgap.yaml`. It generates the latest documentation tarball from
+the `master` branch on demand (unlike the tag-triggered workflow, which only
+runs on push).
+
+The job:
+
+1. Checks out the latest `master` commit (always ignores the triggering
+   branch/ref).
+2. Runs `kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine-distro`
+   inside the KAS container. `docker-x86_64-scarthgap` is used because it
+   targets `pantavisor-appengine-distro`, which pulls in the full component
+   set needed for documentation.
+3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
+   `build/tmp-scarthgap/deploy/images/docker-x86_64/`.
+4. Renames the tarball: `pantavisor-appengine-distro-<rest>.rootfs.docs.tar.zst` →
+   `pantavisor-<rest>.docs.tar.zst`.
+5. Uploads the renamed tarball to the `docs/latest/` prefix in S3:
+   ```
+   s3://<BUCKET>/meta-pantavisor/docs/latest/pantavisor-<rest>.docs.tar.zst
+   ```
+6. Writes a `latest.json` metadata file to
+   `s3://<BUCKET>/meta-pantavisor/docs/latest.json`:
+
+```json
+{
+  "name": "pantavisor-<rest>.docs.tar.zst",
+  "hash": "<sha256>",
+  "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/docs/latest/pantavisor-<rest>.docs.tar.zst",
+  "branch": "master",
+  "generated": "<ISO 8601 timestamp>"
+}
+```
+
+Unlike `tag-docs-scarthgap.yaml`, this workflow does **not** upload to GitHub
+Releases or send a `repository_dispatch` to `docs.pantavisor` — it is purely
+a build-and-upload-to-S3 convenience for getting the latest docs during
+development.
+
 ## CI Badges (upload-badges)
 
 After all build jobs finish, the `summary` job in `release.yaml` calls `upload-badges`. The script:

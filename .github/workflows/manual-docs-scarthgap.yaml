@@ -1,0 +1,74 @@
+name: "manual: generate latest docs"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    env:
+      TMPDIR: "tmp-scarthgap"
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: master
+
+      - name: setup workspace
+        run: |
+          chown -R builder:builder $RUNNER_WORKSPACE
+          chown -R builder:builder /__w
+          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin master && git reset --hard origin/master && rm -rf build/ && git clean -f -f -d -x"
+          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      - name: build docs
+        run: |
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine-distro"
+
+      - name: collect docs tarball
+        run: |
+          chmod -R 777 $GITHUB_WORKSPACE
+          mkdir -p docs-out
+          find build/${{ env.TMPDIR }}/deploy/images/docker-x86_64 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
+          ls -l docs-out
+
+      - name: upload docs to S3 and update latest.json
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          AWS_S3_URL="https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor"
+
+          ORIG_FILEPATH=$(ls docs-out/*.rootfs.docs.tar.zst)
+          ORIG_FILENAME=$(basename "${ORIG_FILEPATH}")
+          NEW_FILENAME=$(echo "${ORIG_FILENAME}" \
+            | sed 's/pantavisor-appengine-distro-/pantavisor-/' \
+            | sed 's/\.rootfs\.docs\.tar\.zst$/.docs.tar.zst/')
+          cp "${ORIG_FILEPATH}" "docs-out/${NEW_FILENAME}"
+
+          DOCS_CSUM=$(sha256sum "docs-out/${NEW_FILENAME}" | cut -d' ' -f1)
+
+          aws s3 cp "docs-out/${NEW_FILENAME}" "s3://${AWS_S3_BUCKET}/docs/latest/${NEW_FILENAME}"
+          DOCS_S3_URL="${AWS_S3_URL}/docs/latest/${NEW_FILENAME}"
+
+          jq -n \
+            --arg docs_name "${NEW_FILENAME}" \
+            --arg docs_sha "${DOCS_CSUM}" \
+            --arg docs_url "${DOCS_S3_URL}" \
+            --arg branch "master" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          '{
+            name: $docs_name,
+            hash: $docs_sha,
+            url: $docs_url,
+            branch: $branch,
+            generated: $timestamp
+          }' > latest.json
+
+          aws s3 cp latest.json "s3://${AWS_S3_BUCKET}/docs/latest.json"
