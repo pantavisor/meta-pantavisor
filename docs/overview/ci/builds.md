@@ -258,13 +258,14 @@ The job:
 
 1. Checks out the latest `master` commit (always ignores the triggering
    branch/ref).
-2. Runs `kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine-distro`
-   inside the KAS container. `docker-x86_64-scarthgap` is used because it
-   targets `pantavisor-appengine-distro`, which pulls in the full component
-   set needed for documentation.
+2. Runs `kas build build-targets/docker-x86_64-scarthgap.yaml -- -c create_pantacor_docs pantavisor-appengine`
+   inside the KAS container. `docker-x86_64-scarthgap` is used because
+   `pantavisor-appengine` inherits `pantavisor-docs` (via
+   `pantavisor-appengine.inc`) and pulls in the full component set needed
+   for documentation.
 3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
    `build/tmp-scarthgap/deploy/images/docker-x86_64/`.
-4. Renames the tarball: `pantavisor-appengine-distro-<rest>.rootfs.docs.tar.zst` →
+4. Renames the tarball: `pantavisor-appengine-<rest>.rootfs.docs.tar.zst` →
    `pantavisor-<rest>.docs.tar.zst`.
 5. Uploads the renamed tarball to the `docs/latest/` prefix in S3:
    ```
