@@ -6,6 +6,7 @@
 # ##############################################################################
 
 name: "manual: scarthgap"
+run-name: "manual: ${{ inputs.machine }} (scarthgap) — ${{ github.ref_name }} by ${{ github.actor }}"
 
 on:
   workflow_dispatch:

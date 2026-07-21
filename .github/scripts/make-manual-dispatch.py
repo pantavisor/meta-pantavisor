@@ -22,6 +22,7 @@ content = f"""\
 # ##############################################################################
 
 name: "manual: {branch}"
+run-name: "manual: ${{{{ inputs.machine }}}} ({branch}) — ${{{{ github.ref_name }}}} by ${{{{ github.actor }}}}"
 
 on:
   workflow_dispatch:
