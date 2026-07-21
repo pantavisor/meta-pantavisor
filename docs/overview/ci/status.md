@@ -8,6 +8,7 @@ sidebar_position: 4
 <!-- WORKFLOW_TABLE_START -->
 | Workflow | Status |
 | :--- | :--- |
+| **manual-docs-scarthgap** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-docs-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-docs-scarthgap.yaml) |
 | **manual-pvtests** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-pvtests.yaml) |
 | **manual-scarthgap** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-scarthgap.yaml) |
 | **onpush-scarthgap** | [![PUSH](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/onpush-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=PUSH)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/onpush-scarthgap.yaml) |
