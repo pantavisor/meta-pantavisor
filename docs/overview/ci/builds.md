@@ -287,9 +287,8 @@ The job:
 ```
 
 Unlike `tag-docs-scarthgap.yaml`, this workflow does **not** upload to GitHub
-Releases or send a `repository_dispatch` to `docs.pantavisor` — it is purely
-a build-and-upload-to-S3 convenience for getting the latest docs during
-development.
+Releases. It does send a `repository_dispatch` to `docs.pantavisor` with
+`"tag": "latest"` so the docs site can pull in the latest documentation.
 
 ## CI Badges (upload-badges)
 
