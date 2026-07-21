@@ -11,7 +11,7 @@ The following machines are configured in the CI pipeline (`.github/machines.json
 
 | Machine Name | Description / Notes |
 | ------------ | ------------------- |
-| `sunxi-orange-pi-3lts` | Orange Pi 3 LTS (Allwinner H6) |
+| `sunxi-orange-pi-3lts` | Orange Pi 3 LTS (Allwinner H6) — real suspend-to-RAM via [crust SCP firmware](https://github.com/crust-firmware/crust); see [testplan-wakelocks-opi3-crust.md](testing/testplans/testplan-wakelocks-opi3-crust.md) |
 | `sunxi-orange-pi-r1` | Orange Pi R1 (Allwinner H2+) |
 | `sunxi-bananapi-m2-berry`| Banana Pi M2 Berry |
 | `imx8qxp-b0-mek` | NXP i.MX 8QXP MEK |
