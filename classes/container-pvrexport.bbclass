@@ -56,6 +56,13 @@ PVRIMAGE_AUTO_MDEV ??= "1"
 
 PVR_SIG_ADD_ARGS ??= "--noconfig --part ${PN}"
 
+# Hook for a recipe to fix up the generated ${PN}/run.json (or other tracked
+# files) after `pvr app add` but before signing/export. No-op by default. Runs
+# from ${PVSTATE}, same cwd as the rest of IMAGE_CMD:pvrexportit. A recipe
+# using this must itself run `pvr add` if it changes tracked file content --
+# the class re-adds/commits unconditionally right after invoking this hook.
+PVR_APP_POST_FIXUP ??= ":"
+
 # Define a config overlay directory that the image recipe will make available
 # in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
 # This directory will be added to the pvrexport as _config/${PN}
@@ -136,6 +143,7 @@ EOF1
         mkdir -p _config
         cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PN}
     fi
+    ${PVR_APP_POST_FIXUP}
     pvr add
     pvr commit
     pvr sig add ${PVR_SIG_ADD_ARGS}
