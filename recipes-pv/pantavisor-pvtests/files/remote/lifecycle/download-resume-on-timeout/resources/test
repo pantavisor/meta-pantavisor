@@ -1,0 +1,76 @@
+#!/bin/sh
+
+source /usr/share/pantavisor/pvtest/utils
+
+device_id=$(cat /var/run/pantavisor/pv/device-id)
+pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
+cd /home/checkout
+
+# One large, incompressible object so the download reliably outlasts
+# PH_LIBEVENT_HTTP_TIMEOUT (20s) against the harness's effective hub
+# bandwidth (see testplan-download-progress.md sec 5 for the sizing
+# rationale; a 50 MB object is proven there to stay in DOWNLOADING well
+# beyond a few seconds, so 100 MB gives comfortable margin above 20s).
+dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=100 2>/dev/null
+sha=$(sha256sum pvr-sdk/bigfile.bin | awk '{print $1}')
+pvr add pvr-sdk/bigfile.bin > /dev/null 2>&1
+pvr commit -m "add large file to exercise download-resume" > /dev/null 2>&1
+pvr post -m "download resume on timeout test" > /dev/null 2>&1
+
+tmp_path="/storage/objects/${sha}.tmp"
+
+wait_for_value "pvcontrol steps show-progress 1 | jq -r '.status'" "DOWNLOADING" 120 \
+    || { echo "ERROR: timeout waiting for DOWNLOADING" >&2; exit 1; }
+
+# Continuously sample the on-disk partial object file for the whole
+# DOWNLOADING window. PH_LIBEVENT_HTTP_TIMEOUT=5 (well under the object's
+# transfer time) forces at least one connection timeout mid-download without
+# killing Pantavisor, driving the resume path.
+#
+# Assert only a timing-independent invariant: the file size never decreases.
+# Old (pre-resume) behavior deletes the tmp file and restarts from 0 after
+# every timeout, so it would show a drop back toward 0 at some point in this
+# window; new (resume) behavior only ever grows the same file via Range
+# requests. Never assert on the exact size or on how many timeouts occurred.
+prev=0
+saw_nonzero=0
+no_reset=1
+for i in $(seq 1 180); do
+    st=$(pvcontrol steps show-progress 1 | jq -r '.status')
+    if [ "$st" != "DOWNLOADING" ]; then
+        [ "$st" = "NEW" ] || [ "$st" = "QUEUED" ] || break
+        sleep 1
+        continue
+    fi
+
+    size=$(pventer -c pvr-sdk wc -c "$tmp_path" 2>/dev/null | awk '{print $1}')
+    [ -z "$size" ] && size=0
+
+    if [ "$size" -gt 0 ] 2>/dev/null; then
+        saw_nonzero=1
+        if [ "$size" -lt "$prev" ] 2>/dev/null; then
+            no_reset=0
+        fi
+        prev="$size"
+    fi
+    sleep 1
+done
+
+echo "object-tmp-file-seen: $saw_nonzero"
+echo "object-tmp-file-no-reset: $no_reset"
+
+# This is the device's very first revision (fresh self-claim), so it takes
+# a reboot transition and lands on DONE (rollback point set) rather than
+# UPDATED (which only applies to non-reboot transitions on top of an
+# existing revision) -- accept either terminal success state.
+final_status=""
+for i in $(seq 1 180); do
+    final_status=$(pvcontrol steps show-progress 1 | jq -r '.status')
+    [ "$final_status" = "DONE" ] || [ "$final_status" = "UPDATED" ] && break
+    sleep 1
+done
+if [ "$final_status" != "DONE" ] && [ "$final_status" != "UPDATED" ]; then
+    echo "ERROR: timeout waiting for local DONE/UPDATED, last status: $final_status" >&2
+    exit 1
+fi
+pvcontrol steps show-progress 1 | jq -Mc 'del(.logs, .downloads) | {status, progress}'
