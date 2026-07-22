@@ -27,9 +27,17 @@ PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
 
 PVR_APP_ADD_EXTRA_ARGS += " \
     --volume ovl:/tmp:permanent \
+    --status-goal MOUNTED \
 "
 
-PVR_APP_ADD_GROUP = "platform"
+# app, not platform: pv-avahi is just a daemon in the host net namespace, and
+# staying passive (status-goal MOUNTED) until on-demand D-Bus activation
+# starts it needs the app group's "container" restart policy so it can also
+# be stopped/started manually via the containers API. args.json's PV_GROUP
+# already said "app" (fix(pv-avahi): move container to app group /
+# fix(pv-avahi): drop system restart policy), but this --group flag was
+# never updated to match and silently overrode it at build time.
+PVR_APP_ADD_GROUP = "app"
 
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
