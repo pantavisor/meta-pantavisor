@@ -44,6 +44,25 @@ PVR_SIG_ADD_ARGS = "--part ${PN}"
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
 
+# WORKAROUND for a `pvr app add` bug (isolated 2026-07-22): passing
+# --status-goal together with --group silently drops the top-level "type"
+# and "config" keys from the generated run.json. Without "type", pantavisor's
+# _pv_platforms_get_ctrl(p->type) calls strcmp() on a NULL p->type and
+# segfaults the whole mainloop on every boot that reconciles this platform
+# (confirmed via on-device core dump + gdb backtrace, platforms.c:691). Patch
+# the fields back in and recommit so the exported pvrexport is valid.
+#
+# Appending directly to do_image_pvrexportit here does not work: image.bbclass
+# regenerates that task's body from IMAGE_CMD:pvrexportit after this recipe is
+# parsed, clobbering any :append on the task itself. Append to the IMAGE_CMD
+# variable instead so our fixup ends up inside the generated task body.
+IMAGE_CMD:pvrexportit:append() {
+    cd ${PVSTATE}
+    jq '. + {"type": "lxc", "config": "lxc.container.conf"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+    pvr add
+    pvr commit
+}
+
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}
     install -m 0755 ${WORKDIR}/pv-avahi-start.sh ${IMAGE_ROOTFS}${bindir}/pv-avahi-start
