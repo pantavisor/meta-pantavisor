@@ -335,10 +335,29 @@ window for the `>5 MiB` kill-trigger threshold to land reliably. Unlike the
 original timing-based approach (§2), this is expected to hold up even if
 Hub round-trip characteristics change.
 
-Validated over multiple consecutive clean runs against production Hub
-(golden-generating + verify-only against the recorded `output`); not yet run
-the full ≥20x loop used for the download-progress test — worth doing before
-leaning on this test long-term in CI.
+A first ≥20x stability run (6/20 failed) uncovered a genuine bug in the
+throttle knob's underlying implementation, not in the resume feature or the
+test itself: libevent's mbedtls bufferevent backend wires its
+`decrement_buckets`/`init_bio_counts` rate-limiting hooks to a no-op stub
+(unlike the openssl backend, which tracks real byte counts), so
+`bufferevent_set_rate_limit()` never actually throttled anything for any
+mbedtls-backed connection -- confirmed empirically with an isolated
+client/server test (unpatched: ~300 MB/s through a 1 MiB/s limit; patched:
+~1.05 MB/s). Fixed via a new recipe patch,
+`recipes-pv/libevent/files/mbedtls-decrement-rate-limit-buckets.patch`. A
+second, smaller round of flakiness (2/10) turned out to be the test itself:
+transient `pvcontrol` connection errors (e.g. right after a restart) were
+leaking into the captured session log unredirected, breaking the
+golden-diff comparison even though the underlying poll loop already
+tolerated the transient failure correctly.
+
+With both fixes in place: 10/10 clean passes against real production Hub in
+a dedicated follow-up run. Independently verified the resumed object's
+final content-addressed filename matches a freshly-computed sha256 of its
+own bytes, and matches the original file's hash recorded before upload --
+confirming the resumed download reconstructs the exact original bytes, not
+just a same-length file, and that pantavisor's existing checksum gate
+(`pv_update_install_object`) is what actually gates the atomic install.
 
 ## 8. Integration steps — done
 
@@ -347,8 +366,8 @@ leaning on this test long-term in CI.
 2. ✓ Built via `kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml -- pantavisor-appengine-distro`,
    `install-docker`, `run ... -o` to generate the golden, copied back to the
    source tree (CRLF preserved).
-3. Ran multiple consecutive clean passes (not the full ≥20x loop yet — see
-   §7).
+3. ✓ Ran the full ≥20x stability loop (see §7 for the two bugs it found and
+   fixed); 10/10 clean in a dedicated follow-up run with both fixes in place.
 4. ✓ Row added to `docs/overview/testing/automated-workflow.md`
    (remote/lifecycle table), marked ✓.
 5. ✓ Linked from [`index.md`](index.md).
