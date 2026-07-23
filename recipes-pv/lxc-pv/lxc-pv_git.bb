@@ -48,7 +48,8 @@ SRC_URI:append:panta-appengine = " \
 	file://0002-fix-avoid-infinite-loop-when-closing-inherited-fd.patch"
 
 PE = "1"
-PKGV = "3.0.4+git0+pv+${GITPKGV}"
+PV = "3.0.4+git0+pv"
+PKGV = "${PV}+${GITPKGV}"
 
 S = "${WORKDIR}/git"
 

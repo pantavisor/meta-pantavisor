@@ -16,7 +16,8 @@ PACKAGES =+ "libthttp-certs"
 SRC_URI = "git://github.com/pantavisor/libthttp;protocol=https;branch=master"
 SRCREV = "ce916c562c5b11bcb0b5165043ded543dfea322a"
 PE = "1"
-PKGV = "011+git0+${GITPKGV}"
+PV = "011+git0"
+PKGV = "${PV}+${GITPKGV}"
 
 FILES:${PN}-certs += "/etc/thttp/certs"
 
