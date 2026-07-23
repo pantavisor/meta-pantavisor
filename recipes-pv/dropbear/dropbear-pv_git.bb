@@ -20,7 +20,8 @@ RDEPENDS:${PN}-dev = ""
 SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/master;protocol=https"
 SRCREV = "a5052fd488a1071ae7b0ee0877f6b0e17bc2a216"
 PE = "1"
-PKGV = "2020.81+git0+pv+${GITPKGV}"
+PV = "2020.81+git0+pv"
+PKGV = "${PV}+${GITPKGV}"
 
 S = "${WORKDIR}/git"
 
