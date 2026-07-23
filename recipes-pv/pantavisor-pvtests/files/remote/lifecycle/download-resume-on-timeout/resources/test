@@ -48,7 +48,7 @@ if ! [ "$size_before_kill" -gt 0 ] 2>/dev/null; then
     exit 1
 fi
 
-retries_before_kill=$(pvcontrol steps show-progress 1 2>/dev/null | jq -r '.retries')
+retries_before_kill=$(pvcontrol steps show-progress 1 2>/dev/null | jq -r '.retries' 2>/dev/null)
 [ -z "$retries_before_kill" ] || [ "$retries_before_kill" = "null" ] && retries_before_kill=0
 
 # Simulate a crash mid-download (same proven pattern as update-retries-gc-pressure)
@@ -108,7 +108,7 @@ echo "hub-honored-range: $hub_honored_range"
 # revision) -- accept either terminal success state.
 final_status=""
 for i in $(seq 1 180); do
-    final_status=$(pvcontrol steps show-progress 1 | jq -r '.status')
+    final_status=$(pvcontrol steps show-progress 1 2>/dev/null | jq -r '.status' 2>/dev/null)
     [ "$final_status" = "DONE" ] || [ "$final_status" = "UPDATED" ] && break
     sleep 1
 done

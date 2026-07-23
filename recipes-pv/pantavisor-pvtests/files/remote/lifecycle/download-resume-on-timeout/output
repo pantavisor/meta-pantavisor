@@ -1,394 +1,726 @@
-[[pvtest] 1784805059 DEBUG -- [test-script]: cat /var/run/pantavisor/pv/device-id
-[pvtest] 1784805059 DEBUG -- [test-script]: device_id=6a61f6b19940190009a4759f
-[pvtest] 1784805059 DEBUG -- [test-script]: pvr clone https://api.pantahub.com/trails/6a61f6b19940190009a4759f /home/checkout
-[pvtest] 1784805061 DEBUG -- [test-script]: cd /home/checkout
-[pvtest] 1784805061 DEBUG -- [test-script]: dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=100
-[[pvtest] 1784805062 DEBUG -- [test-script]: sha256sum pvr-sdk/bigfile.bin
-[[pvtest] 1784805062 DEBUG -- [test-script]: awk '{print $1}'
-[pvtest] 1784805062 DEBUG -- [test-script]: sha=934a064e83d24e9e856bea02b4d0a96359164c669b25a1f83a715949f180c4ce
-[pvtest] 1784805062 DEBUG -- [test-script]: pvr add pvr-sdk/bigfile.bin
-[pvtest] 1784805062 DEBUG -- [test-script]: pvr commit -m 'add large file to exercise download-resume'
-[pvtest] 1784805062 DEBUG -- [test-script]: pvr post -m 'download resume on crash test'
-[pvtest] 1784805133 DEBUG -- [test-script]: tmp_path=/storage/objects/934a064e83d24e9e856bea02b4d0a96359164c669b25a1f83a715949f180c4ce.tmp
-[pvtest] 1784805133 DEBUG -- [test-script]: wait_for_value 'pvcontrol steps show-progress 1 | jq -r '\''.status'\''' DOWNLOADING 120
-[pvtest] 1784805133 DEBUG -- [test-script]: local 'cmd=pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
-[pvtest] 1784805133 DEBUG -- [test-script]: local value=DOWNLOADING
-[pvtest] 1784805133 DEBUG -- [test-script]: local timeout=120
-[pvtest] 1784805133 DEBUG -- [test-script]: local counter=0
-[pvtest] 1784805133 DEBUG -- [test-script]: '[' 0 -lt 120 ']'
-[[pvtest] 1784805133 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
-[pvtest] 1784805133 DEBUG -- [test-script]: local result=
-[pvtest] 1784805133 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
-[pvtest] 1784805133 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805134 DEBUG -- [test-script]: counter=1
-[pvtest] 1784805134 DEBUG -- [test-script]: '[' 1 -lt 120 ']'
-[[pvtest] 1784805134 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
-[pvtest] 1784805134 DEBUG -- [test-script]: local result=QUEUED
-[pvtest] 1784805134 DEBUG -- [test-script]: '[' QUEUED = DOWNLOADING ']'
-[pvtest] 1784805134 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805135 DEBUG -- [test-script]: counter=2
-[pvtest] 1784805135 DEBUG -- [test-script]: '[' 2 -lt 120 ']'
-[[pvtest] 1784805135 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
-[pvtest] 1784805135 DEBUG -- [test-script]: local result=DOWNLOADING
-[pvtest] 1784805135 DEBUG -- [test-script]: '[' DOWNLOADING = DOWNLOADING ']'
-[pvtest] 1784805135 DEBUG -- [test-script]: return 0
-[[pvtest] 1784805135 DEBUG -- [test-script]: pventer -c pvr-sdk readlink /storage/logs/current
-[pvtest] 1784805135 DEBUG -- [test-script]: boot_log_dir=0
-[pvtest] 1784805135 DEBUG -- [test-script]: '[' -z 0 ']'
-[pvtest] 1784805135 DEBUG -- [test-script]: log_path=/storage/logs/0/pantavisor/pantavisor.log
-[pvtest] 1784805135 DEBUG -- [test-script]: size_before_kill=0
-[[pvtest] 1784805135 DEBUG -- [test-script]: seq 1 60
-[pvtest] 1784805135 DEBUG -- [test-script]: for i in $(seq 1 60)
-[[pvtest] 1784805135 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/934a064e83d24e9e856bea02b4d0a96359164c669b25a1f83a715949f180c4ce.tmp
-[[pvtest] 1784805135 DEBUG -- [test-script]: awk '{print $1}'
-[pvtest] 1784805135 DEBUG -- [test-script]: size_before_kill=843257
-[pvtest] 1784805135 DEBUG -- [test-script]: '[' -z 843257 ']'
-[pvtest] 1784805135 DEBUG -- [test-script]: '[' 843257 -gt 5242880 ']'
-[pvtest] 1784805135 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805136 DEBUG -- [test-script]: for i in $(seq 1 60)
-[[pvtest] 1784805136 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/934a064e83d24e9e856bea02b4d0a96359164c669b25a1f83a715949f180c4ce.tmp
-[[pvtest] 1784805136 DEBUG -- [test-script]: awk '{print $1}'
-[pvtest] 1784805137 DEBUG -- [test-script]: size_before_kill=57696256
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' -z 57696256 ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' 57696256 -gt 5242880 ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: break
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' 57696256 -gt 0 ']'
-[[pvtest] 1784805137 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805137 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805137 DEBUG -- [test-script]: retries_before_kill=1
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' -z 1 ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' 1 = null ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: killall pantavisor
-[pvtest] 1784805137 DEBUG -- [test-script]: new_retries=1
-[[pvtest] 1784805137 DEBUG -- [test-script]: seq 1 120
-[pvtest] 1784805137 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805137 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805137 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805137 DEBUG -- [test-script]: new_retries=1
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' -n 1 ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' 1 '!=' null ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
-[pvtest] 1784805137 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805138 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805138 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805138 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805143 DEBUG -- [test-script]: new_retries=
-[pvtest] 1784805143 DEBUG -- [test-script]: '[' -n '' ']'
-[pvtest] 1784805143 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805144 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805144 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805144 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805149 DEBUG -- [test-script]: new_retries=
-[pvtest] 1784805149 DEBUG -- [test-script]: '[' -n '' ']'
-[pvtest] 1784805149 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805150 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805150 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805150 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805151 DEBUG -- [test-script]: new_retries=
-[pvtest] 1784805151 DEBUG -- [test-script]: '[' -n '' ']'
-[pvtest] 1784805151 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805152 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805152 DEBUG -- [test-script]: jq -r .retries
-[[pvtest] 1784805152 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805152 DEBUG -- [test-script]: new_retries=1
-[pvtest] 1784805152 DEBUG -- [test-script]: '[' -n 1 ']'
-[pvtest] 1784805152 DEBUG -- [test-script]: '[' 1 '!=' null ']'
-[pvtest] 1784805152 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
-[pvtest] 1784805152 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805153 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805153 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805153 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805153 DEBUG -- [test-script]: new_retries=1
-[pvtest] 1784805153 DEBUG -- [test-script]: '[' -n 1 ']'
-[pvtest] 1784805153 DEBUG -- [test-script]: '[' 1 '!=' null ']'
-[pvtest] 1784805153 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
-[pvtest] 1784805153 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805154 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805154 DEBUG -- [test-script]: jq -r .retries
-[[pvtest] 1784805154 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805154 DEBUG -- [test-script]: new_retries=1
-[pvtest] 1784805154 DEBUG -- [test-script]: '[' -n 1 ']'
-[pvtest] 1784805154 DEBUG -- [test-script]: '[' 1 '!=' null ']'
-[pvtest] 1784805154 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
-[pvtest] 1784805154 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805155 DEBUG -- [test-script]: for i in $(seq 1 120)
-[[pvtest] 1784805155 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805155 DEBUG -- [test-script]: jq -r .retries
-[pvtest] 1784805155 DEBUG -- [test-script]: new_retries=2
-[pvtest] 1784805155 DEBUG -- [test-script]: '[' -n 2 ']'
-[pvtest] 1784805155 DEBUG -- [test-script]: '[' 2 '!=' null ']'
-[pvtest] 1784805155 DEBUG -- [test-script]: '[' 2 -gt 1 ']'
-[pvtest] 1784805155 DEBUG -- [test-script]: break
-[pvtest] 1784805156 DEBUG -- [test-script]: '[' 2 -gt 1 ']'
-[[pvtest] 1784805156 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/934a064e83d24e9e856bea02b4d0a96359164c669b25a1f83a715949f180c4ce.tmp
-[[pvtest] 1784805156 DEBUG -- [test-script]: awk '{print $1}'
-[pvtest] 1784805156 DEBUG -- [test-script]: size_after_restart=87146563
-[pvtest] 1784805156 DEBUG -- [test-script]: '[' -z 87146563 ']'
-[pvtest] 1784805156 DEBUG -- [test-script]: '[' 87146563 -ge 57696256 ']'
-[pvtest] 1784805156 DEBUG -- [test-script]: echo 'object-tmp-file-no-reset: 1'
+[[pvtest] 1784830281 DEBUG -- [test-script]: cat /var/run/pantavisor/pv/device-id
+[pvtest] 1784830281 DEBUG -- [test-script]: device_id=6a625937b08aa300091d244c
+[pvtest] 1784830281 DEBUG -- [test-script]: pvr clone https://api.pantahub.com/trails/6a625937b08aa300091d244c /home/checkout
+[pvtest] 1784830285 DEBUG -- [test-script]: cd /home/checkout
+[pvtest] 1784830285 DEBUG -- [test-script]: dd if=/dev/urandom of=pvr-sdk/bigfile.bin bs=1M count=100
+[[pvtest] 1784830286 DEBUG -- [test-script]: sha256sum pvr-sdk/bigfile.bin
+[[pvtest] 1784830286 DEBUG -- [test-script]: awk '{print $1}'
+[pvtest] 1784830286 DEBUG -- [test-script]: sha=f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0
+[pvtest] 1784830286 DEBUG -- [test-script]: pvr add pvr-sdk/bigfile.bin
+[pvtest] 1784830286 DEBUG -- [test-script]: pvr commit -m 'add large file to exercise download-resume'
+[pvtest] 1784830287 DEBUG -- [test-script]: pvr post -m 'download resume on crash test'
+[pvtest] 1784830356 DEBUG -- [test-script]: tmp_path=/storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[pvtest] 1784830356 DEBUG -- [test-script]: wait_for_value 'pvcontrol steps show-progress 1 | jq -r '\''.status'\''' DOWNLOADING 120
+[pvtest] 1784830356 DEBUG -- [test-script]: local 'cmd=pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830356 DEBUG -- [test-script]: local value=DOWNLOADING
+[pvtest] 1784830356 DEBUG -- [test-script]: local timeout=120
+[pvtest] 1784830356 DEBUG -- [test-script]: local counter=0
+[pvtest] 1784830356 DEBUG -- [test-script]: '[' 0 -lt 120 ']'
+[[pvtest] 1784830356 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830356 DEBUG -- [test-script]: local result=
+[pvtest] 1784830356 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
+[pvtest] 1784830356 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830357 DEBUG -- [test-script]: counter=1
+[pvtest] 1784830357 DEBUG -- [test-script]: '[' 1 -lt 120 ']'
+[[pvtest] 1784830357 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830357 DEBUG -- [test-script]: local result=
+[pvtest] 1784830357 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
+[pvtest] 1784830357 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830358 DEBUG -- [test-script]: counter=2
+[pvtest] 1784830358 DEBUG -- [test-script]: '[' 2 -lt 120 ']'
+[[pvtest] 1784830358 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830358 DEBUG -- [test-script]: local result=
+[pvtest] 1784830358 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
+[pvtest] 1784830358 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830359 DEBUG -- [test-script]: counter=3
+[pvtest] 1784830359 DEBUG -- [test-script]: '[' 3 -lt 120 ']'
+[[pvtest] 1784830359 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830359 DEBUG -- [test-script]: local result=
+[pvtest] 1784830359 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
+[pvtest] 1784830359 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830360 DEBUG -- [test-script]: counter=4
+[pvtest] 1784830360 DEBUG -- [test-script]: '[' 4 -lt 120 ']'
+[[pvtest] 1784830360 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830360 DEBUG -- [test-script]: local result=
+[pvtest] 1784830360 DEBUG -- [test-script]: '[' '' = DOWNLOADING ']'
+[pvtest] 1784830360 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830361 DEBUG -- [test-script]: counter=5
+[pvtest] 1784830361 DEBUG -- [test-script]: '[' 5 -lt 120 ']'
+[[pvtest] 1784830361 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830361 DEBUG -- [test-script]: local result=QUEUED
+[pvtest] 1784830361 DEBUG -- [test-script]: '[' QUEUED = DOWNLOADING ']'
+[pvtest] 1784830361 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830362 DEBUG -- [test-script]: counter=6
+[pvtest] 1784830362 DEBUG -- [test-script]: '[' 6 -lt 120 ']'
+[[pvtest] 1784830362 DEBUG -- [test-script]: eval 'pvcontrol steps show-progress 1 | jq -r '\''.status'\'''
+[pvtest] 1784830362 DEBUG -- [test-script]: local result=DOWNLOADING
+[pvtest] 1784830362 DEBUG -- [test-script]: '[' DOWNLOADING = DOWNLOADING ']'
+[pvtest] 1784830362 DEBUG -- [test-script]: return 0
+[[pvtest] 1784830362 DEBUG -- [test-script]: pventer -c pvr-sdk readlink /storage/logs/current
+[pvtest] 1784830362 DEBUG -- [test-script]: boot_log_dir=0
+[pvtest] 1784830362 DEBUG -- [test-script]: '[' -z 0 ']'
+[pvtest] 1784830362 DEBUG -- [test-script]: log_path=/storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830362 DEBUG -- [test-script]: size_before_kill=0
+[[pvtest] 1784830362 DEBUG -- [test-script]: seq 1 60
+[pvtest] 1784830362 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830362 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[[pvtest] 1784830362 DEBUG -- [test-script]: awk '{print $1}'
+[pvtest] 1784830362 DEBUG -- [test-script]: size_before_kill=1089017
+[pvtest] 1784830362 DEBUG -- [test-script]: '[' -z 1089017 ']'
+[pvtest] 1784830362 DEBUG -- [test-script]: '[' 1089017 -gt 5242880 ']'
+[pvtest] 1784830362 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830363 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830363 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[[pvtest] 1784830363 DEBUG -- [test-script]: awk '{print $1}'
+[pvtest] 1784830363 DEBUG -- [test-script]: size_before_kill=2121209
+[pvtest] 1784830363 DEBUG -- [test-script]: '[' -z 2121209 ']'
+[pvtest] 1784830363 DEBUG -- [test-script]: '[' 2121209 -gt 5242880 ']'
+[pvtest] 1784830363 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830364 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830364 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[[pvtest] 1784830364 DEBUG -- [test-script]: awk '{print $1}'
+[pvtest] 1784830364 DEBUG -- [test-script]: size_before_kill=3153401
+[pvtest] 1784830364 DEBUG -- [test-script]: '[' -z 3153401 ']'
+[pvtest] 1784830364 DEBUG -- [test-script]: '[' 3153401 -gt 5242880 ']'
+[pvtest] 1784830364 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830365 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830365 DEBUG -- [test-script]: awk '{print $1}'
+[[pvtest] 1784830365 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[pvtest] 1784830365 DEBUG -- [test-script]: size_before_kill=4185593
+[pvtest] 1784830365 DEBUG -- [test-script]: '[' -z 4185593 ']'
+[pvtest] 1784830365 DEBUG -- [test-script]: '[' 4185593 -gt 5242880 ']'
+[pvtest] 1784830365 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830366 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830366 DEBUG -- [test-script]: awk '{print $1}'
+[[pvtest] 1784830366 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[pvtest] 1784830366 DEBUG -- [test-script]: size_before_kill=5213689
+[pvtest] 1784830366 DEBUG -- [test-script]: '[' -z 5213689 ']'
+[pvtest] 1784830366 DEBUG -- [test-script]: '[' 5213689 -gt 5242880 ']'
+[pvtest] 1784830366 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830367 DEBUG -- [test-script]: for i in $(seq 1 60)
+[[pvtest] 1784830367 DEBUG -- [test-script]: awk '{print $1}'
+[[pvtest] 1784830367 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[pvtest] 1784830367 DEBUG -- [test-script]: size_before_kill=6245881
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' -z 6245881 ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' 6245881 -gt 5242880 ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: break
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' 6245881 -gt 0 ']'
+[[pvtest] 1784830367 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830367 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830367 DEBUG -- [test-script]: retries_before_kill=1
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' -z 1 ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' 1 = null ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: killall pantavisor
+[pvtest] 1784830367 DEBUG -- [test-script]: new_retries=1
+[[pvtest] 1784830367 DEBUG -- [test-script]: seq 1 120
+[pvtest] 1784830367 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830367 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830367 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830367 DEBUG -- [test-script]: new_retries=1
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' -n 1 ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' 1 '!=' null ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
+[pvtest] 1784830367 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830368 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830368 DEBUG -- [test-script]: jq -r .retries
+[[pvtest] 1784830368 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830368 DEBUG -- [test-script]: new_retries=1
+[pvtest] 1784830368 DEBUG -- [test-script]: '[' -n 1 ']'
+[pvtest] 1784830368 DEBUG -- [test-script]: '[' 1 '!=' null ']'
+[pvtest] 1784830368 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
+[pvtest] 1784830368 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830369 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830369 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830369 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830374 DEBUG -- [test-script]: new_retries=
+[pvtest] 1784830374 DEBUG -- [test-script]: '[' -n '' ']'
+[pvtest] 1784830374 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830375 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830375 DEBUG -- [test-script]: jq -r .retries
+[[pvtest] 1784830375 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830380 DEBUG -- [test-script]: new_retries=
+[pvtest] 1784830380 DEBUG -- [test-script]: '[' -n '' ']'
+[pvtest] 1784830380 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830381 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830381 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830381 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830383 DEBUG -- [test-script]: new_retries=
+[pvtest] 1784830383 DEBUG -- [test-script]: '[' -n '' ']'
+[pvtest] 1784830383 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830384 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830384 DEBUG -- [test-script]: jq -r .retries
+[[pvtest] 1784830384 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830384 DEBUG -- [test-script]: new_retries=1
+[pvtest] 1784830384 DEBUG -- [test-script]: '[' -n 1 ']'
+[pvtest] 1784830384 DEBUG -- [test-script]: '[' 1 '!=' null ']'
+[pvtest] 1784830384 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
+[pvtest] 1784830384 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830385 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830385 DEBUG -- [test-script]: jq -r .retries
+[[pvtest] 1784830385 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830385 DEBUG -- [test-script]: new_retries=1
+[pvtest] 1784830385 DEBUG -- [test-script]: '[' -n 1 ']'
+[pvtest] 1784830385 DEBUG -- [test-script]: '[' 1 '!=' null ']'
+[pvtest] 1784830385 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
+[pvtest] 1784830385 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830386 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830386 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830386 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830386 DEBUG -- [test-script]: new_retries=1
+[pvtest] 1784830386 DEBUG -- [test-script]: '[' -n 1 ']'
+[pvtest] 1784830386 DEBUG -- [test-script]: '[' 1 '!=' null ']'
+[pvtest] 1784830386 DEBUG -- [test-script]: '[' 1 -gt 1 ']'
+[pvtest] 1784830386 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830387 DEBUG -- [test-script]: for i in $(seq 1 120)
+[[pvtest] 1784830387 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830387 DEBUG -- [test-script]: jq -r .retries
+[pvtest] 1784830387 DEBUG -- [test-script]: new_retries=2
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' -n 2 ']'
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' 2 '!=' null ']'
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' 2 -gt 1 ']'
+[pvtest] 1784830387 DEBUG -- [test-script]: break
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' 2 -gt 1 ']'
+[[pvtest] 1784830387 DEBUG -- [test-script]: pventer -c pvr-sdk wc -c /storage/objects/f1c51d4314ed22d3a6970419691277163acbbfcc41a8c1db256831eb44927df0.tmp
+[[pvtest] 1784830387 DEBUG -- [test-script]: awk '{print $1}'
+[pvtest] 1784830387 DEBUG -- [test-script]: size_after_restart=7278073
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' -z 7278073 ']'
+[pvtest] 1784830387 DEBUG -- [test-script]: '[' 7278073 -ge 6245881 ']'
+[pvtest] 1784830387 DEBUG -- [test-script]: echo 'object-tmp-file-no-reset: 1'
 object-tmp-file-no-reset: 1
-[pvtest] 1784805156 DEBUG -- [test-script]: hub_honored_range=0
-[[pvtest] 1784805156 DEBUG -- [test-script]: seq 1 150
-[pvtest] 1784805156 DEBUG -- [test-script]: for i in $(seq 1 150)
-[pvtest] 1784805156 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
-[pvtest] 1784805156 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805157 DEBUG -- [test-script]: for i in $(seq 1 150)
-[pvtest] 1784805157 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
-[pvtest] 1784805157 DEBUG -- [test-script]: hub_honored_range=1
-[pvtest] 1784805157 DEBUG -- [test-script]: break
-[pvtest] 1784805157 DEBUG -- [test-script]: echo 'hub-honored-range: 1'
+[pvtest] 1784830387 DEBUG -- [test-script]: hub_honored_range=0
+[[pvtest] 1784830387 DEBUG -- [test-script]: seq 1 150
+[pvtest] 1784830387 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830387 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830387 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830388 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830388 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830388 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830389 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830389 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830389 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830390 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830390 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830390 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830391 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830391 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830391 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830392 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830392 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830392 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830393 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830393 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830393 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830394 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830394 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830394 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830395 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830395 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830395 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830396 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830396 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830396 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830397 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830397 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830398 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830399 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830399 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830399 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830400 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830400 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830400 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830401 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830401 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830401 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830402 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830402 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830402 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830403 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830403 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830403 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830404 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830404 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830404 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830405 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830405 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830405 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830406 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830406 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830406 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830407 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830407 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830407 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830408 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830408 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830408 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830409 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830409 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830409 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830410 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830410 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830410 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830411 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830411 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830411 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830412 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830412 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830412 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830413 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830413 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830413 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830414 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830414 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830414 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830415 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830415 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830415 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830416 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830416 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830416 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830417 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830417 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830417 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830418 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830418 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830419 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830420 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830420 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830420 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830421 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830421 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830421 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830422 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830422 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830422 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830423 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830423 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830423 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830424 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830424 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830424 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830425 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830425 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830425 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830426 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830426 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830426 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830427 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830427 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830427 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830428 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830428 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830428 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830429 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830429 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830429 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830430 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830430 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830430 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830431 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830431 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830431 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830432 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830432 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830432 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830433 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830433 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830433 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830434 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830434 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830434 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830435 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830435 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830435 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830436 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830436 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830436 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830437 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830437 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830437 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830438 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830438 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830438 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830439 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830439 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830439 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830440 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830440 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830440 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830441 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830441 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830442 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830443 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830443 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830443 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830444 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830444 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830444 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830445 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830445 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830445 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830446 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830446 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830446 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830447 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830447 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830447 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830448 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830448 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830448 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830449 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830449 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830449 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830450 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830450 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830450 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830451 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830451 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830451 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830452 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830452 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830452 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830453 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830453 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830453 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830454 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830454 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830454 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830455 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830455 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830455 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830456 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830456 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830456 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830457 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830457 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830457 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830458 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830458 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830458 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830459 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830459 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830459 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830460 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830460 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830460 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830461 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830461 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830461 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830462 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830462 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830462 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830463 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830463 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830464 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830465 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830465 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830465 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830466 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830466 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830466 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830467 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830467 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830467 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830468 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830468 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830468 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830469 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830469 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830469 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830470 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830470 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830470 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830471 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830471 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830471 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830472 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830472 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830472 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830473 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830473 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830473 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830474 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830474 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830474 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830475 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830475 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830475 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830476 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830476 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830476 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830477 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830477 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830477 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830478 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830478 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830478 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830479 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830479 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830479 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830480 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830480 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830480 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830481 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830481 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830481 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830482 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830482 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830482 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830483 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830483 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830483 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830484 DEBUG -- [test-script]: for i in $(seq 1 150)
+[pvtest] 1784830484 DEBUG -- [test-script]: pventer -c pvr-sdk grep -q 'object.*downloaded.*from.*Hub.*status.*206' /storage/logs/0/pantavisor/pantavisor.log
+[pvtest] 1784830484 DEBUG -- [test-script]: hub_honored_range=1
+[pvtest] 1784830484 DEBUG -- [test-script]: break
+[pvtest] 1784830484 DEBUG -- [test-script]: echo 'hub-honored-range: 1'
 hub-honored-range: 1
-[pvtest] 1784805157 DEBUG -- [test-script]: final_status=
-[[pvtest] 1784805157 DEBUG -- [test-script]: seq 1 180
-[pvtest] 1784805157 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805157 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805157 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805157 DEBUG -- [test-script]: final_status=INPROGRESS
-[pvtest] 1784805157 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
-[pvtest] 1784805157 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
-[pvtest] 1784805157 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805158 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805158 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805158 DEBUG -- [test-script]: jq -r .status
-
-[pvtest] 1784805163 DEBUG -- [test-script]: final_status=
-[pvtest] 1784805163 DEBUG -- [test-script]: '[' '' = DONE ']'
-[pvtest] 1784805163 DEBUG -- [test-script]: '[' '' = UPDATED ']'
-[pvtest] 1784805163 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805164 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805164 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805164 DEBUG -- [test-script]: jq -r .status
-
-[pvtest] 1784805169 DEBUG -- [test-script]: final_status=
-[pvtest] 1784805169 DEBUG -- [test-script]: '[' '' = DONE ']'
-[pvtest] 1784805169 DEBUG -- [test-script]: '[' '' = UPDATED ']'
-[pvtest] 1784805169 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805170 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805170 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805170 DEBUG -- [test-script]: jq -r .status
-
-[pvtest] 1784805175 DEBUG -- [test-script]: final_status=
-[pvtest] 1784805175 DEBUG -- [test-script]: '[' '' = DONE ']'
-[pvtest] 1784805175 DEBUG -- [test-script]: '[' '' = UPDATED ']'
-[pvtest] 1784805175 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805176 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805176 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805176 DEBUG -- [test-script]: jq -r .status
-
-[pvtest] 1784805177 DEBUG -- [test-script]: final_status=
-[pvtest] 1784805177 DEBUG -- [test-script]: '[' '' = DONE ']'
-[pvtest] 1784805177 DEBUG -- [test-script]: '[' '' = UPDATED ']'
-[pvtest] 1784805177 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805178 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805178 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805178 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805178 DEBUG -- [test-script]: final_status=INPROGRESS
-[pvtest] 1784805178 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
-[pvtest] 1784805178 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
-[pvtest] 1784805178 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805179 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805179 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805179 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805179 DEBUG -- [test-script]: final_status=INPROGRESS
-[pvtest] 1784805179 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
-[pvtest] 1784805179 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
-[pvtest] 1784805179 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805180 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805180 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805180 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805180 DEBUG -- [test-script]: final_status=INPROGRESS
-[pvtest] 1784805180 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
-[pvtest] 1784805180 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
-[pvtest] 1784805180 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805181 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805181 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805181 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805181 DEBUG -- [test-script]: final_status=INPROGRESS
-[pvtest] 1784805181 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
-[pvtest] 1784805181 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
-[pvtest] 1784805181 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805182 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805182 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805182 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805182 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805182 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805182 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805182 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805183 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805183 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805183 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805183 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805183 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805183 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805183 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805184 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805184 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805184 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805184 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805184 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805184 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805184 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805185 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805185 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805185 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805185 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805185 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805185 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805185 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805186 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805186 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805186 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805186 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805186 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805186 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805186 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805187 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805187 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805187 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805187 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805187 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805187 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805187 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805188 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805188 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805188 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805188 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805188 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805188 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805188 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805189 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805189 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805189 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805189 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805189 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805189 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805189 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805190 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805190 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805190 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805190 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805190 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805190 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805190 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805191 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805191 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805191 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805191 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805191 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805191 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805191 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805192 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805192 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805192 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805192 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805192 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805192 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805192 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805193 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805193 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805193 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805193 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805193 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805193 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805193 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805194 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805194 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805194 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805194 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805194 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805194 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805194 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805195 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805195 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805195 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805195 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805195 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805195 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805195 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805196 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805196 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805196 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805196 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805196 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805196 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805196 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805197 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805197 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805197 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805197 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805197 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805197 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805197 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805198 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805198 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805198 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805198 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805198 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805198 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805198 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805199 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805199 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805199 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805199 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805199 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805199 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805199 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805200 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805200 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805200 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805200 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805200 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805200 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805200 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805201 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805201 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805201 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805201 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805201 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805201 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805201 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805202 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805202 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805202 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805202 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805202 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805202 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805202 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805203 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805203 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805203 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805203 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805203 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805203 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805203 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805204 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805204 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805204 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805204 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805204 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805204 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805204 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805205 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805205 DEBUG -- [test-script]: jq -r .status
-[[pvtest] 1784805205 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805205 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805205 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805205 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805205 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805206 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805206 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805206 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805206 DEBUG -- [test-script]: final_status=TESTING
-[pvtest] 1784805206 DEBUG -- [test-script]: '[' TESTING = DONE ']'
-[pvtest] 1784805206 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
-[pvtest] 1784805206 DEBUG -- [test-script]: sleep 1
-[pvtest] 1784805207 DEBUG -- [test-script]: for i in $(seq 1 180)
-[[pvtest] 1784805207 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[[pvtest] 1784805207 DEBUG -- [test-script]: jq -r .status
-[pvtest] 1784805212 DEBUG -- [test-script]: final_status=DONE
-[pvtest] 1784805212 DEBUG -- [test-script]: '[' DONE = DONE ']'
-[pvtest] 1784805212 DEBUG -- [test-script]: break
-[pvtest] 1784805212 DEBUG -- [test-script]: '[' DONE '!=' DONE ']'
-[pvtest] 1784805212 DEBUG -- [test-script]: pvcontrol steps show-progress 1
-[pvtest] 1784805212 DEBUG -- [test-script]: jq -Mc 'del(.logs, .downloads) | {status, progress}'
+[pvtest] 1784830484 DEBUG -- [test-script]: final_status=
+[[pvtest] 1784830484 DEBUG -- [test-script]: seq 1 180
+[pvtest] 1784830484 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830484 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830484 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830484 DEBUG -- [test-script]: final_status=INPROGRESS
+[pvtest] 1784830484 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
+[pvtest] 1784830484 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
+[pvtest] 1784830484 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830485 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830485 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830485 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830490 DEBUG -- [test-script]: final_status=
+[pvtest] 1784830490 DEBUG -- [test-script]: '[' '' = DONE ']'
+[pvtest] 1784830490 DEBUG -- [test-script]: '[' '' = UPDATED ']'
+[pvtest] 1784830490 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830491 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830491 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830491 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830497 DEBUG -- [test-script]: final_status=
+[pvtest] 1784830497 DEBUG -- [test-script]: '[' '' = DONE ']'
+[pvtest] 1784830497 DEBUG -- [test-script]: '[' '' = UPDATED ']'
+[pvtest] 1784830497 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830498 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830498 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830498 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830503 DEBUG -- [test-script]: final_status=
+[pvtest] 1784830503 DEBUG -- [test-script]: '[' '' = DONE ']'
+[pvtest] 1784830503 DEBUG -- [test-script]: '[' '' = UPDATED ']'
+[pvtest] 1784830503 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830504 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830504 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830504 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830504 DEBUG -- [test-script]: final_status=
+[pvtest] 1784830504 DEBUG -- [test-script]: '[' '' = DONE ']'
+[pvtest] 1784830504 DEBUG -- [test-script]: '[' '' = UPDATED ']'
+[pvtest] 1784830504 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830505 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830505 DEBUG -- [test-script]: jq -r .status
+[[pvtest] 1784830505 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830505 DEBUG -- [test-script]: final_status=INPROGRESS
+[pvtest] 1784830505 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
+[pvtest] 1784830505 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
+[pvtest] 1784830505 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830506 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830506 DEBUG -- [test-script]: jq -r .status
+[[pvtest] 1784830506 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830506 DEBUG -- [test-script]: final_status=INPROGRESS
+[pvtest] 1784830506 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
+[pvtest] 1784830506 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
+[pvtest] 1784830506 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830507 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830507 DEBUG -- [test-script]: jq -r .status
+[[pvtest] 1784830507 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830507 DEBUG -- [test-script]: final_status=INPROGRESS
+[pvtest] 1784830507 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
+[pvtest] 1784830507 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
+[pvtest] 1784830507 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830508 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830508 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830508 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830508 DEBUG -- [test-script]: final_status=INPROGRESS
+[pvtest] 1784830508 DEBUG -- [test-script]: '[' INPROGRESS = DONE ']'
+[pvtest] 1784830508 DEBUG -- [test-script]: '[' INPROGRESS = UPDATED ']'
+[pvtest] 1784830508 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830509 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830509 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830509 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830509 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830509 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830509 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830509 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830510 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830510 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830510 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830510 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830510 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830510 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830510 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830511 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830511 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830511 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830511 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830511 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830511 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830511 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830512 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830512 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830512 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830512 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830512 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830512 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830512 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830513 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830513 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830513 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830513 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830513 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830513 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830513 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830514 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830514 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830514 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830515 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830515 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830515 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830515 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830516 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830516 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830516 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830516 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830516 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830516 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830516 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830517 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830517 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830517 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830517 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830517 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830517 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830517 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830518 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830518 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830518 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830518 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830518 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830518 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830518 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830519 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830519 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830519 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830519 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830519 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830519 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830519 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830520 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830520 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830520 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830520 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830520 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830520 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830520 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830521 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830521 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830521 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830521 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830521 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830521 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830521 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830522 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830522 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830522 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830522 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830522 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830522 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830522 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830523 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830523 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830523 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830523 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830523 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830523 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830523 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830524 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830524 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830524 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830524 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830524 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830524 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830524 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830525 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830525 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830525 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830525 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830525 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830525 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830525 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830526 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830526 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830526 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830526 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830526 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830526 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830526 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830527 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830527 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830527 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830527 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830527 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830527 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830527 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830528 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830528 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830528 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830528 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830528 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830528 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830528 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830529 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830529 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830529 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830529 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830529 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830529 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830529 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830530 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830530 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830530 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830530 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830530 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830530 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830530 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830531 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830531 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830531 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830531 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830531 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830531 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830531 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830532 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830532 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830532 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830532 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830532 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830532 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830532 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830533 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830533 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830533 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830533 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830533 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830533 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830533 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830534 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830534 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830534 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830534 DEBUG -- [test-script]: final_status=TESTING
+[pvtest] 1784830534 DEBUG -- [test-script]: '[' TESTING = DONE ']'
+[pvtest] 1784830534 DEBUG -- [test-script]: '[' TESTING = UPDATED ']'
+[pvtest] 1784830534 DEBUG -- [test-script]: sleep 1
+[pvtest] 1784830535 DEBUG -- [test-script]: for i in $(seq 1 180)
+[[pvtest] 1784830535 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[[pvtest] 1784830535 DEBUG -- [test-script]: jq -r .status
+[pvtest] 1784830540 DEBUG -- [test-script]: final_status=DONE
+[pvtest] 1784830540 DEBUG -- [test-script]: '[' DONE = DONE ']'
+[pvtest] 1784830540 DEBUG -- [test-script]: break
+[pvtest] 1784830540 DEBUG -- [test-script]: '[' DONE '!=' DONE ']'
+[pvtest] 1784830540 DEBUG -- [test-script]: pvcontrol steps show-progress 1
+[pvtest] 1784830540 DEBUG -- [test-script]: jq -Mc 'del(.logs, .downloads) | {status, progress}'
 {"status":"DONE","progress":100}
