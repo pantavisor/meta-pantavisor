@@ -5,12 +5,21 @@
 #   DOCS_FILES          — space-separated list of specific files to include instead of
 #                         a whole directory; takes precedence over DOCS_SRC_DIR
 #   DOCS_COMPONENT_NAME — directory name in the combined image tarball (default: ${BPN})
+#   DOCS_SRC_URI        — optional extra SRC_URI entry (fetcher URL + params) needed only to
+#                         obtain the docs, e.g. when a recipe's normal source fetch doesn't
+#                         include docs/. Appended to SRC_URI, but dropped for class-native/
+#                         class-nativesdk since do_create_component_docs doesn't run there.
 #
 # Recipes that have neither a valid DOCS_SRC_DIR nor DOCS_FILES are skipped with a warning.
 
 DOCS_SRC_DIR ?= "${S}/docs"
 DOCS_FILES ?= ""
 DOCS_COMPONENT_NAME ?= "${BPN}"
+DOCS_SRC_URI ?= ""
+
+SRC_URI:append = " ${DOCS_SRC_URI}"
+SRC_URI:remove:class-native = "${DOCS_SRC_URI}"
+SRC_URI:remove:class-nativesdk = "${DOCS_SRC_URI}"
 
 SSTATETASKS += "do_create_component_docs"
 
