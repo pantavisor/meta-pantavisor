@@ -19,4 +19,8 @@ jobs:
   pvtests:
     needs: build-docker-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
+    with:
+      parallel: "6"
+      # nightly covers both assignment models, so a regression in either is caught
+      model: all
     secrets: inherit

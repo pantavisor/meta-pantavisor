@@ -92,7 +92,8 @@ jobs:
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: local
-      parallel: "4"
+      parallel: "6"
+      model: volatile
     secrets: inherit
 
   summary:
