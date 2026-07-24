@@ -63,6 +63,16 @@ PV_CONFIG_OVERLAY_DIR ??= ""
 
 PSEUDO_IGNORE_PATHS .= ",${PVSTATE},${PVR_CONFIG_DIR}"
 
+# lxc needs these mountpoint dirs at container setup time (the LSM proc mount
+# runs before lxc.mount.auto can create them); docker-origin containers always
+# ship them, but minimal Yocto rootfs (no base-files) don't.
+create_container_mountpoints() {
+	mkdir -p ${IMAGE_ROOTFS}/proc ${IMAGE_ROOTFS}/sys ${IMAGE_ROOTFS}/dev ${IMAGE_ROOTFS}/run
+	mkdir -p ${IMAGE_ROOTFS}/tmp
+	chmod 1777 ${IMAGE_ROOTFS}/tmp
+}
+ROOTFS_POSTPROCESS_COMMAND += "create_container_mountpoints; "
+
 fakeroot IMAGE_CMD:pvrexportit(){
 
     which pvr

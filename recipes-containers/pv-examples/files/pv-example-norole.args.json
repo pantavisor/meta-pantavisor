@@ -1,0 +1,3 @@
+{
+    "PV_LXC_EXTRA_CONF": "lxc.mount.entry = tmpfs tmp tmpfs rw,nodev,relatime,create=dir,mode=1777 0 0"
+}

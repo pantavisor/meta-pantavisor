@@ -11,12 +11,20 @@ SRC_URI = "${@' '.join(['file://%s' % x for x in d.getVar('WORKDIR_FILES').split
 # This recipe doesn't build anything from source
 ALLOW_EMPTY:${PN} = "1"
 
+# Docker images built for the primary MACHINE and bundled as-is. A device-target
+# distro (building this tarball for a real board's MACHINE instead of
+# docker-x86_64) sets this to "" — no container is booted against a real device,
+# so the arm appengine/netsim/tester images aren't built; only the
+# BSP/pvr-sdk/example-app/pvtests tarballs are. The host-side tester it still needs
+# (which runs on the build/CI host, not the arm device) is produced by a separate
+# same-branch x86-appengine build and bundled by the install tooling, not here —
+# multiconfig can't cross-build it in-tree (the i.MX layers' dynamic arm-kernel
+# recipe fails to parse for MACHINE=docker-x86_64).
 PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pantavisor-appengine-tester"
 
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
-do_create_tarball[depends] += "pantavisor-bsp:do_compile pv-pvr-sdk:do_deploy"
 do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norole:do_image_complete"
-do_create_tarball[depends] += "pv-example-ready:do_image_complete pv-example-ready-timeout:do_image_complete"
+do_create_tarball[depends] += "pv-example-ready:do_image_complete pv-example-ready-timeout:do_image_complete pv-example-mgmt:do_image_complete"
 do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-example-system-dbus-server:do_image_complete pv-example-system-dbus-server-collision:do_image_complete pv-example-system-dbus-client:do_image_complete pv-example-system-dbus-client-denied:do_image_complete', '', d)}"
 do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-avahi:do_image_complete pv-avahi-browse:do_image_complete', '', d)}"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
@@ -25,7 +33,7 @@ do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvt
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
 # Define files from WORKDIR (SRC_URI files) to include
-WORKDIR_FILES ?= "test.docker.sh"
+WORKDIR_FILES ?= "test.docker.sh devices.txt README.md"
 
 # Build suffix (using variables available in all recipes)
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"
@@ -66,7 +74,7 @@ do_create_tarball() {
             fi
         done
     fi
-    
+
     # Add files from WORKDIR (SRC_URI files)
     if [ -n "${WORKDIR_FILES}" ]; then
         for filename in ${WORKDIR_FILES}; do
@@ -88,31 +96,18 @@ do_create_tarball() {
         cp -r "${DEPLOY_DIR_IMAGE}/pvtests/." "${STAGING_DIR}/"
     fi
 
-    # Populate generated tarballs from the build into local/common/tarballs/
+    # Populate generated container tarballs from the build into local/common/tarballs/.
+    # bsp/pvr-sdk are NOT staged: tests run against a functional device (the appengine
+    # image bakes them into pvtx.d) and each test's initial revision is built from the
+    # device's factory clone plus the test's own tarballs.
     mkdir -p "${STAGING_DIR}/local/common/tarballs"
-    for f in ${DEPLOY_DIR_IMAGE}/pantavisor-bsp-${MACHINE}.pvrexport.tgz; do
-        if [ -e "$f" ]; then
-            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/bsp.tgz"
-            break
-        fi
-    done
-    for f in ${DEPLOY_DIR_IMAGE}/pv-pvr-sdk.pvrexport.tgz ${DEPLOY_DIR_IMAGE}/pv-pvr-sdk-*.pvrexport.tgz; do
-        if [ -e "$f" ]; then
-            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pvr-sdk.tgz"
-            break
-        fi
-    done
-    for f in ${DEPLOY_DIR_IMAGE}/pv-example-app.pvrexport.tgz; do
-        if [ -e "$f" ]; then
-            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-app.tgz"
-            break
-        fi
-    done
-    for f in ${DEPLOY_DIR_IMAGE}/pv-example-norole.pvrexport.tgz; do
-        if [ -e "$f" ]; then
-            cp -v "$f" "${STAGING_DIR}/local/common/tarballs/pv-example-norole.tgz"
-            break
-        fi
+    for name in pv-example-app pv-example-norole pv-example-ready pv-example-ready-timeout pv-example-mgmt; do
+        for f in ${DEPLOY_DIR_IMAGE}/${name}.pvrexport.tgz; do
+            if [ -e "$f" ]; then
+                cp -v "$f" "${STAGING_DIR}/local/common/tarballs/${name}.tgz"
+                break
+            fi
+        done
     done
     for f in ${DEPLOY_DIR_IMAGE}/pv-example-ready.pvrexport.tgz; do
         if [ -e "$f" ]; then
@@ -163,12 +158,10 @@ do_create_tarball() {
         fi
     done
 
-    # Populate remote/common/tarballs/ (shares bsp and pvr-sdk with local)
+    # Populate remote/common/tarballs/ (shares pv-example-app with local)
     mkdir -p "${STAGING_DIR}/remote/common/tarballs"
-    cp -v "${STAGING_DIR}/local/common/tarballs/bsp.tgz" \
-        "${STAGING_DIR}/remote/common/tarballs/bsp.tgz"
-    cp -v "${STAGING_DIR}/local/common/tarballs/pvr-sdk.tgz" \
-        "${STAGING_DIR}/remote/common/tarballs/pvr-sdk.tgz"
+    cp -v "${STAGING_DIR}/local/common/tarballs/pv-example-app.tgz" \
+        "${STAGING_DIR}/remote/common/tarballs/pv-example-app.tgz"
 
     # Create the tarball
     cd "${STAGING_DIR}"

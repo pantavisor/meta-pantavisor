@@ -1,0 +1,35 @@
+# pvtest --devices manifest — one real device. See README.md for how to run.
+# Copy, fill in, uncomment. Prefer stable /dev/serial/by-id/... over /dev/ttyUSBN.
+#
+#   name=   identifies this one runner: log/console name (capture lands in
+#           <name>.log) and lock key. Unique per board, e.g. dev-01, dev-02.
+#   type=   optional: class of target, shared by every board of the same kind
+#           (the Yocto MACHINE is the natural value). This is what a test's
+#           "devices" allow-list matches, so a pin holds for the whole class.
+#           Defaults to name=, fine until a test pins this class.
+#   ip=     device IP for the pvr HTTP endpoint   -> PVTEST_HOST
+#   exec=   command prefix to run on the device   -> PVTEST_EXEC (e.g. ssh ...)
+#   tty=    host-local serial device path
+#   baud=   optional, default 115200
+#   hook=   optional: host command that sets the device's boot env and
+#           power-cycles it. When set, a test whose config.env doesn't match
+#           the live device re-types through this hook instead of SKIPping.
+#           Invoked as: hook [-c config=] KEY=VALUE ...
+#   config= optional: config file for the hook= command
+#   env=    optional: this board's base boot env, space-separated KEY=VALUE.
+#           Passed to hook= ahead of the test's own tokens (so the test wins on
+#           a shared key) on every re-type. A hook that writes the boot env as
+#           a full replacement would otherwise drop whatever the board needs to
+#           stay usable; empty is right when it merges instead.
+#
+# exec= ssh commands need BatchMode/ConnectTimeout/ServerAlive*: reboot-class
+# updates black-hole established TCP connections, and an ssh without keepalives
+# blocks on them forever (see docs/testing/device-target.md).
+
+#name=dev-01
+#type=<machine>
+#ip=192.168.1.50
+#exec=ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -i /keys/dev.pem root@192.168.1.50
+#tty=/dev/serial/by-id/usb-FTDI_FT232R_USB_UART-if00-port0
+#baud=115200
+#env=

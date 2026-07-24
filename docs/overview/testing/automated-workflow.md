@@ -19,29 +19,6 @@ When changes are made in meta-pantavisor (test scripts, `test.json`, expected ou
 
 For quicker iteration, you can also edit files directly inside an already-extracted workdir (e.g. `local/lifecycle/seq-non-reboot-updates/resources/test` or the `output` file) without rebuilding. Changes made this way are immediate but ephemeral — they must be ported back to the source tree under `recipes-pv/pantavisor-pvtests/files/local/` or `recipes-pv/pantavisor-pvtests/files/remote/` to become persistent.
 
-### Testing an unmerged pantavisor source change
-
-When the behaviour under test lives in **pantavisor C source on a branch that is not yet merged** (a new feature, a fix, a feature-gated code path), you **must** build with the workspace overlay so the recipe compiles your branch instead of its pinned revision:
-
-```bash
-./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml -c \
-    'bitbake -c cleansstate pantavisor pantavisor-appengine-distro \
-     && bitbake pantavisor-appengine-distro'
-```
-
-The recipe's pinned `PANTAVISOR_SRCREV` (in `recipes-pv/pantavisor/pantavisor.inc`) routinely **lags** the workspace feature branch. Building **without** `:kas/with-workspace.yaml` silently compiles the *old* pantavisor, so your change is simply absent — even though the build, image load, and test all run "successfully". A feature-gated path then behaves as if the code were never written (for example, a `#ifdef`-guarded check fails validation: `required service 'system-bus' ... not found` when the hosted-bus code was not compiled in). The Docker load step (`install-docker`) is **not** the culprit here — it loads a perfectly valid image that just holds a feature-less binary.
-
-To confirm which pantavisor you are actually running:
-
-```bash
-grep PANTAVISOR_SRCREV recipes-pv/pantavisor/pantavisor.inc
-git -C build/workspace/sources/pantavisor rev-parse <your-branch>
-```
-
-Notes:
-- Toggling the overlay on or off changes the recipe (it inherits `externalsrc`), so `cleansstate pantavisor` first or the switch may be ignored.
-- The pantavisor that runs the appengine state machine ships **inside `pantavisor-appengine-docker.tar`**, not only in `bsp.tgz`. Re-run `install-docker` after every rebuild (build → load → run) so the new binary is actually loaded.
-
 ## Install
 
 Extract the tarball and load the Docker images as described in [how-to-install/docker.md](../../getting-started/how-to-install/docker.md). When working directly on the build machine, the deploy directory already contains an unpacked directory — cd into it and run `test.docker.sh` without extracting anything.
@@ -92,13 +69,11 @@ The workspace is a temporary directory. Location info (workspace path, log paths
 <workspace>/
   run.log                           <- location info, one result line per test + inline diffs, SUMMARY
   README.md
-  <scope>/<category>/<name>/        <- first attempt
+  <scope>/<category>/<name>/        <- one directory per test
     test.log                        <- full bash-traced output + docker output for this test
     diff                            <- diff (expected vs actual), present only when test failed
     valgrind/
       valgrind.log.<pid>            <- present only when run with -V
-  <scope>/<category>/<name>.1/      <- retry attempt 1 (same structure)
-  <scope>/<category>/<name>.2/      <- retry attempt 2 (same structure)
   storage/                          <- full Pantavisor on-device storage per test (same naming convention)
     <scope>/<category>/<name>/
       trails/ objects/ cache/ boot/ config/ logs/
@@ -140,7 +115,7 @@ Result lines use a `[pvtest] UNIX_TIMESTAMP LEVEL -- message` format (matching p
 
 A failure means actual test output diverged from expected. Lines prefixed with `-` are expected; lines prefixed with `+` are what the test produced.
 
-For failing tests, the diff is printed in `run.log` immediately after the FAILED line, and also saved to `<scope>/<category>/<name>/diff`. Retry attempts get their own directory (`<name>.1/`, `<name>.2/`).
+For failing tests, the diff is printed in `run.log` immediately after the FAILED line, and also saved to `<scope>/<category>/<name>/diff`.
 
 ### test.log
 
@@ -231,80 +206,143 @@ cp -r <workdir>/local/lifecycle/my-new-test \
 |-------|---------|-------|
 | `#spec` | always `"pv-test@1"` | do not change |
 | `description` | human-readable summary | keep it short |
-| `setup.cmdline` | kernel cmdline overrides | `""` if not needed |
-| `setup.env` | space-separated `KEY=VALUE` env vars for Pantavisor | e.g. `"PV_WDT_MODE=disabled PV_SECUREBOOT_MODE=disabled"` |
-| `setup.pantavisor.config` | path to a custom `pantavisor.config`, or `""` | e.g. `"resources/pantavisor.config"` |
-| `setup.pvs` | glob for PVS signing key tarballs | keep `"../../common/pvs/*.tar.gz"` for local; `""` for remote |
-| `setup.containers.control` | name of the container used as control plane | usually `"pvr-sdk"` |
-| `setup.containers.tarballs` | list of container pvrexport tarballs | always include `bsp.tgz` and `pvr-sdk.tgz`; add extra containers as needed |
-| `setup.containers.urls` | OTA container URLs (remote tests) | `[]` for local tests |
-| `setup.ready-script` | script to run once Pantavisor reaches READY | `""` if not needed; `"resources/ready"` otherwise |
-| `setup.self-claim` | remote tests only: auto-claim the device | `"true"` |
+| `setup.config.env` | the device config this test needs, as space-separated `KEY=VALUE`; when the currently-loaded config doesn't already match, the test's setup re-types the slot to a container booted with exactly these keys (passed as `PV_*` env), merged into the initial revision's commit power cycle. Keep it as short as possible — prefer `setup.config.usrmeta` for keys configurable at runtime. | e.g. `"PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=lenient"` |
+| `setup.config.usrmeta` | per-test runtime metadata, space-separated `KEY=VALUE`; applied one-by-one via `pvcontrol usrmeta save` after the initial revision is ready and removed in teardown | e.g. `"PV_LOG_PUSH=1 PH_UPDATER_INTERVAL=5"`; `""` if not needed |
+| `setup.containers.tarballs` | list of extra container pvrexport tarballs merged on top of the device's factory state to form the test's initial revision | `[]` when the factory state is enough; add only the containers the test manipulates (e.g. `pv-example-app.tgz`, `pv-example-norole.tgz`) — never `bsp`/`pvr-sdk`, the functional device provides its own baseline |
+| `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed | requires `PH_USER`/`PH_PASS` when `"true"` |
+| `setup.commit-initial` | whether the initial revision must be committed as a rollback point before the test body runs. `"true"` costs a full reboot cycle — the single most expensive step of a test's setup — so set it only when the test needs it: it triggers a rollback that must land on its own revision, or it asserts the initial revision survives a gc (gc keeps `pv_done`). A test that only posts revisions and asserts on *those* does not need it | set explicitly on every test, even where it matches the default. Omitting it defaults to `"true"` for backwards compatibility with test.json files written before the field existed. Only affects the persistent model: volatile boots into an already-committed revision |
 | `test-script` | path to the test script | `"resources/test"` |
-| `skip` | exclude test from runs | `"false"` normally; `"true"` to disable |
+| `skip` | exclude test from runs | `"false"` normally; `"true"` to disable **for local iteration only** — it yields a SKIPPED result, and `--fail-on-skip` (used on CI/master) fails the run on any SKIPPED, so a skipped test must never be committed to master |
+| `devices` | allow-list of the target *classes* this test may run on; an entry matches `PVTEST_DEVICE_TYPE` — `appengine` for the container, a device manifest's `type=` for real hardware | `[]` (run everywhere) for almost every test. Use it only when a test *cannot* pass elsewhere — its golden output asserts the appengine baseline, or it needs a build feature a BSP need not ship. See [device-target.md](device-target.md) |
+
+> The slot-pool model picks a slot's config from `setup.config.env`. Deprecated
+> keys `setup.required-config`, `setup.usrmeta`, `setup.cmdline`, `setup.env`,
+> `setup.pantavisor.config`, `setup.pvs`, `setup.ready-script`,
+> `setup.containers.control`, and `setup.containers.urls`
+> are no longer read. The host boots a slot's container by passing the
+> config keys as `PV_*` env — no static policy list; see [Parallel
+> execution](#parallel-execution) below.
 
 **3. Write `resources/test`:**
 
 ```sh
 #!/bin/sh
 
-source /work/scripts/utils
-. /opt/pantavisor/set_env
+source /usr/share/pantavisor/pvtest/utils
 
-# Use pventer to run commands inside a container; stdout is diff-ed against `output`
-pventer -c pvr-sdk pvcontrol config ls | jq -M -r '.["policy"]'
+# pvcontrol talks to the device's pv-ctrl directly; stdout is diff-ed against `output`
+pvcontrol conf ls | jq -M -r '.["policy"]'
 ```
 
-Guidelines (from `GEMINI.md` conventions):
-- Always source `utils` and `set_env` at the top — they set up the test environment
-- Use `pventer -c <container> <cmd>` for commands inside containers
-- Use `pvcontrol` and `pvcurl` for the pv-ctrl API
-- **Output determinism**: pipe JSON through `jq -M` (compact, sorted) and use `tr -d '\r'` to strip carriage returns; echo *fixed marker strings* rather than variable content (see [How the `output` diff works](#how-the-output-diff-works) below)
-- Keep tests independent: each test starts from a clean container and storage state
+#### Test authoring rules
 
-#### How the `output` diff works
+Tests assigned to the same worker run **sequentially against one shared container's
+device/trail and one shared tester filesystem** (the slot pool runs other
+workers concurrently at `-p>1`). They must pass both run individually and run
+together — so a test must never depend on, or leak into, the state of another. The
+rules below are mandatory; they encode lessons that caused real cross-test failures.
 
-The runner does **not** diff stdout byte-for-byte. Before comparing, it strips
-from both the recorded `output` and the live run every line matching:
+1. **Per-test isolation.** Any test that clones or uses `pvr` must clone into a
+   unique per-test temp dir — never a fixed shared path like `/home/checkout`,
+   `/home/remote`, `/home/local`, and never `rm -rf` a shared dir as a workaround:
+   ```sh
+   checkout="$(mktemp -d)/checkout"
+   pvr_clone_local_or_die "$checkout"
+   cd "$checkout"
+   ```
+   **Do not override `$HOME`.** The harness exports a per-device, Hub-authenticated
+   `$HOME` (`exec_test` runs `pvr login` into it), and `pvr post` / `pvr_post_rev`
+   and every other Hub call read its `$HOME/.pvr/auth.json`. Clobbering `$HOME`
+   (e.g. `export HOME="$(mktemp -d)"`) throws that token away, so Hub posts fail
+   unauthenticated and `pvr_post_rev` returns empty. The per-device `$HOME` is
+   already isolated per pool slot, so its object cache (`$HOME/.pvr/objects`) is
+   safe to share across the sequential tests on one device. (A purely local test
+   that never touches the Hub has no token to lose, but the temp-checkout pattern
+   above is preferred everywhere and the only one that is safe for remote tests.)
+2. **Clone source.** Clone the device's *current* state from its local pvr
+   endpoint (`http://${PVTEST_HOST:-localhost}:12368/cgi-bin/pvr`) — a clean
+   baseline. Do **not** clone the accumulating Hub trail head
+   (`https://api.pantahub.com/trails/$device_id`), which inherits other tests'
+   leftovers.
+3. **Clone safety.** Always guard the exit code and fail loud; suppress only
+   stdout so it can't leak into the diffed output (as in the snippet above).
+4. **Hub revisions: capture, never hardcode.** Hub revision numbers accumulate
+   across the shared trail and are not fixed — never hardcode `"1"`/`"2"`. Post
+   explicitly to the trail and capture the integer the Hub assigned with
+   `pvr_post_rev` (from `utils`):
+   ```sh
+   device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+   trail_url="https://api.pantahub.com/trails/$device_id"
+   rev=$(pvr_post_rev -m "msg" "$trail_url")
+   [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+   wait_for_revision_state "$rev" "UPDATED"
+   ```
+   Because the captured integer varies run-to-run, **mask it** wherever it appears
+   in diffed stdout (e.g. `sed "s/\"$rev\"/\"REV\"/g"`).
+5. **Local revisions: name them.** Post local revisions with a test-specific name
+   (`pvr post --rev "locals/<name>"`) and wait with
+   `wait_for_revision_state "locals/<name>" "UPDATED|DONE"`.
+6. **Output determinism.** Pipe JSON through `jq -M`, strip `\r`, and mask volatile
+   fields (timestamps, PIDs, object hashes, `$HOME` paths, Hub rev integers). Never
+   hand-edit `output` — regenerate it with `run … -o`.
+7. **Clean up created state.** Device-meta / user-meta / signatures / objects a
+   test creates persist on the shared device — delete them before the test ends,
+   or assert deltas / filter to the test's own revisions rather than dumping
+   absolute trail history.
+8. **Containers / tarballs.** The initial revision is the device's factory clone
+   plus the extra containers declared in `test.json` `setup.containers.tarballs[]`
+   — never include `bsp.tgz`/`pvr-sdk.tgz` (the functional device provides its own
+   baseline, which differs per target). A test that manipulates a container must
+   bring its own (e.g. `pv-example-norole.tgz` for reboot-class updates,
+   `pv-example-app.tgz` for non-reboot ones); a new container = add a pvrexport
+   `.tgz` and list it here (see "Adding a new container for a test" below).
+9. **Config selection.** A test selects its target's config via `setup.config.env`.
+   The host boots/re-types a worker's container by passing those config keys as
+   `PV_*` env, so a new config combination needs **no** code change (just set it in
+   `config.env`; keep it short). On a real device (no boot-time config injection),
+   a test whose config the live device doesn't already satisfy is legitimately
+   SKIPPED at runtime — that is **not** the same as the `skip` field below.
+10. **`skip` is local-only.** `"skip":"true"` is fine for local developer
+    iteration, but it must never reach master: CI/master runs pass
+    `--fail-on-skip`, which fails the run on *any* SKIPPED result — a skipped
+    test is indistinguishable from one skipped for any other reason, and equally
+    fatal. Tests that are not ready to run on master live in the
+    [Todo list](#todo-list), not as skipped dirs in the tree.
+11. **Destructive tests must be state-independent.** There is no isolation
+    mechanism — every test shares a container with later same-config tests, so a
+    test that destroys device state (e.g. a GC test that deletes the factory
+    revision `/storage/trails/0`, or one that fills the disk) must be written to run
+    on a device in *any* prior state and must not assume a pristine factory. Build
+    the baseline the test needs from its own posted revisions, derive content-
+    addressed object names dynamically rather than hard-coding factory hashes (e.g.
+    `sha256sum pv-example-norole/lxc.container.conf`), and assert only on paths the test itself
+    creates/removes. See `local/services/on-demand-gc` and
+    `remote/lifecycle/insufficient-disk-space` for the pattern.
+12. **Only stdout is compared.** The script's stderr goes to `test.log`, not the
+    diffed output — a device BSP's tools may print noise there (e.g. an old
+    `pvcontrol`'s `INFO: Experimental pvcurl backend…`). A test that *asserts* on
+    an error body (`pvcontrol` prints error responses to stderr) must merge it
+    explicitly: plain `2>&1` when the tool is test-owned (e.g. `pventer -c
+    <own-container> pvcontrol …`), or `2>&1 | grep -v '^INFO:'` when it is the
+    device's own pvcontrol, whose noise would re-enter the diff.
+13. **Author for any target, not just appengine.** The script runs in the tester
+    while `pvcontrol`/`pvcurl`/`pventer` may execute on a real device: pass file
+    arguments through `pv_stage_file`/`pv_fetch_file` (never a raw tester path),
+    create and hash payloads in the tester (a device BSP's busybox can lack
+    `sha256sum`/`cut`), and assert device-baseline observations as invariants or
+    booleans, never literal listings. Full rationale and the expected
+    SKIP/FAIL classes on real devices: [device-target.md](device-target.md).
 
-```
-^(\+|\$|\[pvtest\] <timestamp> DEBUG -- \[test-script\]:)
-```
-
-That is: the `set -x` execution traces (the `[pvtest] … DEBUG -- [test-script]:`
-lines, which carry per-line timestamps) **and** any line beginning with `+` or
-`$` are discarded. Only the remaining lines — i.e. what your script actually
-`echo`s or what commands print to stdout — are diffed. Consequences:
-
-- **Timestamps, pids and the trace itself never matter** — they are filtered out.
-- **Everything you deliberately print must be deterministic.** Do not echo a
-  raw command reply that contains volatile data (a version string, hostname,
-  uid, socket path, dynamic D-Bus sender like `:1.7`). Instead, assert with
-  `grep` and echo a fixed marker:
-
-  ```sh
-  if dsend "--dest=$SVC $OBJ $IFACE.GetVersionString" | grep -q 'string "avahi'; then
-      echo "monitor GetVersionString: OK"   # fixed line -> stable in output
-  else
-      echo "monitor GetVersionString: FAILED"
-  fi
-  ```
-
-  The `output` golden then only contains your `== headers ==` and `… OK/DENIED`
-  markers, never the volatile reply text.
-
-- **`pventer` + `dbus-send` stdout caveat**: run `dbus-send` (or any command
-  whose stdout you need to capture) **directly** under `pventer`, passing env via
-  `env KEY=VALUE`, not wrapped in `sh -c "…"`. Under `pventer` a busybox
-  `sh -c` wrapper swallows the child's stdout, so the reply is lost and the
-  `grep` assertion silently fails:
-
-  ```sh
-  # GOOD — reply reaches the pipe
-  pventer -c "$C" env DBUS_SYSTEM_BUS_ADDRESS="$ADDR" dbus-send --system --print-reply …
-  # BAD  — stdout swallowed, assertion always FAILED
-  pventer -c "$C" sh -c "DBUS_SYSTEM_BUS_ADDRESS=$ADDR dbus-send --system --print-reply …"
-  ```
+Always source `utils` at the top (`source /usr/share/pantavisor/pvtest/utils`); it
+provides `pvcontrol`/`pventer`/`pvcurl`, `_pv_exec`, the `wait_for_*` helpers,
+`pvr_clone_local_or_die` and `pvr_post_rev`. After a reboot or a `crash_pv`, fence
+the come-back with `wait_for_down` followed by `wait_for_target_ready`
+(SSH → pv-ctrl → `READY`), passing a short label (`"after crash 2"`) whenever a
+test fences more than once — otherwise each fence logs the same three lines and
+the log cannot say which one stalled. Its `pvtest_log` lines are routed to stderr
+automatically inside a test script, so they reach `test.log` without polluting
+the stdout diffed against `output`; send a test's own diagnostics to stderr for
+the same reason.
 
 **4. Generate the `output` file** (never edit manually):
 
@@ -379,21 +417,15 @@ Add to `do_create_tarball[depends]`:
 do_create_tarball[depends] += "<name>:do_image_complete"
 ```
 
-Add a copy block inside `do_create_tarball()`:
+Add the name to the staged-container loop inside `do_create_tarball()`:
 ```bash
-for f in ${DEPLOY_DIR_IMAGE}/<name>.pvrexport.tgz; do
-    if [ -e "$f" ]; then
-        cp -v "$f" "${STAGING_DIR}/local/common/tarballs/<name>.tgz"
-        break
-    fi
-done
+for name in pv-example-app pv-example-norole ... <name>; do
 ```
+(and to the `cp` into `remote/common/tarballs/` if remote tests need it too)
 
 **3. Reference in `test.json`:**
 ```json
 "tarballs": [
-  "../../common/tarballs/bsp.tgz",
-  "../../common/tarballs/pvr-sdk.tgz",
   "../../common/tarballs/<name>.tgz"
 ]
 ```
@@ -414,25 +446,58 @@ done
 | Flag | Description |
 |------|-------------|
 | `-V`, `--valgrind` | Run Pantavisor under valgrind; results saved to `<tmpdir>/valgrind/` |
-| `-p N`, `--parallel N` | Run up to N tests concurrently (default: 1). Incompatible with `-i` and `-m`. |
-| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Use to inspect a working system. Requires a specific leaf test path. |
-| `-m`, `--manual` | Open a shell without starting Pantavisor. Use when PV fails to reach READY and you need to debug startup. Requires a specific leaf test path. |
+| `-p N`, `--parallel N` | Number of slots — the cap on concurrent appengine containers a single tester keeps busy (default: `nproc`). `-p 1` is fully serial. Incompatible with `-i` and `-m`. |
+| `-i`, `--interactive` | Open a shell once Pantavisor reaches READY (device claimed if configured). Boots a single runner configured from the target test's `config.env`. Use to inspect a working system. Requires a specific leaf test path. |
+| `-m`, `--manual` | Open a shell without starting Pantavisor; the container boots with the target test's `config.env` (as `PV_*` env). Use when PV fails to reach READY and you need to debug startup. |
 | `-o`, `--overwrite` | Create or overwrite the expected test output (use when authoring or updating tests) |
 | `-n`, `--netsim` | Enable wireless network simulation via `mac80211_hwsim` (experimental) |
+| `--fail-on-skip` | Exit non-zero if any test is SKIPPED, whatever the reason: a `test.json` `"skip":"true"`, a `"devices"` class the target isn't in, a config the live device doesn't satisfy, or missing Hub credentials. Used on CI/master so no skip of any kind can land. |
+| `--model MODEL` | Assignment model: `persistent` (default, per-test config.env; also the only model for `--devices`, where it SKIPs unmet-config tests instead of injecting config), or `volatile` (one fresh container per test, incompatible with `--devices`/`-n`). See [device-target.md](device-target.md). |
+| `--devices FILE` | Run against one real device instead of the appengine pool. Incompatible with `-p`, `-m`, `-n`, `-V`. See [device-target.md](device-target.md). |
 
 **Exit codes**: `0` = PASSED, `1` = FAILED, `2` = ABORTED
 
 ### Parallel execution
 
-Pass `-p N` to run up to N tests at the same time:
+A single long-lived tester (`pvtest-run`) owns a global FIFO of `-p` **slots** over
+one flat, pre-sorted test queue (claim-needing tests first, then grouped by
+matching `config.env`, so adjacent tests need the fewest re-types). Each slot
+maps to one appengine container and keeps ONE persistent storage for its
+whole run. Each test's setup installs its initial revision and then takes at
+most ONE power cycle: if the test's `config.env` no longer matches what's
+loaded, it **re-types** — the host stops the old container and boots a new one
+with the new `PV_*` env, same storage, straight into the pending revision —
+otherwise a plain reboot commits the revision. The tester keeps every slot
+busy until the queue drains, so the only idle is the genuine tail. Each test
+runs exactly once.
 
 ```bash
 ./test.docker.sh run local -p 2
 ```
 
-Each parallel test slot gets its own Docker container and isolated storage volume. The semaphore releases immediately when a test finishes, so the next queued test starts with no artificial delay. The practical limit on a development machine is around `-p 2`; higher values can push 4+ simultaneous Docker+LXC stacks past the 30 s pantavisor startup timeout.
+A slot that frees up immediately pulls the next pending test off the shared queue.
+`-p 1` runs fully serial. The practical
+limit on a development machine is around 2–4 simultaneous Docker+LXC stacks before the
+30 s pantavisor startup timeout is at risk; CI runs at `-p 8` on the dedicated runner.
 
 `-p N` is incompatible with `-i` (interactive) and `-m` (manual), which require a single test to be running.
+
+The above describes `--model persistent` (the pool model). `--model volatile` uses a different,
+non-re-typing concurrency model instead: one fresh appengine container per test, capped at `-p`
+concurrent tests via a semaphore, closer to "one `docker run` per test" — there is no re-typing
+and no shared persistent storage across tests. Because the container is fresh and discarded, the
+test's revision is built by `pv-appengine` on first boot rather than installed afterwards, so a
+volatile test pays one pantavisor boot instead of the three a persistent test pays (boot, install,
+commit reboot). Per-push CI runs volatile; the nightly runs both (`model: all`).
+
+### Running against a real device
+
+```bash
+PH_USER=... PH_PASS=... ./test.docker.sh run local --devices devices.txt
+```
+
+`devices.txt` describes the single real board (see [device-target.md](device-target.md) and the
+bundled `README.md` for the manifest format and run model).
 
 ---
 
@@ -488,8 +553,8 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/runtime/config-overlay` | Configuration Overlay | |
 | `local/runtime/resource-constraints` | Resource Constraints (CPU/Mem) | |
 | `local/runtime/status-goal-success-failure` | Status Goal Success and Failure | ✓ |
-| `local/runtime/container-exports` | Container Exports to Host | ✓ |
-| `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | ✓ |
+| `local/runtime/container-exports` | Container Exports to Host | |
+| `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | |
 | `local/runtime/objects-crud` | Object store put/get/verify (pv-ctrl) | ✓ |
 | `local/runtime/steps-rw` | Step read + local revision put (pv-ctrl) | ✓ |
 | `local/runtime/invalid-signal-handling` | Invalid Signal Handling | |
@@ -503,6 +568,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/control/basic-endpoints` | Basic Endpoints (Containers, Objects, etc.) | ✓ |
 | `local/control/basic-endpoints-curl` | Basic Endpoints via cURL | ✓ |
 | `local/control/status-codes` | HTTP status-code contract (commands, signals, drivers, buildinfo) | ✓ |
+| `local/control/pvcontrol-responsiveness` | pvcontrol responds normally during a time-consuming local operation (e.g. object transfer, sequential update) | |
 
 #### xconnect
 
@@ -513,9 +579,6 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/xconnect/unix-sockets` | Unix Sockets (UDS proxying) | |
 | `local/xconnect/rest-over-uds` | REST-over-UDS (Identity headers) | |
 | `local/xconnect/dbus` | D-Bus (Policy mediation) | |
-| `local/xconnect/dbus-systembus` | Hosted D-Bus system bus (owns/allow, generated default-deny policy): allowed `operator` client (`pv-example-system-dbus-client`) calls, separate non-allowed `stranger` client (`pv-example-system-dbus-client-denied`) refused, rogue name-ownership denied | ✓ |
-| `local/xconnect/avahi-systembus` | Hosted D-Bus system bus with a real daemon: avahi owns `org.freedesktop.Avahi`, monitor consumer roundtrips its API | ✓ |
-| `local/xconnect/dbus-collision` | Hosted D-Bus system bus name-collision validation: two apps owning the same well-known name on one bus fail `pv_dbus_daemon_validate` and the revision rolls back | ✓ |
 | `local/xconnect/drm` | DRM (Graphics node injection) | |
 | `local/xconnect/wayland` | Wayland (Isolated UI rendering) | |
 
@@ -541,6 +604,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 |------|-------------|------|
 | `local/services/log-output-formats` | Log Output Formats (filetree/singlefile) | |
 | `local/services/on-demand-gc` | On-Demand Garbage Collection | ✓ |
+| `local/services/sync-gc` | Synchronous Garbage Collection (/storage/gc) | ✓ |
 | `local/services/daemons` | Daemon list/stop/start (pv-ctrl) | ✓ |
 | `local/services/metadata-crud` | Device/user metadata CRUD (pv-ctrl) | ✓ |
 | `local/services/tsh-daemon` | tsh daemon management & log capture | |
@@ -566,7 +630,7 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/core/encrypted-pantahub-config` | Encrypted `pantahub.config` handling | ✓ |
-| `remote/core/unencrypted-pantahub-config` | Unencrypted `pantahub.config` handling | ✓ |
+| `remote/core/unencrypted-pantahub-config` | Unencrypted `pantahub.config` handling | |
 
 #### lifecycle
 
@@ -589,8 +653,9 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 |------|-------------|------|
 | `remote/control/manual-claim` | Manual Device Claim | ✓ |
 | `remote/control/auto-claim` | Automatic Device Claim | ✓ |
-| `remote/control/always-remote-disabled` | Always Remote Disabled | |
+| `remote/control/always-remote-disabled` | Always Remote Disabled | ✓ |
 | `remote/control/always-remote-enabled` | Always Remote Enabled | ✓ |
+| `remote/control/pvcontrol-responsiveness` | pvcontrol responds normally during a Pantahub download or other expensive remote operation | |
 
 #### services
 
@@ -599,5 +664,5 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | Test | Description | Done |
 |------|-------------|------|
 | `remote/services/ph-logger-cloud-push` | `ph-logger` cloud push | ✓ |
-| `remote/services/device-user-metadata` | Device/User Metadata Exchange | |
+| `remote/control/device-user-metadata` | Device/User Metadata Exchange | ✓ |
 
