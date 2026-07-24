@@ -2,20 +2,35 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
+device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
 
-device_id=`cat /var/run/pantavisor/pv/device-id`
-pvr clone "https://api.pantahub.com/trails/$device_id" /home/checkout > /dev/null 2>&1
-cd /home/checkout
-pvr post -m "first revision" > /dev/null 2>&1
-pvr post -m "second revision" > /dev/null 2>&1
-pvr post -m "third revision" > /dev/null 2>&1
+# Per-test isolation: clone into a temp checkout dir; never override $HOME (see
+# automated-workflow.md § Test authoring rules).
+checkout="$(mktemp -d)/checkout"
+pvr_clone_local_or_die "$checkout"
+cd "$checkout"
+trail_url="https://api.pantahub.com/trails/$device_id"
 
-wait_for_revision_state "pvr-sdk" "1" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 1 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 1
-wait_for_revision_state "pvr-sdk" "2" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 2 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 2
-wait_for_revision_state "pvr-sdk" "3" "UPDATED" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for revision 3 to reach UPDATED" >&2; exit 1; }
-pvcontrol steps show-progress 3
+echo "== post 3 revisions simultaneously =="
+rev1=$(pvr_post_rev -m "first revision" "$trail_url")
+rev2=$(pvr_post_rev -m "second revision" "$trail_url")
+rev3=$(pvr_post_rev -m "third revision" "$trail_url")
+{ [ -n "$rev1" ] && [ -n "$rev2" ] && [ -n "$rev3" ]; } \
+    || { echo "ERROR: could not determine posted revisions" >&2; exit 1; }
+
+cloud_step_url1="$trail_url/steps/$rev1"
+cloud_step_url2="$trail_url/steps/$rev2"
+cloud_step_url3="$trail_url/steps/$rev3"
+
+echo "== first revision =="
+wait_for_value "pvr stepinfo \"$cloud_step_url1\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for cloud to reflect UPDATED for $rev1" >&2; exit 1; }
+pvr stepinfo "$cloud_step_url1" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'
+echo "== second revision =="
+wait_for_value "pvr stepinfo \"$cloud_step_url2\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for cloud to reflect UPDATED for $rev2" >&2; exit 1; }
+pvr stepinfo "$cloud_step_url2" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'
+echo "== third revision =="
+wait_for_value "pvr stepinfo \"$cloud_step_url3\" 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "UPDATED" 60 \
+    || { echo "ERROR: timeout waiting for cloud to reflect UPDATED for $rev3" >&2; exit 1; }
+pvr stepinfo "$cloud_step_url3" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'

@@ -1,18 +1,6 @@
-[pvtest] 1783621275 DEBUG -- [test-script]: source /usr/share/pantavisor/pvtest/utils
-[pvtest] 1783621275 DEBUG -- [test-script]: pvcontrol devmeta ls
-[pvtest] 1783621275 DEBUG -- [test-script]: jq -M -r '.["pantavisor.revision"]'
-0
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout
-[pvtest] 1783621275 DEBUG -- [test-script]: cd /home/checkout
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-system-dbus-server.tgz
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr get /work/local/common/tarballs/pv-example-system-dbus-server-collision.tgz
-[pvtest] 1783621275 DEBUG -- [test-script]: pvr checkout
-[pvtest] 1783621276 DEBUG -- [test-script]: pvr post --rev locals/collision
-[pvtest] 1783621276 DEBUG -- [test-script]: wait_for_value 'pvcontrol steps show-progress locals/collision | jq -r '\''.status'\''' ERROR 90
-[pvtest] 1783621293 DEBUG -- [test-script]: wait_for_value 'pvcontrol devmeta ls | jq -r '\''."pantavisor.status"'\''' READY 30
-[pvtest] 1783621293 DEBUG -- [test-script]: pvcontrol steps show-progress locals/collision
-[pvtest] 1783621293 DEBUG -- [test-script]: sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
+== initial revision ==
+locals/local_xconnect_dbus_collision
+== post revision with two owners of org.pantavisor.Example ==
+== locals/collision: ERROR (rolled back) ==
 {"status":"ERROR","status-msg":"A container could not be started","progress":100,"retries":0,"logs":"{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"dbus-daemon\",\"msg\":\"well-known name 'org.pantavisor.Example' on bus 'system-bus' is owned by more than one app\"}\n{\"tsec\":0,\"tnano\":0,\"platform\":\"pantavisor\",\"lvl\":\"ERROR\",\"src\":\"controller\",\"msg\":\"a platform did not work as expected. Tearing down...\"}\n"}
-[pvtest] 1783621293 DEBUG -- [test-script]: pvcontrol devmeta ls
-[pvtest] 1783621293 DEBUG -- [test-script]: jq -M -r '.["pantavisor.revision"]'
-0
+locals/local_xconnect_dbus_collision

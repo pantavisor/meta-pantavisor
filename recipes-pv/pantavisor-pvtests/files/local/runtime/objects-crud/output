@@ -1,67 +1,16 @@
-+ SOCK=/run/pantavisor/pv/pv-ctrl
-+ echo '== initial object count =='
-== initial object count ==
-+ pvcontrol objects ls
-+ jq -M length
-+ tr -d '\r'
-6
-+ echo '== put small object (fixed content) =='
+== objects ls returns an array ==
+"array"
 == put small object (fixed content) ==
-+ printf 'hello pvctrl object test\n'
-++ sha256sum /tmp/small.txt
-++ awk '{print $1}'
-+ SHA_SMALL=ff392d69694b5d126342a1631f140b64881e726f9fa6714a3665a8df3b030976
-+ pvcontrol objects put /tmp/small.txt ff392d69694b5d126342a1631f140b64881e726f9fa6714a3665a8df3b030976
 
-++ present ff392d69694b5d126342a1631f140b64881e726f9fa6714a3665a8df3b030976
-++ pvcontrol objects ls
-++ jq -r --arg s ff392d69694b5d126342a1631f140b64881e726f9fa6714a3665a8df3b030976 'any(.[]; .sha256 == $s)'
-++ tr -d '\r'
-+ echo 'small object present: true'
 small object present: true
-+ echo '== put large object (2MB, chunked upload) =='
+object count increased by one: yes
 == put large object (2MB, chunked upload) ==
-+ head -c 2097152 /dev/zero
-+ tr '\0' x
-++ sha256sum /tmp/large.bin
-++ awk '{print $1}'
-+ SHA_LARGE=6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc
-+ pvcontrol objects put /tmp/large.bin 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc
 
-++ present 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc
-++ pvcontrol objects ls
-++ jq -r --arg s 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc 'any(.[]; .sha256 == $s)'
-++ tr -d '\r'
-+ echo 'large object present: true'
 large object present: true
-+ echo '== get large object + verify integrity =='
 == get large object + verify integrity ==
-+ pvcontrol -f /tmp/large-dl.bin objects get 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc
-++ sha256sum /tmp/large-dl.bin
-++ awk '{print $1}'
-+ SHA_DL=6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc
-++ '[' 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc = 6932fd31e5daf4739b9fa78ff777b2831b0995cc1d0b0093cac80601902013bc ']'
-++ echo yes
-+ echo 'download integrity ok: yes'
 download integrity ok: yes
-+ echo '== put with wrong checksum (expect 422) =='
 == put with wrong checksum (expect 422) ==
-+ printf 'checksum mismatch payload\n'
-+ pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket /run/pantavisor/pv/pv-ctrl -X PUT -T /tmp/bad.txt http://localhost/objects/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 422
-+ echo '== duplicate put is idempotent =='
 == duplicate put is idempotent ==
-++ pvcontrol objects ls
-++ jq length
-++ tr -d '\r'
-+ CNT_BEFORE=8
-+ pvcontrol objects put /tmp/small.txt ff392d69694b5d126342a1631f140b64881e726f9fa6714a3665a8df3b030976
 
-++ pvcontrol objects ls
-++ jq length
-++ tr -d '\r'
-+ CNT_AFTER=8
-++ '[' 8 = 8 ']'
-++ echo yes
-+ echo 'object count unchanged on duplicate: yes'
 object count unchanged on duplicate: yes
