@@ -33,8 +33,14 @@ usage() {
 	echo "  add <scope/category/name>  Create a new test"
 	echo "  install-deps               Install dependencies (and docker)"
 	echo "  install-docker             Install docker"
+	echo "  install-tarballs [path]... Overlay container tarballs into the suites"
 	echo "  ls                         List all tests"
 	echo "  run [path]                 Run one to many tests"
+	echo ""
+	echo "Arguments for 'install-tarballs' command:"
+	echo "  -s, --scope SCOPE     Overlay into this scope only (local|remote; default both)"
+	echo "  -l, --list            Print the installed overrides and exit"
+	echo "      --reset           Restore the shipped tarballs and exit"
 	echo ""
 	echo "Arguments for 'run' command:"
 	echo "  -i, --interactive     Run the test interactively for debugging"
@@ -69,6 +75,8 @@ usage() {
 	echo "  TESTER_PATH      Path to docker load for tester container"
 	echo "  APPENGINE_PATH   Path to docker load for appengine container"
 	echo "  PVTEST_DIR       Directory to pvtest sources to run"
+	echo "  PVTEST_TARBALLS_PATH      Default source for 'install-tarballs'"
+	echo "  PVTEST_TARBALLS_MANIFEST  Override manifest path (default: <dir>/pvtest-tarballs.manifest)"
 	echo ""
 	echo "Target override environments (unset = local appengine container, set = external target):"
 	echo "  PVTEST_EXEC      Command prefix to run pvcontrol/pventer on the target."
@@ -163,6 +171,173 @@ install_docker() {
 	if [ -f "$APPENGINE_PATH" ]; then
 		docker load -i "$APPENGINE_PATH"
 	fi
+}
+
+# --- container tarball substitution -----------------------------------------
+#
+# The suites ship with the example containers built for the appengine (x86,
+# signed by the build's PVS_VENDOR_NAME CA). Running against a real device of
+# another architecture, or one that trusts a different signing CA, needs those
+# replaced with tarballs built for that board. Overlaying them here keeps a
+# single distro install usable against any target.
+#
+# Overrides are workspace-local: they live in the *extracted* distro, not in the
+# meta-pantavisor source tree, so a rebuild re-stages the pristine ones.
+
+_tarballs_manifest() {
+	printf '%s' "${PVTEST_TARBALLS_MANIFEST:-$test_dir/pvtest-tarballs.manifest}"
+}
+
+# The current override set: last record per (scope,name), minus anything restored.
+_tarball_overrides_effective() {
+	local mf; mf="$(_tarballs_manifest)"
+	[ -f "$mf" ] || return 0
+	awk -F'\t' '!/^#/ && NF>=6 { e[$2 FS $3]=$0 }
+	            END { for (k in e) if (e[k] !~ /\trestored\t/) print e[k] }' "$mf" \
+		| sort -t"$(printf '\t')" -k2,2 -k3,3
+}
+
+_tarball_record() {
+	local mf; mf="$(_tarballs_manifest)"
+	if [ ! -f "$mf" ]; then
+		printf '# pvtest-tarballs v1\n' > "$mf"
+		printf '# format: <epoch>\\t<scope>\\t<name>\\t<action>\\t<sha256-12>\\t<source>\n' >> "$mf"
+	fi
+	printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$1" "$2" "$3" "$4" "$5" >> "$mf"
+}
+
+_tarball_sum() {
+	sha256sum "$1" 2>/dev/null | cut -c1-12
+}
+
+# Announce substituted tarballs at INFO: this is the one line explaining why a
+# run's results differ from a pristine distro, so it must survive a grep -v DEBUG.
+_log_tarball_overrides() {
+	local wp="$1" n ts scope name action sum src
+	n=$(_tarball_overrides_effective | wc -l)
+	[ "${n:-0}" -gt 0 ] || return 0
+	pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
+	_tarball_overrides_effective | while IFS="$(printf '\t')" read -r ts scope name action sum src; do
+		pvtest_log INFO "  $scope/common/tarballs/$name <- $src ($action, sha $sum)"
+	done
+	cp -f "$(_tarballs_manifest)" "$wp/pvtest-tarballs.manifest" 2>/dev/null || true
+}
+
+_tarball_scopes() {
+	local want="$1" s
+	for s in local remote; do
+		[ -z "$want" ] || [ "$want" = "$s" ] || continue
+		[ -d "$test_dir/$s/common/tarballs" ] || continue
+		printf '%s\n' "$s"
+	done
+}
+
+_install_one_tarball() {
+	local src="$1" scope="$2" name dest orig action sum prev
+	name="$(basename "$src")"
+	dest="$test_dir/$scope/common/tarballs/$name"
+	orig="$test_dir/$scope/common/tarballs/.orig"
+
+	# An entry that is already an override keeps its original action, and is not
+	# backed up again: otherwise a second install would record the *previous
+	# override* as the pristine copy, and --reset would restore that instead of
+	# the shipped tarball (or instead of removing a file the distro never had).
+	prev=$(_tarball_overrides_effective | awk -F'\t' -v s="$scope" -v n="$name" '$2==s && $3==n {print $4}')
+	if [ -n "$prev" ]; then
+		action="$prev"
+	elif [ -e "$dest" ]; then
+		mkdir -p "$orig"
+		cp -p "$dest" "$orig/$name"
+		action=replaced
+	else
+		action=added
+	fi
+
+	cp -f "$src" "$dest" || return 1
+	sum="$(_tarball_sum "$dest")"
+	_tarball_record "$scope" "$name" "$action" "$sum" "$src"
+	pvtest_log INFO "$scope/common/tarballs/$name [$action, sha $sum]"
+}
+
+_reset_tarballs() {
+	local ts scope name action sum src dest orig
+	_tarball_overrides_effective | while IFS="$(printf '\t')" read -r ts scope name action sum src; do
+		dest="$test_dir/$scope/common/tarballs/$name"
+		orig="$test_dir/$scope/common/tarballs/.orig/$name"
+		if [ "$action" = replaced ] && [ -e "$orig" ]; then
+			mv -f "$orig" "$dest"
+			pvtest_log INFO "$scope/common/tarballs/$name [restored]"
+		elif [ "$action" = added ]; then
+			rm -f "$dest"
+			pvtest_log INFO "$scope/common/tarballs/$name [removed]"
+		else
+			pvtest_log WARN "$scope/common/tarballs/$name: no backup to restore"
+			continue
+		fi
+		_tarball_record "$scope" "$name" restored - -
+	done
+	rmdir "$test_dir"/local/common/tarballs/.orig "$test_dir"/remote/common/tarballs/.orig 2>/dev/null || true
+}
+
+install_tarballs() {
+	local scope= do_list=false do_reset=false srcs=() found=0
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			-s|--scope) scope="$2"; shift 2 ;;
+			-l|--list)  do_list=true; shift ;;
+			--reset)    do_reset=true; shift ;;
+			-h|--help)  usage; exit 0 ;;
+			-*) pvtest_log ERROR "Unknown install-tarballs option: $1"; exit 1 ;;
+			*)  srcs+=("$1"); shift ;;
+		esac
+	done
+
+	if [ -n "$scope" ] && [ "$scope" != local ] && [ "$scope" != remote ]; then
+		pvtest_log ERROR "--scope must be 'local' or 'remote'"
+		exit 1
+	fi
+
+	if [ "$do_list" = true ]; then
+		local n; n=$(_tarball_overrides_effective | wc -l)
+		if [ "${n:-0}" -eq 0 ]; then
+			pvtest_log INFO "no tarball overrides installed"
+		else
+			pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
+			_tarball_overrides_effective | while IFS="$(printf '\t')" read -r _ts s nm ac sm sr; do
+				pvtest_log INFO "  $s/common/tarballs/$nm <- $sr ($ac, sha $sm)"
+			done
+		fi
+		return 0
+	fi
+
+	if [ "$do_reset" = true ]; then
+		_reset_tarballs
+		return 0
+	fi
+
+	[ ${#srcs[@]} -gt 0 ] || srcs=("${PVTEST_TARBALLS_PATH:-.}")
+
+	local sp f s
+	for sp in "${srcs[@]}"; do
+		if [ ! -e "$sp" ]; then
+			pvtest_log ERROR "no such path: $sp"
+			exit 1
+		fi
+		for f in $([ -d "$sp" ] && find "$sp" -maxdepth 1 -name '*.tgz' | sort || printf '%s\n' "$sp"); do
+			case "$f" in *.tgz) ;; *) pvtest_log WARN "skipping non-tarball: $f"; continue ;; esac
+			for s in $(_tarball_scopes "$scope"); do
+				_install_one_tarball "$f" "$s" || exit 1
+				found=$((found+1))
+			done
+		done
+	done
+
+	if [ "$found" -eq 0 ]; then
+		pvtest_log ERROR "no *.tgz found in: ${srcs[*]}"
+		exit 1
+	fi
+	pvtest_log INFO "installed $found tarball(s); manifest=$(_tarballs_manifest)"
 }
 
 install_deps() {
@@ -1197,6 +1372,7 @@ run_test() {
 		pvtest_log DEBUG "valgrind log=$work_path/storage/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
 	fi
 	pvtest_log DEBUG "diff=$work_path/results/<scope>/<category>/<name>/diff"
+	_log_tarball_overrides "$work_path"
 	} | tee -a "$work_path/run.log"
 
 	# Allocate slot for all containers in this invocation.
@@ -1487,6 +1663,9 @@ run_test() {
                                        device mode    -> raw serial console (from its tty,
                                        keyed by the --devices manifest name=)
   README.md
+  pvtest-tarballs.manifest          <- present only when container tarballs were
+                                       substituted via `install-tarballs`; records
+                                       which ones, from where, and their checksums
   ctrl/<tag>/                       <- re-type protocol dirs (transient)
   ctrl-dev/<name>/                  <- device re-type protocol dir (transient, only
                                        when the --devices manifest sets hook=)
@@ -1674,6 +1853,9 @@ case "$command" in
 		;;
 	install-docker)
 		install_docker
+		;;
+	install-tarballs)
+		install_tarballs "$@"
 		;;
 	ls)
 		list_tests
