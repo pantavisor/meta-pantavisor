@@ -26,7 +26,7 @@ See [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-d
 | [docs/how-to-build/](docs/how-to-build/) | Building images, workspace dev ([pantavisor-development.md](docs/how-to-build/pantavisor-development.md)), container authoring |
 | [docs/how-to-install/](docs/how-to-install/) | Flashing to hardware |
 | [docs/examples/](docs/examples/) | xconnect service mesh examples |
-| [docs/testing/](docs/testing/) | Test plans and appengine testing |
+| [docs/overview/testing/](docs/overview/testing/) | pvtest suite (automated) and manual test plans |
 
 ## Resources
 

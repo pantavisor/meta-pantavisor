@@ -20,4 +20,4 @@ Structured test plans for each feature area covered by the pvtest suite. Each pl
 
 ## Adding a New Test Plan
 
-Create a new `testplan-<feature>.md` in this directory and add it to [automated-workflow.md](../automated-workflow.md)'s todo list.
+Create a new `testplan-<feature>.md` in this directory and add it to the table in [manual/index.md](../index.md).
