@@ -24,7 +24,7 @@
 #
 # exec= ssh commands need BatchMode/ConnectTimeout/ServerAlive*: reboot-class
 # updates black-hole established TCP connections, and an ssh without keepalives
-# blocks on them forever (see docs/testing/device-target.md).
+# blocks on them forever (see docs/overview/testing/automated/devices.md).
 
 #name=dev-01
 #type=<machine>

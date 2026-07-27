@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# pvtest_log, wait_for_status, pvtest_ssh_cmd and pvtest_normalize_cfg are shared
+# with the in-container half (pvtest-run/utils) and ship next to this script in
+# the distro tarball. Sourced before anything that could log.
+PVTEST_LOG_SOURCE=test.docker.sh
+PVTEST_LOG_HOST="$(hostname 2>/dev/null || echo host)"
+# pvtest/common sits beside this script in the distro tarball, and one level up
+# in the meta-pantavisor source tree (files/host/ vs files/pvtest/).
+_pvtest_common=
+for _c in "$(dirname "$0")/pvtest/common" "$(dirname "$0")/../pvtest/common"; do
+	[ -r "$_c" ] && { _pvtest_common="$_c"; break; }
+done
+if [ -z "$_pvtest_common" ]; then
+	echo "ERROR: pvtest shared helpers (pvtest/common) not found next to $0." >&2
+	echo "       Run test.docker.sh from the extracted pantavisor-appengine-distro" >&2
+	echo "       tarball root, which ships pvtest/common beside this script." >&2
+	exit 1
+fi
+. "$_pvtest_common"
+
 usage() {
 	echo ""
 	echo "Usage: $0 [options] <command> [arguments]"
@@ -25,7 +44,7 @@ usage() {
 	echo "  -p, --parallel N      Number of slots: the cap on concurrent appengine"
 	echo "                        containers a single tester keeps busy (default: 1)."
 	echo "  --devices FILE        Run against one real device instead of the appengine"
-	echo "                        pool (see README.md / docs/testing/device-target.md)."
+	echo "                        pool (see README.md / docs/overview/testing/automated/devices.md)."
 	echo "  --model MODEL         Assignment model: persistent (default) boots every test"
 	echo "                        under exactly its config.env (one persistent storage per"
 	echo "                        worker); on --devices, a manifest entry with hook=/config="
@@ -65,25 +84,10 @@ usage() {
 	echo ""
 }
 
-# leading tag is the container/device this line is about (set PVTEST_LOG_TAG in a
-# subshell handling one appengine/device); falls back to this host's own
-# hostname for host-level lines that aren't about any one container.
-_pvtest_host_tag="$(hostname 2>/dev/null || echo host)"
-pvtest_log() { local level=$1; shift; printf '[%s] %s %s -- [test.docker.sh]: %s\n' "${PVTEST_LOG_TAG:-$_pvtest_host_tag}" "$(date +%s)" "$level" "$*"; }
+# Runner-type = (normalized config.env, needs-claim); see the testing docs.
 
-# Runner-type = (normalized config.env, needs-claim); see docs/testing/device-target.md.
-
-# Normalize config.env: drop PV_LXC_LOG_LEVEL, sort tokens for a stable signature.
-normalize_reqcfg() {
-	local kv out=()
-	for kv in $1; do
-		[ -n "$kv" ] || continue
-		case "$kv" in PV_LXC_LOG_LEVEL=*) continue ;; esac
-		out+=("$kv")
-	done
-	[ ${#out[@]} -eq 0 ] && return 0
-	printf '%s\n' "${out[@]}" | sort | tr '\n' ' ' | sed 's/ *$//'
-}
+# Normalize config.env to a stable signature (shared with pvtest-run).
+normalize_reqcfg() { pvtest_normalize_cfg "$@"; }
 
 list_tests() {
 	printf "%-50s %-10s\n" "test" "description"
@@ -206,24 +210,6 @@ echo "This will install some packages in your system. Do you want to continue? [
 	pvtest_log INFO "Dependency installation complete"
 
 	exit 0
-}
-
-wait_for_status() {
-    local cmd="$1"
-    local status="$2"
-    local timeout="$3"
-
-    local counter=0
-    while [ $counter -lt $timeout ]; do
-        eval "$cmd"
-        if [ "$?" = "$status" ]; then
-            return 0
-        else
-            sleep 1
-            counter=$((counter+1))
-        fi
-    done
-    return 1
 }
 
 setup_network0() {
@@ -783,15 +769,12 @@ _run_pass() {
 	return $res
 }
 
-# ssh invocation for a volatile-model appengine, mirroring pvtest-run.in's own
-# _ae_exec_cmd (pvtest/utils) — needed here because, unlike pool mode (where
-# the tester derives PVTEST_EXEC itself once it learns the re-typed
+# ssh invocation for a volatile-model appengine. Needed here because, unlike pool
+# mode (where the tester derives PVTEST_EXEC itself once it learns the re-typed
 # container's name over the ctrl protocol), the host already knows the volatile
 # model's container name up front and passes PVTEST_EXEC/PVTEST_HOST directly,
 # the same way the --devices manifest path does for real hardware.
-_volatile_exec_cmd() {
-	printf 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -i /tmp/pvtest_id -p 8222 _pv_@%s' "$1"
-}
+_volatile_exec_cmd() { pvtest_ssh_cmd "$1" /tmp/pvtest_id; }
 
 # Stage test $1's container tarballs into $2, for mounting as the appengine's
 # pvtx.extra.d. Numbered to preserve pvtx add order (a later tarball overrides an
@@ -1524,7 +1507,7 @@ run_test() {
       valgrind.log.<pid>
 ```
 
-One tester (`pvtest-run`) drives each pool pass; see `docs/testing/device-target.md`
+One tester (`pvtest-run`) drives each pool pass; see `docs/overview/testing/automated/devices.md`
 for the full model. `--model` picks the assignment model:
 - **persistent** (default) — every test runs under exactly its `config.env`:
   `-p` workers each keep ONE storage for the whole pass, settling back to a

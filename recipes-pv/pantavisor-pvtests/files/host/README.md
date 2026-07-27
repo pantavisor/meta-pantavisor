@@ -46,7 +46,7 @@ the board needs to stay usable. See `devices.txt` for the full contract.
 A test may also restrict *which targets it runs on* with a `"devices"` allow-list
 in its `test.json`; entries match the target's **class** — `appengine` for the
 container, the manifest's `type=` for a real device. Tests that leave the list
-empty run everywhere. See `docs/overview/testing/device-target.md`.
+empty run everywhere. See `the layer docs at docs/overview/testing/automated/devices.md`.
 
 ## Output
 

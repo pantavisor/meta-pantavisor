@@ -12,14 +12,15 @@ DOCKER_IMAGE_NAME = "${PN}"
 DOCKER_IMAGE_TAG = "1.0"
 DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
+# curl, jq, openssh-ssh and pvr arrive transitively via pantavisor-pvtest-runner's
+# RDEPENDS. bc stays explicit: nothing in the runner uses it, it is an
+# interactive-debug convenience. pantavisor-pvtx-tests carries this repo's pvtx
+# unit suite, which tools/testing/run-pvtx-tests runs against this image.
 CORE_IMAGE_EXTRA_INSTALL += " \
 	bc \
-	curl \
-	jq \
-	openssh-ssh \
-	pantavisor-pvtest \
+	pantavisor-pvtest-runner \
+	pantavisor-pvtx-tests \
 	procps \
-	pvr \
 	valgrind \
 	vim-xxd \
 "

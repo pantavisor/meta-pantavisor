@@ -39,7 +39,7 @@ PE = "1"
 PV = "029~rc4+git0"
 PKGV = "${PV}+${GITPKGV}"
 
-PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl ${PN}-debug-hooks"
+PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtx-tests ${PN}-pvcontrol ${PN}-pvcurl ${PN}-debug-hooks"
 
 FILES:${PN} += " /usr/bin/pv-appengine"
 FILES:${PN} += " /usr/lib"
@@ -61,9 +61,11 @@ FILES:${PN}-config += "/etc/pantavisor.config"
 FILES:${PN}-config += "/etc/pantavisor/"
 FILES:${PN}-config += "/etc/resolv.conf"
 
-FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
-FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
-FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/pvtx"
+# pvtx unit-test suite (this repo's test/pvtx/, staged by do_install:append below).
+# The pvtest *framework* — pvtest-run and its utils/common libraries — lives in
+# meta-pantavisor at recipes-pv/pantavisor-pvtests/; see pantavisor-pvtest-runner.bb.
+FILES:${PN}-pvtx-tests = "/usr/share/pantavisor/pvtest/pvtx"
+RDEPENDS:${PN}-pvtx-tests += "${PN}-pvtx"
 
 # pvcontrol and pvcurl packages (replace standalone recipes)
 FILES:${PN}-pvcontrol += "${bindir}/pvcontrol"
@@ -101,7 +103,6 @@ EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-sys
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', '-DPANTAVISOR_APPENGINE=ON', '-DPANTAVISOR_APPENGINE=OFF', d)}"
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_NAME="${DISTRO_NAME}"'
 EXTRA_OECMAKE += '-DPANTAVISOR_DISTRO_VERSION="${DISTRO_VERSION}"'
-EXTRA_OECMAKE += '-DPANTAVISOR_PVTEST=ON'
 EXTRA_OECMAKE += "-DPANTAVISOR_PVTX_STATIC=ON -DPANTAVISOR_PVTX=ON -DPANTAVISOR_RUNTIME=ON"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '-DPANTAVISOR_DEBUG_HOOKS=ON', '-DPANTAVISOR_DEBUG_HOOKS=OFF', d)}"
 

@@ -27,13 +27,17 @@ do_create_tarball[depends] += "pv-example-app:do_image_complete pv-example-norol
 do_create_tarball[depends] += "pv-example-ready:do_image_complete pv-example-ready-timeout:do_image_complete pv-example-mgmt:do_image_complete"
 do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-example-system-dbus-server:do_image_complete pv-example-system-dbus-server-collision:do_image_complete pv-example-system-dbus-client:do_image_complete pv-example-system-dbus-client-denied:do_image_complete', '', d)}"
 do_create_tarball[depends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', 'pv-avahi:do_image_complete pv-avahi-browse:do_image_complete', '', d)}"
-do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
+do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy pantavisor-pvtests-host:do_deploy"
 
 # Define the files you want from DEPLOY_DIR_IMAGE (modify as needed)
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
-# Define files from WORKDIR (SRC_URI files) to include
-WORKDIR_FILES ?= "test.docker.sh devices.txt README.md"
+# Host-side files (test.docker.sh, devices.txt, README.md) and the shared
+# pvtest/common helpers come from pantavisor-pvtests-host's do_deploy, via
+# ${DEPLOY_DIR_IMAGE}/pvtests — the same channel as the local/ and remote/ suites,
+# copied into the tarball root below. Kept as an empty extension point for
+# downstream bbappends that add their own tarball-root files.
+WORKDIR_FILES ?= ""
 
 # Build suffix (using variables available in all recipes)
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"
@@ -91,7 +95,8 @@ do_create_tarball() {
     #mkdir -p ${DEPLOY_DIR_IMAGE}/${BUILD_DEPLOY_NAME}
     #cp -rf ${STAGING_DIR}/* ${DEPLOY_DIR_IMAGE}/${BUILD_DEPLOY_NAME}
 
-    # Copy pvtests tree (local/ and remote/) from deploy dir into staging
+    # Copy pvtests tree from deploy dir into staging: the local/ and remote/ suites
+    # plus the host-side test.docker.sh, devices.txt, README.md and pvtest/common.
     if [ -e "${DEPLOY_DIR_IMAGE}/pvtests" ]; then
         cp -r "${DEPLOY_DIR_IMAGE}/pvtests/." "${STAGING_DIR}/"
     fi

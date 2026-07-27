@@ -4,13 +4,15 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 inherit nopackages deploy
 
-SRC_URI = "file://remote"
+# See pantavisor-pvtests-local.bb for why the source tree has a data/ level and
+# the deployed tarball layout does not.
+SRC_URI = "file://data/remote;subdir=pvtests"
 
 do_install[noexec] = "1"
 
 do_deploy() {
     install -d ${DEPLOYDIR}/pvtests
-    cp -r ${WORKDIR}/remote ${DEPLOYDIR}/pvtests/
+    cp -r ${WORKDIR}/pvtests/remote ${DEPLOYDIR}/pvtests/
 }
 
 addtask deploy after do_compile before do_build

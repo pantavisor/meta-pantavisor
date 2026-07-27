@@ -10,7 +10,7 @@
 #   IMAGE_TAG            appengine image tag (default: latest)
 #
 # The test suite is installed at /usr/share/pantavisor/pvtest/pvtx/ inside
-# the image when the pantavisor-pvtest package is included.  Build the image
+# the image when the pantavisor-pvtx-tests package is included.  Build the image
 # with the standard appengine config:
 #
 #   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
