@@ -8,8 +8,8 @@
 		},
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-example-mgmt.tgz",
-				"../../common/tarballs/pv-example-norole.tgz"
+				"../../common/tarballs/pv-example-mgmt.pvrexport.tgz",
+				"../../common/tarballs/pv-example-norole.pvrexport.tgz"
 			]
 		},
 		"self-claim": "false",

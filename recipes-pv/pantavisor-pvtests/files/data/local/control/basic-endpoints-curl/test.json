@@ -10,7 +10,7 @@
 		"pvs": "",
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-example-app.tgz"
+				"../../common/tarballs/pv-example-app.pvrexport.tgz"
 			]
 		},
 		"ready-script": "",

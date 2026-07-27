@@ -36,8 +36,8 @@ merge_tarball() {
 }
 
 echo "== post revision with two owners of org.pantavisor.Example =="
-merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server.tgz
-merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server-collision.tgz
+merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server.pvrexport.tgz
+merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server-collision.pvrexport.tgz
 pvr checkout > /dev/null 2>&1
 pvr commit > /dev/null 2>&1
 pvr post --rev "locals/collision" > /dev/null 2>&1

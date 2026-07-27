@@ -256,7 +256,7 @@ Then rebuild and verify as above.
 
 ## Adding a new container for a test
 
-When a test needs a container that does not exist yet in `local/common/tarballs/`:
+When a test needs a container that does not exist yet in the target trees:
 
 **1. Create the recipe** in `recipes-containers/pv-examples/<name>.bb` — use
 `pv-example-app.bb` as a reference:
@@ -281,23 +281,28 @@ ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/<entrypoint>"
 ```
 
-**2. Register it in `recipes-pv/pantavisor/pantavisor-appengine-distro.bb`:**
+**2. Register it in `recipes-pv/pantavisor/pantavisor-appengine-distro.bb`** by adding the
+name to `PV_PVTEST_CONTAINERS`:
 
-Add to `do_create_tarball[depends]`:
 ```bitbake
-do_create_tarball[depends] += "<name>:do_image_complete"
+PV_PVTEST_CONTAINERS ?= "pv-example-app pv-example-norole ... <name>"
 ```
 
-Add the name to the staged-container loop inside `do_create_tarball()`:
-```bash
-for name in pv-example-app pv-example-norole ... <name>; do
-```
-(and to the `cp` into `remote/common/tarballs/` if remote tests need it too)
+That one list drives both `do_create_tarball[depends]` and the staging loop, so there is
+nothing else to keep in sync. Use `PV_PVTEST_CONTAINERS_XCONNECT` instead if the container
+only exists when `PANTAVISOR_FEATURES` carries `xconnect-dbus-systembus` — and then pin the
+test `"devices": ["appengine"]`, since a board build won't have it. Add the name to the `cp`
+into each target's `remote/` as well if remote tests need it.
 
-**3. Reference in `test.json`:**
+**3. Reference in `test.json`** by its deploy name. The path is relative to the scope root and
+never names a target: `test.docker.sh` mounts the active target's
+[`targets/<type>/<scope>/`](devices.md#per-target-container-tarballs) over
+`/work/<scope>/common/tarballs`, so one reference resolves to the right architecture on every
+board. The `.pvrexport.tgz` suffix comes from `container-pvrexport.bbclass` and is what every
+MACHINE emits, which is what makes a board build's deploy dir a drop-in source:
 ```json
 "tarballs": [
-  "../../common/tarballs/<name>.tgz"
+  "../../common/tarballs/<name>.pvrexport.tgz"
 ]
 ```
 

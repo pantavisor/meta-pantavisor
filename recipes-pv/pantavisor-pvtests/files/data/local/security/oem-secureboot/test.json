@@ -8,8 +8,8 @@
 		},
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-oem-developer-001.tgz",
-				"../../common/tarballs/pv-example-app.tgz"
+				"../../common/tarballs/pv-oem-developer-001.pvrexport.tgz",
+				"../../common/tarballs/pv-example-app.pvrexport.tgz"
 			]
 		},
 		"self-claim": "false",

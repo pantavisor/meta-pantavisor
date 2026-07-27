@@ -33,12 +33,13 @@ usage() {
 	echo "  add <scope/category/name>  Create a new test"
 	echo "  install-deps               Install dependencies (and docker)"
 	echo "  install-docker             Install docker"
-	echo "  install-tarballs [path]... Overlay container tarballs into the suites"
+	echo "  install-tarballs [path]... Install container tarballs for a target type"
 	echo "  ls                         List all tests"
 	echo "  run [path]                 Run one to many tests"
 	echo ""
 	echo "Arguments for 'install-tarballs' command:"
-	echo "  -s, --scope SCOPE     Overlay into this scope only (local|remote; default both)"
+	echo "  -t, --target TYPE     Target type to install for (default appengine)"
+	echo "  -s, --scope SCOPE     Install into this scope only (local|remote; default both)"
 	echo "  -l, --list            Print the installed overrides and exit"
 	echo "      --reset           Restore the shipped tarballs and exit"
 	echo ""
@@ -184,8 +185,15 @@ install_docker() {
 # Overrides are workspace-local: they live in the *extracted* distro, not in the
 # meta-pantavisor source tree, so a rebuild re-stages the pristine ones.
 
+# Which target tree install-tarballs and the override log operate on. Set by
+# install-tarballs -t and by run_test once the device type is known; appengine is
+# the type a run without --devices resolves to.
+_tarball_target=appengine
+
+# Per target: a manifest inside the target tree keeps each target's override history
+# self-contained, so --list/--reset never mix two boards' records.
 _tarballs_manifest() {
-	printf '%s' "${PVTEST_TARBALLS_MANIFEST:-$test_dir/pvtest-tarballs.manifest}"
+	printf '%s' "${PVTEST_TARBALLS_MANIFEST:-$test_dir/targets/$_tarball_target/pvtest-tarballs.manifest}"
 }
 
 # The current override set: last record per (scope,name), minus anything restored.
@@ -200,6 +208,7 @@ _tarball_overrides_effective() {
 _tarball_record() {
 	local mf; mf="$(_tarballs_manifest)"
 	if [ ! -f "$mf" ]; then
+		mkdir -p "$(dirname "$mf")"
 		printf '# pvtest-tarballs v1\n' > "$mf"
 		printf '# format: <epoch>\\t<scope>\\t<name>\\t<action>\\t<sha256-12>\\t<source>\n' >> "$mf"
 	fi
@@ -218,16 +227,19 @@ _log_tarball_overrides() {
 	[ "${n:-0}" -gt 0 ] || return 0
 	pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
 	_tarball_overrides_effective | while IFS="$(printf '\t')" read -r ts scope name action sum src; do
-		pvtest_log INFO "  $scope/common/tarballs/$name <- $src ($action, sha $sum)"
+		pvtest_log INFO "  targets/$_tarball_target/$scope/$name <- $src ($action, sha $sum)"
 	done
 	cp -f "$(_tarballs_manifest)" "$wp/pvtest-tarballs.manifest" 2>/dev/null || true
 }
 
+# Scope dirs live under targets/<type>/, which is what test.docker.sh mounts over
+# /work/<scope>/common/tarballs. A type that does not exist yet is created: that is
+# how a new board target is introduced, without copying the suites.
 _tarball_scopes() {
 	local want="$1" s
 	for s in local remote; do
 		[ -z "$want" ] || [ "$want" = "$s" ] || continue
-		[ -d "$test_dir/$s/common/tarballs" ] || continue
+		mkdir -p "$test_dir/targets/$_tarball_target/$s" || continue
 		printf '%s\n' "$s"
 	done
 }
@@ -235,8 +247,8 @@ _tarball_scopes() {
 _install_one_tarball() {
 	local src="$1" scope="$2" name dest orig action sum prev
 	name="$(basename "$src")"
-	dest="$test_dir/$scope/common/tarballs/$name"
-	orig="$test_dir/$scope/common/tarballs/.orig"
+	dest="$test_dir/targets/$_tarball_target/$scope/$name"
+	orig="$test_dir/targets/$_tarball_target/$scope/.orig"
 
 	# An entry that is already an override keeps its original action, and is not
 	# backed up again: otherwise a second install would record the *previous
@@ -256,34 +268,36 @@ _install_one_tarball() {
 	cp -f "$src" "$dest" || return 1
 	sum="$(_tarball_sum "$dest")"
 	_tarball_record "$scope" "$name" "$action" "$sum" "$src"
-	pvtest_log INFO "$scope/common/tarballs/$name [$action, sha $sum]"
+	pvtest_log INFO "targets/$_tarball_target/$scope/$name [$action, sha $sum]"
 }
 
 _reset_tarballs() {
 	local ts scope name action sum src dest orig
 	_tarball_overrides_effective | while IFS="$(printf '\t')" read -r ts scope name action sum src; do
-		dest="$test_dir/$scope/common/tarballs/$name"
-		orig="$test_dir/$scope/common/tarballs/.orig/$name"
+		dest="$test_dir/targets/$_tarball_target/$scope/$name"
+		orig="$test_dir/targets/$_tarball_target/$scope/.orig/$name"
 		if [ "$action" = replaced ] && [ -e "$orig" ]; then
 			mv -f "$orig" "$dest"
-			pvtest_log INFO "$scope/common/tarballs/$name [restored]"
+			pvtest_log INFO "targets/$_tarball_target/$scope/$name [restored]"
 		elif [ "$action" = added ]; then
 			rm -f "$dest"
-			pvtest_log INFO "$scope/common/tarballs/$name [removed]"
+			pvtest_log INFO "targets/$_tarball_target/$scope/$name [removed]"
 		else
-			pvtest_log WARN "$scope/common/tarballs/$name: no backup to restore"
+			pvtest_log WARN "targets/$_tarball_target/$scope/$name: no backup to restore"
 			continue
 		fi
 		_tarball_record "$scope" "$name" restored - -
 	done
-	rmdir "$test_dir"/local/common/tarballs/.orig "$test_dir"/remote/common/tarballs/.orig 2>/dev/null || true
+	rmdir "$test_dir/targets/$_tarball_target"/local/.orig "$test_dir/targets/$_tarball_target"/remote/.orig 2>/dev/null || true
 }
 
 install_tarballs() {
 	local scope= do_list=false do_reset=false srcs=() found=0
+	_tarball_target=appengine
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
+			-t|--target) _tarball_target="$2"; shift 2 ;;
 			-s|--scope) scope="$2"; shift 2 ;;
 			-l|--list)  do_list=true; shift ;;
 			--reset)    do_reset=true; shift ;;
@@ -305,7 +319,7 @@ install_tarballs() {
 		else
 			pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
 			_tarball_overrides_effective | while IFS="$(printf '\t')" read -r _ts s nm ac sm sr; do
-				pvtest_log INFO "  $s/common/tarballs/$nm <- $sr ($ac, sha $sm)"
+				pvtest_log INFO "  targets/$_tarball_target/$s/$nm <- $sr ($ac, sha $sm)"
 			done
 		fi
 		return 0
@@ -1372,7 +1386,6 @@ run_test() {
 		pvtest_log DEBUG "valgrind log=$work_path/storage/<scope>/<category>/<name>/valgrind/valgrind.log.<pid>"
 	fi
 	pvtest_log DEBUG "diff=$work_path/results/<scope>/<category>/<name>/diff"
-	_log_tarball_overrides "$work_path"
 	} | tee -a "$work_path/run.log"
 
 	# Allocate slot for all containers in this invocation.
@@ -1520,6 +1533,46 @@ run_test() {
 		_devfile_abs_dir="$(cd "$(dirname "$devices_file")" && pwd)"
 		tester_device_args=(-v "$_devfile_abs_dir":"$_devfile_abs_dir":ro)
 	fi
+
+	# Resolve the target class and mount its container tarballs over the suites'
+	# common/tarballs/. Only the tarballs vary by target (architecture + signing CA),
+	# so local/ and remote/ stay shared single-copy trees: the tester always sees
+	# /work/<scope>/common/tarballs whichever target supplied it. That is what keeps
+	# every test.json's relative ../../common/tarballs/ reference — and the five
+	# absolute /work/local/common/tarballs/ references inside test scripts — working
+	# unchanged for any target, with no per-target copy of the suites.
+	#
+	# Docker applies nested bind-mounts by path depth, so these land inside the
+	# /work/<scope> mounts built above rather than racing them.
+	#
+	# Precedence matches the PVTEST_DEVICE_TYPE the tester is handed below: an
+	# explicit env override, else the manifest's type=, else appengine.
+	local target_type abs_targets_path=
+	target_type="${PVTEST_DEVICE_TYPE:-${dev_type:-appengine}}"
+	if [ ! -d "$test_dir/targets/$target_type" ]; then
+		pvtest_log ERROR "no container tarballs for target type '$target_type'"
+		pvtest_log ERROR "  expected: $test_dir/targets/$target_type/{local,remote}"
+		pvtest_log ERROR "  available: $(ls "$test_dir/targets" 2>/dev/null | tr '\n' ' ')"
+		pvtest_log ERROR "  add one with: ./test.docker.sh install-tarballs -t $target_type <exports>"
+		if [ -n "$devices_file" ]; then
+			_stop_device_capture "$dev_name"
+			_unlock_device "$dev_name"
+		fi
+		release_slot
+		return 1
+	fi
+	abs_targets_path=$(cd "$test_dir/targets/$target_type" && pwd)
+	[ -n "$abs_local_path" ] && [ -d "$abs_targets_path/local" ] \
+		&& tester_scope_args+=(-v "$abs_targets_path/local":/work/local/common/tarballs)
+	[ -n "$abs_remote_path" ] && [ -d "$abs_targets_path/remote" ] \
+		&& tester_scope_args+=(-v "$abs_targets_path/remote":/work/remote/common/tarballs)
+	# INFO, not DEBUG: this is the line explaining why a run's container payload
+	# differs from a pristine appengine run, so it must survive a grep -v DEBUG.
+	_tarball_target="$target_type"
+	{
+		pvtest_log INFO "target type: $target_type (tarballs from targets/$target_type)"
+		_log_tarball_overrides "$work_path"
+	} | tee -a "$work_path/run.log"
 
 	local docker_it_opt=
 	[ "$interactive" = "true" ] && docker_it_opt="-it"

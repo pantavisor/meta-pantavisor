@@ -8,8 +8,8 @@
 		},
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-avahi.tgz",
-				"../../common/tarballs/pv-avahi-browse.tgz"
+				"../../common/tarballs/pv-avahi.pvrexport.tgz",
+				"../../common/tarballs/pv-avahi-browse.pvrexport.tgz"
 			]
 		},
 		"self-claim": "false",

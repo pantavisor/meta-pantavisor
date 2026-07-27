@@ -8,9 +8,9 @@
 		},
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-example-system-dbus-server.tgz",
-				"../../common/tarballs/pv-example-system-dbus-client.tgz",
-				"../../common/tarballs/pv-example-system-dbus-client-denied.tgz"
+				"../../common/tarballs/pv-example-system-dbus-server.pvrexport.tgz",
+				"../../common/tarballs/pv-example-system-dbus-client.pvrexport.tgz",
+				"../../common/tarballs/pv-example-system-dbus-client-denied.pvrexport.tgz"
 			]
 		},
 		"self-claim": "false",

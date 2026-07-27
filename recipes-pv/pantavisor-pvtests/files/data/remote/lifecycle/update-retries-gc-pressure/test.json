@@ -8,7 +8,7 @@
 		},
 		"containers": {
 			"tarballs": [
-				"../../common/tarballs/pv-example-app.tgz"
+				"../../common/tarballs/pv-example-app.pvrexport.tgz"
 			]
 		},
 		"self-claim": "true",

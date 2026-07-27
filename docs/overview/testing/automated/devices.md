@@ -13,14 +13,14 @@ So the flow is:
 
 1. install the stock **x86** appengine distro — its tester container works against any target,
 2. fill in a `devices.txt` manifest describing the board,
-3. substitute the container tarballs with ones built for that board, if its architecture or
-   signing CA differs,
+3. install container tarballs built for that board, if its architecture or signing CA
+   differs — they go in their own `targets/<type>/` tree, leaving the suites untouched,
 4. run.
 
 ```bash
 ./test.docker.sh install-docker                       # 1
 cp devices.txt my-device.txt && $EDITOR my-device.txt # 2
-./test.docker.sh install-tarballs ../m2-tarballs/     # 3
+./test.docker.sh install-tarballs -t smm-m2 ../m2-tarballs/  # 3
 PH_USER=... PH_PASS=... ./test.docker.sh run local --devices my-device.txt   # 4
 ```
 
@@ -70,51 +70,111 @@ manifest's own directory: `test.docker.sh` bind-mounts that directory into the t
 same absolute path and evaluates `exec=` there, so an SSH key anywhere else is invisible to the
 tester.
 
-## Substituting container tarballs
+## Per-target container tarballs
 
 The suites ship with the example containers built for the appengine — an x86 rootfs signed by
 the build's `PVS_VENDOR_NAME` CA. A board of another architecture cannot run those binaries,
-and a board that trusts a different CA will reject their signatures. `install-tarballs`
-overlays replacements into the extracted distro:
+and a board that trusts a different CA will reject their signatures.
+
+Only the tarballs vary by target, so the suites are **not** copied per board. `local/` and
+`remote/` stay single shared trees, and each target's containers live in their own tree:
+
+```
+<distro-root>/
+  local/  remote/                        shared suites, one copy
+    common/templates/                    scope-varying, target-invariant
+  targets/
+    appengine/{local,remote}/*.pvrexport.tgz
+    smm-m2/{local,remote}/*.pvrexport.tgz
+```
+
+At tester start, `test.docker.sh` bind-mounts `targets/<type>/<scope>/` over
+`/work/<scope>/common/tarballs`. The tester therefore always sees the same path whichever
+target supplied the bytes, which is what keeps every `test.json`'s relative
+`../../common/tarballs/<name>.pvrexport.tgz` — and the handful of absolute
+`/work/local/common/tarballs/...` references inside test scripts — target-agnostic. Nothing in
+the test data mentions a target.
+
+`<type>` is the manifest's `type=` field, or `appengine` for a run without `--devices`, and
+`PVTEST_DEVICE_TYPE` overrides both. Every run announces it at `INFO` in the head of `run.log`:
+
+```
+[ci-runner] 1753600000 INFO -- [test.docker.sh]: target type: smm-m2 (tarballs from targets/smm-m2)
+```
+
+If the resolved target has no tree, the run **aborts before any container starts**, listing the
+targets that do exist — a board whose tarballs were never installed fails loudly instead of
+silently testing x86 binaries against arm hardware.
+
+### Installing a target's tarballs
 
 ```bash
-./test.docker.sh install-tarballs <dir|tarball>...   # overlay
-./test.docker.sh install-tarballs --list             # what is currently overridden
-./test.docker.sh install-tarballs --reset            # restore the shipped ones
-./test.docker.sh install-tarballs -s remote <dir>    # one scope only
+./test.docker.sh install-tarballs -t smm-m2 <dir|tarball>...   # install (creates the tree)
+./test.docker.sh install-tarballs -t smm-m2 --list             # what is installed
+./test.docker.sh install-tarballs -t smm-m2 --reset            # restore/remove
+./test.docker.sh install-tarballs -t smm-m2 -s remote <dir>    # one scope only
 ```
 
-`PVTEST_TARBALLS_PATH` supplies a default source. Each substitution backs the shipped tarball
-up once to `common/tarballs/.orig/` and records an append-only line in
-`pvtest-tarballs.manifest` at the distro root — epoch, scope, name, action, sha256 prefix and
-source path. Repeated installs never lose the pristine copy, and `--reset` restores the tree
-exactly.
+`-t` defaults to `appengine`. A target tree that does not exist yet is created on first
+install, so introducing a board needs no separate setup step. `PVTEST_TARBALLS_PATH` supplies a
+default source. Each target keeps its own append-only `pvtest-tarballs.manifest` inside its
+tree — epoch, scope, name, action, sha256 prefix and source path — so `--list`/`--reset` never
+mix two boards' records, and installing for one board cannot disturb another's or the shipped
+appengine set.
 
-Every run announces the effective override set at `INFO` in the head of `run.log` and copies
-the manifest into the workspace, so an archived CI artifact records which artifacts actually
-ran:
-
-```
-[ci-runner] 1753600000 INFO -- [test.docker.sh]: tarball overrides: 2 (manifest=./pvtest-tarballs.manifest)
-[ci-runner] 1753600000 INFO -- [test.docker.sh]:   local/common/tarballs/pv-example-app.tgz <- ../m2/pv-example-app.tgz (replaced, sha 3f2a1c9d0e7b)
-```
-
-Overrides live in the *extracted* distro, not in the meta-pantavisor source tree — a rebuild
-re-stages the pristine tarballs.
+Target trees live in the *extracted* distro, not in the meta-pantavisor source tree — a rebuild
+re-stages the pristine `targets/appengine/`.
 
 ### Producing replacement tarballs
 
-Build the same `pantavisor-appengine-distro` target for the board's MACHINE. The recipes carry
-no arch literals, so rebuilding them under a different MACHINE yields drop-in replacements; the
-generated tarballs land in `local/common/tarballs/` of that build's output.
+The example containers are ordinary `image` + `container-pvrexport` recipes with no arch
+literals, so building *just those recipes* for the board's MACHINE is enough. You do **not**
+need a whole `pantavisor-appengine-distro` for that MACHINE — any build config that gives you
+the right MACHINE and the right signing CA will do. With a Raspberry Pi as the worked example:
 
-Set `PV_APPENGINE_CONTAINERS = ""` in the distro conf for such a build. The x86
+```bash
+kas shell kas/build-configs/release/rpi-scarthgap.yaml -c \
+    'bitbake pv-example-app pv-example-norole pv-example-ready \
+             pv-example-ready-timeout pv-example-mgmt'
+```
+
+The exports land in the deploy dir under exactly the names the tests reference — the
+`.pvrexport.tgz` suffix comes from `container-pvrexport.bbclass`, so it is the same for every
+MACHINE:
+
+```
+build/tmp-scarthgap/deploy/images/raspberrypi/pv-example-app.pvrexport.tgz
+```
+
+That makes the deploy dir a drop-in source, with no renaming or staging step:
+
+```bash
+cd <extracted-distro>
+./test.docker.sh install-tarballs -t raspberrypi \
+    <build>/tmp-scarthgap/deploy/images/raspberrypi/pv-example-app.pvrexport.tgz \
+    <build>/tmp-scarthgap/deploy/images/raspberrypi/pv-example-norole.pvrexport.tgz
+```
+
+Use `-t <type>` matching the `type=` you put in `devices.txt` — that is the whole binding
+between a board and its containers. Name the files explicitly, or stage them into a directory
+of their own and pass that: pointing `install-tarballs` at a raw deploy directory also sweeps
+up `pantavisor-bsp-*.pvrexport.tgz`, `pv-pvr-sdk-*.pvrexport.tgz` and versioned duplicates,
+which the suites do not want.
+
+`PV_PVTEST_CONTAINERS` in `pantavisor-appengine-distro.bb` is the authoritative list of what
+the suites consume. The `PV_PVTEST_CONTAINERS_XCONNECT` set (dbus/avahi) is built only when
+`PANTAVISOR_FEATURES` carries `xconnect-dbus-systembus`, and the two tests that use it are
+pinned `"devices": ["appengine"]` — so a real-device run never needs those.
+
+Building the full `pantavisor-appengine-distro` for the board's MACHINE is still an option if
+you want a board-native workspace rather than one distro serving every target. Set
+`PV_APPENGINE_CONTAINERS = ""` and `PVTEST_TARGET_TYPE = "<type>"` in that distro conf: the x86
 appengine/netsim/tester docker images cannot be cross-built from an arm MACHINE (and
-multiconfig can't do it in-tree), and they aren't needed: no container is booted against a real
-device. With it empty the build produces only the BSP, pvr-sdk, example-app and pvtests
-tarballs — exactly the artifacts you feed to `install-tarballs`.
+multiconfig can't do it in-tree), and no container is booted against a real device anyway. You
+then have to bundle a host-side x86 tester image from a separate build, which is why installing
+into one distro's `targets/` is usually the cheaper path.
 
-**Architecture.** Each `pv-example-*.tgz` embeds a squashfs of a Yocto rootfs built for the
+**Architecture.** Each `pv-example-*.pvrexport.tgz` embeds a squashfs of a Yocto rootfs built for the
 current MACHINE/TUNE (`pvr app add --type rootfs --from ${IMAGE_ROOTFS}`), so its busybox and
 coreutils will not run on another architecture. Nothing else in them is arch-bound.
 
@@ -123,7 +183,7 @@ coreutils will not run on another architecture. Nothing else in them is arch-bou
 BSP trust store contains the same CA — which the `PV_SECUREBOOT_MODE=strict` tests exercise
 directly. To switch vendor, set `PVS_VENDOR_NAME`, `PVS_URI` and `PVS_URI_SHA256` consistently
 across `container-pvrexport`, `pvrexport`, `pvroot-image` and `pantavisor-bsp`. The two
-checked-in `pv-oem-developer-001*.tgz` fragments are config-only (no rootfs), so they need no
+checked-in `pv-oem-developer-001*.pvrexport.tgz` fragments are config-only (no rootfs), so they need no
 change for a different architecture, but would have to be re-signed by hand for a different
 signing vendor — they exist for `local/security/oem-secureboot`, which is pinned to
 `appengine` anyway.

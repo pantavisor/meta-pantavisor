@@ -23,7 +23,7 @@ merge_tarball() {
 }
 
 echo "== post revision with container that signals READY =="
-merge_tarball /work/local/common/tarballs/pv-example-ready.tgz
+merge_tarball /work/local/common/tarballs/pv-example-ready.pvrexport.tgz
 pvr checkout > /dev/null 2>&1
 pvr commit > /dev/null 2>&1
 pvr post --rev "locals/success" > /dev/null 2>&1
@@ -37,7 +37,7 @@ pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
 echo "== post revision where container never signals READY (triggers rollback) =="
 # pv-example-ready-timeout has status_goal READY but never sends the signal, so
 # the update deterministically times out its goals and rolls back.
-merge_tarball /work/local/common/tarballs/pv-example-ready-timeout.tgz
+merge_tarball /work/local/common/tarballs/pv-example-ready-timeout.pvrexport.tgz
 pvr checkout > /dev/null 2>&1
 pvr commit > /dev/null 2>&1
 pvr post --rev "locals/failure" > /dev/null 2>&1
