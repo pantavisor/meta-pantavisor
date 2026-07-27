@@ -16,7 +16,7 @@
 #   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
 #   docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 #
-# See docs/testing/testplans/testplan-pvtx.md for full documentation.
+# See docs/overview/testing/manual/testplans/testplan-pvtx.md for full documentation.
 
 set -e
 
@@ -27,19 +27,18 @@ TEST_DATA_DIR="/usr/share/pantavisor/pvtest/pvtx"
 TEST_SCRIPT="${TEST_DATA_DIR}/pvtx.sh"
 
 # The test script expects (SRC_DIR BIN_DIR) where:
-#   SRC_DIR/test/pvtx/ holds the test data
-#   BIN_DIR/pvtx       is the pvtx binary
+#   SRC_DIR/{resources,expected}/ holds the test data
+#   BIN_DIR/pvtx                  is the pvtx binary
 #
-# Since the data is installed flat under TEST_DATA_DIR we create a
-# compatible layout in a tmpdir inside the container.
+# The installed data is read-only, and pvtx.sh writes beside it, so copy it
+# into a tmpdir inside the container first.
 
 SETUP_CMD=$(cat <<'EOF'
 set -e
 TMPDIR=$(mktemp -d /tmp/pvtx-test.XXXXXX)
-# Build a fake "source tree" layout the test script expects:
-#   $TMPDIR/test/pvtx/{pvtx.sh,resources/,expected/}
-mkdir -p "${TMPDIR}/test/pvtx"
-cp -r /usr/share/pantavisor/pvtest/pvtx/. "${TMPDIR}/test/pvtx/"
+SRC_DIR="${TMPDIR}/data"
+mkdir -p "${SRC_DIR}"
+cp -r /usr/share/pantavisor/pvtest/pvtx/. "${SRC_DIR}/"
 
 # BIN_DIR: directory containing pvtx binary
 BIN_DIR=$(dirname "$(command -v pvtx)")
@@ -52,7 +51,7 @@ echo "  image pvtx : $(pvtx --version 2>/dev/null || echo '(no --version)')"
 echo "  test data  : /usr/share/pantavisor/pvtest/pvtx"
 echo ""
 
-sh "${TMPDIR}/test/pvtx/pvtx.sh" "${TMPDIR}" "${BIN_DIR}"
+sh "${SRC_DIR}/pvtx.sh" "${SRC_DIR}" "${BIN_DIR}"
 STATUS=$?
 rm -rf "${TMPDIR}"
 exit ${STATUS}

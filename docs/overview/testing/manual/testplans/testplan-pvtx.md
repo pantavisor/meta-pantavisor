@@ -125,7 +125,7 @@ This path tests the same pvtx binary that will ship in a Yocto image.
 
 ### Prerequisites
 
-Build the appengine image (the `pantavisor-pvtest` package installs `pvtx`,
+Build the appengine image (the `pantavisor-pvtx-tests` package installs `pvtx`,
 the test script, and all test data into the image):
 
 ```bash
@@ -192,6 +192,6 @@ PVTX_TEST_PRINT_ALL=1 ./tools/testing/run-pvtx-tests   # verbose pvtx output
 | `pvtx: not found` | pvtx not installed | Build with `-DPANTAVISOR_PVTX=ON` or use appengine image |
 | `jq: not found` | jq missing | Install `jq` on host, or use appengine image |
 | `couldn't find .../test/pvtx` | Wrong SRC_DIR argument | Pass the pantavisor repo root as first argument to pvtx.sh |
-| Test data missing in container | `pantavisor-pvtest` not included | Rebuild image; check `IMAGE_INSTALL` includes `pantavisor-pvtest` |
+| Test data missing in container | `pantavisor-pvtx-tests` not included | Rebuild image; check `IMAGE_INSTALL` includes `pantavisor-pvtx-tests` |
 | `check_canonical_json` fails with `#spec missing` | pvtx dropped the spec field | Check the pvtx transaction merge logic for the failing test case |
 | `check_canonical_json` fails idempotency check | jq or pvtx produces non-normalised JSON | Run `jq -S . < result.json` twice and compare |
