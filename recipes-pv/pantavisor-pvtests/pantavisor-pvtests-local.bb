@@ -9,13 +9,16 @@ inherit nopackages deploy
 # layout is unchanged: local/ and remote/ stay at the distro tarball root, which
 # is what test.docker.sh resolves and what every test.json's relative
 # ../../common/tarballs/ path depends on.
+#
+# subdir= sets the unpack prefix; bitbake keeps the SRC_URI path segments under
+# it, so files/data/local lands at ${WORKDIR}/pvtests/data/local.
 SRC_URI = "file://data/local;subdir=pvtests"
 
 do_install[noexec] = "1"
 
 do_deploy() {
     install -d ${DEPLOYDIR}/pvtests
-    cp -r ${WORKDIR}/pvtests/local ${DEPLOYDIR}/pvtests/
+    cp -r ${WORKDIR}/pvtests/data/local ${DEPLOYDIR}/pvtests/
 }
 
 addtask deploy after do_compile before do_build

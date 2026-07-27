@@ -12,7 +12,7 @@ do_install[noexec] = "1"
 
 do_deploy() {
     install -d ${DEPLOYDIR}/pvtests
-    cp -r ${WORKDIR}/pvtests/remote ${DEPLOYDIR}/pvtests/
+    cp -r ${WORKDIR}/pvtests/data/remote ${DEPLOYDIR}/pvtests/
 }
 
 addtask deploy after do_compile before do_build
