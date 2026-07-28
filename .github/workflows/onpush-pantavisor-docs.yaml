@@ -33,7 +33,7 @@ jobs:
 
           if [ -z "$OLD_SRCREV" ]; then
             echo "Could not resolve previous PANTAVISOR_SRCREV; triggering docs build to be safe."
-            gh workflow run docs-scarthgap.yaml --ref master
+            gh workflow run docs-scarthgap.yaml --repo "$GITHUB_REPOSITORY" --ref master
             exit 0
           fi
 
@@ -61,7 +61,7 @@ jobs:
           if [ -n "$CHANGED_DOCS" ]; then
             echo "docs/ changed in pantavisor between $OLD_SRCREV and $NEW_SRCREV:"
             echo "$CHANGED_DOCS"
-            gh workflow run docs-scarthgap.yaml --ref master
+            gh workflow run docs-scarthgap.yaml --repo "$GITHUB_REPOSITORY" --ref master
           else
             echo "No docs/ changes in pantavisor between $OLD_SRCREV and $NEW_SRCREV; skipping."
           fi
