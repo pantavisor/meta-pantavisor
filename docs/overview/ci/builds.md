@@ -180,22 +180,21 @@ s3://<BUCKET>/meta-pantavisor/
 | `028`, `029` | stable | `latest/stable/` |
 | `028-rc1`, `028-rc9` | release-candidate | `latest/release-candidate/` |
 
-## Documentation Tarball (tag-docs-scarthgap.yaml)
+## Shared Build (build-docs-scarthgap.yaml)
 
-`tag-docs-scarthgap.yaml` runs via `workflow_run` after the `ontag: sync and
-release` workflow (`tag-scarthgap.yaml`) completes successfully. It is
-independent of the per-machine build matrix.
+`build-docs-scarthgap.yaml` is a `workflow_call` reusable workflow — the same
+pattern as `buildkas-target.yaml` — that both `tag-docs-scarthgap.yaml` and
+`docs-scarthgap.yaml` call for the actual build. It takes `ref` (git ref to
+build), `fetch_tags` (whether to fetch all tags first), and `artifact_name`
+(name for the uploaded tarball artifact) as inputs, and does:
 
-Documentation is built using `pantavisor-docs.bbclass` and
-`pantacor-component-docs.bbclass`. See
-[how-to-build/component-docs.md](../component-docs.md) for the
-full class reference.
-
-The job:
-
-1. Checks out the tagged commit (`workflow_run.head_sha`) so the docs match
-   the release.
-2. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml -- -c create_pantacor_docs pantavisor-starter`
+1. Checks out `ref`.
+2. Optionally fetches all tags (`fetch_tags: true`), needed by the tag build
+   so `git describe`-based versioning sees the release tag.
+3. Resets the workspace to `ref` (via `git fetch origin $EFFECTIVE_REF && git
+   reset --hard FETCH_HEAD`, which works for both branch names and commit
+   SHAs).
+4. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml -- -c create_pantacor_docs pantavisor-starter`
    inside the KAS container. `raspberrypi-armv8-scarthgap.yaml` was chosen
    because `pantavisor-starter` is its primary target and it pulls in the full
    set of components — including `pvr` (used by the pantabox container) — that
@@ -205,15 +204,34 @@ The job:
    `meta-pantavisor/docs/`, and packages everything into a single
    `<IMAGE_LINK_NAME>.rootfs.docs.tar.zst`. No full image assembly is needed —
    BitBake only builds packages up to `do_install`.
-3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
-   `build/tmp-scarthgap/deploy/images/`.
-4. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
+5. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
+   `build/tmp-scarthgap/deploy/images/raspberrypi-armv8/`.
+6. Uploads it as a workflow artifact (`actions/upload-artifact`) named
+   `artifact_name`, for the calling workflow's publish job to download.
+
+Documentation is built using `pantavisor-docs.bbclass` and
+`pantacor-component-docs.bbclass`. See
+[how-to-build/component-docs.md](../component-docs.md) for the
+full class reference.
+
+## Documentation Tarball (tag-docs-scarthgap.yaml)
+
+`tag-docs-scarthgap.yaml` runs via `workflow_run` after the `ontag: sync and
+release` workflow (`tag-scarthgap.yaml`) completes successfully. It is
+independent of the per-machine build matrix.
+
+It has two jobs: `build-docs`, which calls `build-docs-scarthgap.yaml` with
+`ref: workflow_run.head_sha` (the tagged commit) and `fetch_tags: true`; and
+`publish-docs` (`needs: build-docs`, runs on `ubuntu-latest`), which downloads
+the artifact and:
+
+1. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
    `pantavisor-<rest>.docs.tar.zst` (strips `starter-` and `.rootfs`).
-5. Uploads the renamed tarball directly under the tag prefix in S3:
+2. Uploads the renamed tarball directly under the tag prefix in S3:
    ```
    s3://<BUCKET>/meta-pantavisor/<TAG>/pantavisor-<rest>.docs.tar.zst
    ```
-6. Downloads `releases.json` from S3, upserts a `docs` key at the tag level,
+3. Downloads `releases.json` from S3, upserts a `docs` key at the tag level,
    and writes it back. Machine entries written by `upload.sh` live under
    `devices` in the same object:
 
@@ -236,7 +254,7 @@ The job:
 }
 ```
 
-7. Uploads the original (unstripped) tarball to the GitHub Release via
+4. Uploads the original (unstripped) tarball to the GitHub Release via
    `upload-docs.py upload-asset`, then sends a `repository_dispatch` event
    (`event_type: "docs-release"`, payload `{"tag": "<TAG>"}`) directly to
    `pantavisor/docs.pantavisor` via `curl` using the `PANTAVISOR_DOCS_SYNC`
@@ -247,33 +265,27 @@ The tag is taken from `workflow_run.head_branch` (the tag that triggered
 present on the default branch, this workflow takes effect once it is on
 `master`.
 
-## Manual Documentation Build (manual-docs-scarthgap.yaml)
+## Latest Documentation Build (docs-scarthgap.yaml)
 
-`manual-docs-scarthgap.yaml` is a `workflow_dispatch` counterpart to
+`docs-scarthgap.yaml` is a `push`/`workflow_dispatch` counterpart to
 `tag-docs-scarthgap.yaml`. It generates the latest documentation tarball from
-the `master` branch on demand (unlike the tag-triggered workflow, which only
-runs on tagged releases).
+the `master` branch whenever `docs/` files change on `master`, or on demand
+via manual dispatch (unlike the tag-triggered workflow, which only runs on
+tagged releases).
 
-It uses the same build strategy as `tag-docs-scarthgap.yaml`:
-`raspberrypi-armv8-scarthgap.yaml` with `pantavisor-starter` as the target,
-which pulls in the full component set (pantavisor, pvr) needed for
-documentation.
+It shares the `build-docs-scarthgap.yaml` build with `tag-docs-scarthgap.yaml`
+and follows the same two-job shape: `build-docs` calls the reusable workflow
+with `ref: master` (always builds the latest `master` tip, ignoring the
+triggering commit/ref) and `fetch_tags: false` (default); `publish-docs`
+(`needs: build-docs`, runs on `ubuntu-latest`) downloads the artifact and:
 
-The job:
-
-1. Checks out the latest `master` commit (always ignores the triggering
-   branch/ref).
-2. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-starter`
-   inside the KAS container — identical to `tag-docs-scarthgap.yaml`.
-3. Collects the real tarball (non-symlink `*.rootfs.docs.tar.zst`) from
-   `build/tmp-scarthgap/deploy/images/raspberrypi-armv8/`.
-4. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
+1. Renames the tarball: `pantavisor-starter-<rest>.rootfs.docs.tar.zst` →
    `pantavisor-<rest>.docs.tar.zst` (strips `starter-` and `.rootfs`).
-5. Uploads the renamed tarball to the `docs/latest/` prefix in S3:
+2. Uploads the renamed tarball to the `docs/latest/` prefix in S3:
    ```
    s3://<BUCKET>/meta-pantavisor/docs/latest/pantavisor-<rest>.docs.tar.zst
    ```
-6. Writes a `latest.json` metadata file to
+3. Writes a `latest.json` metadata file to
    `s3://<BUCKET>/meta-pantavisor/docs/latest.json`:
 
 ```json
@@ -287,8 +299,8 @@ The job:
 ```
 
 Unlike `tag-docs-scarthgap.yaml`, this workflow does **not** upload to GitHub
-Releases. It does send a `repository_dispatch` to `docs.pantavisor` with
-`"tag": "latest"` so the docs site can pull in the latest documentation.
+Releases, and it does **not** send a `repository_dispatch` to
+`docs.pantavisor` — that notification only happens on tagged releases.
 
 ## CI Badges (upload-badges)
 
@@ -331,3 +343,34 @@ In `release.yaml`, `pvtest-remote` runs with `if: always()` so it executes even 
 3. Appends a short git log to the commit message body for review.
 
 If any updates were found, the workflow opens (or force-updates) a PR on `auto-update/components`.
+
+## Pantavisor Docs Check (onpush-pantavisor-docs.yaml)
+
+The docs tarball built by `docs-scarthgap.yaml` embeds `pantavisor`'s own
+`docs/` folder, pulled from its source tree at whatever commit
+`PANTAVISOR_SRCREV` (in `recipes-pv/pantavisor/pantavisor.inc`) pins. A
+`PANTAVISOR_SRCREV` bump — whether from `schedule-updates.yaml` or a manual
+edit — doesn't touch `meta-pantavisor/docs/**`, so it wouldn't otherwise
+trigger a docs rebuild even if it moves past commits that changed `docs/` in
+the `pantavisor` repo itself.
+
+`onpush-pantavisor-docs.yaml` closes that gap. It triggers on push to
+`master` when `recipes-pv/pantavisor/pantavisor.inc` changes, and:
+
+1. Reads the new `PANTAVISOR_SRCREV` from the pushed commit, and the old one
+   from `github.event.before` (via `git show <before>:pantavisor.inc`).
+2. If they differ, does a throwaway shallow clone of
+   `https://github.com/pantavisor/pantavisor.git` (public, no auth needed —
+   same pattern as `update-components.sh`), fetching both SRCREVs and running
+   `git diff --name-only <old> <new> -- docs/`.
+3. If `docs/` changed upstream, dispatches `docs-scarthgap.yaml` via `gh
+   workflow run docs-scarthgap.yaml --ref master`. Since both workflows live
+   in this repo, this uses the default `GITHUB_TOKEN` (granted `actions:
+   write`) rather than a cross-repo PAT.
+
+If the previous SRCREV or the upstream commits can't be resolved (e.g. a
+shallow-history edge case), the job triggers the docs build anyway rather
+than risk silently skipping a real docs update.
+
+This check is scoped to `pantavisor` only — not generalized to the other
+`components.json` entries.

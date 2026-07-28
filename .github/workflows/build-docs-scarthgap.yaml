@@ -1,0 +1,66 @@
+name: "build: scarthgap docs tarball"
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or commit SHA) to build docs from'
+        required: true
+        type: string
+      fetch_tags:
+        description: 'Fetch all tags before building (needed when the docs output depends on git describe)'
+        required: false
+        type: boolean
+        default: false
+      artifact_name:
+        description: 'Name for the uploaded docs tarball artifact'
+        required: true
+        type: string
+
+jobs:
+  build-docs:
+    env:
+      TMPDIR: "tmp-scarthgap"
+    runs-on: ["self-hosted"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Fetch tags
+        if: inputs.fetch_tags
+        run: |
+          git config --global --add safe.directory '*'
+          git fetch --tags --force
+
+      - name: setup workspace
+        env:
+          EFFECTIVE_REF: ${{ inputs.ref }}
+        run: |
+          chown -R builder:builder $RUNNER_WORKSPACE
+          chown -R builder:builder /__w
+          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $EFFECTIVE_REF && git reset --hard FETCH_HEAD && rm -rf build/ && git clean -f -f -d -x"
+          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      - name: build docs
+        run: |
+          su - builder -c "cd $GITHUB_WORKSPACE && kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml -- -c create_pantacor_docs pantavisor-starter"
+
+      - name: collect docs tarball
+        run: |
+          chmod -R 777 $GITHUB_WORKSPACE
+          mkdir -p docs-out
+          find build/${{ env.TMPDIR }}/deploy/images/raspberrypi-armv8 -name "*.rootfs.docs.tar.zst" ! -type l -exec cp {} docs-out/ \;
+          ls -l docs-out
+
+      - name: upload docs tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: docs-out/*.rootfs.docs.tar.zst
