@@ -11,6 +11,10 @@ suite per target:
 - a **slot pool** of up to `-p` appengine containers driven in parallel,
 - a **real device** over the network.
 
+All three are the same machinery: one tester holding `-p` slots, each slot holding one
+target. They differ only in how a slot's target is obtained and re-typed, which is what
+[Assignment models](#assignment-models) describes.
+
 This page covers the framework itself — how it is built, how it is laid out, how a run
 executes and how to read its output. For running and authoring against the appengine
 pool see [appengine.md](appengine.md); for real hardware see [devices.md](devices.md);
@@ -63,18 +67,26 @@ halves source.
 
 ## Assignment models
 
-`--model` selects how tests are assigned to targets.
+Every non-interactive run works the same way: `test.docker.sh` builds one flat queue and
+starts one tester, and `pvtest-run`'s `run_slot_pool` fans that queue out across `-p`
+workers, each holding one target at a time. Two independent variables shape what a worker
+does — and a real device is *not* a third path, it is a target with a different re-type
+mechanism.
 
-**persistent** (the default) boots every test under exactly its `config.env`. Each of the
-`-p` workers keeps ONE persistent storage for the whole pass and re-boots with new config
-only when a test actually needs it, merged into that test's own setup power cycle. Each
-test starts from its own fresh child of the factory revision installed by `setup_test`,
-followed by a synchronous gc.
+### Lifecycle — `--model`
 
-**volatile** boots one fresh appengine container per test (own storage, no re-typing),
-with `-p` capping how many run concurrently. Incompatible with `--devices` and `-n`.
-Because the container is thrown away anyway, the test's revision is seeded into
-`pv-appengine`'s first-boot pvtx (the image's `pvtx.d` plus the test's tarballs mounted at
+How long a worker keeps a target.
+
+**persistent** (the default) runs every test under exactly its `config.env`. Each worker
+keeps ONE storage for the whole pass and re-boots with new config only when a test
+actually needs it, merged into that test's own setup power cycle. Each test starts from
+its own fresh child of the factory revision installed by `setup_test`, followed by a
+synchronous gc.
+
+**volatile** gives every test its own appengine container (own storage, thrown away
+afterwards). Incompatible with `--devices` — you cannot throw a board away — and, for now,
+with `-n`. Because the container is discarded anyway, the test's revision is seeded into
+`pv-appengine`'s first-boot pvtx (the image's `pvtx.d` plus the test's tarballs staged at
 `pvtx.extra.d`) and deployed under the same `locals/<id>` name, so the container boots into
 it already committed. Pantavisor only auto-commits the revision it boots into when that
 revision is literally named `0`, so `pv-appengine` also writes the `.pv/done` and
@@ -87,8 +99,24 @@ the first gc reclaims it anyway — so a volatile test starts against a trail ho
 its own revision, where a persistent one starts against a trail that has accumulated the
 worker's earlier tests.
 
-Against a real device, persistent is the only usable model. Want results from both models?
-Run `test.docker.sh` twice, once per `--model`.
+Want results from both models? Run `test.docker.sh` twice, once per `--model`.
+
+### Capability — `PVTEST_RETYPE`
+
+How a target changes config, and whether releasing it destroys it. The host works this out
+from the run and announces it; the tester never asks what kind of thing it is talking to.
+
+| value | target | a test needing a different `config.env` | release |
+|-------|--------|------------------------------------------|---------|
+| `container` | appengine pool | powered off, then booted as a new generation | destroys it |
+| `hook` | `--devices` board with `hook=` in its manifest | the hook power-cycles the board | leaves it up, reset to factory |
+| `none` | board without `hook=`; preset `PVTEST_EXEC` | SKIPPED — no way to apply it | leaves it up, reset to factory |
+
+The courtesy factory reset at detach follows the *release* column, not the target's
+nature: a container skips it because nobody will ever see that container again.
+
+`--model volatile` therefore requires `PVTEST_RETYPE=container`, which is why it and
+`--devices` are mutually exclusive. Everything else composes freely.
 
 ## Topology
 
@@ -174,14 +202,16 @@ convention `docker logs -f` uses for an appengine) and is captured to `<name>.lo
  └────────────────────────────┘
 ```
 
-The diagram shows one slot's lifecycle. The slot pool runs `-p` of these in parallel over
-one global, pre-sorted queue (claim-needing tests first, equal configs adjacent): a worker
-boots its slot's container with its first test's config and inits it once; from there
-`setup_test` owns everything per test, including the config change. When a test needs a
-different `config.env`, `setup_test` itself powers the container off and asks the host to
-boot a new generation with the new `PV_*` env **on the same storage** — the new instance
-boots straight into the pending test revision, so the config change and the commit reboot
-cost a single power cycle. Claim state is settled per test at the end of `setup_test`; a
+The diagram shows one slot's lifecycle under `--model persistent`. The slot pool runs `-p`
+of these in parallel over one global queue, pre-sorted for persistent only (claim-needing
+tests first, equal configs adjacent — volatile has neither claims to batch nor re-types to
+avoid, so it keeps the caller's order). A worker attaches its slot to a target running its
+first test's config and inits it once; from there `setup_test` owns everything per test,
+including the config change. When a test needs a different `config.env`, `setup_test` asks
+the host to re-type the slot — for a container that means powering it off and booting a new
+generation with the new `PV_*` env **on the same storage**, so it boots straight into the
+pending test revision and the config change and the commit reboot cost a single power
+cycle. Claim state is settled per test at the end of `setup_test`; a
 claim persists on the worker's storage across adjacent claim tests (state-driven no-ops)
 and is deleted at worker detach.
 

@@ -509,8 +509,10 @@ _boot_appengine() {
 	fi
 	local ae_seed_args=()
 	if [ -n "$initial_rev" ]; then
-		ae_seed_args=(
-			-e PV_APPENGINE_INITIAL_REV="$initial_rev"
+		ae_seed_args=(-e PV_APPENGINE_INITIAL_REV="$initial_rev")
+		# a revision with no tarballs of its own is still meaningful — it deploys the
+		# image's own pvtx.d — so only mount the extra dir when there is one
+		[ -n "$pvtx_extra_dir" ] && ae_seed_args+=(
 			-v "$pvtx_extra_dir":/usr/lib/pantavisor/pvtx.extra.d:ro
 		)
 	fi
@@ -689,15 +691,27 @@ _release_devices() {
 # Handle one re-type request id=$2 for slot=$3 to config=$4 (empty = teardown),
 # keeping storage under key $5 across generations when non-empty.
 # Backgrounded by retype_service; per-slot current container in $1/state/slot<S>.ae.
+# Atomically publish the response to request $2 under ctrl dir $1; the remaining args
+# are the response lines. Written to a .tmp and renamed so the tester, which polls for
+# the file, never reads a half-written reply.
+_retype_reply() {
+	local ctrl="$1" id="$2"
+	shift 2
+	printf '%s\n' "$@" > "$ctrl/resp/.tmp.$id"
+	mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+}
+
+# Satisfy a 'container' re-type: stop slot $3's current generation and boot a new one on
+# config $4. $6/$7 are the volatile model's initial revision and the seed subdir holding
+# its tarballs, both empty for persistent.
 _retype_handle() {
-	local ctrl="$1" id="$2" S="$3" cfg="$4" stor="$5"
+	local ctrl="$1" id="$2" S="$3" cfg="$4" stor="$5" rev="$6" seed="$7"
 	local stf="$ctrl/state/slot${S}.ae" old ae gen
 	old=$(cat "$stf" 2>/dev/null)
 	[ -n "$old" ] && _stop_appengine "$old"
 	: > "$stf"
 	if [ -z "$cfg" ] || [ "$cfg" = "__none__" ]; then
-		printf 'status=down\n' > "$ctrl/resp/.tmp.$id"
-		mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+		_retype_reply "$ctrl" "$id" "status=down"
 		return 0
 	fi
 	# gives (slot,S) its own 64-wide loop-device range; slot keeps this
@@ -708,21 +722,27 @@ _retype_handle() {
 		printf '%s' "$g" > "$ctrl/state/gen"; printf '%s' "$g"
 	) 8>"$ctrl/state/gen.lock" )
 	ae="pantavisor-appengine-${USER}-${slot}-w${S}-g${gen}"
-	if _boot_appengine "$ae" "$cfg" "$stor"; then
+	if _boot_appengine "$ae" "$cfg" "$stor" "$rev" "${seed:+$ctrl/seed/$seed}"; then
 		printf '%s' "$ae" > "$stf"
-		printf 'ae=%s\nstatus=ready\n' "$ae" > "$ctrl/resp/.tmp.$id"
+		_retype_reply "$ctrl" "$id" "ae=$ae" "status=ready"
 	else
-		printf 'status=failed\n' > "$ctrl/resp/.tmp.$id"
+		_retype_reply "$ctrl" "$id" "status=failed"
 	fi
-	mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
 }
 
-# Background re-type service: handles $1/req/slot<S> requests until $1/stop appears,
-# then tears down all slots.
+# Background target-lifecycle service: handles $1/req/slot<S> requests until $1/stop
+# appears, then releases whatever it created. $2 is the run's re-type mechanism, the
+# same value the tester gets as PVTEST_RETYPE:
+#   container  boot a new appengine generation with the requested config
+#   hook       run the manifest's hook, which power-cycles the board itself
+#   none       no mechanism at all; every request is answered 'unsupported', which the
+#              tester turns into a SKIP for any test the target's config doesn't satisfy
+# It always runs, even for 'none' — an unanswered request would block the tester for the
+# full 300s _retype_slot timeout instead of skipping in a few milliseconds.
 retype_service() {
-	local ctrl="$1"
+	local ctrl="$1" mech="$2"
 	mkdir -p "$ctrl/req" "$ctrl/resp" "$ctrl/state"
-	local req id S cfg stor
+	local req id S cfg stor rev seed
 	while [ ! -e "$ctrl/stop" ]; do
 		for req in "$ctrl"/req/slot*; do
 			[ -e "$req" ] || continue
@@ -730,12 +750,21 @@ retype_service() {
 			S=$(sed -n 's/^slot=//p' "$req")
 			cfg=$(sed -n 's/^cfg=//p' "$req")
 			stor=$(sed -n 's/^storage=//p' "$req")
+			rev=$(sed -n 's/^rev=//p' "$req")
+			seed=$(sed -n 's/^seed=//p' "$req")
 			rm -f "$req"
-			( _retype_handle "$ctrl" "$id" "$S" "$cfg" "$stor" ) &
+			case "$mech" in
+				container) ( _retype_handle "$ctrl" "$id" "$S" "$cfg" "$stor" "$rev" "$seed" ) & ;;
+				hook)      ( _dev_retype_handle "$ctrl" "$id" "$dev_name" "$cfg" ) & ;;
+				*)         _retype_reply "$ctrl" "$id" "status=unsupported" ;;
+			esac
 		done
 		sleep 0.2
 	done
 	wait
+
+	# Only containers are ours to destroy; a board outlives the run.
+	[ "$mech" = "container" ] || return 0
 	local st ae
 	for st in "$ctrl"/state/slot*.ae; do
 		[ -e "$st" ] || continue
@@ -744,28 +773,35 @@ retype_service() {
 	done
 }
 
-# Handle one device re-type request id=$2 for device=$3 to config=$4 (the device's
-# env= base followed by the test's required_env), by running its manifest hook=
-# synchronously. Hook exit 0 means the hook ran, NOT that the device is back up —
-# the hook returns after a few seconds of boot serial. Confirming the device is up
-# on the new config is the tester's job (pvtest-run's _setup_device_retype).
+# Satisfy a 'hook' re-type: run device $3's manifest hook= synchronously to bring it up
+# on config $4. The board's env= base is prepended here, so the tester only ever sends a
+# test's required config and stays unaware of any per-board baseline. Hook exit 0 means
+# the hook ran, NOT that the device is back up — it returns after a few seconds of boot
+# serial. Confirming the device is up on the new config is the tester's job
+# (pvtest-run's _setup_retype), exactly as for a container generation.
 _dev_retype_handle() {
 	local ctrl="$1" id="$2" name="$3" cfg="$4"
-	local i=-1 j hook= config=
+	local i=-1 j hook= config= env_base=
+
+	# empty cfg is the release verb; releasing a board is a no-op, it outlives the run
+	if [ -z "$cfg" ]; then
+		_retype_reply "$ctrl" "$id" "status=down"
+		return 0
+	fi
+
 	for j in "${!_dev_name[@]}"; do
 		[ "${_dev_name[$j]}" = "$name" ] && { i=$j; break; }
 	done
 	if [ "$i" -lt 0 ]; then
-		printf 'status=hookfail\n' > "$ctrl/resp/.tmp.$id"
-		mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+		_retype_reply "$ctrl" "$id" "status=failed"
 		return 0
 	fi
-	hook="${_dev_hook[$i]}"; config="${_dev_config[$i]}"
+	hook="${_dev_hook[$i]}"; config="${_dev_config[$i]}"; env_base="${_dev_env[$i]}"
 	if [ -z "$hook" ]; then
-		printf 'status=nohook\n' > "$ctrl/resp/.tmp.$id"
-		mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
+		_retype_reply "$ctrl" "$id" "status=unsupported"
 		return 0
 	fi
+	[ -n "$env_base" ] && cfg="$env_base $cfg"
 
 	# the hook needs exclusive access to the same tty _start_device_capture is
 	# tailing — pause capture around the hook call, resume after
@@ -776,45 +812,17 @@ _dev_retype_handle() {
 	[ -n "$config" ] && hookargs+=(-c "$config")
 	hookargs+=($cfg)
 	if "${hookargs[@]}" > "$hooklog" 2>&1; then
-		printf 'status=ok\nlog=%s\n' "$hooklog" > "$ctrl/resp/.tmp.$id"
+		_retype_reply "$ctrl" "$id" "ae=$name" "status=ready" "log=$hooklog"
 	else
 		pvtest_log ERROR "device '$name' hook failed (see $hooklog)"
-		printf 'status=hookfail\nlog=%s\n' "$hooklog" > "$ctrl/resp/.tmp.$id"
+		_retype_reply "$ctrl" "$id" "status=failed" "log=$hooklog"
 	fi
-	mv "$ctrl/resp/.tmp.$id" "$ctrl/resp/$id"
 
 	_start_device_capture "$name" "${_dev_tty[$i]}" "${_dev_baud[$i]}" \
 		|| pvtest_log ERROR "failed to resume tty capture for device '$name' after hook"
 }
 
-# Background device re-type service: handles $1/req/<id> requests (cfg=<required_env>)
-# for the single device $2 until $1/stop appears. Only started when the manifest's
-# device has a hook= configured (see _run_pass) — a device with no hook never spins
-# this up, so it stays byte-for-byte today's SKIP-only behavior.
-_dev_retype_service() {
-	local ctrl="$1" name="$2"
-	mkdir -p "$ctrl/req" "$ctrl/resp"
-	local req id cfg
-	while [ ! -e "$ctrl/stop" ]; do
-		for req in "$ctrl"/req/*; do
-			[ -e "$req" ] || continue
-			id=$(basename "$req")
-			cfg=$(sed -n 's/^cfg=//p' "$req")
-			rm -f "$req"
-			( _dev_retype_handle "$ctrl" "$id" "$name" "$cfg" ) &
-		done
-		sleep 0.2
-	done
-	wait
-}
-
-# Run one tester pass over the queue: start the re-type service, run the tester,
-# stop the service and sweep this slot's appengine containers. $1 = assignment
-# model (PVTEST_MODEL), $2 = pass tag namespacing ctrl/, results/, the container
-# names and the per-pass log. Reads run_test's locals via dynamic scoping;
-# returns the tester's exit code.
-
-# Tester-container args shared by both passes, into _TESTER_ARGS; $1 = results tag.
+# Tester-container args, into _TESTER_ARGS; $1 = results tag.
 # Reads run_test's locals the same way its callers do.
 _tester_common_args() {
 	_TESTER_ARGS=(
@@ -835,48 +843,33 @@ _tester_common_args() {
 	)
 }
 
+# Run the tester over the queue: start the target-lifecycle service, run the tester,
+# stop the service and sweep any container it left behind. $1 = assignment model
+# (PVTEST_MODEL), $2 = pass tag namespacing ctrl/, results/ and the pass log. Reads
+# run_test's locals via dynamic scoping; returns the tester's exit code.
 _run_pass() {
 	local pass_model="$1" pass_tag="$2"
 	local res=0
 
 	local ctrl_dir="$work_path/ctrl/$pass_tag"
-	if [ -z "$devices_file" ]; then
-		mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
-	fi
+	mkdir -p "$ctrl_dir/req" "$ctrl_dir/resp" "$ctrl_dir/state"
 
 	local _nq
 	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
-	if [ -n "$devices_file" ]; then
-		pvtest_log INFO "=== single device: ${_nq} test(s) against ${dev_name} ==="
-	else
-		pvtest_log INFO "=== slot pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
-	fi
+	pvtest_log INFO "=== ${pass_model} pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
 
-	# Start the host re-type service (container runs only; never for real devices).
 	# Storage lineage is persistent within a pass but always fresh at pass start
-	# (covers -w workspace reuse).
-	local svc_pid=""
-	if [ "$pool_mode" = true ]; then
-		rm -rf "$work_path/storage/$pass_tag"
-		retype_service "$ctrl_dir" &
-		svc_pid=$!
-	fi
+	# (covers -w workspace reuse). Only containers have host-side storage.
+	[ "$retype_mech" = "container" ] && rm -rf "$work_path/storage/$pass_tag"
 
-	# Start the device re-type service — only when this device's manifest entry
-	# has a hook= configured. No hook = today's behavior, byte for byte: no
-	# service, no ctrl dir, no PVTEST_DEV_HOOK_CTRL passed to the tester below,
-	# so run_test_attempt's SKIP gate sees it unset and mismatched tests SKIP
-	# exactly as before.
-	local dev_ctrl_dir="$work_path/ctrl-dev/${dev_name:-}"
-	local dev_svc_pid=""
-	if [ -n "$devices_file" ] && [ -n "$dev_hook" ]; then
-		rm -rf "$dev_ctrl_dir"
-		_dev_retype_service "$dev_ctrl_dir" "$dev_name" &
-		dev_svc_pid=$!
-	fi
+	retype_service "$ctrl_dir" "$retype_mech" &
+	local svc_pid=$!
 
 	mkdir -p "$work_path/results/$pass_tag"
 
+	# One tester, whatever the targets are: pvtest-run's run_slot_pool dispatches
+	# PVTEST_QUEUE across PVTEST_SLOTS workers, each holding one target for as long as
+	# PVTEST_MODEL says, and asking this pass's retype_service for config changes.
 	_tester_common_args "$pass_tag"
 	local -a tester_run_args=(
 		"${_TESTER_ARGS[@]}"
@@ -884,44 +877,38 @@ _run_pass() {
 		-e TEST_PATH="/work/$target_path"
 		-e PVTEST_QUEUE="$pvtest_queue"
 		-e PVTEST_MODEL="$pass_model"
+		-e PVTEST_RETYPE="$retype_mech"
+		-e PVTEST_SLOTS="$parallel"
+		-e PVTEST_CTRL="/work/ctrl"
 		-e PVTEST_TESTER_NAME="${tester_name}"
 		-e INTERACTIVE="$interactive"
 		-e MANUAL="$manual"
 		-e NETSIM="$netsim"
 		-e APPENGINE_LOGS=/work/hostlogs
 		-v "$work_path":/work/hostlogs:ro
+		-v "$ctrl_dir":/work/ctrl
 	)
 
 	if [ -n "$devices_file" ]; then
-		# Single-target mode: pvtest-run's run_single_device drains PVTEST_QUEUE against
-		# the one device over PVTEST_EXEC/PVTEST_HOST and SKIPs tests whose config.env
-		# the device doesn't satisfy (PVTEST_MODEL=persistent). The later PVTEST_DEVICE_TYPE
-		# -e overrides the "appengine" default set in the shared args above.
+		# A board is a slot the tester binds instead of booting: PVTEST_DEVICE_NAME is
+		# the target it attaches to, and PVTEST_EXEC/PVTEST_HOST come from the manifest
+		# (_ae_exec_cmd/_ae_host short-circuit on them). Real hardware is slower — real
+		# reboots, ssh round-trips per poll — so tests get a longer wall. The later
+		# PVTEST_DEVICE_TYPE -e overrides the "appengine" default in the shared args.
 		tester_run_args+=(
 			-e PVTEST_EXEC="$dev_exec"
 			-e PVTEST_HOST="$dev_ip"
 			-e PVTEST_DEVICE_TYPE="${PVTEST_DEVICE_TYPE:-$dev_type}"
 			-e PVTEST_DEVICE_NAME="$dev_name"
+			-e PVTEST_TEST_TIMEOUT="${PVTEST_TEST_TIMEOUT:-1800}"
 			"${tester_device_args[@]}"
 		)
-		if [ -n "$dev_svc_pid" ]; then
-			tester_run_args+=(
-				-e PVTEST_DEV_HOOK_CTRL="/work/ctrl-dev"
-				-e PVTEST_DEV_ENV_BASE="$dev_env"
-				-v "$dev_ctrl_dir":/work/ctrl-dev
-			)
-		fi
 	else
-		# Slot-pool mode: pvtest-run's run_slot_pool dispatches PVTEST_QUEUE across
-		# PVTEST_SLOTS workers inside this single tester, each owning one appengine.
 		tester_run_args+=(
-			-e PVTEST_SLOTS="$parallel"
-			-e PVTEST_CTRL="/work/ctrl"
 			-e PVTEST_SSH_KEY="/tmp/pvtest_id"
 			-e PVTEST_EXEC="${PVTEST_EXEC:-}"
 			-e PVTEST_HOST="${PVTEST_HOST:-}"
 			"${tester_shared_args[@]}"
-			-v "$ctrl_dir":/work/ctrl
 		)
 	fi
 
@@ -932,133 +919,13 @@ _run_pass() {
 		| tee -a "$work_path/pass-${pass_tag}.log"
 	res=${PIPESTATUS[0]}
 
-	# Stop the re-type service and tear down any remaining slot containers.
-	if [ -n "$svc_pid" ]; then
-		touch "$ctrl_dir/stop"
-		wait "$svc_pid" 2>/dev/null || true
-	fi
-	if [ -n "$dev_svc_pid" ]; then
-		touch "$dev_ctrl_dir/stop"
-		wait "$dev_svc_pid" 2>/dev/null || true
-	fi
-	if [ "$pool_mode" = true ]; then
+	# Stop the lifecycle service and tear down any remaining slot containers.
+	touch "$ctrl_dir/stop"
+	wait "$svc_pid" 2>/dev/null || true
+	if [ "$retype_mech" = "container" ]; then
 		docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
 	fi
 
-	return $res
-}
-
-# Stage test $1's container tarballs into $2, for mounting as the appengine's
-# pvtx.extra.d. Numbered to preserve pvtx add order (a later tarball overrides an
-# earlier one) and to keep same-basename tarballs from different dirs apart.
-_volatile_seed() {
-	local tid="$1" dir="$2"
-	local t src n=0
-
-	rm -rf "$dir"; mkdir -p "$dir"
-	while IFS= read -r t; do
-		[ -n "$t" ] || continue
-		case "$t" in
-			/*) src="$t" ;;
-			*) src="$test_dir/$tid/$t" ;;
-		esac
-		if [ ! -f "$src" ]; then
-			pvtest_log ERROR "tarball '$t' not found for '$tid'"
-			return 1
-		fi
-		cp "$src" "$(printf '%s/%02d-%s' "$dir" "$n" "${src##*/}")" || return 1
-		n=$((n + 1))
-	done < <(jq -r '.setup.containers.tarballs[]? // empty' "$test_dir/$tid/test.json")
-	return 0
-}
-
-# One test, fully self-contained: fresh appengine + one tester invocation against
-# it via pvtest-run's single-target mode (run_single_device; no PVTEST_CTRL, so the
-# tester never enters slot-pool mode) + teardown. Reads run_test's locals like _run_pass.
-_volatile_run_one_test() {
-	local json_path="$1" pass_tag="$2" failed_flag="$3"
-	local test_id; test_id=$(echo "$json_path" | sed 's|^/work/||; s|/test\.json$||')
-	# $BASHPID, not $$: the container name doubles as a DNS hostname (63-byte
-	# labels, so no test_id) and $$ is the same in every backgrounded subshell,
-	# which would collide names at -p>1.
-	local ae="pantavisor-appengine-${USER}-${slot}-${BASHPID}"
-	local PVTEST_LOG_TAG="$ae"
-	local cfg; cfg=$(_test_cfg "$test_dir/$test_id")
-
-	# Seeded into pv-appengine's first-boot pvtx (image pvtx.d + this test's
-	# tarballs) rather than installed once pantavisor is up: same locals/<id> name,
-	# minus the install and its commit reboot that the persistent model pays.
-	local rev; rev="locals/$(printf '%s' "$test_id" | tr '/' '_' | tr '-' '_')"
-	local seed_dir="$work_path/pvtx-seed/$pass_tag/$BASHPID"
-
-	# binds this container name — the log tag every line below carries — to the
-	# test it runs; without it run.log only shows opaque per-test container names
-	pvtest_log INFO "running '$test_id'"
-
-	local res=1
-	if ! _volatile_seed "$test_id" "$seed_dir"; then
-		pvtest_log ERROR "'${test_id}' ABORTED (could not stage container tarballs)"
-	elif ! _boot_appengine "$ae" "$cfg" "$test_id" "$rev" "$seed_dir"; then
-		pvtest_log ERROR "'${test_id}' ABORTED (appengine boot failed)"
-	else
-		# Route through pvtest-run's single-target mode (run_single_device:
-		# PVTEST_QUEUE + PVTEST_DEVICE_NAME), the only non-pool test path; with
-		# PVTEST_MODEL=volatile its setup_test asserts the container came up on
-		# $rev rather than installing anything.
-		local tname="pantavisor-tester-${USER}-${slot}-${BASHPID}"
-		_tester_common_args "$pass_tag"
-		docker run \
-			"${_TESTER_ARGS[@]}" \
-			--name "$tname" \
-			-e PVTEST_TESTER_NAME="$tname" \
-			-e PVTEST_QUEUE="/work/$test_id/test.json" \
-			-e PVTEST_MODEL=volatile \
-			-e PVTEST_DEVICE_NAME="$ae" \
-			-e PVTEST_EXEC="$(pvtest_ssh_cmd "$ae" /tmp/pvtest_id)" \
-			-e PVTEST_HOST="$ae" \
-			-e PVTEST_TEST_TIMEOUT=600 \
-			-e INTERACTIVE=false \
-			-e MANUAL=false \
-			-e NETSIM=false \
-			-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro \
-			"$tester_image" \
-			| tee -a "$work_path/pass-${pass_tag}.log"
-		res=${PIPESTATUS[0]}
-		_stop_appengine "$ae"
-	fi
-	rm -rf "$seed_dir"
-
-	pvtest_log INFO "finished '$test_id' (exit $res)"
-
-	[ "$res" -ne 0 ] && [ "$res" -ne 2 ] && touch "$failed_flag"
-}
-
-# Volatile-model pass: one fresh appengine + one tester invocation per test,
-# capped at $parallel concurrent tests via a semaphore FIFO — the pre-pool
-# master behaviour, reusing current building blocks (_boot_appengine,
-# setup.config.env, results/<tag>/ namespacing) instead of the old exec_test.
-_run_volatile_pass() {
-	local pass_tag="$1" res=0
-	mkdir -p "$work_path/results/$pass_tag"
-	local failed_flag="$work_path/.failed-$pass_tag"
-
-	local sem_fifo; sem_fifo=$(mktemp -u); mkfifo "$sem_fifo"
-	exec {SEM_FD}<>"$sem_fifo"; rm -f "$sem_fifo"
-	local i; for ((i = 0; i < parallel; i++)); do printf 'x' >&"$SEM_FD"; done
-
-	local _nq
-	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
-	pvtest_log INFO "=== volatile pass: ${_nq} test(s), up to ${parallel} concurrent ==="
-
-	local _json
-	for _json in $pvtest_queue; do
-		read -r -n1 -u"$SEM_FD" _tok
-		( _volatile_run_one_test "$_json" "$pass_tag" "$failed_flag"; printf 'x' >&"$SEM_FD" ) &
-	done
-	for ((i = 0; i < parallel; i++)); do read -r -n1 -u"$SEM_FD" _tok; done
-	exec {SEM_FD}>&-
-
-	if [ -f "$failed_flag" ]; then res=1; rm -f "$failed_flag"; fi
 	return $res
 }
 
@@ -1292,11 +1159,9 @@ run_test() {
 			;;
 	esac
 
-	# volatile needs a docker container per test — doesn't exist for real
-	# hardware, so a device runs persistent only. persistent itself works fine
-	# against real devices: run_single_device re-types via the manifest's hook=
-	# when configured, otherwise SKIPs any test whose config.env the device
-	# doesn't already satisfy.
+	# volatile throws the target away after every test, which only a container can
+	# afford — so a board runs persistent. It re-types via the manifest's hook= when
+	# one is configured, otherwise SKIPs any test whose config.env it doesn't satisfy.
 	if [ -n "$devices_file" ] && [ "$model" != "persistent" ]; then
 		if [ "$model_explicit" = "true" ]; then
 			pvtest_log ERROR "--model $model is not supported with --devices; use --model persistent"
@@ -1306,15 +1171,18 @@ run_test() {
 		model="persistent"
 	fi
 
-	# single-target modes boot the target test's exact config.env already
+	# -i/-m boot one target on the selected test's exact config.env, so there is no
+	# assignment to model in the first place
 	if [ "$model_explicit" = "true" ] && { [ "$interactive" = "true" ] || [ "$manual" = "true" ]; }; then
 		pvtest_log ERROR "--model does not apply to -i/-m"
 		usage
 		exit 1
 	fi
 
+	# Both models now share one tester and one netsim wiring, so this is no longer a
+	# structural limit — just an untested combination. Lift it once someone runs it.
 	if [ "$model" = "volatile" ] && [ "$netsim" = "true" ]; then
-		pvtest_log ERROR "--model volatile is incompatible with -n (no per-test netsim wiring)"
+		pvtest_log ERROR "--model volatile is incompatible with -n (untested combination)"
 		usage
 		exit 1
 	fi
@@ -1366,9 +1234,9 @@ run_test() {
 	docker rm -f "$netsim_name" 2>/dev/null || true
 
 	# ^C: the tester's PID 1 ignores SIGINT and the appengines are detached, so
-	# nothing goes away on its own. Match this slot's whole name prefix — volatile
-	# runs one appengine + one tester per test, all suffixed with the subshell's
-	# PID — and bail out instead of letting the pass keep spawning containers.
+	# nothing goes away on its own. Match this slot's whole name prefix — a volatile
+	# run cycles through one appengine generation per test — and bail out instead of
+	# letting the pass keep spawning containers.
 	# The slot lock is an open fd, so exiting releases it.
 	trap '_abort_run' INT TERM
 
@@ -1482,6 +1350,17 @@ run_test() {
 		tester_device_args=(-v "$_devfile_abs_dir":"$_devfile_abs_dir":ro)
 	fi
 
+	# How a target of this run changes config, announced to the tester as PVTEST_RETYPE.
+	# This is the only thing that distinguishes a board from a container: both are slots
+	# the tester holds and re-types, they just differ in what "re-type" costs and whether
+	# releasing the slot destroys the target. 'container' is exactly pool_mode.
+	local retype_mech=none
+	if [ "$pool_mode" = true ]; then
+		retype_mech=container
+	elif [ -n "$dev_hook" ]; then
+		retype_mech=hook
+	fi
+
 	# Mount the target's tarballs over the suites' common/tarballs/. Only tarballs
 	# vary by target, so local/ and remote/ stay single-copy trees and every
 	# ../../common/tarballs/ reference keeps working for any target. Docker orders
@@ -1582,11 +1461,7 @@ run_test() {
 	fi
 
 	local res=0
-	if [ "$model" = "volatile" ]; then
-		_run_volatile_pass volatile || res=1
-	else
-		_run_pass "$model" main || res=1
-	fi
+	_run_pass "$model" main || res=1
 
 	[ "$pool_mode" = true ] && rm -rf "$shared_ssh_dir"
 
@@ -1614,11 +1489,7 @@ run_test() {
 	fi
 
 	local skip_fail=0
-	if [ "$model" = "volatile" ]; then
-		_print_summary "$work_path/pass-volatile.log" volatile || skip_fail=1
-	else
-		_print_summary "$work_path/run.log" main || skip_fail=1
-	fi
+	_print_summary "$work_path/run.log" main || skip_fail=1
 
 	# make summary available to the run path for the CI
 	[ "${CI:-false}" = "true" ] && cp "$work_path/run.log" ./run.log

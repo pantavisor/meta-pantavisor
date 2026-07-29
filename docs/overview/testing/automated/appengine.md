@@ -55,12 +55,13 @@ at `-p 6` on the dedicated runner.
 `-p N` is incompatible with `-i` (interactive) and `-m` (manual), which require a single test
 to be running.
 
-The above describes `--model persistent`. `--model volatile` uses a different, non-re-typing
-concurrency model: one fresh appengine container per test, capped at `-p` concurrent tests via
-a semaphore, closer to "one `docker run` per test". Because the container is fresh and
-discarded, the test's revision is built by `pv-appengine` on first boot rather than installed
-afterwards, so a volatile test pays one pantavisor boot instead of the three a persistent test
-pays (boot, install, commit reboot).
+The above describes `--model persistent`. `--model volatile` runs through the same tester,
+the same queue and the same `-p` workers; what changes is that a worker throws its container
+away after each test and asks for a fresh one, instead of keeping it and re-typing only when
+a config change demands it. Because that container is fresh and discarded, the test's
+revision is built by `pv-appengine` on first boot rather than installed afterwards, so a
+volatile test pays one pantavisor boot instead of the three a persistent test pays (boot,
+install, commit reboot).
 
 ## Debugging a failing test
 

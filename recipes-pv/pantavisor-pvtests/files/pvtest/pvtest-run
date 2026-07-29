@@ -12,9 +12,12 @@ usage() {
 	echo "  INTERACTIVE MANUAL OVERWRITE VERBOSE NETSIM"
 	echo ""
 	echo "Dispatch mode (exactly one):"
-	echo "  PVTEST_QUEUE + PVTEST_CTRL           slot pool, PVTEST_SLOTS workers"
-	echo "  PVTEST_QUEUE + PVTEST_DEVICE_NAME    one target, sequential"
-	echo "  PVTEST_APPENGINES                    tester console (INTERACTIVE=true)"
+	echo "  PVTEST_QUEUE + PVTEST_CTRL   slot pool, PVTEST_SLOTS workers"
+	echo "  PVTEST_APPENGINES            tester console (INTERACTIVE=true)"
+	echo ""
+	echo "Slot pool:"
+	echo "  PVTEST_MODEL   persistent (keep target across tests) | volatile (one per test)"
+	echo "  PVTEST_RETYPE  container (boot a generation) | hook (power-cycle a board) | none"
 	echo ""
 	echo "See docs/overview/testing/automated/."
 	echo ""
@@ -27,9 +30,9 @@ parse_test() {
 		return 1
 	fi
 
-	# config.env: the config a test runs under — forced per test in the persistent
-	# model; on a real device (no boot-time config injection) it's matched against
-	# `conf ls` instead, SKIPping the test on mismatch (see run_single_device).
+	# config.env: the config a test runs under — applied by re-typing the target when it
+	# has a mechanism for that (PVTEST_RETYPE), otherwise matched against `conf ls` and
+	# the test SKIPped on mismatch (see run_test_attempt).
 	# config.usrmeta: per-test runtime metadata, applied after ready, removed in teardown.
 	required_env=$(jq -r '.setup.config.env // ""' "$j")
 	usrmeta=$(jq -r '.setup.config.usrmeta // ""' "$j")
@@ -259,18 +262,24 @@ _reqcfg_satisfied() {
 	return 0
 }
 
-# persistent pool only: does the container's currently-loaded config already
-# satisfy this test's required config ($1)? If not, power off and signal the
-# caller to re-type (the single power cycle setup_test merges with the
-# initial revision's commit reboot). Returns 0 (proceed) or 3 (caller must
-# re-type).
+# Does the target's currently-loaded config already satisfy this test's required
+# config ($1)? If not, signal the caller to re-type (the single power cycle setup_test
+# merges with the initial revision's commit reboot). Returns 0 (proceed) or 3 (re-type).
+#
+# A container is powered off here first, so the host's stop is the graceful, valgrind-
+# friendly one rather than a docker stop; a hook power-cycles the board itself and must
+# find it live, so it is left alone.
 _reqcfg_gate() {
 	local _next_cfg="$1"
 	[ -n "$_next_cfg" ] || return 0
 	pvcontrol conf ls > "$(_ae_conf_file "$PVTEST_AE")" 2>/dev/null || true
 	if ! _reqcfg_satisfied "$_next_cfg" "$(_ae_conf_file "$PVTEST_AE")"; then
-		pvtest_log INFO "test needs a different config; powering off..."
-		pv_ctrl cmd poweroff "pvtest: test needs different config" > /dev/null 2>&1 || true
+		if [ "$PVTEST_RETYPE" = "container" ]; then
+			pvtest_log INFO "test needs a different config; powering off..."
+			pv_ctrl cmd poweroff "pvtest: test needs different config" > /dev/null 2>&1 || true
+		else
+			pvtest_log INFO "test needs a different config; requesting re-type..."
+		fi
 		return 3
 	fi
 	return 0
@@ -649,6 +658,39 @@ _tarball_path() {
 	esac
 }
 
+# Deterministic name for a test's initial revision, so golden outputs see a stable
+# "locals/<id>" and never a random pvtx name. The volatile model asks the host to seed a
+# container with this name and setup_test asserts it booted into it, so both sides must
+# derive it the same way — hence one helper rather than two copies of the rule.
+_initial_rev_name() {
+	printf 'locals/%s' "$(printf '%s' "$1" | tr '/' '_' | tr '-' '_')"
+}
+
+# Stage test $1's container tarballs into dir $2, for the host to mount as a fresh
+# appengine's pvtx.extra.d. Numbered to preserve pvtx add order (a later tarball
+# overrides an earlier one) and to keep same-basename tarballs from different dirs
+# apart. $2 lives under PVTEST_CTRL, the one directory both halves can write.
+_stage_seed() {
+	local _json="$1" _dir="$2"
+	local _t _src _n=0 _tdir
+	_tdir=$(dirname "$_json")
+
+	rm -rf "$_dir"; mkdir -p "$_dir" || return 1
+	for _t in $(jq -r '.setup.containers.tarballs[]? // empty' "$_json"); do
+		case "$_t" in
+			/*) _src="$_t" ;;
+			*)  _src="$_tdir/$_t" ;;
+		esac
+		if [ ! -f "$_src" ]; then
+			pvtest_log ERROR "tarball '$_t' not found for '$(dirname "${_json#/work/}")'"
+			return 1
+		fi
+		cp "$_src" "$(printf '%s/%02d-%s' "$_dir" "$_n" "${_src##*/}")" || return 1
+		_n=$((_n + 1))
+	done
+	return 0
+}
+
 # Stage tarball $1 (labelled $2) onto the device and pvtx-add it. Staged to a real
 # file first: pvtx seeks the fd and SSH stdin is a pipe. Aborts the pvtx
 # transaction on failure, so the caller only has to propagate the error.
@@ -806,24 +848,37 @@ _install_initial_pvr() {
 	return 0
 }
 
-# mid-setup re-type (persistent pool): the slot's container was already powered
-# off by _reqcfg_gate; ask the host for a new generation with this test's config
-# on the same storage — it boots straight into the pending initial revision $1
-# and commits it, merging the config change and the commit reboot into one power
-# cycle. Re-keys the per-name artifacts (factory clone/export, conf snapshot)
-# and re-targets run_test_attempt's device-log tail (ae_log/ae_tail_pid/
-# PVTEST_ACTIVE_TESTLOG, reached via dynamic scoping) at the new container's
-# log. Clears PVTEST_AE when the slot is left without a usable container so the
-# worker re-attaches fresh on its next pick.
+# Mid-setup re-type: bring this slot's target up on the test's config, so it lands on
+# the pending initial revision $1 and commits it — merging the config change and the
+# commit reboot into a single power cycle. _reqcfg_gate has already powered a container
+# off; a board is power-cycled by the hook itself. Re-keys the per-name artifacts
+# (factory clone/export, conf snapshot) and re-targets run_test_attempt's device-log
+# tail (ae_log/ae_tail_pid/PVTEST_ACTIVE_TESTLOG, reached via dynamic scoping) at the
+# new generation's log. Clears PVTEST_AE when the slot is left without a usable target,
+# so the worker re-attaches fresh on its next pick.
+#
+# A board comes back under its own name, so the renames and the log re-target are no-ops
+# there rather than special cases.
 _setup_retype() {
 	local _rev="$1" _old="$PVTEST_AE" _new
 
-	pvtest_log INFO "re-typing on storage w${PVTEST_SLOT} cfg=[$(pvtest_normalize_cfg "$required_env")]"
+	pvtest_log INFO "re-typing slot ${PVTEST_SLOT} cfg=[$(pvtest_normalize_cfg "$required_env")]"
 	_new=$(_retype_slot "$PVTEST_SLOT" "$required_env" "w${PVTEST_SLOT}")
 	if [ -z "$_new" ]; then
 		pvtest_log ERROR "re-type failed"
 		export PVTEST_AE=""
 		return 1
+	fi
+
+	# A new container generation answers under a name nothing was listening on, so
+	# readiness below cannot mistake the old target for the new one. A target that keeps
+	# its name can: it was already up on $_rev before the re-type, so a revision-keyed
+	# wait would pass against the pre-power-cycle target. Fence on it going down first.
+	# The hook power-cycles synchronously, so that window may already be over — this is
+	# a best-effort fence, not a hard gate.
+	if [ "$PVTEST_RETYPE" != "container" ]; then
+		pvtest_log INFO "re-type: waiting for target to go down..."
+		wait_for_down 30 || pvtest_log WARN "target did not confirm down within 30s; continuing"
 	fi
 
 	# per-name artifacts follow the container name; their content (factory
@@ -853,56 +908,6 @@ _setup_retype() {
 
 	# refresh the stored conf snapshot for the newly loaded config
 	pvcontrol conf ls > "$(_ae_conf_file "$_new")" 2>/dev/null || true
-	return 0
-}
-
-# Real device with a manifest hook=: the hook power-cycles the board itself (unlike
-# the pool's _reqcfg_gate, which powers off and waits for a fresh container), so this
-# just requests it and then fences the same target going down and coming back.
-_setup_device_retype() {
-	local _rev="$1" _id _resp _status _cfg _waited=0
-
-	_cfg="$required_env"
-	[ -n "$PVTEST_DEV_ENV_BASE" ] && _cfg="$PVTEST_DEV_ENV_BASE $required_env"
-
-	pvtest_log INFO "device retype: requesting hook cfg=[$(pvtest_normalize_cfg "$_cfg")]"
-
-	_id="req.$$.$(date +%s%N)"
-	{ printf 'cfg=%s\n' "$_cfg"; } > "$PVTEST_DEV_HOOK_CTRL/req/.tmp.$_id"
-	mv "$PVTEST_DEV_HOOK_CTRL/req/.tmp.$_id" "$PVTEST_DEV_HOOK_CTRL/req/$_id"
-
-	_resp="$PVTEST_DEV_HOOK_CTRL/resp/$_id"
-	while [ ! -f "$_resp" ]; do
-		sleep 1
-		_waited=$((_waited + 1))
-		if [ "$_waited" -gt 300 ]; then
-			pvtest_log ERROR "device retype: host did not respond"
-			return 1
-		fi
-	done
-	_status=$(sed -n 's/^status=//p' "$_resp")
-	rm -f "$_resp"
-
-	case "$_status" in
-		ok) ;;
-		nohook)
-			pvtest_log ERROR "device retype: no hook configured (should have been caught by the SKIP gate)"
-			return 1
-			;;
-		*)
-			pvtest_log ERROR "device retype: hook failed (status=$_status; see host-side log)"
-			return 1
-			;;
-	esac
-
-	# the hook already power-cycled the board; the "down" window may already
-	# be over by the time we start polling — best-effort fence, not a hard gate
-	pvtest_log INFO "device retype: waiting for device to go down..."
-	wait_for_down 30 || pvtest_log WARN "device did not confirm down within 30s; continuing"
-
-	wait_for_target_ready "device retype" "$_rev" DONE || return 1
-
-	pvcontrol conf ls > "$(_ae_conf_file "$PVTEST_AE")" 2>/dev/null || true
 	return 0
 }
 
@@ -951,32 +956,22 @@ _install_initial_rev() {
 	# this test's own named revision, not whatever was current before it
 	local _st _grc=0
 	_st=$(pvcontrol steps show-progress "$rev" 2>/dev/null | jq -r '.status' 2>/dev/null)
-	if [ -n "$PVTEST_CTRL" ] && [ -n "$PVTEST_SLOT" ]; then
-		# persistent pool: _reqcfg_gate powers off before returning 3
-		_reqcfg_gate "$required_env"; _grc=$?
-	elif [ -n "$PVTEST_DEV_HOOK_CTRL" ]; then
-		# real device with a manifest hook=: check mismatch, signal retype via a
-		# distinct sentinel (4) rather than reusing _reqcfg_gate's 3 — do NOT
-		# pre-poweroff like the pool does, the hook's own power-cycle assumes
-		# the board's current live state.
-		pvcontrol conf ls > "$(_ae_conf_file "$PVTEST_AE")" 2>/dev/null || true
-		if ! _reqcfg_satisfied "$required_env" "$(_ae_conf_file "$PVTEST_AE")"; then
-			_grc=4
-		fi
-	else
-		# no re-type mechanism (real device without an env hook; volatile is
-		# booted with its own config): a mismatch that slipped past the
-		# required-config SKIP gate aborts the test
-		pvcontrol conf ls > "$(_ae_conf_file "$PVTEST_AE")" 2>/dev/null || true
-		if ! _reqcfg_satisfied "$required_env" "$(_ae_conf_file "$PVTEST_AE")"; then
-			pvtest_log ERROR "required config not satisfied and no re-type mechanism: $required_env"
-			return 1
-		fi
-	fi
+	case "$PVTEST_RETYPE" in
+		container|hook)
+			_reqcfg_gate "$required_env"; _grc=$?
+			;;
+		*)
+			# no re-type mechanism: a mismatch that slipped past run_test_attempt's
+			# SKIP gate aborts the test rather than running it under the wrong config
+			pvcontrol conf ls > "$(_ae_conf_file "$PVTEST_AE")" 2>/dev/null || true
+			if ! _reqcfg_satisfied "$required_env" "$(_ae_conf_file "$PVTEST_AE")"; then
+				pvtest_log ERROR "required config not satisfied and no re-type mechanism: $required_env"
+				return 1
+			fi
+			;;
+	esac
 	if [ "$_grc" = 3 ]; then
 		_setup_retype "$rev" || return 1
-	elif [ "$_grc" = 4 ]; then
-		_setup_device_retype "$rev" || return 1
 	elif [ "$_st" = "UPDATED" ] && [ "$commit_initial" = "false" ]; then
 		pvtest_log DEBUG "initial revision left UPDATED (commit-initial=false)"
 	elif [ "$_st" = "UPDATED" ]; then
@@ -989,9 +984,8 @@ _install_initial_rev() {
 }
 
 setup_test() {
-	# deterministic name so golden outputs see a stable "locals/<id>", not a random pvtx name
 	local rev
-	rev="locals/$(printf '%s' "$test_id" | tr '/' '_' | tr '-' '_')"
+	rev=$(_initial_rev_name "$test_id")
 
 	# volatile factory revision should be already the test initial revision
 	if [ "$PVTEST_MODEL" = "volatile" ]; then
@@ -1202,12 +1196,12 @@ run_test_attempt() {
 		fi
 	fi
 
-	# Real device with no manifest hook=: SKIP tests whose config.env the live device
-	# doesn't already satisfy, since there is no way to inject boot config on hardware.
-	# With a hook, let _setup_device_retype try instead. Never gates the pool.
-	if [ "$PVTEST_MODEL" = "persistent" ] && [ -n "$PVTEST_DEVICE_NAME" ] && [ -n "$required_env" ] && [ -z "$PVTEST_DEV_HOOK_CTRL" ]; then
+	# Target with no re-type mechanism at all: SKIP tests whose config.env it doesn't
+	# already satisfy, since there is no way to put it under a different config. Any
+	# target that can be re-typed lets _setup_retype try instead.
+	if [ "$PVTEST_RETYPE" = "none" ] && [ -n "$required_env" ]; then
 		if ! _reqcfg_satisfied "$required_env" "$(_ae_conf_file "$PVTEST_AE")"; then
-			pvtest_log INFO "'$test_id' SKIPPED (required-config not satisfied by device: $required_env, no hook configured)"
+			pvtest_log INFO "'$test_id' SKIPPED (required-config not satisfied by target and no re-type mechanism: $required_env)"
 			return 2
 		fi
 	fi
@@ -1278,20 +1272,25 @@ _slot_bind_ae() {
 	export PVTEST_AE="$1"
 }
 
-# ask the host to re-type slot $1 to required-config $2 (empty = tear down); echoes new container name.
-# optional $3 = storage key: the host keeps /storage under that key across re-types
-# (old hosts ignore the field and boot fresh storage — forward-compatible).
-# silent on error (caller logs the abort) so it never pollutes the captured name.
+# Ask the host to bring slot $1 up on required-config $2 (empty = release the target);
+# echoes the target's name. Optional $3 = storage key, under which the host keeps
+# /storage across re-types; $4/$5 = an initial revision to seed and the ctrl-relative
+# subdir holding its tarballs (volatile only, see _stage_seed).
+# Return codes: 0 ready (name on stdout) or released, 1 failed, 2 unsupported — the
+# target exists but cannot be re-typed at all, which is a normal answer for a board with
+# no hook= and makes the caller SKIP rather than abort.
+# Silent on error (callers log) so it never pollutes the captured name.
 _retype_slot() {
-	local _slot="$1" _cfg="$2" _storage="$3" _req _resp _waited _status _ae
+	local _slot="$1" _cfg="$2" _storage="${3:-}" _rev="${4:-}" _seed="${5:-}"
+	local _req _resp _waited _status _ae
 	_req="$PVTEST_CTRL/req/slot${_slot}"
 	_resp="$PVTEST_CTRL/resp/slot${_slot}"
 	rm -f "$_resp"
 	{
 		printf 'slot=%s\ncfg=%s\n' "$_slot" "$_cfg"
-		if [ -n "$_storage" ]; then
-			printf 'storage=%s\n' "$_storage"
-		fi
+		[ -n "$_storage" ] && printf 'storage=%s\n' "$_storage"
+		[ -n "$_rev" ] && printf 'rev=%s\n' "$_rev"
+		[ -n "$_seed" ] && printf 'seed=%s\n' "$_seed"
 	} > "$PVTEST_CTRL/req/.tmp.slot${_slot}"
 	mv "$PVTEST_CTRL/req/.tmp.slot${_slot}" "$_req"
 	_waited=0
@@ -1304,9 +1303,10 @@ _retype_slot() {
 	_ae=$(sed -n 's/^ae=//p' "$_resp")
 	rm -f "$_resp"
 	case "$_status" in
-		ready) printf '%s' "$_ae"; return 0 ;;
-		down)  return 0 ;;
-		*)     return 1 ;;
+		ready)       printf '%s' "$_ae"; return 0 ;;
+		down)        return 0 ;;
+		unsupported) return 2 ;;
+		*)           return 1 ;;
 	esac
 }
 
@@ -1321,56 +1321,28 @@ _slot_abort_tests() {
 	done
 }
 
-# Single real-device runner: no pool, no re-type, no claim-batching — the device
-# binds once, inits once, then every queued test runs against it sequentially via
-# run_test_attempt. PVTEST_EXEC/PVTEST_HOST come from the manifest via
-# test.docker.sh. Also the volatile model's one-test-per-container path, where the
-# factory reset is skipped: the container is torn down right after anyway.
-run_single_device() {
-	local _name="$1"
-	local _json _rc _overall=0
-
-	# real devices are slower (real reboots, ssh round-trips per poll)
-	export PVTEST_TEST_TIMEOUT="${PVTEST_TEST_TIMEOUT:-1800}"
-
-	export PVTEST_AE="$_name"
-	if ! init_device "$_name"; then
-		pvtest_log ERROR "init failed"
-		return 1
-	fi
-	pvtest_log INFO "SLOT_ATTACH"
-
-	local _n
-	_n=$(printf '%s\n' $test_json_list | grep -c .)
-	pvtest_log INFO "=== single device: ${_n} test(s) against $_name ==="
-
-	for _json in $test_json_list; do
-		run_test_attempt "$_json"; _rc=$?
-		{ [ "$_rc" -ne 0 ] && [ "$_rc" -ne 2 ]; } && _overall=1
-	done
-
-	# good manners: leave a real device back on a clean factory state once
-	# testing is done. Pointless for volatile model's throwaway container, torn
-	# down by the caller right after this returns.
-	if [ "$PVTEST_MODEL" != "volatile" ]; then
-		_settle_to_factory || pvtest_log WARN "final factory reset failed"
-	fi
-
-	pvtest_log INFO "SLOT_DETACH"
-
-	[ "$PVTEST_MODEL" = "volatile" ] && \
-		pv_ctrl cmd poweroff "pvtest: volatile test done" > /dev/null 2>&1 || true
-
-	return $_overall
+# Attach slot $1 to a target running config $2, echoing its name. For a re-typable
+# target that means asking the host to bring one up; for a target that exists already and
+# cannot be re-typed (a board with no hook=, or a preset PVTEST_EXEC) the host answers
+# 'unsupported' and we bind what is already there — tests whose config it doesn't satisfy
+# are SKIPped later by run_test_attempt's gate. $3/$4/$5 are the optional storage key,
+# seeded initial revision and seed subdir passed straight through to _retype_slot.
+_slot_attach() {
+	local _slot="$1" _cfg="$2" _ae _rc
+	_ae=$(_retype_slot "$_slot" "$_cfg" "${3:-}" "${4:-}" "${5:-}"); _rc=$?
+	# 'unsupported' is not a failure: the target is already there, we just cannot
+	# choose its config. It has to have been named for us to bind it, though.
+	[ "$_rc" = 2 ] && _ae="$PVTEST_DEVICE_NAME"
+	printf '%s' "$_ae"
+	[ -n "$_ae" ]
 }
-
 
 # persistent-model dispatcher: one flat queue sorted so claim-needing tests come first
 # (one claim per worker held across adjacent tests) and equal-config tests sit
 # together (fewest re-types); correctness never depends on the ordering.
 
-# pop the next "<rank>\t<cfg>\t<jsonpath>" line from the persistent queue; empty when drained
-_persistent_pick() {
+# pop the next "<rank>\t<cfg>\t<jsonpath>" line from the shared queue; empty when drained
+_queue_pick() {
 	local _pool="$1"
 	(
 		flock -x 9
@@ -1392,15 +1364,15 @@ persistent_worker() {
 	export PVTEST_SLOT="$_slot"
 
 	while : ; do
-		_line=$(_persistent_pick "$_pool")
+		_line=$(_queue_pick "$_pool")
 		[ -n "$_line" ] || break
 		_newcfg=$(printf '%s' "$_line" | cut -f2)
 		_json=$(printf '%s' "$_line" | cut -f3)
 
-		# first pick (or recovery after a failed mid-setup re-type): boot the
-		# worker's container with this test's config
+		# first pick (or recovery after a failed mid-setup re-type): get the worker
+		# a target running this test's config
 		if [ -z "$_ae" ]; then
-			_ae=$(_retype_slot "$_slot" "$_newcfg" "w${_slot}")
+			_ae=$(_slot_attach "$_slot" "$_newcfg" "w${_slot}")
 			if [ -z "$_ae" ]; then
 				_slot_abort_tests "re-type failed" "$_json"; touch "$_failed"; continue
 			fi
@@ -1424,7 +1396,7 @@ persistent_worker() {
 
 	# Final detach: remove the device from the Hub (unclaim when it can walk
 	# back to claimable; plain Hub delete for a claimed device left in local
-	# mode), power off, release the container.
+	# mode), then release the target.
 	if [ -n "$_ae" ]; then
 		_slot_bind_ae "$_ae"
 		_state=$(pvcontrol devmeta ls 2>/dev/null | jq -r '.["pantahub.state"] // empty')
@@ -1433,20 +1405,80 @@ persistent_worker() {
 		else
 			_dev_delete_only
 		fi
+
+		# A target that survives the run gets left on a clean factory state as a
+		# courtesy; one that is about to be destroyed does not, because nobody will
+		# ever see it. That is a property of the release, not of the hardware.
+		if [ "$PVTEST_RETYPE" != "container" ]; then
+			_settle_to_factory || pvtest_log WARN "final factory reset failed"
+		fi
+
 		pvtest_log INFO "[slot $_slot] SLOT_DETACH ae=$_ae"
-		pv_ctrl cmd poweroff "pvtest: worker done" > /dev/null 2>&1 || true
-		_retype_slot "$_slot" "" > /dev/null 2>&1 || true
+		if [ "$PVTEST_RETYPE" = "container" ]; then
+			pv_ctrl cmd poweroff "pvtest: worker done" > /dev/null 2>&1 || true
+			_retype_slot "$_slot" "" > /dev/null 2>&1 || true
+		fi
 	fi
 }
 
-# persistent-model scheduler: flat sorted queue, no runner-type machinery
+# One volatile-model worker: every test gets its own target, thrown away right after.
+# The initial revision is seeded into the target's first boot (image pvtx.d + this test's
+# tarballs) rather than installed once pantavisor is up, so a test pays one boot instead
+# of the three the persistent model's install-and-commit costs.
+volatile_worker() {
+	local _slot="$1" _pool="$2" _failed="$3"
+	local _line _cfg _json _tid _rev _ae _rc
+	local _seed="$PVTEST_CTRL/seed/slot${_slot}"
+
+	export PVTEST_SLOT="$_slot"
+
+	while : ; do
+		_line=$(_queue_pick "$_pool")
+		[ -n "$_line" ] || break
+		_cfg=$(printf '%s' "$_line" | cut -f2)
+		_json=$(printf '%s' "$_line" | cut -f3)
+		_tid=$(echo "$_json" | sed 's|^/work/||; s|/test\.json$||')
+		_rev=$(_initial_rev_name "$_tid")
+
+		if ! _stage_seed "$_json" "$_seed"; then
+			_slot_abort_tests "could not stage container tarballs" "$_json"
+			touch "$_failed"; continue
+		fi
+
+		# storage keyed by test id, so a workspace keeps one storage dir per test
+		_ae=$(_slot_attach "$_slot" "$_cfg" "$_tid" "$_rev" "slot${_slot}")
+		if [ -z "$_ae" ]; then
+			_slot_abort_tests "appengine boot failed" "$_json"
+			touch "$_failed"; continue
+		fi
+
+		_slot_bind_ae "$_ae"
+		if ! init_device "$_ae"; then
+			pvtest_log ERROR "init failed"
+			_slot_abort_tests "device init failed" "$_json"; touch "$_failed"
+		else
+			pvtest_log INFO "[slot $_slot] SLOT_ATTACH ae=$_ae rev=$_rev cfg=[$_cfg]"
+			run_test_attempt "$_json"; _rc=$?
+			{ [ "$_rc" -ne 0 ] && [ "$_rc" -ne 2 ]; } && touch "$_failed"
+		fi
+
+		# the claim, if any, died with teardown_test; drop the target itself
+		pvtest_log INFO "[slot $_slot] SLOT_DETACH ae=$_ae"
+		pv_ctrl cmd poweroff "pvtest: volatile test done" > /dev/null 2>&1 || true
+		_retype_slot "$_slot" "" > /dev/null 2>&1 || true
+		rm -rf "$_seed"
+	done
+}
+
+# The scheduler, for every model and every kind of target: build one flat queue, fan it
+# out across PVTEST_SLOTS workers, collect a single pass/fail. Only the worker body
+# differs, and only by lifecycle — whether a target is kept across tests or thrown away.
 run_slot_pool() {
 	local _slots="${PVTEST_SLOTS:-1}"
 	local _pool _failed _j _req _sc _rank _pids _w
-	_pool=$(mktemp -d /tmp/pvtest_persistentpool.XXXXXX)
+	_pool=$(mktemp -d /tmp/pvtest_slotpool.XXXXXX)
 
-	# rank 0 = needs a claim (REMOTE=1 + self-claim), 1 = rest; sort by rank,
-	# then config, then path — claim block first, equal configs adjacent
+	# rank 0 = needs a claim (REMOTE=1 + self-claim), 1 = rest
 	for _j in $test_json_list; do
 		_req=$(pvtest_normalize_cfg "$(jq -r '.setup.config.env // ""' "$_j")")
 		_sc=$(jq -r '.setup."self-claim" // "false"' "$_j")
@@ -1455,15 +1487,30 @@ run_slot_pool() {
 			*" PV_CONTROL_REMOTE=1 "*) [ "$_sc" = "true" ] && _rank=0 ;;
 		esac
 		printf '%s\t%s\t%s\n' "$_rank" "$_req" "$_j"
-	done | sort -t "$(printf '\t')" -k1,1 -k2,2 -k3,3 > "$_pool/queue"
+	done > "$_pool/queue.raw"
 
-	pvtest_log INFO "=== persistent pool: $(wc -l < "$_pool/queue") test(s) across up to ${_slots} worker(s) ==="
+	# persistent sorts by rank, then config, then path — claim block first, equal
+	# configs adjacent, so one claim covers several tests and re-types are rare.
+	# volatile re-types unconditionally and claims per test, so it has nothing to
+	# batch and keeps the caller's order. Correctness never depends on either.
+	if [ "$PVTEST_MODEL" = "volatile" ]; then
+		mv "$_pool/queue.raw" "$_pool/queue"
+	else
+		sort -t "$(printf '\t')" -k1,1 -k2,2 -k3,3 "$_pool/queue.raw" > "$_pool/queue"
+		rm -f "$_pool/queue.raw"
+	fi
+
+	pvtest_log INFO "=== ${PVTEST_MODEL} pool: $(wc -l < "$_pool/queue") test(s) across up to ${_slots} worker(s) ==="
 
 	_failed=$(mktemp); rm -f "$_failed"
 
 	_pids=""; _w=0
 	while [ "$_w" -lt "$_slots" ]; do
-		persistent_worker "$_w" "$_pool" "$_failed" &
+		if [ "$PVTEST_MODEL" = "volatile" ]; then
+			volatile_worker "$_w" "$_pool" "$_failed" &
+		else
+			persistent_worker "$_w" "$_pool" "$_failed" &
+		fi
 		_pids="${_pids:+$_pids }$!"
 		_w=$((_w + 1))
 	done
@@ -1524,20 +1571,10 @@ pvtest_log INFO "starting test run: ${_run_scope:-all}"
 
 wait_for_netsim
 
-# single-target mode: flat PVTEST_QUEUE run sequentially against PVTEST_DEVICE_NAME
-if [ -n "$PVTEST_QUEUE" ] && [ -n "$PVTEST_DEVICE_NAME" ]; then
-	test_json_list="$PVTEST_QUEUE"
-	run_single_device "$PVTEST_DEVICE_NAME"
-	exit $?
-fi
-
-# slot-pool mode: flat PVTEST_QUEUE dispatched across PVTEST_SLOTS via PVTEST_CTRL
+# slot-pool mode: flat PVTEST_QUEUE dispatched across PVTEST_SLOTS via PVTEST_CTRL.
+# Every non-interactive run lands here — containers and boards alike, both models.
 if [ -n "$PVTEST_QUEUE" ] && [ -n "$PVTEST_CTRL" ]; then
 	test_json_list="$PVTEST_QUEUE"
-	if [ "$PVTEST_MODEL" != "persistent" ]; then
-		pvtest_log ERROR "slot-pool dispatch supports PVTEST_MODEL=persistent only (got '$PVTEST_MODEL')"
-		exit 1
-	fi
 	run_slot_pool
 	exit $?
 fi
@@ -1570,6 +1607,6 @@ if [ -n "$PVTEST_APPENGINES" ]; then
 	exit 0
 fi
 
-pvtest_log ERROR "no dispatch mode configured (need PVTEST_QUEUE with PVTEST_DEVICE_NAME or PVTEST_CTRL, or PVTEST_APPENGINES)"
+pvtest_log ERROR "no dispatch mode configured (need PVTEST_QUEUE with PVTEST_CTRL, or PVTEST_APPENGINES)"
 usage
 exit 1

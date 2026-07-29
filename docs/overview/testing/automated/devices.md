@@ -53,12 +53,20 @@ Unrecognized keys produce a `WARN` and are ignored. `--devices` is incompatible 
 
 ### The re-type hook
 
+A board is a slot like any other. The tester asks the host to bring slot 0 up on a given
+config over the same ctrl protocol the appengine pool uses; the only difference is what the
+host does to satisfy that request — boot a new container generation (`PVTEST_RETYPE=container`)
+or run this board's hook (`PVTEST_RETYPE=hook`). A board with no `hook=` answers `unsupported`,
+which is a normal reply rather than an error: the tester binds the board as it is and SKIPs
+any test whose `config.env` it doesn't already satisfy.
+
 A hook is invoked as `hook [-c <config=>] KEY=VALUE ...`, and typically writes the boot env as
 a full replacement — so passing only a test's own `config.env` would drop everything else the
-device needs to stay usable. That is what the manifest's `env=` field is for: the tester passes
-those board-level tokens **ahead** of the test's own on every re-type, so the test still wins
-on any key both set, and a board that boots with, say, a fixed log or secure-boot setting keeps
-it across re-types. Leave `env=` empty for a hook that merges rather than replaces.
+device needs to stay usable. That is what the manifest's `env=` field is for: the host prepends
+those board-level tokens to the test's own on every re-type, so the test still wins on any key
+both set, and a board that boots with, say, a fixed log or secure-boot setting keeps it across
+re-types. Leave `env=` empty for a hook that merges rather than replaces. This happens entirely
+host-side — the tester only ever sends a test's own required config.
 
 Without `hook=`, tests whose `config.env` the live device doesn't already satisfy are SKIPPED
 instead of power-cycled — so run device-mode suites **without** `--fail-on-skip` until each
