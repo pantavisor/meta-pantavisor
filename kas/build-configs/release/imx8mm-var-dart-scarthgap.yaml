@@ -33,7 +33,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 8fa83af3b9c8d3894597cf75a7b2806957d1358a
+        commit: 5d0e70808292f7fe1470142acf0c3830aeee9193
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
