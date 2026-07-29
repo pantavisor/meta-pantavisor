@@ -25,6 +25,8 @@ do_deploy() {
     install -m 0755 ${WORKDIR}/host/test.docker.sh ${DEPLOYDIR}/pvtests/test.docker.sh
     install -m 0644 ${WORKDIR}/host/devices.txt    ${DEPLOYDIR}/pvtests/devices.txt
     install -m 0644 ${WORKDIR}/host/README.md      ${DEPLOYDIR}/pvtests/README.md
+    # copied into each run's workspace by test.docker.sh; must sit beside it
+    install -m 0644 ${WORKDIR}/host/workspace-README.md ${DEPLOYDIR}/pvtests/workspace-README.md
 
     install -d ${DEPLOYDIR}/pvtests/pvtest
     install -m 0644 ${WORKDIR}/pvtest/common ${DEPLOYDIR}/pvtests/pvtest/common

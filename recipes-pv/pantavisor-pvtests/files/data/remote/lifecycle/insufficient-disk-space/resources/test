@@ -2,7 +2,7 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
 
 # Per-test isolation: clone into a temp checkout dir; never override $HOME (see
 # automated-workflow.md § Test authoring rules).
@@ -31,7 +31,7 @@ pvr commit -m "add large file to trigger insufficient space" > /dev/null 2>&1
 revB=$(pvr_post_rev -m "trigger insufficient space" "$trail_url")
 [ -n "$revB" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
 
-wait_for_path "$(storage_dir)/trails/0" "-d" > /dev/null 2>&1 \
+wait_for_path "$(pv_storage_dir)/trails/0" "-d" > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for /storage/trails/0 to be GC'd" >&2; exit 1; }
 wait_for_value "pvcontrol steps show-progress $revB | jq -r '.status'" "WONTGO" 120 \
     || { echo "ERROR: timeout waiting for revision $revB to reach WONTGO" >&2; exit 1; }

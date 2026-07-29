@@ -12,10 +12,10 @@ pvcontrol conf ls | jq '.[] | select(.key == "PV_STORAGE_PHCONFIG_VOL")'
 # bind-mounted phconfig dir and check only for THAT name: deterministic
 # regardless of storage history, and does not depend on claim state at all.
 marker="pvtest_phconfig_marker"
-_pv_exec sh -c "echo marker > /run/pantavisor/pv/phconfig/$marker"
+pv_exec sh -c "echo marker > /run/pantavisor/pv/phconfig/$marker"
 
 echo "== marker visible in /volumes/bsp/pv--phconfig (bind-mount target when PV_STORAGE_PHCONFIG_VOL=1) =="
-_pv_exec test -e "/volumes/bsp/pv--phconfig/$marker" && echo present || echo absent
+pv_exec test -e "/volumes/bsp/pv--phconfig/$marker" && echo present || echo absent
 
 echo "== marker absent from /storage/config (phconfig writes never fall back to plain storage) =="
-_pv_exec test -e "/storage/config/$marker" && echo present || echo absent
+pv_exec test -e "/storage/config/$marker" && echo present || echo absent

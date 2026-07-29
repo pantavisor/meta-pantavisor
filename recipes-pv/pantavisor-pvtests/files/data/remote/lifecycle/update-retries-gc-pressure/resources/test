@@ -2,7 +2,7 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
 
 # Per-test isolation: clone into a temp checkout dir; never override $HOME (see
 # automated-workflow.md § Test authoring rules).
@@ -26,7 +26,7 @@ wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "DOWNLOADI
 pvcontrol steps show-progress $rev | jq -Mc 'del(.logs, .downloads)'
 
 echo "== kill PV (crash 1, triggers retry 2) =="
-crash_pv
+pv_crash
 wait_for_down 30 \
     || { echo "ERROR: pv-ctrl never went down after crash" >&2; exit 1; }
 wait_for_target_ready \
@@ -39,7 +39,7 @@ wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "DOWNLOADI
 pvcontrol steps show-progress $rev | jq -Mc 'del(.logs, .downloads)'
 
 echo "== kill PV (crash 2, triggers WONTGO via cloud) =="
-crash_pv
+pv_crash
 wait_for_down 30 \
     || { echo "ERROR: pv-ctrl never went down after crash" >&2; exit 1; }
 wait_for_target_ready \

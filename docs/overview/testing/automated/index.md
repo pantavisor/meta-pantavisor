@@ -32,7 +32,7 @@ real device would. The tester drives each target over two channels:
   A device manifest's `exec=ssh …` must include
   `-o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=3 -o ServerAliveCountMax=2`:
   reboot-class updates black-hole established TCP connections, and an ssh without
-  keepalives blocks on them forever. As a backstop, `_pv_exec` wall-bounds every
+  keepalives blocks on them forever. As a backstop, `pv_exec` wall-bounds every
   forwarded call tester-side with `timeout` (`PVTEST_EXEC_TIMEOUT`, default 60 s; 600 s
   for `pvtx` tarball streaming).
 - **`PVTEST_HOST`** — the host for the target's pvr HTTP endpoint

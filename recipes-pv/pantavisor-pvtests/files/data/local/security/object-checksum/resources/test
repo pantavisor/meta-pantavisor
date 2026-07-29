@@ -5,7 +5,7 @@ source /usr/share/pantavisor/pvtest/utils
 echo "== checksum validation log =="
 # The validated file set is the device baseline (target-dependent), so assert
 # the invariant core as booleans instead of a literal file list.
-LOG=$(_pv_exec grep 'validati' "$(storage_dir)/logs/current/pantavisor/pantavisor.log" \
+LOG=$(pv_exec grep 'validati' "$(pv_storage_dir)/logs/current/pantavisor/pantavisor.log" \
 	| tr -d '\r' \
 	| grep -v '\[dmesg\]' \
 	| sed 's/^.* -- \[[^]]*\]: *//; s/^([a-zA-Z_][a-zA-Z0-9_]*:[0-9]*) //')

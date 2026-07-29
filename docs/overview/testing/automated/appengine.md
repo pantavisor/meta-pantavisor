@@ -168,7 +168,7 @@ encode lessons that caused real cross-test failures.
    shared trail and are not fixed — never hardcode `"1"`/`"2"`. Post explicitly and capture
    the integer the Hub assigned with `pvr_post_rev` (from `utils`):
    ```sh
-   device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+   device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
    trail_url="https://api.pantahub.com/trails/$device_id"
    rev=$(pvr_post_rev -m "msg" "$trail_url")
    [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
@@ -217,8 +217,8 @@ encode lessons that caused real cross-test failures.
     expected SKIP/FAIL classes on real devices: [devices.md](devices.md).
 
 Always source `utils` at the top (`source /usr/share/pantavisor/pvtest/utils`); it provides
-`pvcontrol`/`pventer`/`pvcurl`, `_pv_exec`, the `wait_for_*` helpers, `pvr_clone_local_or_die`
-and `pvr_post_rev`. After a reboot or a `crash_pv`, fence the come-back with `wait_for_down`
+`pvcontrol`/`pventer`/`pvcurl`, `pv_exec`, the `wait_for_*` helpers, `pvr_clone_local_or_die`
+and `pvr_post_rev`. After a reboot or a `pv_crash`, fence the come-back with `wait_for_down`
 followed by `wait_for_target_ready`, passing a short label (`"after crash 2"`) whenever a test
 fences more than once — otherwise each fence logs the same lines and the log cannot say which
 one stalled.

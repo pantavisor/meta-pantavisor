@@ -30,15 +30,15 @@ usage() {
 	echo "  -d, --dir         Use directory as pvtest source directory (or PVTEST_DIR env)"
 	echo ""
 	echo "Commands:"
-	echo "  add <scope/category/name>  Create a new test"
-	echo "  install-deps               Install dependencies (and docker)"
-	echo "  install-docker             Install docker"
-	echo "  install-tarballs [path]... Install container tarballs for a target type"
-	echo "  ls                         List all tests"
-	echo "  run [path]                 Run one to many tests"
+	echo "  add <scope/category/name>            Create a new test"
+	echo "  install-deps                         Install dependencies (and docker)"
+	echo "  install-docker                       Install docker"
+	echo "  install-tarballs <target> [path]...  Install container tarballs for a target"
+	echo "  ls                                   List all tests"
+	echo "  run [path]                           Run one to many tests"
 	echo ""
 	echo "Arguments for 'install-tarballs' command:"
-	echo "  -t, --target TYPE     Target type to install for (default appengine)"
+	echo "  <target>              Target type to install for (the devices.txt type=)"
 	echo "  -s, --scope SCOPE     Install into this scope only (local|remote; default both)"
 	echo "  -l, --list            Print the installed overrides and exit"
 	echo "      --reset           Restore the shipped tarballs and exit"
@@ -48,20 +48,10 @@ usage() {
 	echo "  -m, --manual          Avoid starting Pantavisor for debugging"
 	echo "  -n, --netsim          Use the network simulator (experimental)"
 	echo "  -o, --overwrite       Create or overwrite the test output"
-	echo "  -p, --parallel N      Number of slots: the cap on concurrent appengine"
-	echo "                        containers a single tester keeps busy (default: 1)."
-	echo "  --devices FILE        Run against one real device instead of the appengine"
-	echo "                        pool (see README.md / docs/overview/testing/automated/devices.md)."
-	echo "  --model MODEL         Assignment model: persistent (default) boots every test"
-	echo "                        under exactly its config.env (one persistent storage per"
-	echo "                        worker); on --devices, a manifest entry with hook=/config="
-	echo "                        set re-types the device via that hook when config.env"
-	echo "                        doesn't match, otherwise (no hook=) tests are SKIPPED as"
-	echo "                        before; volatile boots one fresh container per test,"
-	echo "                        straight into that test's revision (incompatible with"
-	echo "                        --devices). Run test.docker.sh twice to get both."
-	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED, whatever the reason"
-	echo "                        (test.json \"skip\", \"devices\" filter, unmet config, no creds)"
+	echo "  -p, --parallel N      Cap on concurrent appengine containers (default: 1)"
+	echo "  --devices FILE        Run against one real device instead of the pool"
+	echo "  --model MODEL         persistent (default) or volatile"
+	echo "      --fail-on-skip    Exit non-zero if any test is SKIPPED, for any reason"
 	echo "  -V, --valgrind        Run Pantavisor with valgrind"
 	echo "  -w, --work PATH       Set workspace path for logs/storage (default: mktemp)"
 	echo ""
@@ -79,24 +69,18 @@ usage() {
 	echo "  PVTEST_TARBALLS_PATH      Default source for 'install-tarballs'"
 	echo "  PVTEST_TARBALLS_MANIFEST  Override manifest path (default: <dir>/pvtest-tarballs.manifest)"
 	echo ""
-	echo "Target override environments (unset = local appengine container, set = external target):"
-	echo "  PVTEST_EXEC      Command prefix to run pvcontrol/pventer on the target."
-	echo "                     Unset (default): test.docker.sh starts a pantavisor-appengine"
-	echo "                     container and sets this to \"ssh _pv_@<container>\" (dropbear-pv)."
-	echo "                     Real device: \"ssh root@<ip>\" or \"ssh -p <port> user@<ip>\""
-	echo "  PVTEST_HOST      Hostname or IP for pvr/HTTP calls to the target (default: localhost)."
-	echo "                     Set automatically to the appengine container name when unset."
-	echo "  PVTEST_DEVICE_TYPE  Class of target, shared by every runner of the same kind"
-	echo "                     (default: appengine; on --devices, the manifest's type=,"
-	echo "                     falling back to its name=). Tests with a non-empty"
-	echo "                     \"devices\" array only run when this value is listed."
+	echo "Target overrides (unset = local appengine container, set = external target):"
+	echo "  PVTEST_EXEC         Command prefix to reach the target (e.g. \"ssh root@<ip>\")"
+	echo "  PVTEST_HOST         Host/IP for pvr HTTP calls (default: localhost)"
+	echo "  PVTEST_DEVICE_TYPE  Target class matched against a test's \"devices\" array"
+	echo ""
+	echo "See README.md and docs/overview/testing/automated/."
 	echo ""
 }
 
-# Runner-type = (normalized config.env, needs-claim); see the testing docs.
-
-# Normalize config.env to a stable signature (shared with pvtest-run).
-normalize_reqcfg() { pvtest_normalize_cfg "$@"; }
+# Normalized config.env of the test under dir $1; the signature pvtest-run
+# compares against, so both sides must derive it the same way.
+_test_cfg() { pvtest_normalize_cfg "$(jq -r '.setup.config.env // ""' "$1/test.json")"; }
 
 list_tests() {
 	printf "%-50s %-10s\n" "test" "description"
@@ -176,18 +160,13 @@ install_docker() {
 
 # --- container tarball substitution -----------------------------------------
 #
-# The suites ship with the example containers built for the appengine (x86,
-# signed by the build's PVS_VENDOR_NAME CA). Running against a real device of
-# another architecture, or one that trusts a different signing CA, needs those
-# replaced with tarballs built for that board. Overlaying them here keeps a
-# single distro install usable against any target.
-#
-# Overrides are workspace-local: they live in the *extracted* distro, not in the
-# meta-pantavisor source tree, so a rebuild re-stages the pristine ones.
+# The shipped example containers are x86 and signed by the build's own CA, so a
+# board of another architecture or CA needs its own. Overrides are workspace-local
+# (the extracted distro, not the source tree), so a rebuild restages the pristine ones.
 
 # Which target tree install-tarballs and the override log operate on. Set by
-# install-tarballs -t and by run_test once the device type is known; appengine is
-# the type a run without --devices resolves to.
+# install-tarballs' <target> argument and by run_test once the device type is known;
+# appengine is the type a run without --devices resolves to.
 _tarball_target=appengine
 
 # Per target: a manifest inside the target tree keeps each target's override history
@@ -219,17 +198,17 @@ _tarball_sum() {
 	sha256sum "$1" 2>/dev/null | cut -c1-12
 }
 
-# Announce substituted tarballs at INFO: this is the one line explaining why a
-# run's results differ from a pristine distro, so it must survive a grep -v DEBUG.
-_log_tarball_overrides() {
-	local wp="$1" n ts scope name action sum src
+# INFO, not DEBUG: this is the one line explaining why a run's results differ from
+# a pristine distro, so it must survive a grep -v DEBUG. Returns 1 when there are
+# none, so callers can say so in their own words.
+_print_tarball_overrides() {
+	local n ts scope name action sum src
 	n=$(_tarball_overrides_effective | wc -l)
-	[ "${n:-0}" -gt 0 ] || return 0
+	[ "${n:-0}" -gt 0 ] || return 1
 	pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
 	_tarball_overrides_effective | while IFS="$(printf '\t')" read -r ts scope name action sum src; do
 		pvtest_log INFO "  targets/$_tarball_target/$scope/$name <- $src ($action, sha $sum)"
 	done
-	cp -f "$(_tarballs_manifest)" "$wp/pvtest-tarballs.manifest" 2>/dev/null || true
 }
 
 # Scope dirs live under targets/<type>/, which is what test.docker.sh mounts over
@@ -293,19 +272,29 @@ _reset_tarballs() {
 
 install_tarballs() {
 	local scope= do_list=false do_reset=false srcs=() found=0
-	_tarball_target=appengine
+	_tarball_target=
 
+	# First non-option argument is the target, the rest are sources.
 	while [ $# -gt 0 ]; do
 		case "$1" in
-			-t|--target) _tarball_target="$2"; shift 2 ;;
 			-s|--scope) scope="$2"; shift 2 ;;
 			-l|--list)  do_list=true; shift ;;
 			--reset)    do_reset=true; shift ;;
 			-h|--help)  usage; exit 0 ;;
 			-*) pvtest_log ERROR "Unknown install-tarballs option: $1"; exit 1 ;;
-			*)  srcs+=("$1"); shift ;;
+			*)  if [ -z "$_tarball_target" ]; then _tarball_target="$1"; else srcs+=("$1"); fi; shift ;;
 		esac
 	done
+
+	# Required rather than defaulting to appengine: dropping a board's arm tarballs
+	# into the pool's tree is exactly the mix-up the per-target split prevents, and a
+	# default would make it the outcome of a forgotten argument.
+	if [ -z "$_tarball_target" ]; then
+		pvtest_log ERROR "install-tarballs needs a target type (the devices.txt 'type=' of the board)"
+		pvtest_log ERROR "  usage: $0 install-tarballs <target> [path]..."
+		pvtest_log ERROR "  existing: $(ls "$test_dir/targets" 2>/dev/null | tr '\n' ' ')"
+		exit 1
+	fi
 
 	if [ -n "$scope" ] && [ "$scope" != local ] && [ "$scope" != remote ]; then
 		pvtest_log ERROR "--scope must be 'local' or 'remote'"
@@ -313,15 +302,7 @@ install_tarballs() {
 	fi
 
 	if [ "$do_list" = true ]; then
-		local n; n=$(_tarball_overrides_effective | wc -l)
-		if [ "${n:-0}" -eq 0 ]; then
-			pvtest_log INFO "no tarball overrides installed"
-		else
-			pvtest_log INFO "tarball overrides: $n (manifest=$(_tarballs_manifest))"
-			_tarball_overrides_effective | while IFS="$(printf '\t')" read -r _ts s nm ac sm sr; do
-				pvtest_log INFO "  targets/$_tarball_target/$s/$nm <- $sr ($ac, sha $sm)"
-			done
-		fi
+		_print_tarball_overrides || pvtest_log INFO "no tarball overrides installed"
 		return 0
 	fi
 
@@ -496,12 +477,24 @@ teardown_network() {
 # Slot-pool helpers: retype_service subshell snapshots run_test's/_run_pass's
 # locals (work_path, valgrind, pvtest_pubkey, slot, pass_tag, USER).
 
-# Boot appengine $1 with config.env $2 (detached); tester's init_device awaits readiness.
-# Optional $3 = storage key: containers re-typed under the same key share one
-# storage dir across generations (default: the container name = fresh storage).
-# Optional $4/$5 = initial revision name and a host dir of tarballs to build it
-# from, on top of the image's own pvtx.d — pv-appengine deploys that revision on
-# first boot and boots into it (volatile model; see _volatile_run_one_test).
+# Container flags every appengine needs, whatever boots it.
+_AE_DOCKER_ARGS=(
+	--net=test-appengine-net
+	--cgroupns host
+	--cap-add NET_ADMIN --cap-add SYS_ADMIN --cap-add SYS_PTRACE --cap-add MKNOD
+	--device /dev/kmsg --device /dev/hwrng --device /dev/loop-control
+	--device-cgroup-rule 'b 7:* rmw'
+	--security-opt apparmor=unconfined --security-opt seccomp=unconfined
+	--volume /sys/fs:/sys/fs
+	--mount type=tmpfs,target=/usr/lib/lxc/rootfs
+	--mount type=tmpfs,target=/volumes
+	--mount type=tmpfs,target=/configs
+)
+
+# Boot appengine $1 with config.env $2 (detached); init_device awaits readiness.
+# $3 = storage key, shared across re-typed generations (default: fresh storage).
+# $4/$5 = initial revision name + a dir of tarballs to build it from, deployed by
+# pv-appengine on first boot (volatile model).
 _boot_appengine() {
 	local ae="$1" cfg="$2" storage_key="$3" initial_rev="$4" pvtx_extra_dir="$5"
 	local PVTEST_LOG_TAG="$ae"
@@ -524,24 +517,9 @@ _boot_appengine() {
 	touch "$work_path/${ae}.log"
 	if ! docker run \
 		--name "$ae" \
-		--net=test-appengine-net \
 		-d \
 		--rm \
-		--cgroupns host \
-		--cap-add NET_ADMIN \
-		--cap-add SYS_ADMIN \
-		--cap-add SYS_PTRACE \
-		--cap-add MKNOD \
-		--device /dev/kmsg \
-		--device /dev/hwrng \
-		--device /dev/loop-control \
-		--device-cgroup-rule 'b 7:* rmw' \
-		--security-opt apparmor=unconfined \
-		--security-opt seccomp=unconfined \
-		--volume "/sys/fs":"/sys/fs" \
-		--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
-		--mount type=tmpfs,target="/volumes" \
-		--mount type=tmpfs,target="/configs" \
+		"${_AE_DOCKER_ARGS[@]}" \
 		-v "$storage_dir":/var/pantavisor/storage \
 		"${ae_valgrind_args[@]}" \
 		"${ae_seed_args[@]}" \
@@ -606,15 +584,10 @@ _dev_flush_stanza() {
 	return 0
 }
 
-# Parse a --devices manifest (blank-line separated key=value stanzas) into
-# parallel arrays: _dev_name (this runner), _dev_type (its class, what a test's
-# "devices" list is matched against), _dev_ip, _dev_exec, _dev_tty, _dev_baud,
-# plus the config-injection fields _dev_hook/_dev_config/_dev_env (hook= names a host
-# command that sets the device's boot env and power-cycles it; config= names its
-# config file; env= is the board's base boot env, prepended to every test's own
-# tokens). Consumed by _dev_retype_handle/_dev_retype_service when a
-# manifest entry sets hook=; a device with no hook= keeps the old SKIP-only
-# behavior (see run_test_attempt in pvtest-run.in).
+# Parse a --devices manifest (blank-line separated key=value stanzas) into the
+# parallel _dev_* arrays. _dev_type is the class a test's "devices" list matches
+# against; hook=/config=/env= drive _dev_retype_handle, and a device without a
+# hook= keeps the SKIP-only behaviour (see run_test_attempt in pvtest-run).
 _parse_device_manifest() {
 	local file="$1"
 	local name= type= ip= exec_cmd= tty= baud= hook= config= env_base= line
@@ -703,6 +676,16 @@ _stop_device_capture() {
 	fi
 }
 
+# Hand every manifest device back: stop its tty capture, drop its lock. The board
+# itself is left running — a device run never powers hardware down.
+_release_devices() {
+	local i
+	for i in "${!_dev_name[@]}"; do
+		_stop_device_capture "${_dev_name[$i]}"
+		_unlock_device "${_dev_name[$i]}"
+	done
+}
+
 # Handle one re-type request id=$2 for slot=$3 to config=$4 (empty = teardown),
 # keeping storage under key $5 across generations when non-empty.
 # Backgrounded by retype_service; per-slot current container in $1/state/slot<S>.ae.
@@ -761,16 +744,11 @@ retype_service() {
 	done
 }
 
-# Handle one device re-type request id=$2 for device=$3 to config=$4 (space-
-# separated PV_KEY=VALUE tokens: the device's env= base followed by the test's
-# required_env). Looks up the hook=/config= command for $3 in the parsed manifest
-# arrays and runs it synchronously — this is the consumer of the config-injection
-# seam that _parse_device_manifest/_dev_flush_stanza have carried since parsing but
-# nothing invoked. A hook exiting 0 means the hook itself succeeded (set the
-# boot env, power-cycled) — it does NOT mean the device is back up; the hook
-# only streams a few seconds of boot serial before returning. Confirming the
-# device is actually up with the new config is the tester's job (pvtest-run's
-# _setup_device_retype), not this function's.
+# Handle one device re-type request id=$2 for device=$3 to config=$4 (the device's
+# env= base followed by the test's required_env), by running its manifest hook=
+# synchronously. Hook exit 0 means the hook ran, NOT that the device is back up —
+# the hook returns after a few seconds of boot serial. Confirming the device is up
+# on the new config is the tester's job (pvtest-run's _setup_device_retype).
 _dev_retype_handle() {
 	local ctrl="$1" id="$2" name="$3" cfg="$4"
 	local i=-1 j hook= config=
@@ -835,6 +813,28 @@ _dev_retype_service() {
 # model (PVTEST_MODEL), $2 = pass tag namespacing ctrl/, results/, the container
 # names and the per-pass log. Reads run_test's locals via dynamic scoping;
 # returns the tester's exit code.
+
+# Tester-container args shared by both passes, into _TESTER_ARGS; $1 = results tag.
+# Reads run_test's locals the same way its callers do.
+_tester_common_args() {
+	_TESTER_ARGS=(
+		--rm
+		--net=test-appengine-net
+		-e OVERWRITE="$overwrite"
+		-e VERBOSE="$verbose"
+		-e VALGRIND="$valgrind"
+		-e PH_USER="$PH_USER"
+		-e PH_PASS="$PH_PASS"
+		-e PVR_DISABLE_SELF_UPGRADE=true
+		-e PVTEST_DEVICE_TYPE="${PVTEST_DEVICE_TYPE:-appengine}"
+		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
+		-e PV_LOG_TIMESTAMP="absolute"
+		-e RUN_DIR=/work/results
+		"${tester_scope_args[@]}"
+		-v "$work_path/results/$1":/work/results
+	)
+}
+
 _run_pass() {
 	local pass_model="$1" pass_tag="$2"
 	local res=0
@@ -856,7 +856,7 @@ _run_pass() {
 	# Storage lineage is persistent within a pass but always fresh at pass start
 	# (covers -w workspace reuse).
 	local svc_pid=""
-	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
+	if [ "$pool_mode" = true ]; then
 		rm -rf "$work_path/storage/$pass_tag"
 		retype_service "$ctrl_dir" &
 		svc_pid=$!
@@ -877,8 +877,9 @@ _run_pass() {
 
 	mkdir -p "$work_path/results/$pass_tag"
 
+	_tester_common_args "$pass_tag"
 	local -a tester_run_args=(
-		--net=test-appengine-net
+		"${_TESTER_ARGS[@]}"
 		--name "${tester_name}"
 		-e TEST_PATH="/work/$target_path"
 		-e PVTEST_QUEUE="$pvtest_queue"
@@ -886,26 +887,13 @@ _run_pass() {
 		-e PVTEST_TESTER_NAME="${tester_name}"
 		-e INTERACTIVE="$interactive"
 		-e MANUAL="$manual"
-		-e OVERWRITE="$overwrite"
-		-e VERBOSE="$verbose"
 		-e NETSIM="$netsim"
-		-e VALGRIND="$valgrind"
-		-e PH_USER="$PH_USER"
-		-e PH_PASS="$PH_PASS"
-		-e PVR_DISABLE_SELF_UPGRADE=true
-		-e PVTEST_DEVICE_TYPE="${PVTEST_DEVICE_TYPE:-appengine}"
-		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
-		-e PV_LOG_TIMESTAMP="absolute"
-		-e RUN_DIR=/work/results
 		-e APPENGINE_LOGS=/work/hostlogs
-		--rm
-		"${tester_scope_args[@]}"
-		-v "$work_path/results/$pass_tag":/work/results
 		-v "$work_path":/work/hostlogs:ro
 	)
 
 	if [ -n "$devices_file" ]; then
-		# Single-device run: pvtest-run's run_single_device drains PVTEST_QUEUE against
+		# Single-target mode: pvtest-run's run_single_device drains PVTEST_QUEUE against
 		# the one device over PVTEST_EXEC/PVTEST_HOST and SKIPs tests whose config.env
 		# the device doesn't satisfy (PVTEST_MODEL=persistent). The later PVTEST_DEVICE_TYPE
 		# -e overrides the "appengine" default set in the shared args above.
@@ -924,6 +912,8 @@ _run_pass() {
 			)
 		fi
 	else
+		# Slot-pool mode: pvtest-run's run_slot_pool dispatches PVTEST_QUEUE across
+		# PVTEST_SLOTS workers inside this single tester, each owning one appengine.
 		tester_run_args+=(
 			-e PVTEST_SLOTS="$parallel"
 			-e PVTEST_CTRL="/work/ctrl"
@@ -951,19 +941,12 @@ _run_pass() {
 		touch "$dev_ctrl_dir/stop"
 		wait "$dev_svc_pid" 2>/dev/null || true
 	fi
-	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
+	if [ "$pool_mode" = true ]; then
 		docker ps -aq --filter "name=pantavisor-appengine-${USER}-${slot}-" | xargs -r docker rm -f 2>/dev/null || true
 	fi
 
 	return $res
 }
-
-# ssh invocation for a volatile-model appengine. Needed here because, unlike pool
-# mode (where the tester derives PVTEST_EXEC itself once it learns the re-typed
-# container's name over the ctrl protocol), the host already knows the volatile
-# model's container name up front and passes PVTEST_EXEC/PVTEST_HOST directly,
-# the same way the --devices manifest path does for real hardware.
-_volatile_exec_cmd() { pvtest_ssh_cmd "$1" /tmp/pvtest_id; }
 
 # Stage test $1's container tarballs into $2, for mounting as the appengine's
 # pvtx.extra.d. Numbered to preserve pvtx add order (a later tarball overrides an
@@ -989,34 +972,22 @@ _volatile_seed() {
 	return 0
 }
 
-# One test, fully self-contained: fresh appengine (own storage key, no re-type/
-# claim-batching) + one tester invocation against it via pvtest-run's
-# run_single_device path (PVTEST_MODEL=volatile, PVTEST_QUEUE with a single
-# test + PVTEST_DEVICE_NAME; no PVTEST_CTRL so the tester never enters the
-# slot-pool dispatch) + teardown. No retries (removed harness-wide). Reads
-# run_test's locals via dynamic scoping, same as _run_pass.
+# One test, fully self-contained: fresh appengine + one tester invocation against
+# it via pvtest-run's single-target mode (run_single_device; no PVTEST_CTRL, so the
+# tester never enters slot-pool mode) + teardown. Reads run_test's locals like _run_pass.
 _volatile_run_one_test() {
 	local json_path="$1" pass_tag="$2" failed_flag="$3"
 	local test_id; test_id=$(echo "$json_path" | sed 's|^/work/||; s|/test\.json$||')
-	# short name (this subshell's real PID) — not the full test_id, which
-	# doubles the name as a DNS hostname the tester resolves over the docker
-	# network, and DNS labels cap out at 63 bytes (RFC 1035); a category/name
-	# test_id easily blows past that. Not pass_tag either — $BASHPID alone is
-	# already unique, so it'd be redundant. $BASHPID, not $$ — $$ is the
-	# top-level script's PID and is IDENTICAL across every concurrent
-	# `( ... ) &` subshell _run_volatile_pass backgrounds, which would collide
-	# container names at -p>1; $BASHPID is this subshell's own PID.
+	# $BASHPID, not $$: the container name doubles as a DNS hostname (63-byte
+	# labels, so no test_id) and $$ is the same in every backgrounded subshell,
+	# which would collide names at -p>1.
 	local ae="pantavisor-appengine-${USER}-${slot}-${BASHPID}"
 	local PVTEST_LOG_TAG="$ae"
-	local cfg; cfg=$(normalize_reqcfg "$(jq -r '.setup.config.env // ""' "$test_dir/$test_id/test.json")")
+	local cfg; cfg=$(_test_cfg "$test_dir/$test_id")
 
-	# The container is fresh and thrown away right after, so the test's own
-	# revision is seeded into pv-appengine's first-boot pvtx instead of being
-	# installed once pantavisor is up: the image's baked-in pvtx.d (bsp +
-	# pvr-sdk, i.e. what the factory revision is made of) plus this test's
-	# tarballs, deployed under the same locals/<id> name setup_test would have
-	# used. That drops both the install and the commit reboot it ends with —
-	# the two pantavisor boot cycles per test that the persistent model pays.
+	# Seeded into pv-appengine's first-boot pvtx (image pvtx.d + this test's
+	# tarballs) rather than installed once pantavisor is up: same locals/<id> name,
+	# minus the install and its commit reboot that the persistent model pays.
 	local rev; rev="locals/$(printf '%s' "$test_id" | tr '/' '_' | tr '-' '_')"
 	local seed_dir="$work_path/pvtx-seed/$pass_tag/$BASHPID"
 
@@ -1030,35 +1001,25 @@ _volatile_run_one_test() {
 	elif ! _boot_appengine "$ae" "$cfg" "$test_id" "$rev" "$seed_dir"; then
 		pvtest_log ERROR "'${test_id}' ABORTED (appengine boot failed)"
 	else
-		# Route through pvtest-run's run_single_device (PVTEST_QUEUE +
-		# PVTEST_DEVICE_NAME), the only non-pool test path; with
+		# Route through pvtest-run's single-target mode (run_single_device:
+		# PVTEST_QUEUE + PVTEST_DEVICE_NAME), the only non-pool test path; with
 		# PVTEST_MODEL=volatile its setup_test asserts the container came up on
 		# $rev rather than installing anything.
-		docker run --rm \
-			--net=test-appengine-net \
-			--name "pantavisor-tester-${USER}-${slot}-${BASHPID}" \
-			-e PVTEST_TESTER_NAME="pantavisor-tester-${USER}-${slot}-${BASHPID}" \
+		local tname="pantavisor-tester-${USER}-${slot}-${BASHPID}"
+		_tester_common_args "$pass_tag"
+		docker run \
+			"${_TESTER_ARGS[@]}" \
+			--name "$tname" \
+			-e PVTEST_TESTER_NAME="$tname" \
 			-e PVTEST_QUEUE="/work/$test_id/test.json" \
+			-e PVTEST_MODEL=volatile \
 			-e PVTEST_DEVICE_NAME="$ae" \
-			-e PVTEST_DEVICE_TYPE="${PVTEST_DEVICE_TYPE:-appengine}" \
+			-e PVTEST_EXEC="$(pvtest_ssh_cmd "$ae" /tmp/pvtest_id)" \
+			-e PVTEST_HOST="$ae" \
 			-e PVTEST_TEST_TIMEOUT=600 \
 			-e INTERACTIVE=false \
 			-e MANUAL=false \
-			-e OVERWRITE="$overwrite" \
-			-e VERBOSE="$verbose" \
 			-e NETSIM=false \
-			-e VALGRIND="$valgrind" \
-			-e PH_USER="$PH_USER" \
-			-e PH_PASS="$PH_PASS" \
-			-e PVR_DISABLE_SELF_UPGRADE=true \
-			-e PVTEST_MODEL=volatile \
-			-e PVTEST_EXEC="$(_volatile_exec_cmd "$ae")" \
-			-e PVTEST_HOST="$ae" \
-			-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
-			-e PV_LOG_TIMESTAMP="absolute" \
-			-e RUN_DIR=/work/results \
-			"${tester_scope_args[@]}" \
-			-v "$work_path/results/$pass_tag":/work/results \
 			-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro \
 			"$tester_image" \
 			| tee -a "$work_path/pass-${pass_tag}.log"
@@ -1376,6 +1337,11 @@ run_test() {
 		exit 1
 	fi
 
+	# We boot (and own) the appengine containers only when no external target is
+	# configured: neither PVTEST_EXEC nor a --devices board.
+	local pool_mode=false
+	[ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && pool_mode=true
+
 	mkdir -p "$work_path"
 	{
 	pvtest_log DEBUG "workspace=$work_path"
@@ -1445,27 +1411,12 @@ run_test() {
 	# Manual mode: single appengine in interactive shell, booted with the target test's config.env; no tester.
 	if [ "$manual" = "true" ]; then
 		local manual_cfg_args=() _mkv
-		for _mkv in $(normalize_reqcfg "$(jq -r '.setup.config.env // ""' "$test_dir/$target_path/test.json")"); do
+		for _mkv in $(_test_cfg "$test_dir/$target_path"); do
 			manual_cfg_args+=(-e "$_mkv")
 		done
 		docker run -it --rm \
 			--name "pantavisor-appengine-${USER}-${slot}-0" \
-			--net=test-appengine-net \
-			--cgroupns host \
-			--cap-add NET_ADMIN \
-			--cap-add SYS_ADMIN \
-			--cap-add SYS_PTRACE \
-			--cap-add MKNOD \
-			--device /dev/kmsg \
-			--device /dev/hwrng \
-			--device /dev/loop-control \
-			--device-cgroup-rule 'b 7:* rmw' \
-			--security-opt apparmor=unconfined \
-			--security-opt seccomp=unconfined \
-			--volume "/sys/fs":"/sys/fs" \
-			--mount type=tmpfs,target="/usr/lib/lxc/rootfs" \
-			--mount type=tmpfs,target="/volumes" \
-			--mount type=tmpfs,target="/configs" \
+			"${_AE_DOCKER_ARGS[@]}" \
 			-v "$work_path/storage/0":/var/pantavisor/storage \
 			"${manual_cfg_args[@]}" \
 			pantavisor-appengine \
@@ -1478,7 +1429,7 @@ run_test() {
 	# Not needed in device mode — real devices are reached via each manifest
 	# entry's own exec=, not a bootstrap key we generate and inject at boot.
 	local shared_ssh_dir= pvtest_pubkey=
-	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
+	if [ "$pool_mode" = true ]; then
 		shared_ssh_dir=$(mktemp -d)
 		ssh-keygen -t ed25519 -f "$shared_ssh_dir/id_ed25519" -N "" -q
 		chmod 600 "$shared_ssh_dir/id_ed25519"
@@ -1490,19 +1441,16 @@ run_test() {
 	# Tester-shared mounts (SSH key) and scope mounts (local/remote test trees)
 	# are the same for every slot — compute once.
 	local tester_shared_args=()
-	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ]; then
+	if [ "$pool_mode" = true ]; then
 		tester_shared_args=(-v "$shared_ssh_dir/id_ed25519":/tmp/pvtest_id:ro)
 	fi
 	local tester_scope_args=()
 	[ -n "$abs_local_path" ] && tester_scope_args+=(-v "$abs_local_path":/work/local)
 	[ -n "$abs_remote_path" ] && tester_scope_args+=(-v "$abs_remote_path":/work/remote)
 
-	# Device mode (downgraded to a single device): parse the manifest, require
-	# exactly one device, lock it and start its tty capture. The tester reaches it
-	# via PVTEST_EXEC/PVTEST_HOST taken straight from the manifest — no stripped map
-	# is staged anymore. Bind-mount the manifest's directory read-only at the same
-	# absolute path so any key path referenced in exec= resolves unchanged inside
-	# the tester container.
+	# Device mode: parse the manifest, require exactly one device, lock it and start
+	# its tty capture. The manifest's directory is bind-mounted read-only at the same
+	# absolute path, so a key path named in exec= resolves unchanged in the tester.
 	local dev_name= dev_type= dev_ip= dev_exec= dev_hook= dev_config= dev_env= tester_device_args=()
 	if [ -n "$devices_file" ]; then
 		if ! _parse_device_manifest "$devices_file"; then
@@ -1534,30 +1482,20 @@ run_test() {
 		tester_device_args=(-v "$_devfile_abs_dir":"$_devfile_abs_dir":ro)
 	fi
 
-	# Resolve the target class and mount its container tarballs over the suites'
-	# common/tarballs/. Only the tarballs vary by target (architecture + signing CA),
-	# so local/ and remote/ stay shared single-copy trees: the tester always sees
-	# /work/<scope>/common/tarballs whichever target supplied it. That is what keeps
-	# every test.json's relative ../../common/tarballs/ reference — and the five
-	# absolute /work/local/common/tarballs/ references inside test scripts — working
-	# unchanged for any target, with no per-target copy of the suites.
-	#
-	# Docker applies nested bind-mounts by path depth, so these land inside the
-	# /work/<scope> mounts built above rather than racing them.
-	#
-	# Precedence matches the PVTEST_DEVICE_TYPE the tester is handed below: an
-	# explicit env override, else the manifest's type=, else appengine.
+	# Mount the target's tarballs over the suites' common/tarballs/. Only tarballs
+	# vary by target, so local/ and remote/ stay single-copy trees and every
+	# ../../common/tarballs/ reference keeps working for any target. Docker orders
+	# nested bind-mounts by path depth, so these land inside the /work/<scope>
+	# mounts above rather than racing them. Precedence matches PVTEST_DEVICE_TYPE:
+	# env override, else the manifest's type=, else appengine.
 	local target_type abs_targets_path=
 	target_type="${PVTEST_DEVICE_TYPE:-${dev_type:-appengine}}"
 	if [ ! -d "$test_dir/targets/$target_type" ]; then
 		pvtest_log ERROR "no container tarballs for target type '$target_type'"
 		pvtest_log ERROR "  expected: $test_dir/targets/$target_type/{local,remote}"
 		pvtest_log ERROR "  available: $(ls "$test_dir/targets" 2>/dev/null | tr '\n' ' ')"
-		pvtest_log ERROR "  add one with: ./test.docker.sh install-tarballs -t $target_type <exports>"
-		if [ -n "$devices_file" ]; then
-			_stop_device_capture "$dev_name"
-			_unlock_device "$dev_name"
-		fi
+		pvtest_log ERROR "  add one with: ./test.docker.sh install-tarballs $target_type <exports>"
+		[ -n "$devices_file" ] && _release_devices
 		release_slot
 		return 1
 	fi
@@ -1566,24 +1504,20 @@ run_test() {
 		&& tester_scope_args+=(-v "$abs_targets_path/local":/work/local/common/tarballs)
 	[ -n "$abs_remote_path" ] && [ -d "$abs_targets_path/remote" ] \
 		&& tester_scope_args+=(-v "$abs_targets_path/remote":/work/remote/common/tarballs)
-	# INFO, not DEBUG: this is the line explaining why a run's container payload
-	# differs from a pristine appengine run, so it must survive a grep -v DEBUG.
 	_tarball_target="$target_type"
 	{
 		pvtest_log INFO "target type: $target_type (tarballs from targets/$target_type)"
-		_log_tarball_overrides "$work_path"
+		_print_tarball_overrides \
+			&& cp -f "$(_tarballs_manifest)" "$work_path/pvtest-tarballs.manifest" 2>/dev/null
 	} | tee -a "$work_path/run.log"
 
 	local docker_it_opt=
 	[ "$interactive" = "true" ] && docker_it_opt="-it"
 
-	# Interactive (non-manual): drop into the tester's single-target console. The
-	# only difference between an appengine and a real device is what the tester
-	# talks to: an appengine we boot here and reach over the shared SSH key, a
-	# device is already up and reached over PVTEST_EXEC/PVTEST_HOST from the
-	# manifest. So it's one docker run parameterised by a target-specific arg set,
-	# not a second copy. No PVTEST_QUEUE is passed, so pvtest-run runs
-	# exec_interactive instead of the test loop.
+	# Interactive (non-manual): drop into the tester's console — one docker run
+	# parameterised by a target-specific arg set, since an appengine and a device
+	# differ only in how the tester reaches them. No PVTEST_QUEUE, so pvtest-run
+	# enters interactive/manual mode (run_interactive) instead of the test loop.
 	if [ "$interactive" = "true" ]; then
 		local _iae= iface_args=()
 		if [ -n "$devices_file" ]; then
@@ -1596,7 +1530,7 @@ run_test() {
 			)
 		else
 			local _icfg
-			_icfg=$(normalize_reqcfg "$(jq -r '.setup.config.env // ""' "$test_dir/$target_path/test.json")")
+			_icfg=$(_test_cfg "$test_dir/$target_path")
 			_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
 			_boot_appengine "$_iae" "$_icfg"
 			iface_args=(
@@ -1621,8 +1555,7 @@ run_test() {
 			"${tester_scope_args[@]}" \
 			"$tester_image"
 		if [ -n "$devices_file" ]; then
-			_stop_device_capture "$dev_name"
-			_unlock_device "$dev_name"
+			_release_devices
 		else
 			_stop_appengine "$_iae"
 			[ -z "$PVTEST_EXEC" ] && rm -rf "$shared_ssh_dir"
@@ -1642,14 +1575,9 @@ run_test() {
 
 	if [ -z "$pvtest_queue" ]; then
 		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
-		if [ -n "$devices_file" ]; then
-			for _i in "${!_dev_name[@]}"; do
-				_stop_device_capture "${_dev_name[$_i]}"
-				_unlock_device "${_dev_name[$_i]}"
-			done
-		fi
+		[ -n "$devices_file" ] && _release_devices
 		release_slot
-		[ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && rm -rf "$shared_ssh_dir"
+		[ "$pool_mode" = true ] && rm -rf "$shared_ssh_dir"
 		return 0
 	fi
 
@@ -1660,23 +1588,18 @@ run_test() {
 		_run_pass "$model" main || res=1
 	fi
 
-	[ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && rm -rf "$shared_ssh_dir"
+	[ "$pool_mode" = true ] && rm -rf "$shared_ssh_dir"
 
 	# Storage is written as root inside the container; chown back to the caller
 	# (best-effort) so the host user can read it.
-	if [ -z "$PVTEST_EXEC" ] && [ -z "$devices_file" ] && [ -d "$work_path/storage" ]; then
+	if [ "$pool_mode" = true ] && [ -d "$work_path/storage" ]; then
 		docker run --rm -v "$work_path/storage":/storage pantavisor-appengine \
 			-c "chown -R $(id -u):$(id -g) /storage" > /dev/null 2>&1 || true
 	fi
 
 	# Device mode: no docker teardown/poweroff — release the tty capture and the
 	# device lock only, so the board stays reachable after the run.
-	if [ -n "$devices_file" ]; then
-		for _i in "${!_dev_name[@]}"; do
-			_stop_device_capture "${_dev_name[$_i]}"
-			_unlock_device "${_dev_name[$_i]}"
-		done
-	fi
+	[ -n "$devices_file" ] && _release_devices
 
 	if [ "$netsim" = "true" ]; then
 		docker stop "$netsim_name" > /dev/null 2>&1
@@ -1700,168 +1623,15 @@ run_test() {
 	# make summary available to the run path for the CI
 	[ "${CI:-false}" = "true" ] && cp "$work_path/run.log" ./run.log
 
-	cat > "$work_path/README.md" << 'EOF'
-# Test Run Results
-
-## Workspace Layout
-
-```
-<workspace>/
-  run.log                           <- aggregate output (host + tester) + SUMMARY
-  pass-<tag>.log                    <- per-pass tester output; tag is "main", or
-                                       "volatile" with --model volatile
-  <name>.log                        <- console capture for one target, keyed by name:
-                                       appengine mode -> full pantavisor stdout_direct
-                                       (docker logs, keyed by container name)
-                                       device mode    -> raw serial console (from its tty,
-                                       keyed by the --devices manifest name=)
-  README.md
-  pvtest-tarballs.manifest          <- present only when container tarballs were
-                                       substituted via `install-tarballs`; records
-                                       which ones, from where, and their checksums
-  ctrl/<tag>/                       <- re-type protocol dirs (transient)
-  ctrl-dev/<name>/                  <- device re-type protocol dir (transient, only
-                                       when the --devices manifest sets hook=)
-  pvtx-seed/<tag>/<pid>/            <- volatile model only: the test's tarballs, mounted
-                                       into the container's pvtx.extra.d (transient)
-  results/
-    <tag>/<scope>/<category>/<name>/
-      test.log     <- test script output interleaved with target console logs during exec_test
-      diff         <- diff (expected vs actual), present only when test failed
-  storage/          <- appengine mode only (a real device keeps its own on-device storage)
-    <tag>/<key>/   <- persistent pantavisor storage lineage: one per worker in the
-                      persistent model (w<N>), one per test in the volatile model
-                      (fresh every time, never persistent); fresh at pass start,
-                      kept across re-types where the model persists storage at all
-      trails/ objects/ logs/ ...
-  valgrind/         <- appengine mode only, with -V
-    <container>/   <- per-appengine valgrind output
-      valgrind.log.<pid>
-```
-
-One tester (`pvtest-run`) drives each pool pass; see `docs/overview/testing/automated/devices.md`
-for the full model. `--model` picks the assignment model:
-- **persistent** (default) — every test runs under exactly its `config.env`:
-  `-p` workers each keep ONE storage for the whole pass, settling back to a
-  gc'd factory state between tests and re-booting with new config only when
-  the next test actually needs it (at most one power cycle between tests).
-- **volatile** — master-like: one fresh appengine container per test (own
-  storage, no re-typing), `-p` capping how many run concurrently. The test's
-  tarballs are seeded into `pvtx.extra.d` so `pv-appengine` deploys the test's
-  own `locals/<id>` revision on first boot and boots into it committed, which
-  is what makes the model cheap: no install and no commit reboot, one
-  pantavisor boot per test instead of three. Incompatible with `--devices`
-  and `-n`.
-- **device mode (`--devices`)** — persistent only: every selected test runs
-  sequentially against the single real device (no pool). If the manifest entry
-  sets `hook=` (a host command that sets the device's boot env and
-  power-cycles it, with `config=` as that command's config file), a test whose
-  `config.env` doesn't match triggers a re-type through the hook instead of
-  skipping. The hook gets the entry's `env=` base tokens first and the test's
-  own last, so a hook that writes the boot env as a full replacement keeps the
-  board bootable. Without `hook=`, tests whose `config.env` the live device doesn't
-  satisfy are SKIPPED as before, so run **without** `--fail-on-skip` until each
-  test's `"devices"` array is triaged.
-- Want both models? Just run `test.docker.sh` twice, once per `--model`.
-
-The SUMMARY collects the per-test results.
-EOF
-
-	cat >> "$work_path/README.md" << 'EOF'
-
-## Log Format
-
-All structured log lines follow the pantavisor log convention:
-
-```
-[pvtest] <epoch> LEVEL -- [source]: message
-```
-
-Sources: `test.docker.sh`, `pvtest-run`, `pv-appengine`.
-
-## run.log
-
-The single aggregate log: host orchestrator (`test.docker.sh`) and tester
-(`pvtest-run`) output interleaved — distinguishable by the `[source]` tag — plus
-one structured line per test result and a SUMMARY section at the end.
-
-Log levels used in `run.log`:
-
-| Level | When |
-|-------|------|
-| `DEBUG` | Test launch and workspace setup diagnostics |
-| `INFO` | PASSED, ABORTED, SKIPPED, retry |
-| `ERROR` | FAILED |
-
-On failure the diff is printed inline after the `ERROR` line, and also saved to
-`results/<scope>/<category>/<name>/diff`. Retry attempts get their own directory
-(`<name>.1/`, `<name>.2/`).
-
-Quick scan for failures:
-
-    grep ERROR run.log
-
-## test.log
-
-`test.log` is a single interleaved stream of everything that happened during a test run.
-It mixes output from four sources:
-
-**1. `test.docker.sh`**
-Host-side orchestrator. With `-v` produces `set -x` traces (`++ docker run ...`,
-`++ allocate_slot`, etc.) covering container startup and network setup.
-Structured messages use `[pvtest] LEVEL -- [test.docker.sh]: message`.
-
-**2. `pvtest-run` + `resources/test`**
-Inner test runner inside the tester container. Parses `test.json`, connects to the
-appengine via PVTEST_EXEC (SSH), then runs the test script (with `set -x` injected).
-Structured messages use `[pvtest] LEVEL -- [pvtest-run]: message`.
-The test script output is captured and diffed against the stored `output` file.
-
-**3. `pv-appengine`**
-Pantavisor runtime launcher inside the appengine container. Sets up cgroups and storage
-mounts, then runs the `pantavisor` binary in a restart loop (simulating device reboots).
-Structured messages use `[pvtest] LEVEL -- [pv-appengine]: message`.
-
-**4. Pantavisor (`stdout_direct`)**
-Started with `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. Streams internal logs
-directly to stdout without buffering:
-`[pantavisor] TIMESTAMP LEVEL -- [module]: message`.
-
-To filter by source:
-
-    grep '\[pvtest-run\]'   test.log    # pvtest-run messages only
-    grep '\[pv-appengine\]' test.log    # pv-appengine messages only
-    grep '\[pantavisor\]'   test.log    # pantavisor messages only
-    grep 'WARN\|ERROR'      test.log    # all warnings and errors
-
-In GHA, WARN and ERROR lines from `test.log` are automatically surfaced in the
-job step summary under **Test log issues**.
-EOF
-
-	cat >> "$work_path/README.md" << 'EOF'
-
-## Valgrind Logs (appengine mode, -V)
-
-Valgrind output is under `valgrind/<N>/valgrind.log.<pid>`. The main worker is typically
-the largest file. Check with:
-
-    grep -E "definitely lost|possibly lost|ERROR SUMMARY" valgrind/<N>/valgrind.log.<largest-pid>
-
-- `definitely lost` — real leaks, investigate
-- `possibly lost` — typically PV buffer pools; consistent at ~3.7 MB, not a regression
-- `ERROR SUMMARY` — mostly `Syscall param` warnings from liblxc, not pantavisor code
-EOF
+	# Ships beside this script; see pantavisor-pvtests-host.bb.
+	cp "$_script_dir/workspace-README.md" "$work_path/README.md" 2>/dev/null \
+		|| pvtest_log WARN "workspace-README.md not found beside $0"
 
 	if [ $res -ne 0 ] || [ "${skip_fail:-0}" -ne 0 ]; then
 		return 1
 	fi
 	return 0
 }
-
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-NOCOLOR='\033[0m'
 
 verbose="false"
 command=

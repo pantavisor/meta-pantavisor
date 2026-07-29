@@ -2,7 +2,7 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-device_id=$(_pv_exec cat /run/pantavisor/pv/device-id)
+device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
 
 # Per-test isolation: clone into a temp checkout dir; never override $HOME (see
 # automated-workflow.md § Test authoring rules).

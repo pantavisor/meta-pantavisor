@@ -8,9 +8,9 @@ pvr_clone_local_or_die "$HOME/checkout"
 cd "$HOME/checkout"
 
 # Container init PIDs live on the device host, not the tester, so route lxc-info
-# via _pv_exec (falls back to local exec when PVTEST_EXEC is unset).
+# via pv_exec (falls back to local exec when PVTEST_EXEC is unset).
 get_pid() {
-    _pv_exec lxc-info -P /usr/var/lib/lxc -n "$1" -p 2>/dev/null | awk '{print $2}' | tr -d '\r'
+    pv_exec lxc-info -P /usr/var/lib/lxc -n "$1" -p 2>/dev/null | awk '{print $2}' | tr -d '\r'
 }
 
 echo "== initial state =="

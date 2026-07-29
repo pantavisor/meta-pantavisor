@@ -5,21 +5,18 @@ source /usr/share/pantavisor/pvtest/utils
 
 usage() {
 	echo ""
-	echo "Usage: $0 [-v] (driven by INTERACTIVE/MANUAL/OVERWRITE/VERBOSE/NETSIM plus one dispatch mode)"
+	echo "Usage: $0 [-v]"
+	echo "Run pvtests against a pantavisor target from inside the tester container"
 	echo ""
-	echo "Slot-pool mode (persistent model): set PVTEST_QUEUE to the test.json list and"
-	echo "PVTEST_CTRL to the host control dir; PVTEST_SLOTS workers force each test's"
-	echo "config.env, asking the host to re-type their slot's container on demand."
+	echo "Driven by env. Required:"
+	echo "  INTERACTIVE MANUAL OVERWRITE VERBOSE NETSIM"
 	echo ""
-	echo "Single-device mode: set PVTEST_QUEUE and PVTEST_DEVICE_NAME to the device"
-	echo "name (plus PVTEST_EXEC/PVTEST_HOST to reach it). Every queued test runs"
-	echo "sequentially against the one device. If PVTEST_DEV_HOOK_CTRL is set (the"
-	echo "manifest configured hook=), a required-config mismatch re-types the device"
-	echo "through the hook; otherwise such tests are SKIPPED. Also the volatile"
-	echo "model's one-test-per-container path. See docs/overview/testing/device-target.md."
+	echo "Dispatch mode (exactly one):"
+	echo "  PVTEST_QUEUE + PVTEST_CTRL           slot pool, PVTEST_SLOTS workers"
+	echo "  PVTEST_QUEUE + PVTEST_DEVICE_NAME    one target, sequential"
+	echo "  PVTEST_APPENGINES                    tester console (INTERACTIVE=true)"
 	echo ""
-	echo "Interactive/manual mode: set PVTEST_APPENGINES to the appengine name(s) and"
-	echo "INTERACTIVE=true; drops into the tester console instead of running tests."
+	echo "See docs/overview/testing/automated/."
 	echo ""
 }
 
@@ -30,7 +27,6 @@ parse_test() {
 		return 1
 	fi
 
-	description=$(jq -r '.description' "$j")
 	# config.env: the config a test runs under — forced per test in the persistent
 	# model; on a real device (no boot-time config injection) it's matched against
 	# `conf ls` instead, SKIPping the test on mismatch (see run_single_device).
@@ -56,7 +52,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-initial_setup() {
+wait_for_netsim() {
 	if [ "$netsim" = "true" ]; then
 		wait_for_status "ip link set wlan1 name wlan0" 0 5 > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
@@ -66,7 +62,7 @@ initial_setup() {
 	fi
 }
 
-exec_interactive() {
+run_interactive() {
 	echo ""
 	echo "Welcome to pvtest tester!"
 	echo ""
@@ -113,29 +109,17 @@ _ae_host() {
 	fi
 }
 
-# path to the stored `conf ls` JSON for a given appengine name, used by the config matcher
-_ae_conf_file() {
-	local ae="$1" ae_safe
-	ae_safe=$(printf '%s' "$ae" | tr '/' '_' | tr '-' '_' | tr '.' '_')
-	printf '/tmp/pvtest_device_conf_%s.json' "$ae_safe"
-}
+# container/device name as a filename component
+_ae_safe() { printf '%s' "$1" | tr '/.-' '___'; }
 
-# per-device pristine factory clone path (init_device); test setup clones from here to avoid trail buildup
-_ae_factory_dir() {
-	local ae="$1" ae_safe
-	ae_safe=$(printf '%s' "$ae" | tr '/' '_' | tr '-' '_' | tr '.' '_')
-	printf '/tmp/pvtest_factory_%s' "$ae_safe"
-}
+# stored `conf ls` JSON for a given appengine name, used by the config matcher
+_ae_conf_file() { printf '/tmp/pvtest_device_conf_%s.json' "$(_ae_safe "$1")"; }
 
-# per-device pvr HOME, keyed by appengine name — avoids concurrent pool slots racing on shared ~/.pvr
-_ae_pvr_home() {
-	local ae="${1:-$PVTEST_AE}" ae_safe
-	ae_safe=$(printf '%s' "$ae" | tr '/' '_' | tr '-' '_' | tr '.' '_')
-	printf '/tmp/pvtest_pvrhome_%s' "${ae_safe:-default}"
-}
+# per-device pristine factory clone (init_device); test setup clones from here to avoid trail buildup
+_ae_factory_dir() { printf '/tmp/pvtest_factory_%s' "$(_ae_safe "$1")"; }
 
-# normalize required-config to a stable signature (shared with test.docker.sh)
-_reqcfg_norm() { pvtest_normalize_cfg "$@"; }
+# per-device pvr HOME — keeps concurrent pool slots off a shared ~/.pvr
+_ae_pvr_home() { printf '/tmp/pvtest_pvrhome_%s' "$(_ae_safe "${1:-${PVTEST_AE:-default}}")"; }
 
 # run a pvr command authenticated against the Hub in this device's isolated HOME
 _pvr_auth() {
@@ -167,16 +151,22 @@ _pvr_logged() {
 	return $rc
 }
 
-# delete Hub user-meta key via PATCH null (-> Mongo $unset); pvr has no delete verb.
-# best-effort, needs PH creds.
-_hub_usrmeta_delete() {
-	local device_id="$1" key="$2" home tok
-	{ [ -n "$PH_USER" ] && [ -n "$PH_PASS" ] && [ -n "$device_id" ]; } || return 0
+# Hub access token from this device's pvr HOME; empty when creds are unset or
+# login fails. Both user-meta helpers PATCH with it — pvr has no verb for either.
+_hub_token() {
+	local home
+	{ [ -n "$PH_USER" ] && [ -n "$PH_PASS" ]; } || return 1
 	home="$(_ae_pvr_home)"; mkdir -p "$home" 2>/dev/null
 	( export HOME="$home"
 	  PVR_USERNAME="$PH_USER" PVR_PASSWORD="$PH_PASS" pvr login > /dev/null 2>&1 )
-	tok=$(jq -r 'first(.tokens[]) | .["access-token"] // empty' \
-		"$home/.pvr/auth.json" 2>/dev/null)
+	jq -r 'first(.tokens[]) | .["access-token"] // empty' "$home/.pvr/auth.json" 2>/dev/null
+}
+
+# delete Hub user-meta key via PATCH null (-> Mongo $unset); best-effort.
+_hub_usrmeta_delete() {
+	local device_id="$1" key="$2" tok
+	[ -n "$device_id" ] || return 0
+	tok=$(_hub_token)
 	[ -n "$tok" ] || return 0
 	curl -s -X PATCH \
 		-H "Authorization: Bearer $tok" -H "Content-Type: application/json" \
@@ -187,13 +177,9 @@ _hub_usrmeta_delete() {
 
 # set Hub user-meta key (PATCH), retried — ownership propagation lag right after claim
 _hub_usrmeta_set() {
-	local device_id="$1" key="$2" value="$3" home tok attempt=1
-	{ [ -n "$PH_USER" ] && [ -n "$PH_PASS" ] && [ -n "$device_id" ]; } || return 0
-	home="$(_ae_pvr_home)"; mkdir -p "$home" 2>/dev/null
-	( export HOME="$home"
-	  PVR_USERNAME="$PH_USER" PVR_PASSWORD="$PH_PASS" pvr login > /dev/null 2>&1 )
-	tok=$(jq -r 'first(.tokens[]) | .["access-token"] // empty' \
-		"$home/.pvr/auth.json" 2>/dev/null)
+	local device_id="$1" key="$2" value="$3" tok attempt=1
+	[ -n "$device_id" ] || return 0
+	tok=$(_hub_token)
 	[ -n "$tok" ] || return 1
 	while [ $attempt -le 4 ]; do
 		curl -sf -X PATCH \
@@ -264,7 +250,7 @@ _conf_value() {
 # SKIPPED rather than run (see run_test_attempt / docs/testing/device-target.md).
 _reqcfg_satisfied() {
 	local kv k v actual
-	for kv in $(_reqcfg_norm "$1"); do
+	for kv in $(pvtest_normalize_cfg "$1"); do
 		k=${kv%%=*}
 		v=${kv#*=}
 		actual=$(_conf_value "$k" "$2")
@@ -330,9 +316,8 @@ int_handler() {
 
 # post-flash init for a single device: wait for pantavisor to respond, collect device info
 init_device() {
-	local ae="$1"
-	local ae_safe
-	ae_safe=$(printf '%s' "$ae" | tr '/' '_' | tr '-' '_' | tr '.' '_')
+	local ae="$1" ae_safe
+	ae_safe=$(_ae_safe "$ae")
 
 	export PVTEST_EXEC="$(_ae_exec_cmd "$ae")"
 	export PVTEST_HOST="$(_ae_host "$ae")"
@@ -390,18 +375,10 @@ _dev_gc() {
 	return 0
 }
 
-# One-time courtesy reset, run only at the very end of a real-device
-# (--devices) run: return the target to a pristine, gc'd factory state,
-# installing a FRESH randomly-named child of the factory clone — never
-# re-runs the cached factory revision by name, since a prior sync gc may have
-# reclaimed it. Per-test resets no longer go through here: setup_test installs
-# and commits each test's own initial revision directly (see setup_test).
-#  1. drain whatever the last test left running
-#  2. install a fresh, randomly-named child of the factory clone (pvtx/pvr;
-#     no test tarballs — a bare reset) and wait for it like any posted revision
-#  3. commit it with a reboot if it comes back UPDATED, otherwise nothing left to do
-#  4. confirm back (best-effort READY) and synchronous gc
-# Returns 0 settled+gc'd, 1 error.
+# Courtesy reset at the very end of a real-device run: drain, install a FRESH
+# randomly-named child of the factory clone (never re-run the cached factory
+# revision by name — a prior sync gc may have reclaimed it), commit it if it comes
+# back UPDATED, then gc. Returns 0 settled+gc'd, 1 error.
 _settle_to_factory() {
 	local factory_dir _new_rev _st _saved_tarballs
 
@@ -554,17 +531,15 @@ _dev_delete_only() {
 	_track_device del "$device_id"
 }
 
-# self-claim=false with a device still claimed by a previous test: unclaim it BEFORE
-# go-remote, while the Hub client is down — a stale in-flight trail update cannot resume
-# then, so it can neither reject the unclaim with 503 ("update ongoing") nor apply over
-# the just-installed test revision. Claimed is detected from the hint files: pv writes
-# the device-id at boot only when pantahub.config carries creds, and the challenge file
-# is non-empty only while the device is registered-but-unclaimed. Hub-side deletion is
-# deferred to handle_self_claim.
+# self-claim=false on a device still claimed by a previous test: unclaim BEFORE
+# go-remote, while the Hub client is down, so a stale in-flight trail update can
+# neither reject it with 503 nor apply over the just-installed revision. Claimed is
+# read off the hint files (device-id written at boot with creds; challenge non-empty
+# only while registered-but-unclaimed). Hub deletion is deferred to handle_self_claim.
 handle_pre_remote_unclaim() {
 	pre_unclaimed_device=
 
-	case " $(_reqcfg_norm "$required_env") " in
+	case " $(pvtest_normalize_cfg "$required_env") " in
 	*" PV_CONTROL_REMOTE=1 "*) ;;
 	*) return 0 ;;
 	esac
@@ -602,7 +577,7 @@ handle_self_claim() {
 
 	# no-op for tests that don't run under PV_CONTROL_REMOTE: pantahub.state never
 	# appears for those, so there's nothing to wait for or claim/unclaim
-	case " $(_reqcfg_norm "$required_env") " in
+	case " $(pvtest_normalize_cfg "$required_env") " in
 	*" PV_CONTROL_REMOTE=1 "*) ;;
 	*) return 0 ;;
 	esac
@@ -666,6 +641,41 @@ apply_usrmeta() {
 	done
 }
 
+# tarball $1 as an absolute path (test.json lists them relative to the test dir)
+_tarball_path() {
+	case "$1" in
+	/*) printf '%s' "$1" ;;
+	*)  printf '%s/%s' "$test_dir" "$1" ;;
+	esac
+}
+
+# Stage tarball $1 (labelled $2) onto the device and pvtx-add it. Staged to a real
+# file first: pvtx seeks the fd and SSH stdin is a pipe. Aborts the pvtx
+# transaction on failure, so the caller only has to propagate the error.
+_pvtx_add_tarball() {
+	local src="$1" label="${2:-${1##*/}}" remote="/tmp/pvtest_pvtx_$$_${1##*/}" out
+	pvtest_log DEBUG "pvtx add $label [via SSH]"
+	if ! $PVTEST_EXEC "cat > '$remote'" < "$src"; then
+		pvtest_log ERROR "failed to stage $label to device"
+		pvtx abort > /dev/null 2>&1
+		return 1
+	fi
+	if ! out=$(pvtx add "$remote" 2>&1); then
+		pvtest_log ERROR "pvtx add failed for $label: $out"
+		$PVTEST_EXEC "rm -f '$remote'" > /dev/null 2>&1
+		pvtx abort > /dev/null 2>&1
+		return 1
+	fi
+	$PVTEST_EXEC "rm -f '$remote'" > /dev/null 2>&1
+	return 0
+}
+
+# True if pvtx can be run on the exec target
+_have_pvtx() {
+	[ -n "$PVTEST_EXEC" ] || return 1
+	$PVTEST_EXEC "command -v pvtx >/dev/null 2>&1"
+}
+
 # Build the initial revision on the device with pvtx (begin empty + add each
 # self-contained tarball), like pv-appengine first boot. Sets _pvtx_rev.
 _install_initial_pvtx() {
@@ -680,51 +690,17 @@ _install_initial_pvtx() {
 		return 1
 	fi
 
-	local t tarball_path remote_tarball
-
 	# seed with the factory export: initial revision = cloned device state + extras
-	local factory_tgz
+	local t factory_tgz
 	factory_tgz="$(_ae_factory_dir "$PVTEST_AE").tgz"
 	if [ -f "$factory_tgz" ]; then
-		remote_tarball="/tmp/pvtest_pvtx_$$_factory.tgz"
-		pvtest_log DEBUG "pvtx add factory export [via SSH]"
-		if ! $PVTEST_EXEC "cat > '$remote_tarball'" < "$factory_tgz"; then
-			pvtest_log ERROR "failed to stage factory export to device"
-			pvtx abort > /dev/null 2>&1
-			return 1
-		fi
-		_out=$(pvtx add "$remote_tarball" 2>&1) || {
-			pvtest_log ERROR "pvtx add failed for factory export: $_out"
-			$PVTEST_EXEC "rm -f '$remote_tarball'" > /dev/null 2>&1
-			pvtx abort > /dev/null 2>&1
-			return 1
-		}
-		$PVTEST_EXEC "rm -f '$remote_tarball'" > /dev/null 2>&1
+		_pvtx_add_tarball "$factory_tgz" "factory export" || return 1
 	else
 		pvtest_log WARN "no factory export found; building initial revision from tarballs only"
 	fi
 
 	for t in $tarballs; do
-		if [ "${t#/}" = "$t" ]; then
-			tarball_path="$test_dir/$t"
-		else
-			tarball_path="$t"
-		fi
-		# pvtx seeks the tarball fd, so stage to a real file first (SSH stdin is a pipe)
-		remote_tarball="/tmp/pvtest_pvtx_$$_${t##*/}"
-		pvtest_log DEBUG "pvtx add ${tarball_path##*/} [via SSH]"
-		if ! $PVTEST_EXEC "cat > '$remote_tarball'" < "$tarball_path"; then
-			pvtest_log ERROR "failed to stage ${tarball_path##*/} to device"
-			pvtx abort > /dev/null 2>&1
-			return 1
-		fi
-		_out=$(pvtx add "$remote_tarball" 2>&1) || {
-			pvtest_log ERROR "pvtx add failed for ${tarball_path##*/}: $_out"
-			$PVTEST_EXEC "rm -f '$remote_tarball'" > /dev/null 2>&1
-			pvtx abort > /dev/null 2>&1
-			return 1
-		}
-		$PVTEST_EXEC "rm -f '$remote_tarball'" > /dev/null 2>&1
+		_pvtx_add_tarball "$(_tarball_path "$t")" || return 1
 	done
 
 	pvtest_log DEBUG "pvtx commit $rev_name [via SSH]"
@@ -748,13 +724,10 @@ _install_initial_pvtx() {
 	return 0
 }
 
-# fallback: build the initial revision in a private tester-side pvr repo (child of the
-# factory clone) and post it to the device. Used when pvtx can't.
-# rev_name empty = let the device assign one (sets _pvr_rev); pvr's local-endpoint
-# post has no documented "assigned name" stdout message to parse (unlike the Hub's
-# "Successfully posted Revision N", which pvr_post_rev in utils.in parses — a
-# different target/format), so the assigned name is instead observed as whichever
-# new value pantavisor.revision takes on right after the post succeeds.
+# Fallback for when the device has no pvtx: build the initial revision in a private
+# tester-side pvr repo (child of the factory clone) and post it. rev_name empty =
+# let the device name it (sets _pvr_rev) — the local endpoint prints no assigned
+# name, so it's observed as the new pantavisor.revision right after the post.
 _install_initial_pvr() {
 	local factory_dir="$1" rev_name="$2"
 	_pvr_rev=""
@@ -776,11 +749,7 @@ _install_initial_pvr() {
 
 	local t tarball_path frag_dir
 	for t in $tarballs; do
-		if [ "${t#/}" = "$t" ]; then
-			tarball_path="$test_dir/$t"
-		else
-			tarball_path="$t"
-		fi
+		tarball_path="$(_tarball_path "$t")"
 		frag_dir=$(mktemp -d /tmp/pvtest_frag.XXXXXX)
 		tar xzf "$tarball_path" -C "$frag_dir" > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
@@ -849,7 +818,7 @@ _install_initial_pvr() {
 _setup_retype() {
 	local _rev="$1" _old="$PVTEST_AE" _new
 
-	pvtest_log INFO "re-typing on storage w${PVTEST_SLOT} cfg=[$(_reqcfg_norm "$required_env")]"
+	pvtest_log INFO "re-typing on storage w${PVTEST_SLOT} cfg=[$(pvtest_normalize_cfg "$required_env")]"
 	_new=$(_retype_slot "$PVTEST_SLOT" "$required_env" "w${PVTEST_SLOT}")
 	if [ -z "$_new" ]; then
 		pvtest_log ERROR "re-type failed"
@@ -887,19 +856,16 @@ _setup_retype() {
 	return 0
 }
 
-# real device (persistent model, --devices with a manifest hook=): the config
-# mismatch already power-cycles as part of the hook itself (unlike the pool's
-# _reqcfg_gate, which powers off first and waits for a fresh container to boot
-# it back up), so this asks the host to run the hook and then fences the same
-# target's reboot directly — no new container identity to disambiguate against,
-# just this device going down and coming back with the new config.
+# Real device with a manifest hook=: the hook power-cycles the board itself (unlike
+# the pool's _reqcfg_gate, which powers off and waits for a fresh container), so this
+# just requests it and then fences the same target going down and coming back.
 _setup_device_retype() {
 	local _rev="$1" _id _resp _status _cfg _waited=0
 
 	_cfg="$required_env"
 	[ -n "$PVTEST_DEV_ENV_BASE" ] && _cfg="$PVTEST_DEV_ENV_BASE $required_env"
 
-	pvtest_log INFO "device retype: requesting hook cfg=[$(_reqcfg_norm "$_cfg")]"
+	pvtest_log INFO "device retype: requesting hook cfg=[$(pvtest_normalize_cfg "$_cfg")]"
 
 	_id="req.$$.$(date +%s%N)"
 	{ printf 'cfg=%s\n' "$_cfg"; } > "$PVTEST_DEV_HOOK_CTRL/req/.tmp.$_id"
@@ -1052,13 +1018,10 @@ setup_test() {
 	# handle_pre_remote_unclaim)
 	handle_pre_remote_unclaim || return 1
 
-	# best-effort: every initial revision is locals/<id>, which forces
-	# remote_mode=false on RUN entry unless PV_CONTROL_REMOTE_ALWAYS=1 — rather
-	# than setting ALWAYS=1 on every remote test's config, go remote once here.
-	# Skipped when the config guarantees a rejection: remote disabled, or
-	# already remote via ALWAYS=1. Test scripts that themselves reboot onto
-	# another locals/ revision still need their own go-remote afterward (this
-	# one only covers the state setup_test hands off).
+	# Every initial revision is locals/<id>, which forces remote_mode=false on RUN
+	# entry unless ALWAYS=1 — so go remote once here instead of setting ALWAYS=1 on
+	# every remote test. A test that reboots onto another locals/ revision still
+	# needs its own go-remote afterward.
 	local _cf
 	_cf="$(_ae_conf_file "$PVTEST_AE")"
 	if [ "$(_conf_value PV_CONTROL_REMOTE "$_cf")" = "0" ]; then
@@ -1175,12 +1138,9 @@ eval_test() {
 	diff_out=$(diff "$test_dir/output" "$tmp_out_path")
 	local rc=$?
 	if [ $rc -ne 0 ]; then
-		# pass/fail is decided above on stdout alone (unaffected by this); for
-		# DISPLAY only, diff against stdout+stderr concatenated so a captured
-		# "ERROR: ..." shows up as a real unified-diff addition in the one
-		# block, in the position it actually happened (these test scripts always
-		# print it right as they exit, so appending is chronologically correct)
-		# — instead of a second, disconnected section glued on afterward.
+		# Pass/fail was decided above on stdout alone. For DISPLAY only, diff
+		# against stdout+stderr concatenated so a captured "ERROR: ..." shows up as
+		# a real addition inside the one block rather than a disconnected section.
 		local _display_path="$tmp_out_path"
 		if [ -s "$tmp_err_path" ]; then
 			_display_path=$(mktemp /tmp/pv_appengine_combined.XXXXXX)
@@ -1242,13 +1202,9 @@ run_test_attempt() {
 		fi
 	fi
 
-	# real device (persistent model, --devices) with no manifest hook=: SKIP
-	# tests whose config.env the live device doesn't already satisfy — without
-	# a hook there's no way to inject boot-time config on hardware. When a hook
-	# IS configured (PVTEST_DEV_HOOK_CTRL set), skip this pre-emptive check
-	# entirely and let setup_test's _setup_device_retype attempt the retype
-	# instead; a retype failure there already aborts the test on its own.
-	# Never gates the pool, which boots the config itself.
+	# Real device with no manifest hook=: SKIP tests whose config.env the live device
+	# doesn't already satisfy, since there is no way to inject boot config on hardware.
+	# With a hook, let _setup_device_retype try instead. Never gates the pool.
 	if [ "$PVTEST_MODEL" = "persistent" ] && [ -n "$PVTEST_DEVICE_NAME" ] && [ -n "$required_env" ] && [ -z "$PVTEST_DEV_HOOK_CTRL" ]; then
 		if ! _reqcfg_satisfied "$required_env" "$(_ae_conf_file "$PVTEST_AE")"; then
 			pvtest_log INFO "'$test_id' SKIPPED (required-config not satisfied by device: $required_env, no hook configured)"
@@ -1365,19 +1321,11 @@ _slot_abort_tests() {
 	done
 }
 
-# Single real-device runner (the deliberately-downgraded device path): unlike the
-# appengine slot pool, a real device can't be re-booted with new config, so there
-# is no pool/re-type/claim-batching — the one device binds once, inits once, then
-# every queued test runs against it sequentially via run_test_attempt (which
-# applies the skip / devices-filter / required-config matcher and per-test console
-# interleaving). setup_test installs and commits each test's own initial
-# revision, so no per-test reset happens here. PVTEST_EXEC/PVTEST_HOST are
-# already set by test.docker.sh from the manifest; init_device reuses them
-# (the appengine accessors pass a pre-set value through). Also doubles as the
-# volatile model's one-test-per-container path (PVTEST_MODEL=volatile): a fresh
-# container per test makes any factory-reset here (leading or trailing) pure
-# waste, since the container is torn down right after — skipped in that case,
-# as is the initial-revision install itself (the container boots into it).
+# Single real-device runner: no pool, no re-type, no claim-batching — the device
+# binds once, inits once, then every queued test runs against it sequentially via
+# run_test_attempt. PVTEST_EXEC/PVTEST_HOST come from the manifest via
+# test.docker.sh. Also the volatile model's one-test-per-container path, where the
+# factory reset is skipped: the container is torn down right after anyway.
 run_single_device() {
 	local _name="$1"
 	local _json _rc _overall=0
@@ -1492,7 +1440,7 @@ persistent_worker() {
 }
 
 # persistent-model scheduler: flat sorted queue, no runner-type machinery
-run_persistent_pool() {
+run_slot_pool() {
 	local _slots="${PVTEST_SLOTS:-1}"
 	local _pool _failed _j _req _sc _rank _pids _w
 	_pool=$(mktemp -d /tmp/pvtest_persistentpool.XXXXXX)
@@ -1500,7 +1448,7 @@ run_persistent_pool() {
 	# rank 0 = needs a claim (REMOTE=1 + self-claim), 1 = rest; sort by rank,
 	# then config, then path — claim block first, equal configs adjacent
 	for _j in $test_json_list; do
-		_req=$(_reqcfg_norm "$(jq -r '.setup.config.env // ""' "$_j")")
+		_req=$(pvtest_normalize_cfg "$(jq -r '.setup.config.env // ""' "$_j")")
 		_sc=$(jq -r '.setup."self-claim" // "false"' "$_j")
 		_rank=1
 		case " $_req " in
@@ -1527,16 +1475,11 @@ run_persistent_pool() {
 }
 
 
-# Pre-parse -v/--verbose flag; remaining args stay positional for compatibility
 if [ "$1" = "-v" ] || [ "$1" = "--verbose" ]; then
 	VERBOSE=true
 	shift
 fi
 
-# env-first: the tester image entrypoint expands unset envs into SHIFTED
-# positionals (unquoted "$TEST_PATH $INTERACTIVE ..."), so the envs — set
-# explicitly by every host invocation — are the reliable source; positionals
-# are a fallback for hand-run testers only
 test_selector=${TEST_PATH:-$1}
 interactive=${INTERACTIVE:-$2}
 manual=${MANUAL:-$3}
@@ -1544,15 +1487,15 @@ overwrite=${OVERWRITE:-$4}
 verbose=${VERBOSE:-$5}
 netsim=${NETSIM:-$6}
 valgrind=${VALGRIND:-$7}
-# /work/run is mounted from work_path/results on the host for per-test result files
 run_dir=${RUN_DIR:-/work/run}
-# assignment model: persistent = force each test's config.env (also the
-# real-device SKIP gate — see run_single_device), volatile = one container per
-# test (runs through run_single_device with PVTEST_DEVICE_NAME set). Unset
-# means persistent; the host owns the default.
 PVTEST_MODEL="${PVTEST_MODEL:-persistent}"
-# APPENGINE_LOGS (if set): mounted host dir containing <name>.log files,
-# read directly by run_test_attempt() via $APPENGINE_LOGS/<name>.log
+case "$PVTEST_MODEL" in
+	persistent|volatile) ;;
+	*)
+		pvtest_log ERROR "unknown PVTEST_MODEL '$PVTEST_MODEL'"
+		exit 1
+		;;
+esac
 
 if [ -z "$interactive" ] || [ -z "$manual" ] || [ -z "$overwrite" ] || [ -z "$verbose" ] || [ -z "$netsim" ]; then
 	pvtest_log ERROR "missing arguments / envs"
@@ -1561,7 +1504,6 @@ if [ -z "$interactive" ] || [ -z "$manual" ] || [ -z "$overwrite" ] || [ -z "$ve
 fi
 if [ "$verbose" = "true" ]; then set -x; fi
 
-description=
 required_env=
 usrmeta=
 tarballs=
@@ -1575,34 +1517,32 @@ test_id=
 tmp_out_path=
 tmp_err_path=
 
-# human-readable scope label: drop /work/ prefix and trailing slash; empty = whole suite
+# drop /work/ prefix for human-readable test name label
 _run_scope=${test_selector#/work/}
 _run_scope=${_run_scope%/}
 pvtest_log INFO "starting test run: ${_run_scope:-all}"
-initial_setup
 
-# single real-device mode: flat queue (PVTEST_QUEUE) run sequentially against the
-# one device named in PVTEST_DEVICE_NAME (PVTEST_EXEC/PVTEST_HOST reach it)
+wait_for_netsim
+
+# single-target mode: flat PVTEST_QUEUE run sequentially against PVTEST_DEVICE_NAME
 if [ -n "$PVTEST_QUEUE" ] && [ -n "$PVTEST_DEVICE_NAME" ]; then
 	test_json_list="$PVTEST_QUEUE"
 	run_single_device "$PVTEST_DEVICE_NAME"
 	exit $?
 fi
 
-# slot-pool mode: flat queue (PVTEST_QUEUE) dispatched across PVTEST_SLOTS slots
+# slot-pool mode: flat PVTEST_QUEUE dispatched across PVTEST_SLOTS via PVTEST_CTRL
 if [ -n "$PVTEST_QUEUE" ] && [ -n "$PVTEST_CTRL" ]; then
 	test_json_list="$PVTEST_QUEUE"
-	case "$PVTEST_MODEL" in
-		persistent) run_persistent_pool ;;
-		*)
-			pvtest_log ERROR "unknown PVTEST_MODEL '$PVTEST_MODEL'"
-			exit 1
-			;;
-	esac
+	if [ "$PVTEST_MODEL" != "persistent" ]; then
+		pvtest_log ERROR "slot-pool dispatch supports PVTEST_MODEL=persistent only (got '$PVTEST_MODEL')"
+		exit 1
+	fi
+	run_slot_pool
 	exit $?
 fi
 
-# interactive/manual single-device mode: host boots one appengine via PVTEST_APPENGINES
+# interactive/manual mode: host boots one appengine via PVTEST_APPENGINES
 if [ -n "$PVTEST_APPENGINES" ]; then
 	if [ "$manual" != "true" ] && [ "$interactive" != "true" ]; then
 		pvtest_log ERROR "PVTEST_APPENGINES is only supported in interactive/manual mode"
@@ -1612,7 +1552,7 @@ if [ -n "$PVTEST_APPENGINES" ]; then
 	export PVTEST_EXEC="$(_ae_exec_cmd "$first_ae")"
 	export PVTEST_HOST="$(_ae_host "$first_ae")"
 	if [ "$interactive" = "true" ]; then
-		exec_interactive
+		run_interactive
 		# Tester console exited; shutdown all appengines now.
 		for ae in $(printf '%s\n' "$PVTEST_APPENGINES"); do
 			(
