@@ -376,6 +376,16 @@ object count: 6
     "modified": "default"
   },
   {
+    "key": "PV_LOG_TIMESTAMP",
+    "value": "relative",
+    "modified": "default"
+  },
+  {
+    "key": "PV_LOOP_INDEX_BASE",
+    "value": "-1",
+    "modified": "default"
+  },
+  {
     "key": "PV_LXC_LOG_LEVEL",
     "value": "2",
     "modified": "default"
