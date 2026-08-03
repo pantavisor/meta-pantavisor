@@ -34,7 +34,7 @@ meta-pantavisor/
 | `recipes-pv/images/pantavisor-initramfs.bb` | Initramfs image |
 | `recipes-pv/images/pantavisor-bsp.bb` | BSP image (generates pvrexport bundles) |
 | `recipes-pv/pvr/pvr_*.bb` | PVR CLI tool (Go-based) |
-| `recipes-pv/lxc-pv/lxc-pv_git.bb` | Pantavisor-specific LXC fork |
+| `recipes-pv/lxc-pv/lxc-pv_git.bb` | Pantavisor-specific fork of [LXC](https://linuxcontainers.org/lxc/introduction/), the OS-level container runtime containers run under |
 
 ## BitBake Classes
 
@@ -59,7 +59,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `tailscale` | Tailscale VPN integration |
 | `debug` | Debug features |
 | `pvcontrol` | pv-ctrl socket and CLI tools (pvcurl, pvcontrol) |
-| `xconnect` | Service mesh for container-to-container communication |
+| `xconnect` | [Service mesh](/pantavisor/overview/xconnect) for container-to-container communication |
 | `rngdaemon` | Random number generator daemon |
 | `squash-lz4` | LZ4 squashfs compression |
 | `squash-zstd` | Zstd squashfs compression |

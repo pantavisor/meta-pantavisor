@@ -5,9 +5,9 @@ sidebar_position: 6
 
 `pantavisor-starter` (`recipes-pv/images/pantavisor-starter.bb`) is the layer's
 top-level **deployable image**: a complete, bootable rootfs whose initial
-Pantavisor trail (`/trails/0`) is pre-populated with a working set of containers
-and the board's BSP. It is what you flash to get a device that boots Pantavisor
-and brings up a usable system out of the box.
+Pantavisor [trail](glossary.md#trail) (`/trails/0`) is pre-populated with a working set of
+[containers](glossary.md#container) and the board's BSP. It is what you flash to get a
+device that boots Pantavisor and brings up a usable system out of the box.
 
 ```bitbake
 inherit image pvroot-image pantavisor-docs
@@ -25,6 +25,18 @@ container `pvrexport` bundles plus the BSP. The "starter" image is the opinionat
 default mix — enough to boot, get on the network, and be claimed/managed — as
 opposed to the bare [`pantavisor-remix`](#related-image-recipes) which ships only
 the SDK container.
+
+## Cost vs a monolithic image
+
+Splitting the payload into a BSP plus per-app containers isn't free, but it isn't
+paid in flash size either — squashfs container volumes run 50–70% smaller than an
+equivalent plain rootfs, and the Pantavisor runtime itself is a ~1 MB PID 1 with no
+daemon overhead. What you get for that: a single Python app update becomes a 2–5
+minute container update instead of a 30–60 minute full-image rebuild-and-reflash,
+with automatic health-gated rollback if it fails. See [Reduce firmware
+size](/meta-pantavisor/getting-started/solutions/firmware-size) for the full
+footprint breakdown and [Pantavisor vs Yocto](/meta-pantavisor/getting-started/benchmarks/vs-yocto)
+for the update-cost comparison against a monolithic image.
 
 ## What it ships
 
