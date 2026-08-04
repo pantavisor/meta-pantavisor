@@ -1,5 +1,5 @@
 == initial revision ==
-locals/local_services_on_demand_gc
+locals/local_services_sync_gc
 == post reboot update ==
 == reboot update: DONE (rollback point) ==
 {"status":"DONE","status-msg":"Update finished, revision set as rollback point","progress":100,"retries":0}
@@ -7,13 +7,13 @@ locals/local_services_on_demand_gc
 == non-reboot update: UPDATED (current) ==
 {"status":"UPDATED","status-msg":"Update finished, revision not set as rollback point","progress":100,"retries":0}
 == running revision ==
-locals/on_demand_gc_nonreboot
+locals/sync_gc_nonreboot
 == storage before GC ==
 initial trail:        present
 initial logs:         present
 orig norole object:   present
-== run garbage collector ==
-
+== run synchronous garbage collector ==
+true
 == trails after GC ==
 initial:    absent
 reboot:     present

@@ -2,9 +2,9 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-INITIAL="locals/local_services_on_demand_gc"
-REBOOT="locals/on_demand_gc_reboot"
-NONREBOOT="locals/on_demand_gc_nonreboot"
+INITIAL="locals/local_services_sync_gc"
+REBOOT="locals/sync_gc_reboot"
+NONREBOOT="locals/sync_gc_nonreboot"
 
 # present/absent check for a storage path, on the device host via pv_exec
 # (no mgmt container needed). Paths are relative to the storage mountpoint,
@@ -61,15 +61,13 @@ echo "initial trail:        $(exists /trails/$INITIAL)"
 echo "initial logs:         $(exists /logs/$INITIAL)"
 echo "orig norole object:   $(exists /objects/$norole_orig)"
 
-echo "== run garbage collector =="
-pvcontrol commands run-gc
-# run-gc is processed asynchronously by the PV main loop; gate on the initial
-# trail and its orphaned object disappearing (object GC runs in the same pass).
-wait_for_path "$S/trails/$INITIAL" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for initial trail to be GC'd" >&2; exit 1; }
-wait_for_path "$S/objects/$norole_orig" "-d" > /dev/null 2>&1 \
-    || { echo "ERROR: timeout waiting for orig norole object to be GC'd" >&2; exit 1; }
+echo "== run synchronous garbage collector =="
+# `storage gc` replies only after collection finished; the orphaned initial-only
+# object makes the reclaimed byte count non-zero (masked — it is volatile)
+pvcontrol storage gc | jq -M '.reclaimed > 0'
 
+# no polling here, unlike `cmd run-gc`: the reply above IS the completion
+# signal, so storage is checked immediately
 echo "== trails after GC =="
 echo "initial:    $(exists /trails/$INITIAL)"
 echo "reboot:     $(exists /trails/$REBOOT)"

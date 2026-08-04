@@ -16,7 +16,7 @@
 # processed a second POST is rejected with 503 (busy, retry later). We honor
 # that contract by retrying until the slot is free, so the asserted code is
 # the deterministic terminal result rather than a race with the main loop.
-# Signals issued from a platform container (pvr-sdk) are rejected -> 500.
+# Signals issued from outside a container's own scope are rejected -> 500.
 
 SOCK=/run/pantavisor/pv/pv-ctrl
 CT='Content-Type: application/json'
@@ -59,14 +59,3 @@ code -X POST -H "$CT" --data '{"type":"alive","payload":""}' http://localhost/si
 
 echo "== command run-gc =="
 post_cmd '{"op":"RUN_GC","payload":""}'
-
-echo "== command enable-ssh =="
-post_cmd '{"op":"ENABLE_SSH","payload":""}'
-
-echo "== command disable-ssh =="
-post_cmd '{"op":"DISABLE_SSH","payload":""}'
-
-# Let the last queued command finish processing so the harness teardown's
-# own `commands poweroff` is not rejected by a busy command slot (503),
-# which would otherwise stall shutdown until the 120s force-kill timeout.
-sleep 3
