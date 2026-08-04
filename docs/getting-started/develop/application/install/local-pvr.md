@@ -23,15 +23,24 @@ The checkout mirrors the live device state — all containers, their rootfs imag
 
 ## 2 — Add the New Container
 
-Use `pvr app add` to pull a Docker Hub image and convert it to a Pantavisor container. Specify `--platform` to match your device architecture.
+Use `pvr app add` to pull an image and convert it to a Pantavisor container.
+`--from` isn't limited to Docker Hub — point it at any registry host.
+Specify `--platform` to match your device architecture.
 
 ```bash
-# ARM64 device (e.g. Raspberry Pi 4, iMX8)
+# Docker Hub, ARM64 device (e.g. Raspberry Pi 4, iMX8)
 pvr app add tailscale --from tailscale/tailscale --platform linux/arm64
 
-# ARM32 device (e.g. iMX6)
+# Docker Hub, ARM32 device (e.g. iMX6)
 pvr app add tailscale --from tailscale/tailscale --platform linux/arm/v7
+
+# A private/self-hosted registry
+pvr app add api --from registry.example.com/team/api:v2.1 --platform linux/arm64
 ```
+
+Pulling from a private registry needs credentials — see [Authenticating
+Against a Private
+Registry](../access-applications.md#authenticating-against-a-private-registry).
 
 `pvr app add` pulls the image, converts it to a SquashFS rootfs, and creates the container's directory with:
 
@@ -43,6 +52,13 @@ tailscale/
 ├── run.json                    ← Pantavisor runtime manifest
 └── lxc.container.conf          ← LXC runtime configuration
 ```
+
+`pvr app add` reads the image's Docker config and compiles it directly into
+`lxc.container.conf`: `ENTRYPOINT`/`CMD` become the container's init command,
+`ENV` becomes `lxc.environment`, `WORKDIR` becomes `lxc.init.cwd`, and
+`VOLUME`s become mount entries — they carry through unchanged. `--arg
+KEY=VALUE` template arguments are separate: they're for values `pvr`'s own
+templates read, not overrides of the image's config.
 
 ## 3 — Stage and Commit
 

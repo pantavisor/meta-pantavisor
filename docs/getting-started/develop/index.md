@@ -25,6 +25,6 @@ difference.
 
 - [CLI tools](./cli-tools/index.md) — `pvr`, `pvtx`, and `pvcontrol` cheatsheets and workflows
 - [Container development](../../overview/container-development.md) — build example containers in the meta-pantavisor Yocto layer
-- [Pantavisor runtime development](../../overview/pantavisor-development.md) — hack on the Pantavisor runtime itself with the kas workspace
+- [Pantavisor runtime development](../../overview/pantavisor-development.md) — hack on the Pantavisor runtime itself using [`kas`](https://github.com/siemens/kas), the Yocto workspace/build tool this layer's KAS configs are written for
 
-For exhaustive, generated CLI documentation, see the [Reference](/pantavisor/overview).
+For the state, revision, and BSP data model this CLI operates on, see the [Reference](/pantavisor/overview).

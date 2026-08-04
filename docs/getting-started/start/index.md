@@ -26,7 +26,9 @@ boot it, and ship your first update.
 - A Raspberry Pi 3B/3B+/4 with a microSD card (8 GB or more), or Docker for the
   no-hardware path.
 - A laptop or desktop to download and flash the image.
-- Optional but recommended: a USB-to-TTL serial adapter for console access.
+- Optional but recommended: a USB-to-TTL serial adapter for console access —
+  check its logic-level voltage matches the board (see [Serial
+  Console](/meta-pantavisor/getting-started/operate/device-access/serial-port)).
 
 ## Next steps
 
