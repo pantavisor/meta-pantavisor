@@ -129,5 +129,5 @@ PANTAVISOR_FEATURES:append = " appengine"
 ## Getting Help
 
 - [Pantavisor Community Forum](https://community.pantavisor.io)
-- [Official pvr Reference](https://docs.pantahub.com/pvr/)
+- [pvr CLI Reference](/meta-pantavisor/getting-started/develop/cli-tools/pvr-cli)
 - [Pantahub Documentation](https://docs.pantahub.com/)
