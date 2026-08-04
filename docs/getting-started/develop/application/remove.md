@@ -4,7 +4,7 @@ sidebar_position: 44
 description: Remove an application from a Pantavisor device — delete the container from your pvr checkout, commit, and deploy a new revision. Pantavisor stops and discards it on the next boot.
 ---
 
-Removing an application follows the same revision workflow as adding one: remove the container from your local `pvr` checkout, commit, and deploy. Pantavisor stops the container and removes it from the trail on the next boot.
+Removing an application follows the same revision workflow as adding one: remove the container from your local `pvr` checkout, commit, and deploy. Pantavisor stops the container and removes it from the [trail](../../../overview/glossary.md#trail) on the next boot.
 
 ---
 

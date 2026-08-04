@@ -14,8 +14,11 @@ boot it, and ship your first update.
 - **[Download and flash on a Raspberry Pi](./download-and-flash.md)** — flash a
   pre-built starter image and boot real hardware in about 30 minutes.
 - **No hardware?** [Run Pantavisor in Docker (AppEngine)](/meta-pantavisor/getting-started/how-to-install/docker) on
-  your workstation.
-- **Install `pvr`** — the client used to inspect and change device state. See
+  your workstation — see the [glossary](../../overview/glossary.md#appengine)
+  for what "AppEngine" means here (not a PaaS).
+- **Install `pvr`** — the client used to inspect and change device state. Every
+  change is an explicit, one-shot `pvr post` — there's no background agent
+  continuously reconciling drift the way a Kubernetes controller would. See
   the [`pvr` installation guide](/meta-pantavisor/getting-started/develop/cli-tools/pvr-cli#installation).
 
 ## Prerequisites

@@ -45,7 +45,7 @@ ss -tlnp
 
 ## Container-to-Container Communication with pv-xconnect
 
-When containers need to communicate with each other without sharing a network namespace, use the **pv-xconnect** service mesh. It injects sockets or device nodes directly into a consumer container's namespace.
+When containers need to communicate with each other without sharing a network namespace, use **pv-xconnect**. Despite sometimes being called a service mesh, it isn't a sidecar/proxy mesh like Istio or Linkerd — there's no traffic interception or L7 routing. It injects sockets or device nodes directly into a consumer container's namespace, closer to a bind-mount than a network hop.
 
 The provider declares what it exports in `services.json`:
 
@@ -97,6 +97,26 @@ pvr clone http://<device-ip>:12368/cgi-bin device && cd device
 pvr app add tailscale --from tailscale/tailscale --platform linux/arm64
 pvr add . && pvr commit -m "add Tailscale"
 pvr post http://<device-ip>:12368
+```
+
+`--platform` picks the image variant for your device's CPU architecture (see
+[choosing a platform](install/local-pvr.md#2--add-the-new-container) for
+ARM64 vs ARM32 examples); omit it and `pvr` will try to infer it from the
+target.
+
+## Authenticating Against a Private Registry
+
+`pvr app add`/`pvr app update` resolve registry credentials the same way
+`docker pull` does: with no flags, they fall back to your local Docker
+credential store (`~/.docker/config.json`, including credential helpers) via
+the standard OCI default keychain. To pass credentials explicitly instead —
+useful in CI, where there's no local Docker login — use `--username`/
+`--password`, or the `PVR_REGISTRY_USERNAME`/`PVR_REGISTRY_PASSWORD`
+environment variables:
+
+```bash
+pvr app add api --from registry.example.com/team/api:v2.1 \
+  --username "$PVR_REGISTRY_USERNAME" --password "$PVR_REGISTRY_PASSWORD"
 ```
 
 ## Troubleshooting

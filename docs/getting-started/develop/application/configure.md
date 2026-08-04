@@ -23,7 +23,7 @@ After cloning, the directory mirrors the device's revision:
 
 ```
 my-device/
-├── bsp/                        ← BSP component (squashfs files, DTBs)
+├── bsp/                        ← [BSP](../../../overview/glossary.md#bsp-board-support-package) component (squashfs files, Device Tree Blobs)
 ├── network/                    ← network container (root.squashfs, run.json, lxc.container.conf)
 ├── sensor-app/                 ← application container
 ├── _config/                    ← per-container file overlays
@@ -74,7 +74,10 @@ To update the container rootfs itself, use `pvr app update`:
 pvr app update sensor-app --from registry.example.com/sensor-app:v1.2.0
 ```
 
-This re-pulls the image and replaces `sensor-app/root.squashfs`.
+This re-pulls the image and replaces `sensor-app/root.squashfs`. Add `--platform
+<arch>` (e.g. `linux/arm64`) if the registry serves a multi-platform image and
+`pvr` can't infer your device's architecture — see [choosing a
+platform](install/local-pvr.md#2--add-the-new-container).
 
 ---
 
@@ -112,13 +115,16 @@ pvr commit -m "add SSH key and configure auto-recovery for sensor-app"
 
 ## Step 4 — Deploy to the Device
 
-Post the new revision to the device's pvr endpoint — the same URL you cloned from:
+Post the new revision to the device's pvr endpoint — the same URL you cloned
+from. This uses `pvr post`, not the separate `pvr deploy` command (which only
+assembles a local directory and never touches a device — see
+[`pvr deploy`](../cli-tools/pvr-cli.md#assemble-a-deploy-directory-with-pvr-deploy)):
 
 ```bash
 pvr post http://<device-ip>:12368
 ```
 
-Pantavisor downloads the changed objects, writes them to a pending revision, and restarts the affected containers (a full reboot only happens when a `system` restart-policy container or the BSP changed). If the new revision starts cleanly and all containers reach their status goal, it is committed as the new permanent state. If it fails, the previous revision is restored automatically.
+Pantavisor downloads the changed objects, writes them to a pending revision, and restarts the affected containers (a full reboot only happens when a [`system` restart-policy](../../../overview/glossary.md#restart-policy) container or the BSP changed). If the new revision starts cleanly and all containers reach their [status goal](../../../overview/glossary.md#status-goal), it is committed as the new permanent state. If it fails, the previous revision is restored automatically.
 
 ---
 

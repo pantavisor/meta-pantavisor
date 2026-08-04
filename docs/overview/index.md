@@ -14,6 +14,12 @@ pvrexport bundles.
 This section covers the project structure, build system architecture, and how
 the layer is organized. Start here, then follow the build guide below.
 
+**Just want to deploy your own container onto an existing device?** Skip the
+build guide — grab a ready-made image via [Starter Image](images.md) /
+[Flashing Images](flashing-images.md) and go straight to [Develop
+applications](../getting-started/develop/index.md). The build guide below is
+for building your own custom image from source.
+
 ## Topics
 
 1. [Layer Layout](meta-pantavisor.md) — directory structure, key recipes, BitBake classes, `PANTAVISOR_FEATURES`, and Yocto compatibility

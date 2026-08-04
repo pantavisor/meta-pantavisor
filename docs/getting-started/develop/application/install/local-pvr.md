@@ -39,7 +39,7 @@ pvr app add tailscale --from tailscale/tailscale --platform linux/arm/v7
 tailscale/
 ├── root.squashfs               ← container filesystem
 ├── root.squashfs.docker-digest ← image digest for update tracking
-├── src.json                    ← image source and template arguments
+├── src.json                    ← image source (`docker_config`/`docker_digest`, used to detect upstream updates) plus any `--arg KEY=VALUE` template arguments passed to this command
 ├── run.json                    ← Pantavisor runtime manifest
 └── lxc.container.conf          ← LXC runtime configuration
 ```
@@ -81,7 +81,9 @@ Pantavisor downloads the new container objects, writes them as a pending revisio
 
 ## 5 — Verify
 
-After the transition, confirm the container is running:
+After the transition, confirm the container is running — from the [device
+console](../../../operate/device-access/serial-port.md) (serial, or SSH if
+you've set that up) or remotely via `pvcontrol`:
 
 ```bash
 # From the device console (serial or SSH)
