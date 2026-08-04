@@ -27,8 +27,7 @@ boot it, and ship your first update.
   no-hardware path.
 - A laptop or desktop to download and flash the image.
 - Optional but recommended: a USB-to-TTL serial adapter for console access —
-  check its logic-level voltage matches the board (see [Serial
-  Console](/meta-pantavisor/getting-started/operate/device-access/serial-port)).
+  check its logic-level voltage matches the board (see [Serial Console](/meta-pantavisor/getting-started/operate/device-access/serial-port)).
 
 ## Next steps
 

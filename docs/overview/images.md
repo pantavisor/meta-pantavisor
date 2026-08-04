@@ -33,8 +33,7 @@ paid in flash size either — squashfs container volumes run 50–70% smaller th
 equivalent plain rootfs, and the Pantavisor runtime itself is a ~1 MB PID 1 with no
 daemon overhead. What you get for that: a single Python app update becomes a 2–5
 minute container update instead of a 30–60 minute full-image rebuild-and-reflash,
-with automatic health-gated rollback if it fails. See [Reduce firmware
-size](/meta-pantavisor/getting-started/solutions/firmware-size) for the full
+with automatic health-gated rollback if it fails. See [Reduce firmware size](/meta-pantavisor/getting-started/solutions/firmware-size) for the full
 footprint breakdown and [Pantavisor vs Yocto](/meta-pantavisor/getting-started/benchmarks/vs-yocto)
 for the update-cost comparison against a monolithic image.
 
@@ -133,7 +132,7 @@ Authoring a container to add here is covered in
 | `pantavisor-bsp.bb` | BSP pvrexport (kernel + initramfs + modules + firmware); mixed into every pvroot image |
 | `pantavisor-initramfs.bb` | The Pantavisor-as-init initramfs the BSP wraps |
 | `empty-image.bb` | Empty proto rootfs used as a BSP modules/firmware source |
-| `pantavisor-appengine` | Docker-based image for local appengine testing (not a flashable device image) |
+| `pantavisor-appengine` | A Docker container image (a different sense of "image" than the flashable disk images above) for local appengine testing on a workstation — not something you flash to a device |
 | `pv-flash-bundle.bb` | Factory flash archive (UUU) wrapping this image for boards without native `.wic` flashing — see [pv-flash-bundle](pv-flash-bundle.md) |
 
 ## Related

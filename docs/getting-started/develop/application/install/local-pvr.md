@@ -38,9 +38,7 @@ pvr app add tailscale --from tailscale/tailscale --platform linux/arm/v7
 pvr app add api --from registry.example.com/team/api:v2.1 --platform linux/arm64
 ```
 
-Pulling from a private registry needs credentials — see [Authenticating
-Against a Private
-Registry](../access-applications.md#authenticating-against-a-private-registry).
+Pulling from a private registry needs credentials — see [Authenticating Against a Private Registry](../access-applications.md#authenticating-against-a-private-registry).
 
 `pvr app add` pulls the image, converts it to a SquashFS rootfs, and creates the container's directory with:
 
@@ -97,8 +95,7 @@ Pantavisor downloads the new container objects, writes them as a pending revisio
 
 ## 5 — Verify
 
-After the transition, confirm the container is running — from the [device
-console](../../../operate/device-access/serial-port.md) (serial, or SSH if
+After the transition, confirm the container is running — from the [device console](../../../operate/device-access/serial-port.md) (serial, or SSH if
 you've set that up) or remotely via `pvcontrol`:
 
 ```bash

@@ -76,8 +76,7 @@ pvr app update sensor-app --from registry.example.com/sensor-app:v1.2.0
 
 This re-pulls the image and replaces `sensor-app/root.squashfs`. Add `--platform
 <arch>` (e.g. `linux/arm64`) if the registry serves a multi-platform image and
-`pvr` can't infer your device's architecture — see [choosing a
-platform](install/local-pvr.md#2--add-the-new-container).
+`pvr` can't infer your device's architecture — see [choosing a platform](install/local-pvr.md#2--add-the-new-container).
 
 ---
 
