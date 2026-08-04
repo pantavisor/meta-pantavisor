@@ -3,6 +3,8 @@ sidebar_position: 4
 ---
 # Get Started
 
+Building your own image runs through this layer's Yocto/BitBake tooling (`kas`, `bitbake`, recipes, layers — see the [glossary](/meta-pantavisor/overview/glossary) if any of that's unfamiliar). Coming from a different build system? [Pantavisor vs Buildroot](/meta-pantavisor/getting-started/benchmarks/vs-buildroot) covers what changes and what doesn't before you commit to this path.
+
 ## Prerequisites
 
 - Docker installed and running

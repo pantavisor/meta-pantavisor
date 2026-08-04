@@ -12,10 +12,11 @@ reflashing device storage.
 > engine prototyping, development, and testing rather than production
 > deployments.
 
-For full requirements and installation options see:
-**[docs.pantahub.com/requirements-appengine](https://docs.pantahub.com/requirements-appengine/)**
-
-To build the tarball yourself, see [get-started.md](../../overview/get-started.md) — build target `pantavisor-appengine-distro`.
+There's no pre-built AppEngine tarball to download — build one yourself via
+[Get Started](../../overview/get-started.md) (this repo's Yocto/BitBake
+toolchain, build target `pantavisor-appengine-distro`), then continue below.
+For additional background beyond this page, see
+[docs.pantahub.com/requirements-appengine](https://docs.pantahub.com/requirements-appengine/).
 
 ## First-time system setup
 

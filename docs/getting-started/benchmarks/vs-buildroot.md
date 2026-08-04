@@ -85,7 +85,7 @@ fleet backend).
 ## Combining Buildroot and Pantavisor
 
 Pantavisor's official Yocto layer is `meta-pantavisor`. Buildroot doesn't have an
-equivalent upstream layer, but Pantavisor is a small static binary plus an LXC
+equivalent upstream layer, but Pantavisor is a small static binary plus an [LXC](/meta-pantavisor/overview/glossary#lxc)
 fork — it can be cross-compiled with Buildroot's toolchain and packaged as the
 init for a Buildroot-built rootfs. In practice, most production users go via
 Yocto + meta-pantavisor because the integration work is already done.
