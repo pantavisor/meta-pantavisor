@@ -1,9 +1,5 @@
 name: "run pvtests"
 
-env:
-  WORKSPACE: /tmp/workspace-${{ github.run_id }}
-  PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}
-
 on:
   workflow_call:
     inputs:
@@ -18,11 +14,18 @@ on:
         description: 'Number of tests to run in parallel'
         required: false
         type: string
-        default: "4"
+        default: "6"
+      model:
+        description: 'Assignment model: volatile, persistent, or all (both, one job each)'
+        required: false
+        type: string
+        default: "volatile"
 jobs:
 
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      models: ${{ steps.models.outputs.list }}
     steps:
       - name: Validate test_path input
         id: check
@@ -39,9 +42,34 @@ jobs:
             echo "=== Running: ${{ inputs.test_path }} ===" >> $GITHUB_STEP_SUMMARY
           fi
 
+      # "all" fans the tests job out over both models; they are independent runs
+      # of the same suite, so one failing must not cancel the other.
+      - name: Resolve model matrix
+        id: models
+        run: |
+          case "${{ inputs.model }}" in
+            all)                   list='["volatile","persistent"]' ;;
+            volatile|persistent)   list='["${{ inputs.model }}"]' ;;
+            *)
+              echo "❌ Invalid model: '${{ inputs.model }}' (expected volatile, persistent or all)"
+              exit 1
+              ;;
+          esac
+          echo "list=$list" >> $GITHUB_OUTPUT
+          echo "=== Model(s): $list ===" >> $GITHUB_STEP_SUMMARY
+
   tests:
     needs: validate
     runs-on: ["pvtest-runner"]
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJSON(needs.validate.outputs.models) }}
+    # model-scoped so the two "all" jobs never share a workspace or an artifact
+    # name, whether they land on the same runner or different ones
+    env:
+      WORKSPACE: /tmp/workspace-${{ github.run_id }}-${{ matrix.model }}
+      PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}-${{ matrix.model }}
     steps:
       - name: Download pvtest distro
         uses: actions/download-artifact@v7
@@ -66,17 +94,18 @@ jobs:
           echo "=== AppEngine Test Run started at $(date) ==="
 
           echo "------------------------------------------------------"
-          echo "RUNNING: ${TEST_TARGET:-all}"
+          echo "RUNNING: ${TEST_TARGET:-all} (model: ${{ matrix.model }})"
           echo "------------------------------------------------------"
 
           PARALLEL=${{ inputs.parallel }}
+          MODEL="${{ matrix.model }}"
 
           if [[ -z "$TEST_TARGET" ]]; then
-            ./test.docker.sh run -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
+            ./test.docker.sh run -V -p "$PARALLEL" --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
           elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh run "$TEST_TARGET" -V -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
           else
-            ./test.docker.sh run "$TEST_TARGET" -V -p "$PARALLEL" -w $PVTEST_WORKSPACE
+            ./test.docker.sh run "$TEST_TARGET" -V -p "$PARALLEL" --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
           fi
 
       - name: Show Tests Summary
@@ -117,7 +146,7 @@ jobs:
           suffix="${suffix//\//-}"
           sha="${{ inputs.commit || github.sha }}"
           sha="${sha:0:7}"
-          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}" >> $GITHUB_ENV
+          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}-${{ matrix.model }}" >> $GITHUB_ENV
 
           sudo chown -R $(id -u):$(id -g) $PVTEST_WORKSPACE || true
 
@@ -129,8 +158,9 @@ jobs:
           path: |
             ${{ env.PVTEST_WORKSPACE }}/README.md
             ${{ env.PVTEST_WORKSPACE }}/run.log
-            ${{ env.PVTEST_WORKSPACE }}/local
-            ${{ env.PVTEST_WORKSPACE }}/remote
+            ${{ env.PVTEST_WORKSPACE }}/results
+            ${{ env.PVTEST_WORKSPACE }}/valgrind
+            ${{ env.PVTEST_WORKSPACE }}/*.log
           if-no-files-found: ignore
 
       - name: Clean up

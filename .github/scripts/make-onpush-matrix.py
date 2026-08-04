@@ -141,7 +141,9 @@ for m in pvtest_machines:
             "    uses: ./.github/workflows/call-pvtests.yaml",
             "    with:",
             f"      test_path: {test_path}",
-            '      parallel: "4"',
+            '      parallel: "6"',
+            # per-push CI runs the cheap model only; the nightly covers both
+            "      model: volatile",
             "    secrets: inherit",
         ]
 
