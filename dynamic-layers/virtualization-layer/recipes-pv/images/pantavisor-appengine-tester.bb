@@ -14,17 +14,20 @@ DOCKER_IMAGE_EXTRA_TAGS = "latest"
 
 CORE_IMAGE_EXTRA_INSTALL += " \
 	bc \
+	coreutils \
 	curl \
 	jq \
+	openssh-ssh \
 	pantavisor-pvtest \
 	procps \
 	pvr \
+	util-linux \
 	valgrind \
 	vim-xxd \
 "
 
-PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" MANUAL="false" OVERWRITE="false" VERBOSE="false" NETSIM="false"'
-PV_DOCKER_IMAGE_ENTRYPOINT_ARGS = '-c "/usr/bin/pvtest-run $TEST_PATH $INTERACTIVE $MANUAL $OVERWRITE $VERBOSE $NETSIM"'
+PV_DOCKER_IMAGE_ENVS = 'TEST_PATH="/" INTERACTIVE="false" OVERWRITE="false" VERBOSE="false" NETSIM="false"'
+PV_DOCKER_IMAGE_ENTRYPOINT_ARGS = '-c "/usr/bin/pvtest-run $TEST_PATH $INTERACTIVE $OVERWRITE $VERBOSE $NETSIM"'
 
 SRC_URI += "\
 "
@@ -32,4 +35,3 @@ SRC_URI += "\
 do_install_scripts:append() {
     echo "Starting Install of appengine tester"
 }
-

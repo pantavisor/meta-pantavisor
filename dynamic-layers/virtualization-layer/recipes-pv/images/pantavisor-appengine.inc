@@ -28,6 +28,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	pantavisor \
 	bash \
 	dnsmasq \
+	dropbear-pv \
 	hostapd \
 	iw \
 	nftables \

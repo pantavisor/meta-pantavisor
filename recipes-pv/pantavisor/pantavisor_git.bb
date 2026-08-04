@@ -63,6 +63,7 @@ FILES:${PN}-config += "/etc/resolv.conf"
 
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
+FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/common"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/pvtx"
 
 # pvcontrol and pvcurl packages (replace standalone recipes)
