@@ -1,0 +1,44 @@
+# Device Manifest
+#
+# Contains the configuration for identifying and communicating with a real
+# device by pvtest framework. One board per manifest: give each board its own
+# file and pick one with --device <name>.
+#
+# Install it in the host's pvtest config dir, then fill and uncomment:
+#
+#   mkdir -p ~/.config/pvtest/devices
+#   cp device.txt ~/.config/pvtest/devices/<name>.txt
+#
+# See README.md for how to run.
+#
+# That directory — and only that one — is bind-mounted into the tester, so a key
+# named in exec= belongs beside the manifest there. Anything hook=/config= reads
+# is host-side only: keep it out of devices/, e.g. ~/.config/pvtest/<board>.conf.
+#
+#   name=   identifies this one runner. Unique per board, e.g. dev-01, dev-02.
+#   type=   class of target. Shared by every board of the same kind (e.g.
+#           appengine). Used to filter test on "devices" from test.json.
+#   ip=     device IP.
+#   exec=   command prefix to run on the device (e.g. ssh).
+#   tty=    host serial device path. Prefer stable /dev/serial/by-id/... over
+#           /dev/ttyUSBN.
+#   baud=   optional. Default 115200.
+#   hook=   optional. Default will do best effort, SKIPping the test that do
+#           not meet the env config requirements from test.json. When set, it
+#           will be executed when a test needs a retype. That is, when
+#           test.json requires an env config that is not set in the running
+#           device.
+#           Invoked as: hook [-c config=] KEY=VALUE ...
+#   config= optional. Config file for the hook= command.
+#   env=    optional. Base boot env for the device. Space-separated KEY-VALUE
+#           that is passed to hook= along the specific test.json env.
+
+#name=dev-01
+#type=<machine>
+#ip=192.168.1.50
+#exec=ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o BatchMode=yes -o ConnectTimeout=5 -o ServerAliveInterval=3 -o ServerAliveCountMax=2 -i /keys/dev.pem root@192.168.1.50
+#tty=/dev/serial/by-id/usb-FTDI_FT232R_USB_UART-if00-port0
+#baud=115200
+#hook=
+#config=
+#env=
