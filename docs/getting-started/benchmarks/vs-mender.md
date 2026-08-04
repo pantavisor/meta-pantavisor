@@ -48,7 +48,7 @@ device including the base).
   containers in one signed revision.
 - **Per-container health gating.** Mender also commits only after a successful
   boot, and state scripts can add custom checks. Pantavisor's edge is
-  granularity: each container declares a `status_goal`, and the commit is held
+  granularity: each container declares a [`status_goal`](/meta-pantavisor/overview/glossary#status-goal), and the commit is held
   until every container reaches it — per-component health gating with no
   scripting.
 

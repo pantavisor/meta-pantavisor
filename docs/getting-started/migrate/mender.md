@@ -21,13 +21,21 @@ and no separate updater running on top of the OS.
 | Mender | Pantavisor | Notes |
 |---|---|---|
 | `meta-mender` Yocto layer | [`meta-pantavisor`](/meta-pantavisor/overview/get-started) | Swap the layer; Pantavisor builds the BSP, kernel, and containers. |
-| A/B rootfs slots | [Revisions in the trail](/pantavisor/overview/revisions) | Rollback is to the previous revision, not a mirrored partition — no doubled storage for the full rootfs. |
-| Mender Artifact (`.mender`) | A `pvr` revision (`pvr commit` + `pvr post`) | The unit of update is a signed, diffable revision. |
-| `mender-binary-delta` (commercial delta) | Object-level diffs (built in) | Only changed content-addressed objects are transferred — no separate delta add-on. |
+| A/B rootfs slots | [Revisions](/pantavisor/overview/revisions) in the [trail](/meta-pantavisor/overview/glossary#trail) | Rollback is to the previous revision, not a mirrored partition — no doubled storage for the full rootfs. |
+| Mender Artifact (`.mender`) | A [`pvr`](/meta-pantavisor/getting-started/develop/cli-tools/pvr-cli) revision (`pvr commit` + `pvr post`) | The unit of update is a signed, diffable revision. |
+| `mender-binary-delta` (commercial delta) | Object-level diffs (built in) | Only changed content-addressed [objects](/meta-pantavisor/overview/glossary#object) are transferred — no separate delta add-on. |
 | Update Modules (partial/app updates) | [Containers](/meta-pantavisor/getting-started/develop) | Every component is already an independent container; app updates never touch the base. |
 | Mender client (a service on the OS) | Pantavisor **is** PID 1 | No agent layered on top — the runtime and the updater are the same process. |
 | Mender server / Hosted Mender | [Pantahub](/meta-pantavisor/getting-started/operate/device-access/remote-pantahub) (optional) | Or deploy directly over the local network with `pvr`; the cloud is not required. |
-| Commit after successful boot (+ state scripts) | [Health-gated commit + bootloader try/rollback](/meta-pantavisor/getting-started/security/atomicity-and-trust) | Both gate the commit on a healthy boot; Pantavisor gates per container on its `status_goal`, with no scripts to write. |
+| Commit after successful boot (+ state scripts) | [Health-gated commit + bootloader try/rollback](/meta-pantavisor/getting-started/security/atomicity-and-trust) | Both gate the commit on a healthy boot; Pantavisor gates per container on its [`status_goal`](/meta-pantavisor/overview/glossary#status-goal), with no scripts to write. |
+
+**A note on "commit":** the table above uses it for two different things.
+`pvr commit` is a CLI action on your workstation that seals a revision
+*before* it's ever sent to a device — closer to `git commit`. The runtime's
+health-gated commit is a separate, later, device-side event: the bootloader
+marking a revision that has already booted and passed its health checks as
+the new known-good state. They're both gates on a healthy boot, but they
+happen in different places at different times.
 
 ## Migration path
 
