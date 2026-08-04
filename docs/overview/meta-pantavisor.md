@@ -55,7 +55,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `dm-crypt` | Storage encryption |
 | `dm-verity` | Container rootfs integrity verification |
 | `autogrow` | Automatic partition growing |
-| `runc` | OCI runtime support |
+| `runc` | OCI runtime support (a Pantavisor runtime build option — see the [pantavisor](https://github.com/pantavisor/pantavisor) project for details). Containers created via `pvr app add` are LXC-based regardless of this flag, as described throughout this layer's [develop](/meta-pantavisor/getting-started/develop) guides |
 | `tailscale` | Tailscale VPN integration |
 | `debug` | Debug features |
 | `pvcontrol` | pv-ctrl socket and CLI tools (pvcurl, pvcontrol) |
