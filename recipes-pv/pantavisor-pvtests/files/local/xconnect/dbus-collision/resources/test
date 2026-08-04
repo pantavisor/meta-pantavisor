@@ -17,23 +17,38 @@
 
 source /usr/share/pantavisor/pvtest/utils
 
-# initial setup — record the clean base revision we expect to roll back to
+echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'
-pvr clone http://localhost:12368/cgi-bin/pvr /home/checkout > /dev/null 2>&1
-cd /home/checkout
+checkout="$(mktemp -d)/checkout"
+pvr_clone_local_or_die "$checkout"
+cd "$checkout"
 
-# stage BOTH owners of org.pantavisor.Example into one checkout — the collision
-pvr get /work/local/common/tarballs/pv-example-system-dbus-server.tgz > /dev/null 2>&1
-pvr get /work/local/common/tarballs/pv-example-system-dbus-server-collision.tgz > /dev/null 2>&1
-pvr checkout
+# Merge a container pvrexport tarball (from the staged common tarballs) into the
+# checkout. The colliding owners must arrive together as a posted revision, so
+# they are deliberately NOT part of the setup tarballs.
+merge_tarball() {
+    dir=$(mktemp -d)
+    tar xzf "$1" -C "$dir" > /dev/null 2>&1 \
+        || { echo "ERROR: failed to extract $1" >&2; exit 1; }
+    pvr merge "$dir" > /dev/null 2>&1 \
+        || { echo "ERROR: pvr merge failed for $1" >&2; exit 1; }
+    rm -rf "$dir"
+}
+
+echo "== post revision with two owners of org.pantavisor.Example =="
+merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server.pvrexport.tgz
+merge_tarball /work/local/common/tarballs/pv-example-system-dbus-server-collision.pvrexport.tgz
+pvr checkout > /dev/null 2>&1
+pvr commit > /dev/null 2>&1
 pvr post --rev "locals/collision" > /dev/null 2>&1
 
-# after posting evaluation — locals/collision triggers a rollback (validation
-# rejects the duplicate owner). Wait for the step to reach ERROR, then for
-# status to be READY again after the rollback completes.
-wait_for_value "pvcontrol steps show-progress locals/collision | jq -r '.status'" "ERROR" 90 > /dev/null 2>&1 \
+# locals/collision triggers a rollback (validation rejects the duplicate owner).
+# Longer timeouts than the container-mode default: on scarce-resource real
+# devices the rollback itself, not just the validation, takes longer.
+wait_for_value "pvcontrol steps show-progress locals/collision | jq -r '.status'" "ERROR" 180 > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for locals/collision to reach ERROR" >&2; exit 1; }
-wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 30 > /dev/null 2>&1 \
+wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantavisor.status\"'" "READY" 90 > /dev/null 2>&1 \
     || { echo "ERROR: timeout waiting for pantavisor.status READY after rollback" >&2; exit 1; }
+echo "== locals/collision: ERROR (rolled back) =="
 pvcontrol steps show-progress locals/collision | sed 's/\\\"tsec\\\":[0-9]\+/\\\"tsec\\\":0/g; s/\\\"tnano\\\":[0-9]\+/\\\"tnano\\\":0/g; s/\\\"msg\\\":\\\"([a-zA-Z_][a-zA-Z0-9_]*:[0-9]\+) /\\\"msg\\\":\\\"/g'
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'

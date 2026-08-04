@@ -1,63 +1,48 @@
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PV_SYSTEM_INIT_MODE")'
+== pv conf file ==
 {
   "key": "PV_SYSTEM_INIT_MODE",
   "value": "appengine",
   "modified": "pv conf file"
 }
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PH_CREDS_HOST")'
+== ph conf file ==
 {
   "key": "PH_CREDS_HOST",
   "value": "api.pantahub.com",
   "modified": "ph conf file"
 }
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PV_POLICY")'
+== cmdline ==
+{
+  "key": "PH_METADATA_DEVMETA_INTERVAL",
+  "value": "15",
+  "modified": "ph cmdline"
+}
+== env ==
 {
   "key": "PV_POLICY",
   "value": "test",
   "modified": "env"
 }
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PH_CREDS_PORT")'
+== policy ==
 {
-  "key": "PH_CREDS_PORT",
-  "value": "43",
-  "modified": "env"
-}
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PH_METADATA_DEVMETA_INTERVAL")'
-{
-  "key": "PH_METADATA_DEVMETA_INTERVAL",
-  "value": "15",
-  "modified": "env"
-}
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PV_DEBUG_SSH")'
-{
-  "key": "PV_DEBUG_SSH",
-  "value": "0",
+  "key": "PV_LOG_CAPTURE_DMESG",
+  "value": "1",
   "modified": "policy"
 }
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PH_METADATA_USRMETA_INTERVAL")'
+== oem config ==
 {
   "key": "PH_METADATA_USRMETA_INTERVAL",
   "value": "30",
   "modified": "oem config"
 }
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PV_LOG_LEVEL")'
+== metadata (before write) ==
 {
   "key": "PV_LOG_LEVEL",
   "value": "4",
   "modified": "pv conf file"
 }
-+ pventer -c pvr-sdk pvcontrol usrmeta save PV_LOG_LEVEL 5
+== update PV_LOG_LEVEL via user-meta ==
 
-+ pventer -c pvr-sdk pvcontrol conf ls
-+ jq -M '.[] | select(.key == "PV_LOG_LEVEL")'
+== metadata (after write) ==
 {
   "key": "PV_LOG_LEVEL",
   "value": "5",

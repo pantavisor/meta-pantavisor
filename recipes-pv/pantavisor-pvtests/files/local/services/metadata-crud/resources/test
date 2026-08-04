@@ -5,7 +5,8 @@
 # 10 (delete non-existent device-meta key -> 404).
 
 SOCK=/run/pantavisor/pv/pv-ctrl
-DEVFILTER='del(.storage, .interfaces, .sysinfo, .time, .["pantavisor.uname"], .["pantavisor.cpumodel"], .["pantavisor.version"])'
+# whitelist: the devmeta baseline is device-dependent (extra hw keys, claimed state)
+DEVFILTER='to_entries | map(select(.key as $k | ["pantahub.online", "pantavisor.mode", "pantavisor.revision", "pantavisor.status"] | index($k))) | sort_by(.key) | from_entries'
 
 echo "== device-meta initial =="
 pvcontrol devmeta ls | jq -M "$DEVFILTER" | tr -d '\r'
@@ -27,7 +28,9 @@ pvcurl -s -o /dev/null -w '%{http_code}\n' --unix-socket "$SOCK" \
 	-X DELETE http://localhost/device-meta/nonexistent-key-xyz
 
 echo "== user-meta initial =="
-pvcontrol usrmeta ls | jq -M | tr -d '\r'
+# No reset between tests: user-meta is device-persistent and may carry keys from
+# earlier tests. Assert our own key's absence rather than dumping the whole map.
+echo "my-key present initially: $(pvcontrol usrmeta ls | jq -M 'has("my-key")' | tr -d '\r')"
 
 echo "== user-meta save =="
 pvcontrol usrmeta save my-key "my-value"
