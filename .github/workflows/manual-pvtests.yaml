@@ -18,7 +18,17 @@ on:
         description: 'Number of tests to run in parallel'
         required: false
         type: string
-        default: "4"
+        default: "6"
+
+      model:
+        description: 'Assignment model ("all" runs both, one job each)'
+        required: false
+        type: choice
+        options:
+          - volatile
+          - persistent
+          - all
+        default: "volatile"
 
 jobs:
 
@@ -40,4 +50,5 @@ jobs:
       commit: ${{ inputs.commit }}
       test_path: ${{ inputs.test_path }}
       parallel: ${{ inputs.parallel }}
+      model: ${{ inputs.model }}
     secrets: inherit
