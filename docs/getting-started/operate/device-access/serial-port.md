@@ -4,11 +4,14 @@ sidebar_position: 2
 description: Access a Pantavisor device over the serial console — open the debug shell, list and enter containers, query device status, and read logs without any network.
 ---
 
-The serial console is the most direct access path to a Pantavisor device — it works without any network configuration and shows the full boot sequence from bootloader to Pantavisor startup.
+The serial console is the most direct access path to a Pantavisor device — it works without any network configuration and shows the full boot sequence from the board's bootloader (U-Boot on most supported boards) through to Pantavisor startup.
 
 ## Hardware Setup
 
-Connect a USB-to-TTY adapter to the device's TX/RX/GND serial pins. Open a terminal emulator on your computer:
+Connect a USB-to-TTY adapter to the device's TX/RX/GND serial pins — match the
+adapter's logic-level voltage to the board (3.3V on the Raspberry Pi and most
+SoC dev boards; a 5V-only adapter can damage the UART pins). Open a terminal
+emulator on your computer:
 
 ```bash
 # Linux — adjust device node as needed (ttyUSB0, ttyUSB1, ttyACM0, …)
