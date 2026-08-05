@@ -12,7 +12,7 @@ The `pvr` CLI lets you add a Docker Hub image as a Pantavisor container, commit 
 
 ## 1 — Clone the Device
 
-Clone the device's current revision to your workstation. Pantavisor exposes its state over HTTP on port 12368.
+Clone the device's current revision to your workstation. Pantavisor exposes its state over HTTP on port 12368. Don't know `<device-ip>` yet? [`pvr device scan`](../../cli-tools/pvr-cli.md#local-network) finds it over mDNS.
 
 ```bash
 pvr clone http://<device-ip>:12368/cgi-bin mydevice
@@ -91,7 +91,7 @@ Post the new revision to the device's pvr endpoint — the same URL you cloned f
 pvr post http://<device-ip>:12368
 ```
 
-Pantavisor downloads the new container objects, writes them as a pending revision, and transitions into it — a full reboot only happens when a `system` restart-policy container or the BSP changed. If the new revision runs cleanly, it becomes the new permanent state.
+Pantavisor downloads the new container objects, writes them as a pending revision, and transitions into it — a full reboot only happens when a `system` restart-policy container or the [BSP](/meta-pantavisor/overview/glossary#bsp-board-support-package) changed (an ordinary app container add/update never touches it). If the new revision runs cleanly, it becomes the new permanent state.
 
 ## 5 — Verify
 

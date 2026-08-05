@@ -4,7 +4,7 @@ sidebar_position: 20
 description: Install applications on Pantavisor as LXC containers — using the pvr CLI over the local network, the pvtx web UI, or remotely via Pantahub.
 ---
 
-Every application on a Pantavisor device is an LXC container added to the device's revision trail. There are three ways to install a new container, depending on whether you want a command-line-only workflow, a local web upload, or cloud-based remote management.
+Every application on a Pantavisor device is an [LXC](/meta-pantavisor/overview/glossary#lxc) container added to the device's [revision trail](/meta-pantavisor/overview/glossary#trail). There are three ways to install a new container, depending on whether you want a command-line-only workflow, a local web upload, or cloud-based remote management.
 
 ---
 

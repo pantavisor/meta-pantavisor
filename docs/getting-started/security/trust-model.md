@@ -6,7 +6,8 @@ description: Pantavisor's trust model — what it protects, the trust boundaries
 
 # Trust model
 
-Pantavisor owns PID 1, so it must clear a higher bar than an updater you can
+Pantavisor owns PID 1 — the kernel's first, always-running process, normally
+`init`/`systemd` — so it must clear a higher bar than an updater you can
 delete. This page describes what Pantavisor protects, the trust boundaries
 involved, and how the pieces compose into a chain from power-on to a running
 container. For the power-fail evidence behind the atomicity claims, see

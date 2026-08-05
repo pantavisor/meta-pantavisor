@@ -147,6 +147,15 @@ pvr app update nginx-app
 pvr app update app-name --from new-image:tag
 ```
 
+`pvr app update` only stages the change locally, same as `pvr app add` — stage,
+commit, and post it like any other change:
+
+```bash
+pvr add .
+pvr commit -m "update app-name to new-image:tag"
+pvr post http://<device-ip>:12368
+```
+
 #### Remove Applications
 ```bash
 # Remove application from repository
@@ -160,6 +169,21 @@ pvr app rm app-name
 # Scan for Pantavisor devices on the local network (mDNS)
 pvr device scan
 ```
+
+Example output:
+
+```
+── Device 1 ───────────────────────────────
+	ID: 1234abcd5678ef90 (unclaimed)
+	Host: raspberrypi.local.
+	IPv4: [192.168.1.42]
+	IPv6: []
+	Port: 12368
+```
+
+The `IPv4` address is `<device-ip>` — the value `pvr clone`, `pvr post`, and
+the other commands on this page that take `http://<device-ip>:12368/...`
+expect.
 
 #### Pantacor Hub (requires `pvr login`)
 
