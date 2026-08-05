@@ -193,7 +193,8 @@ roughly the Yocto equivalent of a `genimage` config plus a partition table.
 
 ### xconnect
 
-Pantavisor's inter-container service connectivity: containers declare the
+Also referred to as **pv-xconnect** (the name of the on-device daemon) —
+same feature. Pantavisor's inter-container service connectivity: containers declare the
 services they provide and require in `services.json`
 (`service-manifest-xconnect@1`), and Pantavisor wires them together. See the
 [xconnect reference](/pantavisor/overview/xconnect).

@@ -22,6 +22,11 @@ Before you begin, make sure you have the following ready:
 
 The first step is to get the Pantavisor image for your specific device.
 
+> **Skip the manual download:** once you've installed `pvflasher` (below),
+> `pvflasher install` downloads and flashes the image for you interactively
+> — no separate download step or off-site browsing required. The manual
+> steps below are for when you want the image file on disk first.
+
 1.  Head over to our [Downloads page](https://pantavisor.io/downloads/) to see all available platforms and images.
 2.  Find the image that matches your device—in this case, select the image for the **Raspberry Pi 3B**. For the Raspberry Pi 3B/3B+/4, choose the **raspberrypi-armv8** image. Download the latest stable version.
 3.  The downloaded file will be a compressed image, typically named **`pantavisor-starter-raspberrypi-armv8.rootfs.wic.bz2`**.

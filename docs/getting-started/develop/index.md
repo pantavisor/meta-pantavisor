@@ -18,13 +18,13 @@ difference.
 - [Install apps](./application/install/index.md) — add [containers](../../overview/glossary.md#container) with the `pvr` CLI, the pvtx web UI, or remotely via [Pantahub](./application/install/remote-pantahub.md)
 - [Configure](./application/configure.md) — overlay files and runtime manifests through the [revision](../../overview/glossary.md#revision) workflow
 - [View](./application/view.md) — container status, logs, and the pvtx web UI
-- [Access](./application/access-applications.md) — enter containers, reach their ports, and wire services with pv-xconnect
-- [Remove](./application/remove.md) — drop a container from the device state and deploy
+- [Access](./application/access-applications.md) — enter containers, reach their ports, and wire services with [pv-xconnect](../../overview/glossary.md#xconnect)
+- [Remove](./application/remove.md) — drop a container from the [device state](../../overview/glossary.md#state-state-json) and deploy
 
 ## Tooling and deeper development
 
-- [CLI tools](./cli-tools/index.md) — `pvr`, `pvtx`, and `pvcontrol` cheatsheets and workflows
-- [Container development](../../overview/container-development.md) — build example containers in the meta-pantavisor Yocto layer
+- [CLI tools](./cli-tools/index.md) — [`pvr`](../../overview/glossary.md#pvr), [`pvtx`](../../overview/glossary.md#pvtx), and [`pvcontrol`](../../overview/glossary.md#pvcontrol) cheatsheets and workflows
+- [Container development](../../overview/container-development.md) — build example containers in the meta-pantavisor [Yocto](../../overview/glossary.md#openembedded) layer
 - [Pantavisor runtime development](../../overview/pantavisor-development.md) — hack on the Pantavisor runtime itself using [`kas`](https://github.com/siemens/kas), the Yocto workspace/build tool this layer's KAS configs are written for
 
 For the state, revision, and BSP data model this CLI operates on, see the [Reference](/pantavisor/overview).

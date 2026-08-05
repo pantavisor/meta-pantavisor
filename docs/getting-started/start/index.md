@@ -16,7 +16,7 @@ boot it, and ship your first update.
 - **No hardware?** [Run Pantavisor in Docker (AppEngine)](/meta-pantavisor/getting-started/how-to-install/docker) on
   your workstation — see the [glossary](../../overview/glossary.md#appengine)
   for what "AppEngine" means here (not a PaaS).
-- **Install `pvr`** — the client used to inspect and change device state. Every
+- **Install `pvr`** — the client used to inspect and change [device state](../../overview/glossary.md#state-state-json). Every
   change is an explicit, one-shot `pvr post` — there's no background agent
   continuously reconciling drift the way a Kubernetes controller would. See
   the [`pvr` installation guide](/meta-pantavisor/getting-started/develop/cli-tools/pvr-cli#installation).
@@ -33,7 +33,7 @@ boot it, and ship your first update.
 
 - [Install your first application](/meta-pantavisor/getting-started/develop/application/install/) with `pvr`.
 - [Access your device](/meta-pantavisor/getting-started/operate/device-access) over serial, the local network,
-  or Pantahub.
+  or [Pantahub](../../overview/glossary.md#pantahub).
 
 > **📝 Note**
 >
