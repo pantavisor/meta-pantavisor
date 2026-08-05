@@ -9,7 +9,7 @@ the SHA256 of a binary artifact. When you `pvr clone` a device, that manifest is
 expanded into a working directory you can edit. This page covers the real
 layout; for the exhaustive field-by-field schema see the reference
 [state format](/pantavisor/reference/pantavisor-state-format-v2), and see the
-[on-device tools (pvtx, pvcontrol)](/pantavisor/reference/pantavisor-tools)
+[on-device tools (pvtx, pvcontrol)](/pantavisor/tools/pantavisor-tools)
 reference for working with revisions on the device itself.
 
 ## Repository layout

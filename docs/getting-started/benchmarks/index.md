@@ -12,7 +12,7 @@ efficiency claims with reproducible numbers (methodology below).
 
 ## Pantavisor vs alternatives
 
-Pantavisor offers **composable firmware through lightweight LXC containers** —
+Pantavisor offers [**composable firmware**](/meta-pantavisor/overview/composable-firmware) through lightweight LXC containers —
 including the kernel/BSP as a container — which differs from both traditional
 build systems and container platforms.
 

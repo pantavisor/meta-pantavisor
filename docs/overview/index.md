@@ -44,3 +44,14 @@ committing to the Yocto/BitBake build guide below.
 ## Continuous Integration
 
 - [Continuous Integration](ci/index.md) — CI system overview, machine matrix, release builds, tag sync, and docs publishing
+
+## Also in this section
+
+- [Porting Pantavisor](port/index.md) — add support for a new board: platform
+  and machine KAS files, CI registration, and building.
+- [Composable Firmware](composable-firmware.md) — what "composable firmware"
+  actually means here.
+- [Examples](examples/index.md) — worked xconnect and pvwificonnect examples.
+- [Testing](testing/index.md) — development and automated test workflows.
+- [Glossary](glossary.md) — every term used throughout these docs, defined
+  in one place.

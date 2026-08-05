@@ -39,8 +39,9 @@ Built from [meta-pantavisor](/meta-pantavisor/overview/get-started).
 An LXC container defined as a part of the device state: a squashfs root
 filesystem plus a `run.json` runtime manifest (and a `src.json` recording
 where it came from). Apps, system services, and management tools are all
-containers. **Note:** older generated reference pages call containers
-*platforms* — same thing.
+containers. **Note:** some reference pages and state-JSON examples still
+call containers *platforms* — same thing, an older name that hasn't been
+fully replaced everywhere yet.
 
 ### Debug shell
 
