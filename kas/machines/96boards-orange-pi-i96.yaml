@@ -1,0 +1,10 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/96boards.yaml
+
+machine: orangepi-i96
+
+local_conf_header:
+  pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"

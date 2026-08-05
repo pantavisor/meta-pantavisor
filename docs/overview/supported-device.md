@@ -22,6 +22,7 @@ The following machines are configured in the CI pipeline (`.github/machines.json
 | `imx8mn-var-som` | Variscite i.MX 8M Nano SOM |
 | `imx8mm-var-dart` | Variscite DART-MX8M-MINI |
 | `docker-x86_64` | AppEngine testing container (x86_64) |
+| `96boards-orangepi-i96` | Orange Pi i96 (RDA8810PL). BSP in [meta-orangepi-i96](https://github.com/pantavisor/meta-orangepi-i96). No Bluetooth or WiFi AP — see the [board guide](../getting-started/how-to-install/boards/orangepi-i96.md) |
 
 > For an up-to-date programmatic list, always refer to [`.github/machines.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/machines.json). If you add a new machine, remember to run `.github/scripts/makeworkflows` to regenerate the GitHub Actions workflows.
 

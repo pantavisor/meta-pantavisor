@@ -14,6 +14,7 @@ Board-specific guides supplement the generic [install methods](../). Each page c
 2. [Toradex Verdin iMX8MM](verdin-imx8mm.md) — UUU flash via pv-flash-bundle, boot-mode selection for Verdin Development Board
 3. [Variscite iMX8MN VAR-SOM](imx8mn-var-som.md) — UUU flash, boot-mode DIP switches, carrier board notes
 4. [Variscite iMX8MM VAR-DART](imx8mm-var-dart.md) — UUU flash, boot-mode DIP switches, carrier board notes
+5. [Orange Pi i96](orangepi-i96.md) — SD card flash, 921600 baud console, hybrid bootloader assembly, WiFi notes and known limitations
 
 ## Don't See Your Board?
 

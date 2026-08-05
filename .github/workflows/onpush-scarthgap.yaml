@@ -65,6 +65,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 1
+          - machine_name: 96boards-orangepi-i96-scarthgap
+            configs: kas/build-configs/release/96boards-orangepi-i96-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: pantavisor-starter
+            output: "pantavisor-starter*.rootfs.wic*"
+            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}

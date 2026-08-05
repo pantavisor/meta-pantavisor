@@ -221,6 +221,9 @@ config MACHINE_FILTER_RISCV
 config MACHINE_FILTER_RADXA
 	bool "Radxa"
 
+config MACHINE_FILTER_96BOARDS
+	bool "96Boards"
+
 endchoice
 
 config PLATFORM_CORAL
@@ -257,6 +260,9 @@ config PLATFORM_SUNXI
 	bool
 
 config PLATFORM_RADXA
+	bool
+
+config PLATFORM_96BOARDS
 	bool
 
 choice
@@ -437,6 +443,11 @@ config MACHINE_RADXA_ROCK5B
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_RADXA
 	select PLATFORM_RADXA
 
+config MACHINE_ORANGEPI_I96
+	bool "orangepi-i96"
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_96BOARDS
+	select PLATFORM_96BOARDS
+
 endchoice
 
 config KAS_INCLUDE_MACHINE_QEMUX86_64
@@ -608,4 +619,8 @@ config KAS_INCLUDE_MACHINE_RADXA_ROCK5A
 config KAS_INCLUDE_MACHINE_RADXA_ROCK5B
 	string
 	default "kas/machines/radxa-rock5b.yaml" if MACHINE_RADXA_ROCK5B
+
+config KAS_INCLUDE_MACHINE_ORANGEPI_I96
+	string
+	default "kas/machines/96boards-orange-pi-i96.yaml" if MACHINE_ORANGEPI_I96
 
