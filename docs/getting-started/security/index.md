@@ -41,6 +41,9 @@ on the `pantavisor/` side, not repeated here:
   the registration/claim flow that binds a device to a Pantahub account.
 - [`pvr sig`](/meta-pantavisor/getting-started/develop/cli-tools/pvr-cli#signing-a-revision) —
   signing commands and key flags.
+- [Licensing](/meta-pantavisor/getting-started/licensing) — what's open
+  source (on-device code, MIT) vs. the commercial relationship (managed
+  Pantahub service), and that Pantahub itself is self-hostable.
 
 ## Planned coverage
 

@@ -12,10 +12,14 @@ boot it, and ship your first update.
 ## Paths
 
 - **[Download and flash on a Raspberry Pi](./download-and-flash.md)** — flash a
-  pre-built starter image and boot real hardware in about 30 minutes.
+  pre-built starter image and boot real hardware in about 30 minutes. No
+  Yocto or container background needed for this path.
 - **No hardware?** [Run Pantavisor in Docker (AppEngine)](/meta-pantavisor/getting-started/how-to-install/docker) on
   your workstation — see the [glossary](../../overview/glossary.md#appengine)
-  for what "AppEngine" means here (not a PaaS).
+  for what "AppEngine" means here (not a PaaS). Note: there's no pre-built
+  AppEngine image to download, so this path still needs the Yocto/BitBake
+  toolchain to build one — it's a no-*hardware* alternative, not a
+  no-*build* one.
 - **Install `pvr`** — the client used to inspect and change [device state](../../overview/glossary.md#state-state-json). Every
   change is an explicit, one-shot `pvr post` — there's no background agent
   continuously reconciling drift the way a Kubernetes controller would. See
