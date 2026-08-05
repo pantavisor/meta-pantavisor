@@ -116,7 +116,21 @@ pvr app add --from nginx:stable-alpine webserver
 # Pick the target architecture explicitly — usually needed when adding
 # images for an ARM device from an x86 workstation
 pvr app add --from nginx:stable-alpine --platform linux/arm64 webserver
+
+# Set the container's run.json fields at creation time instead of
+# hand-editing them afterward
+pvr app add --from nginx:stable-alpine --group app --status-goal STARTED webserver
 ```
+
+`pvr app add` also accepts:
+
+- `--group <name>` — startup group to install into (default: the last group
+  in `groups.json`, if one exists).
+- `--status-goal <goal>` — one of `MOUNTED`, `STARTED`, or `READY`; see
+  [Status goal](/meta-pantavisor/overview/glossary#status-goal).
+- `--restart-policy <policy>` — `system` or `container`; see [Restart policy](/meta-pantavisor/overview/glossary#restart-policy).
+- `--runlevel <level>` — **deprecated**, use `--group` instead. Old valid
+  values were `data`, `root`, `platform`, and `app`.
 
 #### List Applications
 ```bash
