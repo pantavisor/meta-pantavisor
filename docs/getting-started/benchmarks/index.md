@@ -40,7 +40,7 @@ For the migration *path* off an image updater or container platform, see
 ## Pantavisor vs image updaters (Mender / RAUC / SWUpdate)
 
 Image updaters update **the image**: every change is a full-image event.
-Pantavisor versions the device as content-addressed objects, so a change ships
+Pantavisor versions the device as [content-addressed](/meta-pantavisor/overview/glossary#object) objects, so a change ships
 only what actually changed.
 
 Per-tool comparisons:
