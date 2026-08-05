@@ -91,12 +91,12 @@ Post the new revision to the device's pvr endpoint — the same URL you cloned f
 pvr post http://<device-ip>:12368
 ```
 
-Pantavisor downloads the new container objects, writes them as a pending revision, and transitions into it — a full reboot only happens when a `system` restart-policy container or the [BSP](/meta-pantavisor/overview/glossary#bsp-board-support-package) changed (an ordinary app container add/update never touches it). If the new revision runs cleanly, it becomes the new permanent state.
+Pantavisor downloads the new container objects, writes them as a pending revision, and transitions into it — a full reboot only happens when a [`system` restart-policy](/meta-pantavisor/overview/glossary#restart-policy) container or the [BSP](/meta-pantavisor/overview/glossary#bsp-board-support-package) changed (an ordinary app container add/update never touches it). If the new revision runs cleanly, it becomes the new permanent state. If it fails, the previous revision is restored automatically.
 
 ## 5 — Verify
 
 After the transition, confirm the container is running — from the [device console](../../../operate/device-access/serial-port.md) (serial, or SSH if
-you've set that up) or remotely via `pvcontrol`:
+you've set that up) or remotely via [`pvcontrol`](../../../develop/cli-tools/pvcontrol.md):
 
 ```bash
 # From the device console (serial or SSH)
