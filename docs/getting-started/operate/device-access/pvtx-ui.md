@@ -24,7 +24,7 @@ The **Home** page shows the device's current revision and lets you switch revisi
 
 Top-left status block:
 
-- **Rev** — the current revision number in the device's trail.
+- **Rev** — the current revision number in the device's [trail](/meta-pantavisor/overview/glossary#trail).
 - **Status** — `DONE` means the current revision is committed and stable. Other states (e.g. `TESTING`) appear while a revision is being evaluated.
 - **Progress** — completion percentage of the current update or boot sequence.
 - A status line such as *"Update finished, revision set as rollback point"*.
