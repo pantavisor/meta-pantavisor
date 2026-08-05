@@ -75,6 +75,8 @@ pvcontrol steps show-progress current   # progress of the current revision
 pvcontrol buildinfo                     # Pantavisor build info dump
 ```
 
+`status` is one of `INSTALLED`, `MOUNTED`, `BLOCKED`, `STARTING`, `STARTED`, `READY`, `RECOVERING`, `STOPPING`, `STOPPED` — see [Container status](/pantavisor/overview/containers#status) for what each means; `BLOCKED` and `RECOVERING` are the ones that indicate a problem.
+
 ### View logs
 
 ```bash
