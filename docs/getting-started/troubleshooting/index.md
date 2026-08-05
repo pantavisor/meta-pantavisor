@@ -17,6 +17,9 @@ lxc-ls -f
 # List containers: status, group, status goal, restart policy
 pvcontrol ls
 
+# Restart just one container
+pvcontrol containers restart <name>
+
 # Check Pantavisor runtime log
 tail /pv/logs/<revision>/pantavisor/pantavisor.log
 
@@ -25,6 +28,21 @@ tail /pv/logs/<revision>/<container>/lxc/console.log
 
 # Check Pantahub connectivity (look for pantahub.online / pantahub.state)
 pvcontrol devmeta ls
+```
+
+`<revision>` above is the number `pvcontrol ls` (or the pvtx web UI's "Rev"
+field) shows for the container you're checking.
+
+`pvcontrol ls`'s `status` column is one of `INSTALLED`, `MOUNTED`, `BLOCKED`, `STARTING`, `STARTED`, `READY`, `RECOVERING`, `STOPPING`, `STOPPED` — see [Container status](/pantavisor/overview/containers#status) for what each means and which ones indicate a problem (`BLOCKED` and `RECOVERING` are the ones to look for). `status goal` is the target status a container needs to reach — see [Status goal](/pantavisor/overview/containers#status-goal).
+
+### Disk full / low on space
+
+```bash
+# Reclaim space — this is the only safe way to free /storage manually.
+# Do NOT hand-delete files under /storage: the running, updating, and
+# last-good revisions are protected automatically, but only pvcontrol
+# knows which files those are.
+pvcontrol storage gc
 ```
 
 Running these from inside a container (e.g. an SSH session into pvr-sdk)
@@ -37,7 +55,7 @@ instead? The `/pv/` tree is mounted at `/pantavisor/` there — e.g.
 
 **Symptom**: The device keeps rebooting after pushing a new revision.
 
-**Diagnosis**: A container in the new revision is failing to start, so auto-recovery retries it; after the retries are exhausted Pantavisor rolls back to the last `DONE` revision. Check the logs of the failed revision under `/pv/logs/<revision>/`.
+**Diagnosis**: A container in the new revision is failing to start, so auto-recovery retries it; after the retries are exhausted Pantavisor rolls back to the last `DONE` revision. There's no single fixed retry count — it's per-container/group `auto_recovery` config (`max_retries`, default `0` = unlimited retries, `policy` default `no` = disabled unless configured; see the [Auto-Recovery Object reference](/pantavisor/reference/pantavisor-state-format-v2#auto-recovery-object)). Check the logs of the failed revision under `/pv/logs/<revision>/`.
 
 **Fix**: No manual intervention is needed for recovery — the device returns to the last good revision on its own. Fix the failing container and deploy again.
 
@@ -63,7 +81,7 @@ instead? The `/pv/` tree is mounted at `/pantavisor/` there — e.g.
 
 **Diagnosis**: Either the URL form is wrong, or the pvr-sdk endpoint on the device only binds localhost.
 
-**Fix**: Use `http://<device-ip>:12368` (and `http://<device-ip>:12368/cgi-bin` for clone). If the image binds the endpoint to localhost, open it with a `_config/pvr-sdk/etc/pvr-sdk/config.json` overlay — see [Local Network](/meta-pantavisor/getting-started/operate/device-access/local-network).
+**Fix**: Use `http://<device-ip>:12368` (and `http://<device-ip>:12368/cgi-bin` for clone). If the image binds the endpoint to localhost, open it with a `_config/pvr-sdk/etc/pvr-sdk/config.json` overlay setting `"listen": "0.0.0.0"` — see the [FAQ entry](/meta-pantavisor/getting-started/troubleshooting/faq#pvr-clone-fails-with-connection-refused) for the exact JSON.
 
 ## Build & layer pitfalls (for image builders)
 

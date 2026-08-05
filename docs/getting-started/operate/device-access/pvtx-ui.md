@@ -67,7 +67,7 @@ Below the stats are two tables:
 
 ## API documentation — the pvtx REST API
 
-The **API documentation** page documents the on-device **PVTX REST API** — the same actions available from the `pvtx` CLI, exposed over HTTP so you can manage the device without any cloud service — you upload pvr export packages directly to the device.
+The **API documentation** page documents the on-device **PVTX REST API** — the same actions available from the `pvtx` CLI (the on-device counterpart to `pvcontrol`, installed on the device itself — not something you run from your workstation), exposed over HTTP so you can manage the device without any cloud service — you upload pvr export packages directly to the device.
 
 ![PVTX REST API documentation in the pvtx app](./pvtx-ui-api-docs.png)
 
@@ -75,6 +75,14 @@ It walks through two workflows with runnable `curl` examples:
 
 - **Replace the whole device state** from a `pvexport` package downloaded from Pantahub.
 - **Add or remove parts** of the current running revision.
+
+> **⚠️ Warning — this is a state-changing transaction, not a read-only query**
+>
+> `begin` opens a transaction that later `add`/`commit` calls apply to the
+> device — it's not safe to run on a live device without reading the full
+> workflow on the **API documentation** page first (in the pvtx web UI
+> itself) so you know what `add`/`commit`/`cancel` steps come next and
+> what state they leave the device in if interrupted.
 
 For example, starting a fresh transaction:
 
