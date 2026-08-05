@@ -6,6 +6,11 @@ description: "Add support for a new board to meta-pantavisor: platform and machi
 
 This section covers how to add support for a new device or hardware platform to `meta-pantavisor`.
 
+**Where this job ends:** porting is done once `pantavisor-bsp` boots Pantavisor
+successfully on the new board. Apps and other containers are a separate
+concern, covered in [Container Development](../container-development.md) —
+you don't need to touch container recipes to bring up a new machine.
+
 ## Build System Overview
 
 `meta-pantavisor` uses **Yocto/OpenEmbedded** with **KAS** as the configuration and orchestration layer: builds run through `./kas-container build <config.yaml>`, where the config is composed from layered YAML fragments — base settings (`kas/bsp-base.yaml`), a Yocto release (`kas/scarthgap.yaml`), a platform (`kas/platforms/<family>.yaml`), and a machine (`kas/machines/<device>.yaml`). See the [Build system overview](../build-system) for the full hierarchy.

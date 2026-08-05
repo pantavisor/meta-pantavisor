@@ -17,8 +17,8 @@ root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor
 ```
 
 The kernel + initramfs + device tree are packaged as a FIT image
-(`pantavisor.fit`) that lives inside a versioned **trail revision** on the
-storage volume:
+(`pantavisor.fit`) that lives inside a versioned [**trail**](../glossary.md#trail)
+revision on the storage volume:
 
 ```
 /trails/<rev>/bsp/pantavisor.fit          # preferred: single FIT
@@ -30,7 +30,8 @@ storage volume:
 U-Boot's only job is to pick the right revision, load that revision's
 kernel/initrd/dtb into RAM, assemble the kernel command line, and jump to
 it. Once running, Pantavisor mounts its storage volume and manages
-containers (see [Pantavisor](../../pantavisor/overview/revisions.md) for the trail/revision model).
+[containers](../../pantavisor/overview/containers.md) — [LXC](glossary.md#lxc)-based,
+not Docker (see [Pantavisor](../../pantavisor/overview/revisions.md) for the trail/revision model).
 
 ## How the boot script is built and deployed
 
