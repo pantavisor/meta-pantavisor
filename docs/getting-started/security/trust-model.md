@@ -16,8 +16,9 @@ container. For the power-fail evidence behind the atomicity claims, see
 ## What Pantavisor protects
 
 - **Integrity of the device state** — the kernel, BSP, every container, and
-  configuration are described as content-addressed objects under one signed
-  revision. Tampering with any object changes its hash and breaks the signature.
+  configuration are described as content-addressed [objects](/pantavisor/overview/storage)
+  under one signed [revision](/pantavisor/overview/revisions). Tampering with
+  any object changes its hash and breaks the signature.
 - **Integrity at runtime** — container root filesystems are verified as they are
   mounted, not only at download time.
 - **Confidentiality of stored state** — the storage partition can be encrypted.

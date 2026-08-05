@@ -339,6 +339,34 @@ pvr post http://DEVICE_IP:12368
 - Use signature management for production deployments
 - Monitor device logs after deployment
 
+## Signing a Revision
+
+```bash
+# Sign a part (container or BSP) with your own key
+pvr sig add --part sensor-app --key ./my-signing-key.pem --x5c ./my-cert-chain.pem
+
+# List signatures
+pvr sig ls
+```
+
+Key flags (`pvr sig <subcommand> --help` for the full list):
+
+- `--key` / `-k` (env `PVR_SIG_KEY`) — your private key in PEM format.
+- `--x5c` / `-x` (env `PVR_X5C_PATH`) — cert chain to include in the JWS
+  `x5c` header; `no` to omit it.
+- `--pubkey` / `-p` (env `PVR_SIG_PUBKEY`) — pubkey store used to validate
+  signatures.
+- `--cacerts` / `-c` (env `PVR_SIG_CACERTS`) — cert pool to validate against;
+  use `__system__` to use the system cert store.
+
+**If you don't pass `--key`/`--x5c`,** `pvr sig` fetches and uses
+Pantacor's own **shared, public default developer keys** (`--certs-url`,
+env `PVS_CERTS_URL`, defaults to a `pvs.defaultkeys.tar.gz` tarball on
+`gitlab.com/pantacor/pv-developer-ca`) — fine for development, but you must
+supply your own `--key`/`--x5c` to sign with a key an OEM actually controls.
+This repo doesn't document a recommended key-generation/rotation practice
+beyond that — treat it as an open question for your own PKI process.
+
 ## Official Documentation
 
 For complete command reference and advanced usage:
