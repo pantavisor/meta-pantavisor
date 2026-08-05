@@ -97,7 +97,7 @@ Run all tests in a category:
 
 ### Remote tests (`remote/`)
 
-Remote tests validate Pantahub connectivity — OTA updates, device claiming,
+Remote tests validate [Pantahub](/meta-pantavisor/overview/glossary#pantahub) connectivity — OTA updates, device claiming,
 and cloud logging. Pantahub credentials must be configured via environment
 variables before running these tests.
 
@@ -116,7 +116,7 @@ Run a specific test:
 ## Standalone container
 
 Besides the test harness, you can run the appengine image as a standalone
-container named `pva-test`, with a `pvtx.d` directory of `.pvrexport.tgz`
+container named `pva-test`, with a `pvtx.d` directory of [`.pvrexport.tgz`](/meta-pantavisor/overview/glossary#pvrexport)
 bundles to provision and a `storage-test` volume for persistent state:
 
 ```bash
