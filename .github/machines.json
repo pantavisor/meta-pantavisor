@@ -79,7 +79,7 @@
 		{
 			"config": "kas/machines/96boards-orange-pi-i96.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "96boards-orangepi-i96",
-			"workflows": ["manual", "tag", "onpush"]
+			"workflows": ["manual", "tag"]
 		}
 	]
 }
