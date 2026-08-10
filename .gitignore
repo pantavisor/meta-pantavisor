@@ -18,3 +18,12 @@ layers
 gha-creds-*.json
 temp.json
 workdir
+
+# Locally rebuilt RDA8810 bootloader blobs. These are build artifacts that go
+# stale silently: a blob predating the five-register AP pad map boots fine but
+# leaves no SDIO and no wlan0, which reads as a driver regression. Regenerate
+# rather than commit -- see MODEM-WIFI-PORT.md B3.
+recipes-bsp/u-boot/files/rda8810-spl/*.rda
+
+# Downloaded/exported image artifacts
+pantavisor-starter-*.tar.gz

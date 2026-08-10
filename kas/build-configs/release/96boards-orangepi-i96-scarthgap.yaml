@@ -1,0 +1,76 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-orangepi-i96:
+        branch: main
+        commit: b4fed49e5d3f69afefd1c8e78967d435d5f6b9e0
+        path: layers/meta-orangepi-i96
+        url: https://github.com/pantavisor/meta-orangepi-i96
+    poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: d03f09df0ab0bf326ab1e0d0969f4643a9f8a378
+    meta-pantavisor:
+    meta-virtualization:
+        commit: 89da4f56b4c510059f8dc1527d289d9fd4fef133
+        path: layers/meta-virtualization
+        url: https://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: d8cc4e44001c7257273d290ce8c4496e93d32841
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+machine: orangepi-i96
+local_conf_header:
+    pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-starter
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:

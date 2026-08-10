@@ -25,11 +25,17 @@ python __anonymous() {
     d.setVarFlag("do_image_pvrexportit", "cleandirs", " ${PVSTATE} ")
 
     # A pvrexport container's sole deliverable is the pvrexport, so give it the
-    # no-op do_deploy that pvroot-image depends on. Schedule it only when the
-    # image is a container (IMAGE_FSTYPES is exactly pvrexportit): this class is
-    # applied to every image via IMAGE_CLASSES, and on a wic-building system
-    # image do_image_wic[recrdeps]=do_build would make the task loop.
-    if set((d.getVar("IMAGE_FSTYPES") or "").split()) == {"pvrexportit"}:
+    # no-op do_deploy that pvroot-image depends on. This class is applied to every
+    # image via IMAGE_CLASSES, so schedule the task only when it is safe: the one
+    # hazard is a wic-building system image, whose do_image_wic[recrdeps]=do_build
+    # would turn do_deploy into a dependency loop. Gate on "builds pvrexportit and
+    # not wic" rather than an exact IMAGE_FSTYPES set — machine confs legitimately
+    # append extra rootfs types to every image (e.g. meta-96boards' orangepi-i96
+    # adds ext4.gz for fastboot), and that must not disqualify a container from the
+    # do_deploy pvroot-image depends on. A no-op do_deploy on a non-wic system
+    # image is harmless (pvroot-image depends on the containers' do_deploy).
+    fstypes = set((d.getVar("IMAGE_FSTYPES") or "").split())
+    if "pvrexportit" in fstypes and not any(t == "wic" or t.startswith("wic.") for t in fstypes):
         bb.build.addtask("do_deploy", "do_build", "do_image_complete", d)
 }
 

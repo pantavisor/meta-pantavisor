@@ -1,0 +1,16 @@
+# 96Boards platform. The only machine here is the Orange Pi i96, whose BSP now
+# lives in its own layer: github.com/pantavisor/meta-orangepi-i96.
+#
+# It used to come from 96boards/meta-96boards, which is abandoned — its machine
+# conf targeted the vendor's Linux 3.10 tree and a 2012 u-boot, neither of which
+# builds with a current toolchain, and it dragged in an orphan mesa bbappend that
+# had to be BBMASK'd. meta-orangepi-i96 replaces it outright, so meta-96boards is
+# no longer fetched at all.
+header:
+  version: 16
+
+repos:
+  meta-orangepi-i96:
+    url: "https://github.com/pantavisor/meta-orangepi-i96"
+    path: layers/meta-orangepi-i96
+    branch: main
