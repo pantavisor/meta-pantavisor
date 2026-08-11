@@ -128,6 +128,8 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
+    pantavisor-wakelocks: |
+        PANTAVISOR_FEATURES:append = " wakelocks"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"

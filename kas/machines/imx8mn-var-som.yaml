@@ -11,3 +11,10 @@ header:
 
 # The machine as it is written into the `local.conf` of bitbake.
 machine: imx8mn-var-som
+
+local_conf_header:
+ platform-imx8mn-var-som: |
+  # Wakelocks / managed power. This is the board managed mode is validated on:
+  # it has real PSCI suspend-to-RAM and, via the SNVS RTC patch this feature
+  # gates, a wakeup-capable RTC alarm to wake from it on schedule.
+  PANTAVISOR_FEATURES:append = " wakelocks"
