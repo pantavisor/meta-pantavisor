@@ -37,6 +37,7 @@ PANTAVISOR_SRC_URI = " \
 	file://pvcrypt.cfg \
 	file://dm.cfg \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', 'file://wakelock.cfg', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelock-cadence', 'file://wakelock-psi.cfg', '', d)} \
 	${TAILSCALE_KERNEL_SRC_URI} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'file://caam-nxp.cfg', '', d)} \
@@ -50,6 +51,7 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 	${WORKDIR}/overlayfs.cfg \
 	${WORKDIR}/dm.cfg \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', '${WORKDIR}/wakelock.cfg', '', d)} \
+	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelock-cadence', '${WORKDIR}/wakelock-psi.cfg', '', d)} \
 	${TAILSCALE_KERNEL_FRAGMENT} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '${WORKDIR}/pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', '${WORKDIR}/caam-nxp.cfg', '', d)} \
