@@ -44,6 +44,25 @@ Key documents:
 - [docs/overview/ci/tag-sync.md](docs/overview/ci/tag-sync.md) — meta-pantavisor → pantavisor tag-sync workflow and PAT setup
 - [docs/overview/ci/changelog.md](docs/overview/ci/changelog.md) — per-release CHANGELOG generator, format, and regen procedure
 
+### Actionability (docs/)
+
+Every feature described in docs/ should give the reader a direct or inline path to do something with it, not just explain the concept. Concretely:
+
+- Alongside (or right after) the conceptual explanation of a feature, show the concrete command, config key, or on-disk path that exercises it — e.g. a `pvcontrol` invocation ([docs/getting-started/develop/cli-tools/pvcontrol.md](docs/getting-started/develop/cli-tools/pvcontrol.md)), a configuration key ([docs/getting-started/develop/cli-tools/configuration.md](docs/getting-started/develop/cli-tools/configuration.md) or [docs/getting-started/develop/application/configure.md](docs/getting-started/develop/application/configure.md)), or a rootfs path to inspect ([docs/overview/manifest-audit.md](docs/overview/manifest-audit.md)).
+- Prefer a short fenced code block over prose describing what a command does — show the invocation and, where useful, its output.
+- If a feature genuinely has no user-facing action (e.g. it's fully automatic, internal bookkeeping), say so explicitly rather than leaving the reader to wonder — a one-line "this is managed automatically; no action needed" is enough.
+- Verify every command, config key, path, and filename you add against the actual source or an existing doc before writing it down — don't invent plausible-looking examples.
+- This applies both when writing new docs and when editing existing ones: if you touch a section that only explains a feature without showing how to use it, add the missing hands-on reference while you're there.
+
+### Link conventions (docs/)
+
+- Within the same folder: plain relative links, e.g. `manifest-audit.md#usage`.
+- Between `docs/overview/` and `docs/getting-started/`: relative sibling links, e.g. `../../overview/manifest-audit.md`, `../overview/glossary.md#trail`, or `../getting-started/develop/cli-tools/pvcontrol.md`. These resolve both on GitHub and on the published site.
+- To pantavisor (core runtime) docs: `../../pantavisor/<section>/<page>.md` (e.g. `../../pantavisor/overview/xconnect.md`, `../../../pantavisor/reference/pantavisor-xconnect.md`) — resolves only on the published site, where both repos' docs are siblings.
+- To curated site pages: full URLs, e.g. `https://docs.pantavisor.io/operate/device-access/serial-port`.
+- Do not use retired MkDocs-era prefixes — they dangle on the Docusaurus site.
+- Syntax: the site renders MDX. Use Docusaurus admonitions (`:::note … :::`), not MkDocs `!!! Note`; avoid MkDocs Material icon codes like `:material-check:`.
+
 ## Key Pitfalls
 
 **`PANTAVISOR_FEATURES` operator**: Never use `+=` in distro includes — it clobbers `??=` defaults from `pvbase.bbclass`. Always use `:append`:
