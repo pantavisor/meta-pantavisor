@@ -12,7 +12,11 @@ PANTAVISOR_FEATURES ??= " \
 	xconnect-dbus-systembus \
 	container-mdev \
 "
-# PANTAVISOR_FEATURES += "lxc-next"
-# PANTAVISOR_FEATURES += "console-logging"
+
+# Available, off by default:
+# PANTAVISOR_FEATURES:append = " lxc-next"
+# PANTAVISOR_FEATURES:append = " console-logging"
+# PM wakelocks + autosleep
+# PANTAVISOR_FEATURES:append = " wakelocks"
 
 
