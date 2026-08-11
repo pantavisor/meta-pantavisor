@@ -36,7 +36,7 @@ SRC_URI = "${PANTAVISOR_URI};branch=${PANTAVISOR_BRANCH} \
 SRCREV = "${PANTAVISOR_SRCREV}"
 
 PE = "1"
-PV = "029~rc4+git0"
+PV = "029+git0"
 PKGV = "${PV}+${GITPKGV}"
 
 PACKAGES =+ "${PN}-hooks-mdev ${PN}-pvtx ${PN}-pvtx-static ${PN}-config ${PN}-pvtest ${PN}-pvcontrol ${PN}-pvcurl ${PN}-debug-hooks"
