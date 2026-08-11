@@ -97,6 +97,40 @@ for ENTRY in "${COMPONENTS[@]}"; do
     else
         echo "  Error: Could not find SRCREV or rev= in $RECIPE"
     fi
+
+    # pantavisor tracks a moving branch (master), so its PV must be derived
+    # from the nearest stable release tag reachable from that branch's head
+    # rather than bumped in lockstep with SRCREV. RC tags (e.g. "029-rc4")
+    # are ignored; format is always "<release>+git0" (e.g. "029" -> "029+git0").
+    if [ "$COMPONENT" = "pantavisor" ] && grep -q '^PV = "' "$RECIPE"; then
+        TAG_TEMP_DIR=$(mktemp -d)
+        git clone -q --filter=blob:none --no-checkout "$FULL_URL" "$TAG_TEMP_DIR" 2>/dev/null
+        NEAREST_TAG=$(git -C "$TAG_TEMP_DIR" describe --tags --abbrev=0 --match '[0-9][0-9][0-9]' "$REMOTE_SHA" 2>/dev/null || true)
+        rm -rf "$TAG_TEMP_DIR"
+
+        NEW_PV=""
+        if [[ "$NEAREST_TAG" =~ ^([0-9]+)$ ]]; then
+            NEW_PV="${NEAREST_TAG}+git0"
+        fi
+
+        if [ -n "$NEW_PV" ]; then
+            CURRENT_PV=$(grep -oP '^PV = "\K[^"]+' "$RECIPE")
+            echo "  Current PV: $CURRENT_PV / nearest tag: $NEAREST_TAG"
+            if [ "$CURRENT_PV" != "$NEW_PV" ]; then
+                echo "  PV UPDATE FOUND: $NEW_PV"
+                sed -i "s|^PV = \"$CURRENT_PV\"|PV = \"$NEW_PV\"|" "$RECIPE"
+
+                echo "Updating $COMPONENT PV in $RECIPE:" >> "$COMMIT_MSG_FILE"
+                echo "  $CURRENT_PV -> $NEW_PV" >> "$COMMIT_MSG_FILE"
+                echo "" >> "$COMMIT_MSG_FILE"
+                UPDATES_FOUND=1
+            else
+                echo "  PV up to date."
+            fi
+        else
+            echo "  Warning: Could not derive PV from nearest tag '$NEAREST_TAG'"
+        fi
+    fi
     echo ""
 done
 
