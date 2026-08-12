@@ -34,12 +34,13 @@ committing to the Yocto/BitBake build guide below.
 ## Build Guide
 
 7. [Get Started](get-started.md) — prerequisites, repository setup, git worktrees, and your first KAS build
-8. [Supported Devices](supported-device.md) — machines supported and built by CI
-9. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
-10. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
-11. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
-12. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
-13. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
+8. [Managing Layers with repo](repo-manifest.md) — fold meta-pantavisor into an existing `repo`/`manifest.xml` multi-layer workflow
+9. [Supported Devices](supported-device.md) — machines supported and built by CI
+10. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
+11. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
+12. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
+13. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
+14. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
 
 ## Continuous Integration
 
