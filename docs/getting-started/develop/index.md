@@ -15,6 +15,7 @@ difference.
 
 ## Manage applications
 
+- [Add your application](./application/add-application.md) — pick a path: pull an existing OCI image with `pvr`, or bake it into the BSP as a Yocto recipe
 - [Install apps](./application/install/index.md) — add [containers](../../overview/glossary.md#container) with the `pvr` CLI, the pvtx web UI, or remotely via [Pantahub](./application/install/remote-pantahub.md)
 - [Configure](./application/configure.md) — overlay files and runtime manifests through the [revision](../../overview/glossary.md#revision) workflow
 - [View](./application/view.md) — container status, logs, and the pvtx web UI
