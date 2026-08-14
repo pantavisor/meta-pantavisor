@@ -1,5 +1,11 @@
 name: "generate latest docs on docs/ changes"
 
+# Publishes always-current "latest" docs: meta-pantavisor's own docs/ as of
+# this ref, plus pantavisor and pvr docs pulled straight from THEIR master
+# branches (unpinned — see build-docs-latest.yaml). This intentionally does
+# not go through the SRCREV/PV pins in recipes-pv/pantavisor/pantavisor.inc
+# and recipes-pv/pvr/pvr_<PV>.bb. Release docs use tag-docs-scarthgap.yaml
+# instead, which builds via bitbake and does follow those pins.
 on:
   push:
     branches:
@@ -10,11 +16,10 @@ on:
 
 jobs:
   build-docs:
-    uses: ./.github/workflows/build-docs-scarthgap.yaml
+    uses: ./.github/workflows/build-docs-latest.yaml
     with:
       ref: master
       artifact_name: docs-tarball-latest
-    secrets: inherit
 
   publish-docs:
     needs: build-docs
