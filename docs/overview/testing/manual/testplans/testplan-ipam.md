@@ -474,7 +474,7 @@ If the reservation walk is broken or not being called, IPAM would happily alloca
 
 ### Notes
 
-- The baked address (`10.0.3.2/24`) is generated via `PV_LXC_NETWORK_*` pvr template variables in `pv-example-ipam-static.args.json`, not by hand-editing `lxc.container.conf`. See the `PVR_TEMPLATES.md` reference for the supported vars.
+- The baked address (`10.0.3.2/24`) is generated via `PV_LXC_NETWORK_*` pvr template variables in `pv-example-ipam-static.args.json`, not by hand-editing `lxc.container.conf`. See the [`PVR_TEMPLATES.md`](../../../../../pvr/PVR_TEMPLATES.md) reference for the supported vars.
 - pv-example-ipam-static does **not** set `PV_NETWORK_POOL` — the validation hook introduced in Test 8 would reject a container that declares both. The two approaches are mutually exclusive by design.
 - Same-subnet coexistence between lxc-native and pool-using containers is the whole point of this design. Different-subnet coexistence (legacy container on a different bridge pantavisor doesn't know about) falls through the reservation walk with a DEBUG log and no effect on pool allocation.
 
