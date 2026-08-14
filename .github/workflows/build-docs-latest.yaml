@@ -1,0 +1,98 @@
+name: "build: latest (unpinned) docs tarball"
+
+# Assembles the same docs tarball layout as build-docs-scarthgap.yaml
+# (index.md + meta-pantavisor/ + pantavisor/ + pvr/, see
+# classes/pantavisor-docs.bbclass) but WITHOUT a bitbake build: pantavisor and
+# pvr are cloned straight off their master branches instead of the SRCREV/PV
+# pinned in this layer's recipes (recipes-pv/pantavisor/pantavisor.inc,
+# recipes-pv/pvr/pvr_<PV>.bb). Used by docs-scarthgap.yaml to publish
+# always-current "latest" docs. Release docs (tag-docs-scarthgap.yaml) must
+# keep using the pinned bitbake build in build-docs-scarthgap.yaml instead —
+# those need to match what was actually shipped in that release.
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or commit SHA) of meta-pantavisor to build docs from'
+        required: true
+        type: string
+      artifact_name:
+        description: 'Name for the uploaded docs tarball artifact'
+        required: true
+        type: string
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout meta-pantavisor
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          path: meta-pantavisor
+
+      - name: Checkout pantavisor (master)
+        uses: actions/checkout@v4
+        with:
+          repository: pantavisor/pantavisor
+          ref: master
+          path: pantavisor
+          sparse-checkout: docs
+
+      - name: Checkout pvr (master)
+        run: |
+          git clone --depth 1 --branch master --no-checkout \
+            https://gitlab.com/pantacor/pvr.git pvr
+          git -C pvr sparse-checkout set docs
+          git -C pvr checkout master
+
+      - name: Assemble docs staging
+        run: |
+          staging="$RUNNER_TEMP/pantacor-docs-staging"
+          rm -rf "$staging"
+
+          install -d "$staging/meta-pantavisor"
+          cp -r meta-pantavisor/docs/. "$staging/meta-pantavisor/"
+
+          if [ -d pantavisor/docs ]; then
+            install -d "$staging/pantavisor"
+            cp -r pantavisor/docs/. "$staging/pantavisor/"
+          else
+            echo "::warning::pantavisor/docs not found, skipping"
+          fi
+
+          if [ -d pvr/docs ]; then
+            install -d "$staging/pvr"
+            cp -r pvr/docs/. "$staging/pvr/"
+          else
+            echo "::warning::pvr/docs not found, skipping"
+          fi
+
+          {
+            printf '# Pantavisor Documentation\n\n'
+            printf 'This archive bundles reference documentation shipped alongside the build artefacts.\n\n'
+            [ -d "$staging/pantavisor" ] && \
+              printf -- '- **[Pantavisor](pantavisor/)** — the embedded Linux runtime that manages\n  the device lifecycle: booting containers, applying atomic OTA updates, and\n  exposing a REST API for local and cloud control.\n\n'
+            [ -d "$staging/pvr" ] && \
+              printf -- '- **[PVR](pvr/)** — the Pantavisor command-line utility for creating,\n  managing, and deploying containerized applications to Pantavisor devices.\n\n'
+            [ -d "$staging/meta-pantavisor" ] && \
+              printf -- '- **[meta-pantavisor](meta-pantavisor/)** — the Yocto/OpenEmbedded layer\n  used to build Pantavisor-based BSP images. Covers the build system, KAS\n  configurations, BitBake recipes, and the CI/release pipeline.\n\n'
+            [ -d "$staging/meta-pantavisor" ] && \
+              printf 'Start with [meta-pantavisor/index.md](meta-pantavisor/index.md) for a guided\nreading order, or jump straight into either section above.\n'
+          } > "$staging/index.md"
+
+          echo "STAGING=$staging" >> "$GITHUB_ENV"
+
+      - name: Build docs tarball
+        run: |
+          mkdir -p docs-out
+          tar -C "$STAGING" --use-compress-program=zstd \
+            -cf docs-out/pantavisor-starter-latest.rootfs.docs.tar.zst .
+          ls -l docs-out
+
+      - name: upload docs tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: docs-out/*.rootfs.docs.tar.zst
