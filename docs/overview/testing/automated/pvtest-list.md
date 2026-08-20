@@ -62,6 +62,7 @@ Local experience tests exercise Pantavisor features that operate without any clo
 | `local/runtime/remount-policies` | Remount Policies (PV_REMOUNT_POLICY) | |
 | `local/runtime/objects-crud` | Object store put/get/verify (pv-ctrl) | ✓ |
 | `local/runtime/steps-rw` | Step read + local revision put (pv-ctrl) | ✓ |
+| `local/runtime/ctrl-empty-object-put` | Bodyless object PUT replies, no hang (pv-ctrl) | ✓ |
 | `local/runtime/invalid-signal-handling` | Invalid Signal Handling | |
 
 ### control

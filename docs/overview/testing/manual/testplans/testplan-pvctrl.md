@@ -510,6 +510,37 @@ pvctl objects put /tmp/test-dup.txt $SHA
 
 ---
 
+## Test 16b: Objects PUT - Empty Object (Bodyless Request)
+
+**Endpoint**: `PUT /objects/{sha256}`
+
+### Execute
+
+```bash
+SHA=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+docker exec pva-test sh -c ': > /tmp/empty.bin'
+
+# first PUT stores the object, second hits the already-exists branch
+for i in 1 2; do
+	docker exec pva-test pvcurl -s -o /dev/null -w '%{http_code}\n' \
+		--max-time 10 --unix-socket /run/pantavisor/pv/pv-ctrl \
+		-X PUT -H "Content-Length: 0" -T /tmp/empty.bin \
+		http://localhost/objects/$SHA
+done
+
+# no body and no content-length
+docker exec pva-test pvcurl -s -o /dev/null -w '%{http_code}\n' \
+	--max-time 10 --unix-socket /run/pantavisor/pv/pv-ctrl \
+	-X PUT http://localhost/objects/$SHA
+```
+
+### Expected
+
+- All three PUTs return HTTP 200 OK
+- None of them hangs; a timed-out request reports 000
+
+---
+
 ## Test 17: Daemons List
 
 **Endpoint**: `GET /daemons`
