@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 97957dd27c8dfef2e197322e62cbad990fe296f1
+        commit: f1bc578396c15f28221550aefd94d2cbc0ab4024
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -28,12 +28,12 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 8541b76a56aefab0df9dab75bafdaa7cb4bd2dc4
+        commit: 75853a038ec4686bd5b834062ba4987ace8ec816
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 5d0e70808292f7fe1470142acf0c3830aeee9193
+        commit: 3148bb4a349e4d6d8f2cf0e49562a89aa3fec42a
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
@@ -62,7 +62,7 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: 7eb94107580092f79ff1b639a87762fe6f96aa12
+        commit: bec755063a8b5da65df626f5749496aadaa4f4bb
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 9916b7471edd0e9a95d94364398c241d1c3bac33
+        commit: 64e69ed23703f6358ec431d3f5f1f8483f974cae
     meta-pantavisor:
     meta-virtualization:
-        commit: f851f730ec415d266bfe0c5941c228a63a896298
+        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:

@@ -16,14 +16,14 @@ repos:
                 repo: meta-pantavisor
         url: https://github.com/yoctoproject/poky.git
         path: layers/poky
-        commit: 9916b7471edd0e9a95d94364398c241d1c3bac33
+        commit: 64e69ed23703f6358ec431d3f5f1f8483f974cae
     meta-pantavisor:
     meta-virtualization:
-        commit: f851f730ec415d266bfe0c5941c228a63a896298
+        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 7eb94107580092f79ff1b639a87762fe6f96aa12
+        commit: bec755063a8b5da65df626f5749496aadaa4f4bb
         layers:
             meta-filesystems:
             meta-networking:

@@ -8,6 +8,7 @@ sidebar_position: 4
 <!-- WORKFLOW_TABLE_START -->
 | Workflow | Status |
 | :--- | :--- |
+| **build-docs-latest** | [![BUILD](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/build-docs-latest.yaml?style=flat-square&logo=github-actions&logoColor=white&label=BUILD)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/build-docs-latest.yaml) |
 | **build-docs-scarthgap** | [![BUILD](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/build-docs-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=BUILD)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/build-docs-scarthgap.yaml) |
 | **docs-scarthgap** | [![DOCS](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/docs-scarthgap.yaml?style=flat-square&logo=github-actions&logoColor=white&label=DOCS)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/docs-scarthgap.yaml) |
 | **manual-pvtests** | [![MAN](https://img.shields.io/github/actions/workflow/status/pantavisor/meta-pantavisor/manual-pvtests.yaml?style=flat-square&logo=github-actions&logoColor=white&label=MAN)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/manual-pvtests.yaml) |
