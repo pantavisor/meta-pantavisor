@@ -12,7 +12,7 @@ For the framework itself see [index.md](index.md); for authoring tests and CI,
 [appengine.md](appengine.md).
 
 :::tip Quick reference: colibri-imx6ull end to end
-colibri-imx6ull is the only board with a ready-made `build-targets/tests/` fragment today;
+colibri-imx6ull is the only board with a ready-made `kas/build-configs/tests/` fragment today;
 more targets will be added there over time. The steps below are the general pattern —
 substitute another board's release config and manifest once it has one.
 
@@ -22,14 +22,14 @@ substitute another board's release config and manifest once it has one.
 2. Extract the tester tarball and load its Docker images per its own `README.md` (unchanged
    from an appengine run — the tester is always x86 and runs on the host).
 3. Build the example containers for this board:
-   `kas build kas/build-configs/build-targets/tests/colibri-imx6ull.yaml`.
+   `kas build kas/build-configs/tests/colibri-imx6ull.yaml`.
 4. Install them as a target:
    `./test.docker.sh install-tarballs colibri-imx6ull build/tmp-scarthgap/deploy/images/colibri-imx6ull`.
 5. Copy `device.txt` to `~/.config/pvtest/devices/colibri-imx6ull.txt`, fill in `name=`,
    `ip=`, `exec=`, `tty=`; set `type=colibri-imx6ull` if `name=` differs.
 6. Run: `./test.docker.sh run local --device colibri-imx6ull`.
 
-Every step is detailed below; `kas/build-configs/build-targets/tests/` gives step 3 as one
+Every step is detailed below; `kas/build-configs/tests/` gives step 3 as one
 command for boards that have a fragment there — add one for another board the same way, or
 fall back to the ad-hoc `kas shell … bitbake …` form under
 [Building target tarballs](#building-target-tarballs) if it doesn't yet.
@@ -104,12 +104,12 @@ invisible to it.
 
 The example containers are ordinary `image` + `container-pvrexport` recipes with no arch
 literals, so building *just those recipes* for the board's MACHINE is enough — any build
-config with the right MACHINE and the right signing CA will do. `kas/build-configs/build-targets/tests/`
+config with the right MACHINE and the right signing CA will do. `kas/build-configs/tests/`
 holds a per-board kas fragment that includes the board's release config and overrides
 `target:` to just the `PV_PVTEST_CONTAINERS` set, so the build is one command:
 
 ```bash
-kas build kas/build-configs/build-targets/tests/colibri-imx6ull.yaml
+kas build kas/build-configs/tests/colibri-imx6ull.yaml
 ```
 
 For a board without a fragment there yet, build the recipes directly against its release
