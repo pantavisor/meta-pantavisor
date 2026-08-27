@@ -29,11 +29,11 @@ Auto-recovery containers:
 
 ```bash
 # Build specific containers
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 
 # Build with workspace (when iterating on pantavisor source)
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 ```
 
@@ -87,7 +87,7 @@ Demonstrates raw Unix domain socket proxying between containers.
 ### Build and Verify
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-unix-server --target pv-example-unix-client
 cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-*.pvrexport.tgz pvtx.d/
 ```
@@ -124,7 +124,7 @@ Demonstrates HTTP-over-UDS with identity header injection (`X-PV-Client`, `X-PV-
 ### Build
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-rest-server --target pv-example-rest-client
 ```
 
@@ -171,7 +171,7 @@ Demonstrates policy-aware D-Bus proxying with role-to-UID mapping.
 ### Build and Verify
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-dbus-server --target pv-example-dbus-client
 ```
 
@@ -277,7 +277,7 @@ ls -la /dev/dri/   # card0 (VKMS does not create renderD* nodes)
 ### Build and Run
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider --target pv-example-drm-master
 cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-drm-*.pvrexport.tgz pvtx.d/
 
@@ -324,7 +324,7 @@ Demonstrates Wayland compositor access. Requires DRM.
 ```
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider \
     --target pv-example-wayland-server \
     --target pv-example-wayland-client

@@ -129,7 +129,7 @@ Build the appengine image (the `pantavisor-pvtest` package installs `pvtx`,
 the test script, and all test data into the image):
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
 
 docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
 ```

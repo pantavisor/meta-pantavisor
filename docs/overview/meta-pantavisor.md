@@ -60,20 +60,22 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `debug` | Debug features |
 | `pvcontrol` | pv-ctrl socket and CLI tools (pvcurl, pvcontrol) |
 | `xconnect` | [Service mesh](/pantavisor/overview/xconnect) for container-to-container communication |
+| `xconnect-dbus-systembus` | D-Bus system bus support for xconnect |
+| `container-mdev` | Per-container mdev device-node hook (runs an mdev LXC mount hook on each container start) |
 | `rngdaemon` | Random number generator daemon |
 | `squash-lz4` | LZ4 squashfs compression |
 | `squash-zstd` | Zstd squashfs compression |
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
 
-**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect`
+**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev`
 
 ### The `+=` vs `:append` Pitfall
 
 `pvbase.bbclass` sets defaults via `??=` (weak default operator):
 
 ```bitbake
-PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect "
+PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev "
 ```
 
 In distro includes, you **must** use `:append` or `:remove` — never `+=`:

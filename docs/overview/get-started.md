@@ -104,7 +104,13 @@ Adds `kas/with-workspace.yaml` to create a devtool workspace with editable panta
 
 Build a specific target:
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml --target pantavisor-appengine
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target pantavisor-appengine
+```
+
+`pantavisor-appengine-distro` and `pantavisor-remix` also have their own dedicated kas configs, so they can be built directly instead of via `--target`:
+```bash
+./kas-container build kas/build-configs/build-appengine-distro.yaml
+./kas-container build kas/build-configs/build-base-remix.yaml
 ```
 
 ## Direct BitBake (for integrators)

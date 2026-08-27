@@ -63,7 +63,7 @@ Set `PVR_APP_ADD_GROUP = "app"` in the recipe to inherit the group's default `au
 ## Building Containers
 
 ```bash
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-foo
 ```
 
@@ -97,7 +97,7 @@ cat > recipes-containers/pv-examples/files/pv-example-mytest.args.json << 'EOF'
 EOF
 
 # 3. Build and deploy for testing
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-mytest
 cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-mytest.pvrexport.tgz pvtx.d/
 ```
