@@ -37,11 +37,6 @@ jobs:
             build_target: 
             output: "pv-flash-bundle-imx8qxp-b0-mek.tar.gz"
             sdk: 0
-          - machine_name: raspberrypi-armv8-scarthgap
-            configs: kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-            build_target: pantavisor-starter
-            output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 1
           - machine_name: rpi-scarthgap
             configs: kas/build-configs/release/rpi-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter

@@ -137,6 +137,8 @@ Toradex flashing procedure, and
       "devices": [
         {
           "name": "raspberrypi-armv8-scarthgap",
+          "display_name": "Raspberry Pi 3 / 4 (64-bit)",
+          "description": "64-bit ARMv8 build for the Raspberry Pi 3 and 4. Ships an SDK.",
           "full_image": { "url": "https://.../029/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-029.tar.gz", "sha256": "<sha256>" },
           "pvrexports":  { "url": "https://.../pvexports-raspberrypi-armv8-scarthgap-029.tar.gz",                      "sha256": "<sha256>" },
           "bsp":         { "url": "https://.../pantavisor-bsp-....pvrexport.tgz",                                      "sha256": "<sha256>" },
@@ -156,6 +158,12 @@ Toradex flashing procedure, and
 ```
 
 `release-date` is set by the first machine job to finish (using `//=`) and left unchanged by subsequent parallel jobs. The `docs` key is written later by `tag-docs-scarthgap.yaml`.
+
+`display_name` and `description` are the friendly board label and blurb shown on
+the [downloads list](../supported-device.md#downloading-images). `upload.sh` reads
+them from the machine's entry in `.github/machines.json` (matching on the slug with
+the `-<yocto_branch>` suffix stripped); `display_name` falls back to the suffixed
+slug and `description` is omitted when unset.
 
 ### S3 path layout
 

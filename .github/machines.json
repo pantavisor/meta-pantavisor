@@ -4,22 +4,30 @@
 		{
 			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-orange-pi-3lts",
+			"display_name": "Orange Pi 3 LTS",
+			"description": "Allwinner H6 quad-core Cortex-A53 SBC with 2 GB RAM, Gigabit Ethernet and onboard Wi-Fi/Bluetooth. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag"]
 		},
 		{
 			"config": "kas/machines/sunxi-orange-pi-r1.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-orange-pi-r1",
+			"display_name": "Orange Pi R1",
+			"description": "Allwinner H2+ quad-core Cortex-A7 router board with dual Ethernet (one via USB) and onboard Wi-Fi. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag"]
 		},
 		{
 			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-bananapi-m2-berry",
+			"display_name": "Banana Pi M2 Berry",
+			"description": "Allwinner V40/A40i quad-core Cortex-A7 SBC with 1 GB RAM, Gigabit Ethernet, SATA and onboard Wi-Fi/Bluetooth. Ships a matching Yocto SDK. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag", "onpush"],
 			"sdk": 1
 		},
 		{
 			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8qxp-b0-mek",
+			"display_name": "NXP i.MX 8QuadXPlus MEK",
+			"description": "NXP i.MX 8QXP B0 Multisensory Evaluation Kit. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool rather than as a raw SD image.",
 			"build_target": "",
 			"output": "pv-flash-bundle-imx8qxp-b0-mek.tar.gz",
 			"workflows": ["manual", "tag"]
@@ -27,17 +35,23 @@
 		{
 			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
-			"workflows": ["manual", "tag", "onpush"],
+			"display_name": "Raspberry Pi 3 / 4 (64-bit)",
+			"description": "64-bit ARMv8 / AArch64 build for the Raspberry Pi 3 and 4. Ships a matching Yocto SDK. Boots Pantavisor from an SD card.",
+			"workflows": ["manual"],
 			"sdk": 1
 		},
 		{
 			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "rpi",
+			"display_name": "Raspberry Pi (all versions)",
+			"description": "Generic Raspberry Pi machine covering all targets: a multi-kernel multiconfig that builds for every board (Pi 1/2/3/4/5, Zero, Compute Module) across ARMv6, ARMv7 and ARMv8, both 32- and 64-bit. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag"]
 		},
 		{
 			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-toradex-starter.yaml",
 			"name": "colibri-imx6ull",
+			"display_name": "Toradex Colibri iMX6ULL",
+			"description": "NXP i.MX 6ULL single-core Cortex-A7 SoM on a Toradex carrier board. Delivered as a pv-flash-bundle archive and flashed via the Toradex recovery-mode procedure.",
 			"build_target": "",
 			"output": "pv-flash-bundle-colibri-imx6ull.tar.gz",
 			"workflows": ["manual", "tag"]
@@ -45,11 +59,15 @@
 		{
 			"config": "kas/machines/radxa-rock5a.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "radxa-rock5a",
-			"workflows": ["manual", "tag"]
+			"display_name": "Radxa ROCK 5A",
+			"description": "Rockchip RK3588S octa-core ARMv8.2 SBC (4x Cortex-A76 + 4x Cortex-A55) with up to 16 GB RAM. Boots Pantavisor from an SD card.",
+			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
 			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8mn-var-som",
+			"display_name": "Variscite VAR-SOM-MX8M-NANO",
+			"description": "NXP i.MX 8M Nano quad-core Cortex-A53 SoM on the Variscite Symphony carrier. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool.",
 			"build_target": "",
 			"output": "pv-flash-bundle-imx8mn-var-som.tar.gz",
 			"workflows": ["manual", "tag"]
@@ -57,6 +75,8 @@
 		{
 			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8mm-var-dart",
+			"display_name": "Variscite DART-MX8M-MINI",
+			"description": "NXP i.MX 8M Mini quad-core Cortex-A53 SoM on the Variscite VAR-DT8MCustomBoard. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool.",
 			"build_target": "",
 			"output": "pv-flash-bundle-imx8mm-var-dart.tar.gz",
 			"workflows": ["manual", "tag"]
@@ -64,6 +84,8 @@
 		{
 			"config": "kas/machines/verdin-imx8mm.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-toradex-starter.yaml",
 			"name": "verdin-imx8mm",
+			"display_name": "Toradex Verdin iMX8M Mini",
+			"description": "NXP i.MX 8M Mini quad-core Cortex-A53 SoM on a Toradex Verdin carrier (e.g. Dahlia or the Verdin Development Board). Delivered as a pv-flash-bundle archive and flashed via the Toradex procedure.",
 			"build_target": "",
 			"output": "pv-flash-bundle-verdin-imx8mm.tar.gz",
 			"workflows": ["manual", "tag"]
@@ -73,12 +95,16 @@
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-x86_64",
+			"display_name": "AppEngine test container (x86_64)",
+			"description": "Not a flashable board: an x86_64 container image that runs the Pantavisor AppEngine and the pvtest suite under Docker on CI and developer workstations.",
 			"pvtest": ["local"],
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
 			"config": "kas/machines/96boards-orange-pi-i96.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "96boards-orangepi-i96",
+			"display_name": "Orange Pi i96",
+			"description": "RDA8810PL quad-core Cortex-A5 96Boards IE board. BSP lives in meta-orangepi-i96; has no Bluetooth and no Wi-Fi AP mode. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag"]
 		}
 	]

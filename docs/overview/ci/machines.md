@@ -13,6 +13,8 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
   "machines": [
     {
       "name":         "raspberrypi-armv8",
+      "display_name": "Raspberry Pi 3 / 4 (64-bit)",
+      "description":  "64-bit ARMv8 build for the Raspberry Pi 3 and 4. Ships an SDK.",
       "config":       "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:...",
       "workflows":    ["manual", "tag", "onpush"],
       "build_target": "pantavisor-starter",
@@ -27,6 +29,8 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 |---|---|---|
 | `yocto_branch` | yes | Yocto release name; used as a suffix in all generated file names |
 | `name` | yes | Machine identifier; combined with `yocto_branch` in workflow jobs |
+| `display_name` | no | Human-readable board name for the [downloads list](../supported-device.md#downloading-images); copied into `releases.json` by `upload.sh` (falls back to the suffixed machine slug) |
+| `description` | no | One- to three-sentence board blurb for the downloads list; copied into `releases.json` by `upload.sh` when non-empty |
 | `config` | yes | Colon-separated KAS config fragments to compose for this machine |
 | `workflows` | yes | Which workflow types to generate: `manual`, `onpush`, `tag` |
 | `build_target` | no | BitBake target (default: `pantavisor-starter`) |
@@ -41,7 +45,7 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | `onpush` | `onpush-scarthgap.yaml` | push to master | `buildkas-target.yaml` (build only) |
 | `manual` | `manual-scarthgap.yaml` | `workflow_dispatch` | `buildkas-target.yaml` (build only) |
 
-Machines with only `["manual"]` are never built automatically. `colibri-imx6ull` is an example — its NAND flash workflow hasn't been integrated into automated release pipelines.
+Machines with only `["manual"]` are never built automatically. `colibri-imx6ull` is an example — its NAND flash workflow hasn't been integrated into automated release pipelines. `raspberrypi-armv8` is another: its ARMv8 coverage on `onpush` is provided by `radxa-rock5a` instead.
 
 ## Regenerating Workflows
 
