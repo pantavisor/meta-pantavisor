@@ -100,6 +100,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `debug` | Debug features |
 | `pvcontrol` | pv-ctrl socket and CLI tools (pvcurl, pvcontrol) |
 | `xconnect` | Service mesh for container-to-container communication |
+| `xconnect-dbus-systembus` | D-Bus system bus support for xconnect |
 | `container-mdev` | Per-container mdev device-node hook (runs an mdev LXC mount hook on each container start) |
 | `rngdaemon` | Random number generator daemon |
 | `squash-lz4` | LZ4 squashfs compression |
@@ -107,7 +108,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
 
-**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect container-mdev`
+**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev`
 
 > **Caution**: `tailscale` and `rngdaemon` appear in the default string, but their gating is inconsistent upstream — for example, `pantavisor-initramfs.bb` checks for a feature named `rngd`, not `rngdaemon`. Verify the recipes if you depend on either.
 
@@ -116,7 +117,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 `pvbase.bbclass` sets defaults via `??=` (weak default operator):
 
 ```bitbake
-PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect container-mdev "
+PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev "
 ```
 
 In distro includes, you **must** use `:append` or `:remove` — never `+=`:
@@ -205,4 +206,3 @@ LAYERSERIES_COMPAT_meta-pantavisor = "kirkstone scarthgap"
 | `build/tmp-scarthgap/deploy/images/` | Build outputs |
 | `recipes-containers/pv-examples/` | Example container recipes |
 | `kas/build-configs/release/` | KAS release machine configurations |
-| `.github/configs/release/` | CI release machine configurations |
