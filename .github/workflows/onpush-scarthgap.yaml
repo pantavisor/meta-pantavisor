@@ -12,9 +12,8 @@ on:
     branches:
       - '**'
     paths-ignore:
-      # Pushes that only touch CI internals (workflows, generators,
-      # templates, badge helpers), bot-generated changelogs, or docs
-      # don't change what's built — don't start a build for them.
+      # Deliberately covers .github/** as a whole: a change to the build
+      # workflows or this matrix does not re-trigger onpush on its own.
       - '.github/**'
       - 'CHANGELOG/**'
       - 'docs/**'
