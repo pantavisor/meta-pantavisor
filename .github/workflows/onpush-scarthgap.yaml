@@ -60,11 +60,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 1
-          - machine_name: raspberrypi-armv8-scarthgap
-            configs: kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+          - machine_name: radxa-rock5a-scarthgap
+            configs: kas/build-configs/release/radxa-rock5a-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 1
+            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}

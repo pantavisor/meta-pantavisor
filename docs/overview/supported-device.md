@@ -16,7 +16,7 @@ The following machines are configured in the CI pipeline (`.github/machines.json
 | `sunxi-bananapi-m2-berry`| Banana Pi M2 Berry |
 | `imx8qxp-b0-mek` | NXP i.MX 8QXP MEK |
 | `raspberrypi-armv8` | Raspberry Pi (ARMv8 / 64-bit) |
-| `rpi` | Raspberry Pi (ARMv7 / 32-bit) |
+| `rpi` | Raspberry Pi — all targets. Multi-kernel multiconfig covering every board (Pi 1/2/3/4/5, Zero, Compute Module), ARMv6/ARMv7/ARMv8, 32- and 64-bit |
 | `colibri-imx6ull` | Toradex Colibri iMX6ULL |
 | `radxa-rock5a` | Radxa ROCK 5A |
 | `imx8mn-var-som` | Variscite i.MX 8M Nano SOM |
@@ -25,6 +25,11 @@ The following machines are configured in the CI pipeline (`.github/machines.json
 | `96boards-orangepi-i96` | Orange Pi i96 (RDA8810PL). BSP in [meta-orangepi-i96](https://github.com/pantavisor/meta-orangepi-i96). No Bluetooth or WiFi AP — see the [board guide](../getting-started/how-to-install/boards/orangepi-i96.md) |
 
 > For an up-to-date programmatic list, always refer to [`.github/machines.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/machines.json). If you add a new machine, remember to run `.github/scripts/makeworkflows` to regenerate the GitHub Actions workflows.
+>
+> The `display_name` and `description` fields in `.github/machines.json` are the
+> canonical source for the friendly board name and blurb shown on the
+> [downloads list](#downloading-images) — `upload.sh` copies them into
+> `releases.json` at release time. Keep them in sync with the table above.
 
 ## Officially supported devices
 

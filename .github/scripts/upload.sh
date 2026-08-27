@@ -10,6 +10,18 @@ AWS_S3_URL="https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor"
 
 RELEASE_FILE="releases.json"
 
+# Friendly label + blurb for the downloads list, sourced from .github/machines.json.
+# MACHINE_NAME here is the branch-suffixed slug (e.g. raspberrypi-armv8-scarthgap);
+# strip the "-<yocto_branch>" tail to get the machines.json key.
+MACHINES_JSON=".github/machines.json"
+YOCTO_BRANCH=$(jq -r '.yocto_branch' "$MACHINES_JSON")
+MACHINE_KEY="${MACHINE_NAME%-$YOCTO_BRANCH}"
+DISPLAY_NAME=$(jq -r --arg k "$MACHINE_KEY" \
+  '.machines[] | select(.name == $k) | .display_name // empty' "$MACHINES_JSON")
+DESCRIPTION=$(jq -r --arg k "$MACHINE_KEY" \
+  '.machines[] | select(.name == $k) | .description // empty' "$MACHINES_JSON")
+[ -n "$DISPLAY_NAME" ] || DISPLAY_NAME="$MACHINE_NAME"
+
 TAR_IMAGES="$MACHINE_NAME-$TAG.tar.gz"
 ZIP_PVEXPORTS="pvexports-$MACHINE_NAME-$TAG.zip"
 
@@ -104,13 +116,17 @@ aws s3 cp s3://$AWS_S3_BUCKET/$RELEASE_FILE $RELEASE_FILE || echo "{}" > $RELEAS
 
 NEW_DEVICE=$(jq -n \
   --arg name "$MACHINE_NAME" \
+  --arg display "$DISPLAY_NAME" \
+  --arg desc "$DESCRIPTION" \
   --arg url1 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$TAR_IMAGES" \
   --arg url2 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$ZIP_PVEXPORTS" \
   --arg url3 "$AWS_S3_URL/$TAG/$MACHINE_NAME/$BSP_FILE" \
   --arg IMAGES_CSUM "$IMAGES_CSUM" \
   --arg PVEXPORTS_CSUM "$PVEXPORTS_CSUM" \
   --arg BSP_CSUM "$BSP_CSUM" \
-  '{name: $name, full_image: {url: $url1, sha256: $IMAGES_CSUM},
+  '{name: $name, display_name: $display}
+   + (if $desc != "" then {description: $desc} else {} end)
+   + {full_image: {url: $url1, sha256: $IMAGES_CSUM},
    pvrexports: { url: $url2, sha256: $PVEXPORTS_CSUM },
    bsp: {url: $url3, sha256: $BSP_CSUM} }')
 
