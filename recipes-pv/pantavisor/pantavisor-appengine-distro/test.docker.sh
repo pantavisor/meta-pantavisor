@@ -338,12 +338,10 @@ teardown_network() {
 
 _AE_DOCKER_ARGS=(
 	--net=test-appengine-net
-	--cgroupns host
 	--cap-add NET_ADMIN --cap-add SYS_ADMIN --cap-add SYS_PTRACE --cap-add MKNOD
 	--device /dev/kmsg --device /dev/hwrng --device /dev/loop-control
 	--device-cgroup-rule 'b 7:* rmw'
 	--security-opt apparmor=unconfined --security-opt seccomp=unconfined
-	--volume /sys/fs:/sys/fs
 	--mount type=tmpfs,target=/usr/lib/lxc/rootfs
 	--mount type=tmpfs,target=/volumes
 	--mount type=tmpfs,target=/configs
