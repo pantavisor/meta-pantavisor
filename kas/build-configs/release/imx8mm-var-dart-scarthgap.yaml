@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: f1bc578396c15f28221550aefd94d2cbc0ab4024
+        commit: 0dc50d82f64cd4b0457ca408e0795bab4096fea2
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
