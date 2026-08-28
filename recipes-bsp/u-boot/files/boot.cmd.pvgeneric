@@ -8,7 +8,18 @@ setenv pv_ctrl 2
 if test -z "${devtype}"; then
 	setenv devtype mmc
 fi
+# ${loadaddr} is optional and unset on some vendor U-Boots (Rockchip's rk3588
+# defines only the distro-spec *_addr_r set). Without a fallback the env
+# load/import below run on address 0 and data-abort. pxefile_addr_r is the
+# distro-spec scratch address for small text files; kernel_addr_r is a safe
+# last resort since all env I/O here happens before the kernel is loaded.
 setenv envloadaddr ${loadaddr}
+if test -z "${envloadaddr}"; then
+	setenv envloadaddr ${pxefile_addr_r}
+fi
+if test -z "${envloadaddr}"; then
+	setenv envloadaddr ${kernel_addr_r}
+fi
 
 # UBI/UBIFS (NAND) support: the sourcing bootcmd has run `ubi part /
 # ubifsmount ubi0:<vol>` and set devtype=ubi. A single UBIFS volume holds

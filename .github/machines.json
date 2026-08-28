@@ -64,6 +64,13 @@
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
+			"config": "kas/machines/rockchip-orangepi-5b.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"name": "rockchip-orangepi-5b",
+			"display_name": "Orange Pi 5B",
+			"description": "Rockchip RK3588S octa-core ARMv8.2 SBC (4x Cortex-A76 + 4x Cortex-A55) with onboard Wi-Fi/Bluetooth and eMMC. BSP via JeffyCN/meta-rockchip. Boots Pantavisor from an SD card.",
+			"workflows": ["manual", "tag"]
+		},
+		{
 			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
 			"name": "imx8mn-var-som",
 			"display_name": "Variscite VAR-SOM-MX8M-NANO",

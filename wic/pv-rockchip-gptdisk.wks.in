@@ -1,0 +1,22 @@
+# short-description: GPT disk image for Rockchip boards, rootfs marked bootable
+# long-description:
+# Based on JeffyCN/meta-rockchip's wic/generic-gptdisk.wks.in, with one
+# change: the rootfs partition is marked GPT-bootable (--active).
+#
+# U-Boot's distro_bootcmd scans -bootable partitions for a boot script and
+# otherwise falls back to partition 1, which here is the raw loader region
+# (no filesystem). Without --active it never finds pantavisor's boot.scr,
+# which pantavisor-starter.bb copies into the rootfs at /boot/boot.scr.
+#
+# 0~32K: GPT
+bootloader --ptable gpt
+part --source rawcopy --sourceparams="file=idblock.img" --align 32 --no-table
+part --source rawcopy --sourceparams="file=uboot.img" --part-name uboot --offset 2M
+part --source rawcopy --sourceparams="file=trust.img" --part-name trust --align 4
+part --source rawcopy --sourceparams="file=boot.img" --part-name boot --align 4
+# --label root sets the filesystem label (--part-name is only the GPT name).
+# pantavisor mounts storage by PV_STORAGE_DEVICE=LABEL=root, so without it
+# pv_mount_init() dies with "could not mount '(null)'". The Radxa fork has
+# the same fix in patches/meta-rockchip-radxa/0001-wic-Fix-root-label.patch.
+# --part-name stays "rootfs" so gen_rkupdateimg still finds the rootfs image.
+part / --source rootfs --fstype ${RK_ROOTFS_TYPE} --label root --part-name rootfs --uuid ${RK_ROOTDEV_UUID} --mkfs-extraopts "${RK_ROOTFS_EXTRAOPTS}" --align 8192 --active

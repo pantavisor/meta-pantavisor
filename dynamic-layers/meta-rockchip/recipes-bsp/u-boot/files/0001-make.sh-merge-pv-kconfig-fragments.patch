@@ -1,0 +1,41 @@
+From 495e9f59328ba4b96837e832391e144607d869e7 Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Thu, 20 Aug 2026 18:20:11 -0300
+Subject: [PATCH] make.sh: merge PV_KCONFIG_FRAGS after defconfig selection
+
+The vendor's do_compile:append (u-boot-rockchip.bb) regenerates .config
+from scratch via this script's own defconfig handling, discarding any
+Kconfig fragments OE's standard do_configure step had already merged
+in (e.g. meta-pantavisor's pv.distroboot.cfg, which switches
+CONFIG_BOOTCOMMAND to "run distro_bootcmd" so U-Boot runs pantavisor's
+boot script instead of the vendor's Android boot.img flow). Re-merge
+any fragments listed in PV_KCONFIG_FRAGS right after defconfig
+selection, before the real build, so they stick.
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ make.sh | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/make.sh b/make.sh
+index 8b8fe59..035069d 100644
+--- a/make.sh
++++ b/make.sh
+@@ -266,6 +266,14 @@ function process_args()
+ 		help
+ 		exit 1
+ 	fi
++
++	# Pantavisor: re-merge our Kconfig fragments into the defconfig just
++	# selected above, before the real build.
++	if [ -n "${PV_KCONFIG_FRAGS}" ]; then
++		echo "## merging PV_KCONFIG_FRAGS: ${PV_KCONFIG_FRAGS}"
++		./scripts/kconfig/merge_config.sh -m .config ${PV_KCONFIG_FRAGS}
++		make olddefconfig
++	fi
+ }
+ 
+ function select_toolchain()
+-- 
+2.43.0
+
