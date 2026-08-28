@@ -41,6 +41,12 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
+bblayers_conf_header:
+    platform-rockchip: |
+        # Scoped to this platform: the radxa fork (kas/platforms/radxa.yaml) also
+        # registers the "rockchip" collection but has no u-boot-rockchip /
+        # linux-rockchip recipes for these bbappends to extend.
+        BBFILES_DYNAMIC += " rockchip:${META_PANTAVISOR_BASE}/dynamic-layers/meta-rockchip/recipes-*/*/*.bbappend"
 local_conf_header:
     platform-rockchip: |
         PV_UBOOT_AUTOFDT = "1"
