@@ -1,3 +1,5 @@
+Upstream-Status: Inappropriate [debug logging, not upstreamable]
+
 diff --git a/util-linux/mdev.c b/util-linux/mdev.c
 index 68b0b0727..73f9f01a3 100644
 --- a/util-linux/mdev.c

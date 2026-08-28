@@ -1,0 +1,262 @@
+From 52e23fc76accdc26686a3edce66636adc098e919 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Wed, 22 Feb 2023 16:47:04 +0100
+Subject: [PATCH] Improve mdev MODALIAS; support loading pci bus drivers during
+ -s (scan)
+
+Upstream-Status: Pending
+
+---
+ include/libbb.h          |  7 ++--
+ libbb/recursive_action.c |  4 +-
+ util-linux/mdev.c        | 90 ++++++++++++++++++++++++++++++++++------
+ 3 files changed, 84 insertions(+), 17 deletions(-)
+
+diff --git a/include/libbb.h b/include/libbb.h
+index 35be516..f26f635 100644
+--- a/include/libbb.h
++++ b/include/libbb.h
+@@ -511,9 +511,10 @@ enum {
+ 	ACTION_RECURSE        = (1 << 0),
+ 	ACTION_FOLLOWLINKS    = (1 << 1),
+ 	ACTION_FOLLOWLINKS_L0 = (1 << 2),
+-	ACTION_DEPTHFIRST     = (1 << 3),
+-	ACTION_QUIET          = (1 << 4),
+-	ACTION_DANGLING_OK    = (1 << 5),
++	ACTION_FOLLOWLINKS_L1 = (1 << 3),
++	ACTION_DEPTHFIRST     = (1 << 4),
++	ACTION_QUIET          = (1 << 5),
++	ACTION_DANGLING_OK    = (1 << 6),
+ };
+ typedef uint8_t recurse_flags_t;
+ typedef struct recursive_state {
+diff --git a/libbb/recursive_action.c b/libbb/recursive_action.c
+index b1c4bfa..13fbf3e 100644
+--- a/libbb/recursive_action.c
++++ b/libbb/recursive_action.c
+@@ -74,7 +74,9 @@ static int recursive_action1(recursive_state_t *state, const char *fileName)
+ 
+ 	follow = ACTION_FOLLOWLINKS;
+ 	if (state->depth == 0)
+-		follow = ACTION_FOLLOWLINKS | ACTION_FOLLOWLINKS_L0;
++		follow |= ACTION_FOLLOWLINKS_L0 | ACTION_FOLLOWLINKS_L1;
++	if (state->depth == 1)
++		follow |= ACTION_FOLLOWLINKS_L1;
+ 	follow &= state->flags;
+ 	status = (follow ? stat : lstat)(fileName, &statbuf);
+ 	if (status < 0) {
+diff --git a/util-linux/mdev.c b/util-linux/mdev.c
+index dfd4b62..68b0b07 100644
+--- a/util-linux/mdev.c
++++ b/util-linux/mdev.c
+@@ -286,7 +286,7 @@
+ #endif
+ 
+ static const char keywords[] ALIGN1 = "add\0remove\0"; // "change\0"
+-enum { OP_add, OP_remove };
++enum { OP_add, OP_remove, OP_modalias };
+ 
+ struct envmatch {
+ 	struct envmatch *next;
+@@ -312,6 +312,7 @@ struct globals {
+ 	int verbose;
+ 	char *subsystem;
+ 	char *subsys_env; /* for putenv("SUBSYSTEM=subsystem") */
++	char *modalias_env; /* for putenv("MODALIAS=alias:somethinglonger") */
+ #if ENABLE_FEATURE_MDEV_CONF
+ 	const char *filename;
+ 	parser_t *parser;
+@@ -332,8 +333,11 @@ struct globals {
+ /* Prevent infinite loops in /sys symlinks */
+ #define MAX_SYSFS_DEPTH 3
+ 
++/* Prevent infinite loops in /sys symlinks */
++#define MAX_SYSFS_DEPTH_MODALIAS 10
++
+ /* We use additional bytes in make_device() */
+-#define SCRATCH_SIZE 128
++#define SCRATCH_SIZE 512
+ 
+ #if ENABLE_FEATURE_MDEV_FOLLOW_X_ROOT
+ static char *newroot = NULL;
+@@ -585,9 +589,9 @@ static char *build_alias(char *alias, const char *device_name)
+ static void make_device(char *device_name, char *path, int operation)
+ {
+ 	int major, minor, type, len;
+-	char *path_end = path + strlen(path);
++	int path_len = strlen(path);
++	char *path_end = path + path_len;
+ 	struct stat s;
+-	static char wd [PATH_MAX] = {0};
+ 
+ #if ENABLE_FEATURE_MDEV_FOLLOW_X_ROOT
+ 	if (newrootdev && !(!access(newrootdev, X_OK) && !stat(newrootdev, &s) && (S_IFDIR & s.st_mode))){
+@@ -604,8 +608,6 @@ static void make_device(char *device_name, char *path, int operation)
+ #endif
+ 		chdir ("/dev");
+ 
+-	getcwd(wd, PATH_MAX);
+-
+ 	/* Try to read major/minor string.  Note that the kernel puts \n after
+ 	 * the data, so we don't need to worry about null terminating the string
+ 	 * because sscanf() will stop at the first nondigit, which \n is.
+@@ -614,7 +616,8 @@ static void make_device(char *device_name, char *path, int operation)
+ 	major = -1;
+ 	if (operation == OP_add) {
+ 		strcpy(path_end, "/dev");
+-		len = open_read_close(path, path_end + 1, SCRATCH_SIZE - 1);
++		len = open_read_close(path, path_end + 1, PATH_MAX +
++				      SCRATCH_SIZE - path_len - 1);
+ 		*path_end = '\0';
+ 		if (len < 1) {
+ 			if (!ENABLE_FEATURE_MDEV_EXEC)
+@@ -631,6 +634,8 @@ static void make_device(char *device_name, char *path, int operation)
+ 
+ 	/* Determine device name */
+ 	if (!device_name) {
++		char *tok = NULL;
++		char *strd = NULL;
+ 		/*
+ 		 * There was no $DEVNAME envvar (for example, mdev -s never has).
+ 		 * But it is very useful: it contains the *path*, not only basename,
+@@ -641,20 +646,38 @@ static void make_device(char *device_name, char *path, int operation)
+ 		 * DEVNAME=snd/controlC0
+ 		 */
+ 		strcpy(path_end, "/uevent");
+-		len = open_read_close(path, path_end + 1, SCRATCH_SIZE - 1);
++		len = open_read_close(path, path_end + 1, PATH_MAX + SCRATCH_SIZE - path_len - 1);
+ 		if (len < 0)
+ 			len = 0;
+ 		*path_end = '\0';
+ 		path_end[1 + len] = '\0';
++		strd = xstrdup(path_end + 1);
++		unsetenv("MODALIAS");
++		if (G.modalias_env)
++			free(G.modalias_env);
++		G.modalias_env = NULL;
++		tok = strtok(strd, "\n");
++		while(tok) {
++			if (!strncmp(tok, "MODALIAS=", 9)) {
++				G.modalias_env = strdup(tok);
++				dbg3("MODALIAS: %s", G.modalias_env);
++				putenv(G.modalias_env);
++			}
++			tok = strtok(NULL, "\n");
++		}
++		if (strd)
++			free(strd);
++
+ 		device_name = strstr(path_end + 1, "\nDEVNAME=");
+ 		if (device_name) {
+ 			device_name += sizeof("\nDEVNAME=")-1;
+ 			strchrnul(device_name, '\n')[0] = '\0';
+-		} else {
+-			/* Fall back to just basename */
++		} else if (operation != OP_modalias) {
++			/* Fall back to just basename unless modalias */
+ 			device_name = (char*) bb_basename(path);
+ 		}
+ 	}
++
+ 	/* Determine device type */
+ 	/*
+ 	 * http://kernel.org/doc/pending/hotplug.txt says that only
+@@ -693,6 +716,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 			memset(off, 0, sizeof(off));
+ 			goto rule_matches;
+ 		}
++
+ 		if (rule->envvar) { /* $envvar=regex rule */
+ 			str_to_match = getenv(rule->envvar);
+ 			dbg3("getenv('%s'):'%s'", rule->envvar, str_to_match);
+@@ -726,7 +750,7 @@ static void make_device(char *device_name, char *path, int operation)
+ #endif
+ 		/* Build alias name */
+ 		alias = NULL;
+-		if (ENABLE_FEATURE_MDEV_RENAME && rule->ren_mov) {
++		if (ENABLE_FEATURE_MDEV_RENAME && operation != OP_modalias && rule->ren_mov) {
+ 			aliaslink = rule->ren_mov[0];
+ 			if (aliaslink == '!') {
+ 				/* "!": suppress node creation/deletion */
+@@ -787,7 +811,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 
+ 		/* "Execute" the line we found */
+ 		node_name = device_name;
+-		if (ENABLE_FEATURE_MDEV_RENAME && alias) {
++		if (ENABLE_FEATURE_MDEV_RENAME && operation != OP_modalias && alias) {
+ 			node_name = alias = build_alias(alias, device_name);
+ 			dbg3("alias2:'%s'", alias);
+ 		}
+@@ -850,7 +874,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 			unlink(node_name);
+ 		}
+ 
+-		if (ENABLE_FEATURE_MDEV_RENAME)
++		if (ENABLE_FEATURE_MDEV_RENAME && operation != OP_modalias)
+ 			free(alias);
+ 
+ 		/* We found matching line.
+@@ -915,6 +939,32 @@ static int FAST_FUNC fileAction(struct recursive_state *state,
+ 	return TRUE;
+ }
+ 
++/* File callback for /sys/ traversal.
++ * We act only on "/sys/.../dev" (pseudo)file
++ */
++static int FAST_FUNC fileActionModalias(struct recursive_state *state,
++		const char *fileName,
++		struct stat *statbuf UNUSED_PARAM)
++{
++	size_t len = strlen(fileName) - 9; /* can't underflow */
++	char *path = state->userData;	/* char array[PATH_MAX + SCRATCH_SIZE] */
++	char subsys[PATH_MAX];
++	int res;
++
++	if (len < 0)
++		return FALSE;
++	/* Is it a ".../dev" file? (len check is for paranoid reasons) */
++	if (strcmp(fileName + len, "/modalias") != 0 || len >= PATH_MAX - 32)
++		return FALSE; /* not .../dev */
++
++	strcpy(path, fileName);
++	path[len] = '\0';
++
++	make_device(/*DEVNAME:*/ NULL, path, OP_modalias);
++
++	return TRUE;
++}
++
+ /* Directory callback for /sys/ traversal */
+ static int FAST_FUNC dirAction(struct recursive_state *state,
+ 		const char *fileName UNUSED_PARAM,
+@@ -923,6 +973,14 @@ static int FAST_FUNC dirAction(struct recursive_state *state,
+ 	return (state->depth >= MAX_SYSFS_DEPTH ? SKIP : TRUE);
+ }
+ 
++/* Directory callback for /sys/ traversal */
++static int FAST_FUNC dirActionModalias(struct recursive_state *state,
++		const char *fileName UNUSED_PARAM,
++		struct stat *statbuf UNUSED_PARAM)
++{
++	return (state->depth >= MAX_SYSFS_DEPTH_MODALIAS ? SKIP : TRUE);
++}
++
+ /* For the full gory details, see linux/Documentation/firmware_class/README
+  *
+  * Firmware loading works like this:
+@@ -1179,6 +1237,12 @@ static void initial_scan(char *temp)
+ 
+ 	putenv((char*)"ACTION=add");
+ 
++
++	/* Create all devices from /sys/dev hierarchy */
++	recursive_action("/sys/bus/pci/devices",
++			 ACTION_RECURSE | ACTION_FOLLOWLINKS_L1,
++			 fileActionModalias, dirActionModalias, temp);
++
+ 	/* Create all devices from /sys/dev hierarchy */
+ 	recursive_action("/sys/dev",
+ 			 ACTION_RECURSE | ACTION_FOLLOWLINKS,
+-- 
+2.43.0
+

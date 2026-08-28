@@ -1,0 +1,28 @@
+From fe38cd27a3074c4728e45e965790b9bdb6f76e0d Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Tue, 7 Feb 2023 09:08:11 +0100
+Subject: [PATCH] fix create_and_bind_to_netlink setting sa.nl_pid to
+ potentially not system unique value
+
+Upstream-Status: Pending
+
+---
+ libbb/xconnect.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libbb/xconnect.c b/libbb/xconnect.c
+index 0e0b247..6d126f2 100644
+--- a/libbb/xconnect.c
++++ b/libbb/xconnect.c
+@@ -435,7 +435,7 @@ int FAST_FUNC create_and_bind_to_netlink(int proto, int grp, unsigned rcvbuf)
+ 
+ 	memset(&sa, 0, sizeof(sa));
+ 	sa.nl_family = AF_NETLINK;
+-	sa.nl_pid = getpid();
++	sa.nl_pid = 0;
+ 	sa.nl_groups = grp;
+ 	xbind(fd, (struct sockaddr *) &sa, sizeof(sa));
+ 	close_on_exec_on(fd);
+-- 
+2.43.0
+

@@ -8,7 +8,7 @@ DEPENDS:append = "\
 	       libcap \
 "
 
-REPENDS:append = "\
+RDEPENDS:${PN}:append = "\
 	       libcap \
 "
 

@@ -1,0 +1,50 @@
+From add7a8ddd3c2d8ffb39e9d5300576faa754ffb58 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Mon, 1 Nov 2021 13:01:10 +0100
+Subject: [PATCH] fix capget to be run before switching namespaces
+
+Upstream-Status: Pending
+
+---
+ util-linux/nsenter.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/util-linux/nsenter.c b/util-linux/nsenter.c
+index 58e87d5..986d48f 100644
+--- a/util-linux/nsenter.c
++++ b/util-linux/nsenter.c
+@@ -218,6 +218,19 @@ int nsenter_main(int argc UNUSED_PARAM, char **argv)
+ 					target_pid, ns->ns_nsfile8);
+ 	}
+ 
++	/*
++	 * Lets gather caps info from target pid before switching NS if --caps is used
++	 */
++	if ((opts & OPT_cap) && (opts & OPT_target)) {
++		int ret;
++		getcaps(&capst);
++
++		capst.header.pid = target_pid;
++		if (capget(&capst.header, capst.data))
++			bb_simple_perror_msg_and_die("capget");
++	}
++
++
+ 	/*
+ 	 * Entering the user namespace without --preserve-credentials implies
+ 	 * --setuid & --setgid and clearing root's groups.
+@@ -282,11 +295,6 @@ int nsenter_main(int argc UNUSED_PARAM, char **argv)
+ 	 */
+ 	if ((opts & OPT_cap) && (opts & OPT_target)) {
+ 		int ret;
+-		getcaps(&capst);
+-
+-		capst.header.pid = target_pid;
+-		if (capget(&capst.header, capst.data))
+-			bb_simple_perror_msg_and_die("capget");
+ 
+ 		/* XXX: fix securebits
+ 		securebits = prctl(PR_GET_SECUREBITS);
+-- 
+2.43.0
+

@@ -1,0 +1,106 @@
+From 495d644fbbcef6e49ebb880aee19f3d27356aea7 Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Mon, 23 May 2022 23:49:29 +0200
+Subject: [PATCH] add FOLLOW_X_PID support for pantavisor mdev
+
+Upstream-Status: Pending
+
+---
+ util-linux/mdev.c | 39 +++++++++++++++++++++++++++++++--------
+ 1 file changed, 31 insertions(+), 8 deletions(-)
+
+diff --git a/util-linux/mdev.c b/util-linux/mdev.c
+index b88d3ae..dfd4b62 100644
+--- a/util-linux/mdev.c
++++ b/util-linux/mdev.c
+@@ -78,7 +78,7 @@
+ //config:config FEATURE_MDEV_FOLLOW_X_ROOT
+ //config:	bool "Support following a switch or pivot root in mount_namespace"
+ //config:	default y
+-//config:	depends on MDEV_DAEMON
++//config:	depends on FEATURE_MDEV_DAEMON
+ //config:	help
+ //config:	Add support for following a switch_root and pivot_root of pid 1
+ //config:	Useful for having mdev prefer the dev/ nodes of a root getting
+@@ -128,6 +128,7 @@
+ #include <linux/netlink.h>
+ #include <syslog.h>
+ #include <unistd.h>
++#include <sched.h>
+ 
+ /* "mdev -s" scans /sys/class/xxx, looking for directories which have dev
+  * file (it is of the form "M:m\n"). Example: /sys/class/tty/tty0/dev
+@@ -487,13 +488,6 @@ static const struct rule *next_rule(void)
+ {
+ 	struct rule *rule;
+ 
+-	/* Open conf file if we didn't do it yet */
+-	if (!G.parser && G.filename) {
+-		dbg3("config_open('%s')", G.filename);
+-		G.parser = config_open2(G.filename, fopen_for_read);
+-		G.filename = NULL;
+-	}
+-
+ 	if (G.rule_vec) {
+ 		/* mdev -s */
+ 		/* Do we have rule parsed already? */
+@@ -1280,6 +1274,9 @@ static void daemon_loop(char *temp, int fd)
+ int mdev_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ {
++	char *followpid;
++	pid_t followpid_p;
++
+ 	enum {
+ 		MDEV_OPT_SCAN       = 1 << 0,
+ 		MDEV_OPT_SYSLOG     = 1 << 1,
+@@ -1306,6 +1303,7 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ 
+ #if ENABLE_FEATURE_MDEV_FOLLOW_X_ROOT
+ 	newroot = getenv("FOLLOW_X_ROOT");
++	followpid = getenv("FOLLOW_X_PID");
+ 
+ 	if (newroot && !newrootdev) {
+ 		newrootdev = malloc(sizeof(char) * (strlen(newroot) + 6));
+@@ -1325,6 +1323,13 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ 		/* Same as xrealloc_vector(NULL, 4, 0): */
+ 		G.rule_vec = xzalloc((1 << 4) * sizeof(*G.rule_vec));
+ 	}
++
++	/* Open conf file if we didn't do it yet */
++	if (!G.parser && G.filename) {
++		dbg3("config_open('%s')", G.filename);
++		G.parser = config_open2(G.filename, fopen_for_read);
++		G.filename = NULL;
++	}
+ #endif
+ 
+ 	if (opt & MDEV_OPT_SYSLOG) {
+@@ -1332,6 +1337,24 @@ int mdev_main(int argc UNUSED_PARAM, char **argv)
+ 		logmode |= LOGMODE_SYSLOG;
+ 	}
+ 
++#if ENABLE_FEATURE_MDEV_FOLLOW_X_ROOT
++	if (followpid) {
++		char procpath[PATH_MAX];
++		if (newroot)
++			snprintf(procpath, PATH_MAX -1 ,"%s/proc/%d", newroot, followpid);
++		else
++			snprintf(procpath, PATH_MAX -1 ,"/proc/%d", followpid);
++
++		int procpidfd = open(procpath, O_DIRECTORY | O_RDONLY | O_CLOEXEC);
++		setns(procpidfd, CLONE_NEWNS);
++
++		if (newrootdev)
++			xchdir(newrootdev);
++		else
++			xchdir("/dev");
++	}
++#endif
++
+ #if ENABLE_FEATURE_MDEV_DAEMON
+ 	if (opt & MDEV_OPT_DAEMON) {
+ 		/* Daemon mode listening on uevent netlink socket. Fork away
+-- 
+2.43.0
+
