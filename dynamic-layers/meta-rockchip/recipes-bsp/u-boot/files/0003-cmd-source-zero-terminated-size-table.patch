@@ -1,0 +1,45 @@
+From a1aa14554c0de8808f32a7695888a31383ae3cbe Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Thu, 20 Aug 2026 19:44:58 -0300
+Subject: [PATCH] cmd: source: stop at mkimage's zero-terminated size table
+
+Standard mkimage -T script images carry a multi-file size table
+terminated by a plain 0, but this loop only stops at
+IMAGE_PARAM_INVAL (0xffffffff), which never appears in such an
+image. It therefore runs past the terminator and through the script
+text until it happens upon 0xffffffff, leaving the command pointer
+at an arbitrary offset -- U-Boot then reports
+"Unknown command '<binary garbage>'" and the script never runs.
+
+The comment directly above already describes the zero terminator, so
+restore that behaviour while still accepting IMAGE_PARAM_INVAL for
+any image that relies on it.
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ cmd/source.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/cmd/source.c b/cmd/source.c
+index 6b1c8b7..1852cc0 100644
+--- a/cmd/source.c
++++ b/cmd/source.c
+@@ -86,8 +86,14 @@ source (ulong addr, const char *fit_uname)
+ 		 * scripts are just multi-image files with one component, seek
+ 		 * past the zero-terminated sequence of image lengths to get
+ 		 * to the actual image data
++		 *
++		 * mkimage terminates this table with a plain 0, not
++		 * IMAGE_PARAM_INVAL; scanning only for the latter runs off the
++		 * end into the script text. Accept either terminator.
+ 		 */
+-		while (*data++ != IMAGE_PARAM_INVAL);
++		while (*data != 0 && *data != IMAGE_PARAM_INVAL)
++			data++;
++		data++;
+ 		break;
+ #endif
+ #if defined(CONFIG_FIT)
+-- 
+2.43.0
+

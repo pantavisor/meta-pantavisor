@@ -52,6 +52,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 0
+          - machine_name: rockchip-orangepi-5b-scarthgap
+            configs: kas/build-configs/release/rockchip-orangepi-5b-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: pantavisor-starter
+            output: "pantavisor-starter*.rootfs.wic*"
+            sdk: 0
           - machine_name: imx8mn-var-som-scarthgap
             configs: kas/build-configs/release/imx8mn-var-som-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 

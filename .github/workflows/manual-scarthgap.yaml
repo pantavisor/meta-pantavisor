@@ -23,6 +23,7 @@ on:
           - rpi
           - colibri-imx6ull
           - radxa-rock5a
+          - rockchip-orangepi-5b
           - imx8mn-var-som
           - imx8mm-var-dart
           - verdin-imx8mm
