@@ -21,7 +21,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: bafda8d4723fa985bba51746ba0aeb5274a4cb48
+        commit: 1104a1adaaf4205c04dc00a9f65187ccc3d6b62c
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
     meta-toradex-tezi:
