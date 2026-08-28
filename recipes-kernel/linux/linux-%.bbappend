@@ -31,12 +31,21 @@ python () {
 }
 
 
+# CONFIG_SUNXI_WATCHDOG only exists on Allwinner, where every machine picks up
+# the "sunxi" override from meta-sunxi's sunxi.inc / sunxi64.inc. Rides the
+# same wakelocks feature gate as the common fragment.
+WAKELOCK_SOC_SRC_URI = ""
+WAKELOCK_SOC_SRC_URI:sunxi = "${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', 'file://wakelock-sunxi.cfg', '', d)}"
+WAKELOCK_SOC_FRAGMENT = ""
+WAKELOCK_SOC_FRAGMENT:sunxi = "${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', '${WORKDIR}/wakelock-sunxi.cfg', '', d)}"
+
 PANTAVISOR_SRC_URI = " \
 	file://overlayfs.cfg \
 	file://pantavisor.cfg \
 	file://pvcrypt.cfg \
 	file://dm.cfg \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', 'file://wakelock.cfg', '', d)} \
+	${WAKELOCK_SOC_SRC_URI} \
 	${TAILSCALE_KERNEL_SRC_URI} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'file://pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', 'file://caam-nxp.cfg', '', d)} \
@@ -50,6 +59,7 @@ PANTAVISOR_KERNEL_FRAGMENTS = " \
 	${WORKDIR}/overlayfs.cfg \
 	${WORKDIR}/dm.cfg \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'wakelocks', '${WORKDIR}/wakelock.cfg', '', d)} \
+	${WAKELOCK_SOC_FRAGMENT} \
 	${TAILSCALE_KERNEL_FRAGMENT} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', '${WORKDIR}/pantavisor-lz4.cfg', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'caam-nxp', '${WORKDIR}/caam-nxp.cfg', '', d)} \
