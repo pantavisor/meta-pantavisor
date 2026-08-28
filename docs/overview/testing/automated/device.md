@@ -19,8 +19,13 @@ substitute another board's release config and manifest once it has one.
 1. Flash the board's own BSP if it isn't already running Pantavisor:
    `kas build kas/build-configs/release/colibri-imx6ull-scarthgap.yaml`, then run the
    resulting `pv-flash-bundle-colibri-imx6ull-latest.tar.gz`'s `flash.sh`.
-2. Extract the tester tarball and load its Docker images per its own `README.md` (unchanged
-   from an appengine run — the tester is always x86 and runs on the host).
+2. Build the tester once — it's x86 and machine-agnostic, reused for every target:
+   `kas build kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml`.
+   Extract the resulting `pantavisor-appengine-distro-docker-x86_64-*.tar.gz` and load its
+   Docker images per its own `README.md`. This is a separate MACHINE/DISTRO build from the
+   board's own BSP and from step 3 below — its own `TMPDIR` (`panta-appengine`'s
+   `DISTRO_CODENAME`) doesn't collide with the board's, so both can build from the same
+   checkout.
 3. Build the example containers for this board:
    `kas build kas/build-configs/tests/colibri-imx6ull.yaml`.
 4. Install them as a target:
