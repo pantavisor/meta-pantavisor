@@ -14,6 +14,16 @@ IMAGE_LINGUAS = ""
 IMAGE_TYPES_MASKED += " pvbspit pvrexportit"
 IMAGE_PREPROCESS_COMMAND += "cmd_tidy"
 
+# meta-freescale's image_populate_mfgtool wires do_populate_mfgtool "before
+# do_deploy" plus a do_deploy recrdeptask over every dependency, for every
+# image on an imx-generic-bsp machine (IMAGE_CLASSES:append:imx-generic-bsp
+# in imx-base.inc). A pvroot image assembles several container sub-images
+# via their own do_deploy, and that combination closes a circular
+# dependency. Pantavisor flashes through its own pv-flash-bundle, never
+# MFGTOOL, so drop the class here the same way container-pvrexport.bbclass
+# already does for the containers themselves.
+IMAGE_CLASSES:remove = "image_populate_mfgtool"
+
 ROOTFS_BOOTSTRAP_INSTALL = ""
 MACHINE_FEATURES = ""
 DISTRO_FEATURES = ""
