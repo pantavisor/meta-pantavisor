@@ -1,0 +1,16 @@
+header:
+    version: 16
+    includes:
+        - kas/build-configs/release/colibri-imx6ull-scarthgap.yaml
+
+# Builds the pv-example-* pvrexport tarballs pvtest deploys onto a colibri-imx6ull
+# device, for the same MACHINE/distro/signing CA as the board's own BSP image
+# (see kas/build-configs/release/colibri-imx6ull-scarthgap.yaml). Matches
+# PV_PVTEST_CONTAINERS in recipes-pv/pantavisor/pantavisor-appengine-distro.bb;
+# the xconnect set is appengine-only and not needed here.
+target:
+- pv-example-app
+- pv-example-norole
+- pv-example-ready
+- pv-example-ready-timeout
+- pv-example-mgmt
