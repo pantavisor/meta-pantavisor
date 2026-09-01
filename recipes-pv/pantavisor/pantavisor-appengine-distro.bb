@@ -96,7 +96,7 @@ do_create_tarball() {
         if [ -e "${DEPLOY_DIR_IMAGE}/pvtest/$f" ]; then
             install -m 0644 "${DEPLOY_DIR_IMAGE}/pvtest/$f" "${STAGING_DIR}/pvtest/$f"
         else
-            bbwarn "pvtest runner script not deployed: $f (test.native.sh will need PVTEST_SCRIPTS_DIR)"
+            bbfatal "pvtest runner script not deployed: $f (expected ${DEPLOY_DIR_IMAGE}/pvtest/$f from pantavisor:do_deploy)"
         fi
     done
     [ -e "${STAGING_DIR}/pvtest/pvtest-run" ] && chmod 0755 "${STAGING_DIR}/pvtest/pvtest-run"
@@ -143,6 +143,9 @@ do_create_tarball() {
     # Deploy unpacked directory so test.docker.sh can be run without extracting the tarball
     tarball_link="${TARBALL_LINK_NAME}"
     unpacked_name="${tarball_link%.tar.gz}"
+    if [ -z "$unpacked_name" ]; then
+        bbfatal "unpacked_name is empty; refusing to touch ${DEPLOY_DIR_IMAGE}"
+    fi
     rm -rf "${DEPLOY_DIR_IMAGE}/${unpacked_name}"
     cp -r "${STAGING_DIR}/." "${DEPLOY_DIR_IMAGE}/${unpacked_name}/"
     echo "Unpacked directory available at: ${DEPLOY_DIR_IMAGE}/${unpacked_name}"
@@ -157,7 +160,7 @@ do_create_tarball() {
         if [ -e "${STAGING_DIR}/$item" ]; then
             cp -r "${STAGING_DIR}/$item" "$SCRIPTS_STAGING/"
         else
-            bbwarn "scripts tarball: missing $item"
+            bbfatal "scripts tarball: missing $item (expected in the staging tree)"
         fi
     done
     install -m 0644 "${WORKDIR}/native-README.md" "$SCRIPTS_STAGING/README.md"
@@ -170,7 +173,7 @@ do_create_tarball() {
     if [ -e "$pvr_static" ]; then
         install -D -m 0755 "$pvr_static" "$SCRIPTS_STAGING/pvtest/bin/pvr"
     else
-        bbwarn "no static pvr at $pvr_static; the scripts tarball will require one on PATH"
+        bbfatal "no static pvr at $pvr_static (expected from pvr:do_deploy)"
     fi
 
     cd "$SCRIPTS_STAGING"
@@ -182,10 +185,17 @@ do_create_tarball() {
     ln -s "${SCRIPTS_TARBALL_NAME}" "${SCRIPTS_TARBALL_LINK_NAME}"
     echo "Scripts tarball available at: ${DEPLOY_DIR_IMAGE}/${SCRIPTS_TARBALL_NAME}"
 
-    scripts_unpacked="${SCRIPTS_TARBALL_LINK_NAME%.tar.gz}"
-    rm -rf "${DEPLOY_DIR_IMAGE}/${scripts_unpacked}"
-    cp -r "$SCRIPTS_STAGING/." "${DEPLOY_DIR_IMAGE}/${scripts_unpacked}/"
-    echo "Unpacked scripts directory available at: ${DEPLOY_DIR_IMAGE}/${scripts_unpacked}"
+    # Strip the suffix off a *shell* variable: "${SCRIPTS_TARBALL_LINK_NAME%.tar.gz}"
+    # is not a bitbake key, so bitbake expands it to nothing and the rm below
+    # would take out the whole deploy dir.
+    scripts_link="${SCRIPTS_TARBALL_LINK_NAME}"
+    scripts_unpacked="${scripts_link%.tar.gz}"
+    if [ -z "$scripts_unpacked" ]; then
+        bbfatal "scripts_unpacked is empty; refusing to touch ${DEPLOY_DIR_IMAGE}"
+    fi
+    rm -rf "${DEPLOY_DIR_IMAGE}/$scripts_unpacked"
+    cp -r "$SCRIPTS_STAGING/." "${DEPLOY_DIR_IMAGE}/$scripts_unpacked/"
+    echo "Unpacked scripts directory available at: ${DEPLOY_DIR_IMAGE}/$scripts_unpacked"
 
     # Clean up staging directories
     rm -rvf "${STAGING_DIR}"

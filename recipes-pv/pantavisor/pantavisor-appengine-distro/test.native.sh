@@ -98,6 +98,16 @@ _pvr_path_prefix() {
 	return 0
 }
 
+# Presence is not enough: busybox ships most of these but not the flags the
+# runner needs, and the difference only shows up mid-run. Each probe is the
+# exact usage from the runner or from host-common.
+_probe_tool() {
+	local what="$1"; shift
+	"$@" > /dev/null 2>&1 && return 0
+	pvtest_log ERROR "host tool lacks required behaviour: $what"
+	return 1
+}
+
 _check_host() {
 	local missing="" t rc=0
 	for t in $_NATIVE_TOOLS; do
@@ -106,6 +116,25 @@ _check_host() {
 	if [ -n "$missing" ]; then
 		pvtest_log ERROR "missing host tool(s): $missing"
 		rc=1
+	fi
+
+	if [ -z "$missing" ]; then
+		# timeout --foreground: every forwarded command and each test's bound
+		_probe_tool "timeout --foreground (need coreutils, not busybox)" \
+			timeout --foreground 1 true || rc=1
+		# sed -u: streams the serial console into <device>.log
+		_probe_tool "sed -u (need GNU sed, not busybox)" \
+			sh -c 'echo x | sed -u s/x/y/' || rc=1
+		# script -q -c: wraps every test script, and its pty is why goldens are CRLF
+		_probe_tool "script -q -c (need util-linux)" \
+			script -q -c true /dev/null || rc=1
+		# cp -as: builds the suite symlink farm
+		_probe_tool "cp -as (need GNU coreutils)" \
+			sh -c 't=$(mktemp -d) || exit 1
+			       mkdir -p "$t/src" && : > "$t/src/f"
+			       cp -as "$t/src" "$t/dst"; r=$?
+			       [ "$r" = 0 ] && [ -L "$t/dst/f" ] || r=1
+			       rm -rf "$t"; exit $r' || rc=1
 	fi
 
 	local _b
@@ -414,12 +443,17 @@ run_test() {
 		return $?
 	fi
 
-	local pvtest_queue="" _json _findroot="$farm"
+	local pvtest_queue="" _json _findroot="$farm" _qfile
 	[ -n "$target_path" ] && _findroot="$farm/$target_path"
+	# A plain file, not `done < <(find ...)`: process substitution needs /dev/fd,
+	# which a mount namespace (e.g. a lab DUT container) need not provide.
+	_qfile=$(mktemp) || { pvtest_log ERROR "mktemp failed"; _native_cleanup; return 1; }
+	find "$_findroot" -name test.json 2>/dev/null | sort > "$_qfile"
 	while IFS= read -r _json; do
 		[ -n "$_json" ] || continue
 		pvtest_queue="${pvtest_queue:+$pvtest_queue }$_json"
-	done < <(find "$_findroot" -name test.json 2>/dev/null | sort)
+	done < "$_qfile"
+	rm -f "$_qfile"
 
 	if [ -z "$pvtest_queue" ]; then
 		pvtest_log WARN "no tests found under '${target_path:-<all>}'"
