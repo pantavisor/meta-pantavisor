@@ -6,6 +6,7 @@ inherit deploy kernel-artifact-names pvr-ca image-artifact-names
 DEPENDS:append = " \
 	pvr-native \
 	squashfs-tools-native \
+	jq-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'kmod-native', '', d)} \
 "
@@ -107,6 +108,15 @@ fakeroot do_compile(){
     pvr get ${DEPLOY_DIR_IMAGE}/${VIRTUAL-RUNTIME_pantavisor_skel}.pvrexport.tgz
     pvr checkout
     [ -d bsp ] || mkdir bsp
+
+    if [ -n "${PV_BSP_DRIVERS}" ]; then
+        if [ -f bsp/drivers.json ]; then
+            jq --argjson d '${PV_BSP_DRIVERS}' '. * $d' bsp/drivers.json > bsp/drivers.json.tmp \
+                && mv bsp/drivers.json.tmp bsp/drivers.json
+        else
+            jq -n --argjson d '${PV_BSP_DRIVERS}' '{ "#spec": "driver-aliases@1" } * $d' > bsp/drivers.json
+        fi
+    fi
     [ -f bsp/modules.squashfs ] && rm -f bsp/modules.squashfs
     [ -f bsp/firmware.squashfs ] && rm -f bsp/firmware.squashfs
 
@@ -245,7 +255,6 @@ fakeroot do_compile(){
            done
        fi
     fi
-          
     cat > ${PVBSPSTATE}/bsp/run.json << EOF
 `echo '{'`
     "addons": [],
