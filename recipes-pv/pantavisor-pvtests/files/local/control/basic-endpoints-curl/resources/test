@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 export CURL_CMD=curl
 

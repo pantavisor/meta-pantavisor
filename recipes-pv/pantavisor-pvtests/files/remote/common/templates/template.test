@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
 trail_url="https://api.pantahub.com/trails/$device_id"

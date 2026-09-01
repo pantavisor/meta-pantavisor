@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 INITIAL="locals/local_services_sync_gc"
 REBOOT="locals/sync_gc_reboot"

@@ -10,7 +10,7 @@
 # No reset between tests: object store is device-persistent, so assert deltas/presence, not
 # absolute counts.
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 SOCK=/run/pantavisor/pv/pv-ctrl
 

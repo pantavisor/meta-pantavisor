@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 if [ -z "$PH_USER" ] || [ -z "$PH_PASS" ]; then
     echo "ERROR: PH_USER/PH_PASS not set" >&2; exit 1
