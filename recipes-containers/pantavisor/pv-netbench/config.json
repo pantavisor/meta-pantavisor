@@ -1,0 +1,10 @@
+{
+    "Entrypoint": ["/usr/local/bin/netbench"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "WorkingDir": "/",
+    "Volumes": {
+        "/tmp": {}
+    }
+}
