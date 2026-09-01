@@ -1,0 +1,11 @@
+{
+    "PV_GROUP": "platform",
+    "PV_RESTART_POLICY": "container",
+    "PV_DRIVERS_OPTIONAL": [
+        "nf_tables"
+    ],
+    "PV_LXC_CAP_KEEP": [
+        "net_admin",
+        "net_raw"
+    ]
+}
