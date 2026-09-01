@@ -77,6 +77,11 @@ jobs:
             build_target: pantavisor-appengine-distro
             output: "pantavisor-appengine-distro-*.tar.gz"
             sdk: 0
+          - machine_name: docker-armv8-scarthgap
+            configs: kas/build-configs/release/docker-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: pantavisor-appengine-distro
+            output: "pantavisor-appengine-distro-*.tar.gz"
+            sdk: 0
           - machine_name: 96boards-orangepi-i96-scarthgap
             configs: kas/build-configs/release/96boards-orangepi-i96-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
