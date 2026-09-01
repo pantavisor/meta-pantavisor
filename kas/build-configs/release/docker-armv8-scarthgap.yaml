@@ -1,0 +1,79 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    poky:
+        layers:
+            meta-yocto-bsp:
+            meta-poky:
+            meta:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        commit: 64e69ed23703f6358ec431d3f5f1f8483f974cae
+    meta-pantavisor:
+    meta-virtualization:
+        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
+        path: layers/meta-virtualization
+        url: https://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: bec755063a8b5da65df626f5749496aadaa4f4bb
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+local_conf_header:
+    platform-generic: |
+        PREFERRED_PROVIDER_virtual/kernel = "linux-dummy"
+        MACHINE_FEATURES:remove = "efi"
+        DISTRO_FEATURES:append = " virtualization vmsep opengl wayland"
+        #    PANTAVISOR_FEATURES += "appengine"
+        # DISTRO_FEATURES += "staticdev"
+    kas-machine-genericarm64: |
+        #    HOSTTOOLS += "docker fakeroot"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-appengine "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
+        PANTAVISOR_FEATURES:remove = "autogrow"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    lxc-next: |
+        PANTAVISOR_FEATURES:append = " lxc-next"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: docker-armv8
+defaults:
+    repos:
+        branch: scarthgap
+target:
+- pantavisor-appengine-distro
+build_system: oe
+distro: panta-appengine
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:

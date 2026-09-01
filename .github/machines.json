@@ -108,6 +108,15 @@
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
+			"config": "kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
+			"build_target": "pantavisor-appengine-distro",
+			"output": "pantavisor-appengine-distro-*.tar.gz",
+			"name": "docker-armv8",
+			"display_name": "AppEngine test container (aarch64)",
+			"description": "Not a flashable board: an aarch64 container image that runs the Pantavisor AppEngine and the pvtest suite. Runs natively on arm64 hosts, or on x86_64 through binfmt/qemu-aarch64.",
+			"workflows": ["manual", "tag"]
+		},
+		{
 			"config": "kas/machines/96boards-orange-pi-i96.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "96boards-orangepi-i96",
 			"display_name": "Orange Pi i96",

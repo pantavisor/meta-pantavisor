@@ -28,6 +28,7 @@ on:
           - imx8mm-var-dart
           - verdin-imx8mm
           - docker-x86_64
+          - docker-armv8
           - 96boards-orangepi-i96
 
 jobs:
