@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 echo "== checksum validation log =="
 # The validated file set is the device baseline (target-dependent), so assert

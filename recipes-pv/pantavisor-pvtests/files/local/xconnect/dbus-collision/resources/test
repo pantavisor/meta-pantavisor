@@ -15,7 +15,7 @@
 # rolls back to the previous revision. The second owner never needs to run a
 # real D-Bus server; only its owns declaration is required.
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 echo "== initial revision =="
 pvcontrol devmeta ls | jq -M -r '.["pantavisor.revision"]'

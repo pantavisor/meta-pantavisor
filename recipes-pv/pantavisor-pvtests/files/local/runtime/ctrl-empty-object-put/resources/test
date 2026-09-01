@@ -3,7 +3,7 @@
 # pv-ctrl replies to object PUTs that carry no body.
 # Covers testplan-pvctrl.md Test 16b.
 
-source /usr/share/pantavisor/pvtest/utils
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
 
 SOCK=/run/pantavisor/pv/pv-ctrl
 EMPTY=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
