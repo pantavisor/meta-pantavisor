@@ -31,6 +31,12 @@ GO_IMPORT = "gitlab.com/pantacor/pvr"
 export GO111MODULE="on"
 
 GOBUILDFLAGS += "-mod=vendor"
+
+# Without this the binary reports 'pvr version: NA' — cmd.Version defaults to
+# that and only upstream's Makefile injects it. Revision is deliberately left
+# at NA: there is no git checkout here, and the version printer omits it when
+# it is unset rather than printing a bogus one.
+GO_EXTRA_LDFLAGS += "-X gitlab.com/pantacor/pvr/cmd.Version=${PV}"
 GO_LINKSHARED = ""
 GO_LINKMODE:class-nativesdk = ""
 GO_LINKMODE:class-native = ""
@@ -53,7 +59,9 @@ do_patch[postfuncs] += "relocate_source"
 do_compile:append() {
         export TMPDIR="${GOTMPDIR}"
         cd ${B}/src/${GO_IMPORT}
-        CGO_ENABLED=0 ${GO} build -mod=vendor -trimpath -o ${B}/pvr-static .
+        CGO_ENABLED=0 ${GO} build -mod=vendor -trimpath \
+                -ldflags "-X gitlab.com/pantacor/pvr/cmd.Version=${PV}" \
+                -o ${B}/pvr-static .
 }
 
 do_install:append() {
