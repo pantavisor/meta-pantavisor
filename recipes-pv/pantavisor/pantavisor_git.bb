@@ -60,6 +60,26 @@ FILES:${PN}-config += "/etc/pantavisor.config"
 FILES:${PN}-config += "/etc/pantavisor/"
 FILES:${PN}-config += "/etc/resolv.conf"
 
+# PANTAVISOR_CONFIG[KEY] varflags override individual keys in the shipped
+# /etc/pantavisor.config. This is the PV_CONF level -- the only level that
+# accepts PV_* keys such as PV_CONTROL_REMOTE and PV_LOG_PUSH (pantahub.config's
+# PH_CONF level rejects them, "key not allowed in PH_CONF level"). Mirrors
+# PANTAHUB_CONFIG in pantavisor-pvroot; keys use the canonical PV_-prefixed
+# names. Set per-image in an overlay, not here, e.g.:
+#   PANTAVISOR_CONFIG[PV_CONTROL_REMOTE] = "0"
+#   PANTAVISOR_CONFIG[PV_LOG_PUSH]       = "0"
+PANTAVISOR_CONFIG ?= ""
+
+python () {
+    # getVarFlags' 'expand' arg is an iterable of flag names (not a bool), so
+    # expand=True raises "argument of type 'bool' is not iterable"; fetch the
+    # flags plain and expand each value ourselves (as PANTAHUB_CONFIG does).
+    overrides = []
+    for key, val in sorted((d.getVarFlags('PANTAVISOR_CONFIG') or {}).items()):
+        overrides.append("%s=%s" % (key, d.expand(val)))
+    d.setVar('PANTAVISOR_CONFIG_OVERRIDES', ' '.join(overrides))
+}
+
 FILES:${PN}-pvtest += "/usr/bin/pvtest-run"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/utils"
 FILES:${PN}-pvtest += "/usr/share/pantavisor/pvtest/common"
@@ -132,6 +152,26 @@ do_install:append() {
 		for f in "${S}/test/pvtx/expected/"*.json; do
 			[ -f "$f" ] && install -m 0644 "$f" \
 				"${D}${datadir}/pantavisor/pvtest/pvtx/expected/" || true
+		done
+	fi
+}
+
+# Apply PANTAVISOR_CONFIG[KEY] overrides to the shipped /etc/pantavisor.config
+# after cmake installs it. Rewrites an existing KEY= line in place, otherwise
+# appends. Same logic as PANTAHUB_CONFIG in pantavisor-pvroot.
+do_install:append() {
+	cfg="${D}${sysconfdir}/pantavisor.config"
+	if [ -f "$cfg" ]; then
+		for kv in ${PANTAVISOR_CONFIG_OVERRIDES}; do
+			key="${kv%%=*}"
+			val="${kv#*=}"
+			rkey="$(printf '%s' "$key" | sed 's/[.[\\*^$/]/\\&/g')"
+			rval="$(printf '%s' "$val" | sed 's/[\\&|]/\\&/g')"
+			if grep -q "^${rkey}=" "$cfg"; then
+				sed -i "s|^${rkey}=.*|${key}=${rval}|" "$cfg"
+			else
+				echo "${key}=${val}" >> "$cfg"
+			fi
 		done
 	fi
 }
