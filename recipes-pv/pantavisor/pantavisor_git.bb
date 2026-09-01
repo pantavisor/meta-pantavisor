@@ -88,7 +88,7 @@ FILES:${PN}-debug-hooks = "${libdir}/pantavisor/pv/hooks/system.d/00-hook-debug 
                            ${libdir}/pantavisor/pv/hooks-debug-conf/"
 RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '${PN}-debug-hooks', '', d)}"
 
-inherit cmake gitpkgv pantacor-component-docs
+inherit cmake gitpkgv pantacor-component-docs deploy
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
@@ -113,6 +113,17 @@ do_install() {
 	# [ -f ../../lib/pv ] && ln -sf ../../lib/pv ${D}/usr/lib/pv
 	echo "Yes"
 }
+
+# Host copy of the pvtest runner. Same three files the tester container gets
+# from the pantavisor-pvtest package; deployed so pantavisor-appengine-distro can
+# ship them for a run with no container runtime (test.native.sh).
+do_deploy() {
+	install -d ${DEPLOYDIR}/pvtest
+	install -m 0755 ${D}${bindir}/pvtest-run ${DEPLOYDIR}/pvtest/
+	install -m 0644 ${D}${datadir}/pantavisor/pvtest/utils ${DEPLOYDIR}/pvtest/
+	install -m 0644 ${D}${datadir}/pantavisor/pvtest/common ${DEPLOYDIR}/pvtest/
+}
+addtask deploy after do_install before do_build
 
 do_install:append() {
 	if [ -d "${S}/test/pvtx" ]; then

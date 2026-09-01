@@ -15,7 +15,8 @@ into the test-specific env), which is what [Execution Flow](#execution-flow) des
 
 This page covers the framework itself, how it is built, how it is laid out, how to use it and
 where its output lands. For running against appengine and authoring new tests see
-[appengine.md](appengine.md). For running against real hardware see [device.md](device.md).
+[appengine.md](appengine.md). For running against real hardware see [device.md](device.md),
+and for driving a device from a host with no container runtime, [native.md](native.md).
 For a list of tests that are implemented and pending to do, see
 [pvtest-list.md](pvtest-list.md).
 
