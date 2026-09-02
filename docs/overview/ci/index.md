@@ -16,7 +16,7 @@ Documentation for the meta-pantavisor CI system: how workflows are organized, ho
 4. [Status](status.md) — reading build status badges and CI run summaries
 5. [Versioning](versioning.md) — how `DISTRO_VERSION` is derived from git tags and how to cut a new release tag
 6. [Tag Sync](tag-sync.md) — how `meta-pantavisor` tags are mirrored to `pantavisor/pantavisor` and the PAT setup required
-7. [Changelog](changelog.md) — per-release `CHANGELOG-NNN.md` generator: format, tag conventions, and regen procedure
+7. [Changelog](changelog.md) — per-release changelog: RC sections accumulate on an S3 document, the repo `CHANGELOG-NNN.md` is committed once per major via `--finalize`, and `changelog-gate.yaml` blocks a stable release without it
 
 ## Key Rule
 

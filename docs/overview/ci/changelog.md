@@ -3,10 +3,23 @@ sidebar_position: 7
 ---
 # Per-release CHANGELOG
 
-Each meta-pantavisor release ships with a section in
-[`CHANGELOG/CHANGELOG-NNN.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG) summarizing what changed
-relative to the previous release in the same stream. The format is modeled on
-the [Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.36.md).
+Each meta-pantavisor release gets a section summarizing what changed relative
+to the previous release in the same stream. The format is modeled on the
+[Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.36.md).
+
+Where those sections live depends on the tag:
+
+- **Release candidates** (`0NN-rcN`) are accumulated onto a per-major document
+  on S3 (the [S3 accumulator](#s3-accumulator)). They are never committed to
+  `master`.
+- **The final stable** (`0NN`) is committed once, into
+  [`CHANGELOG/CHANGELOG-<MAJOR>.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG),
+  by a maintainer running `make-changelog.sh --finalize` just before tagging.
+  A [CI gate](#the-stable-release-gate) blocks the stable release build if that
+  commit is missing or stale.
+
+Every tag — RC and stable — also gets a GitHub Release whose body is the
+rendered section.
 
 ## Layout
 
@@ -14,12 +27,14 @@ the [Kubernetes changelog](https://github.com/kubernetes/kubernetes/blob/master/
 |---|---|
 | Generator | [`.github/scripts/make-changelog.sh`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/make-changelog.sh) |
 | Component map (JSON) | [`.github/scripts/components.json`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/scripts/components.json) |
-| CI workflow | [`.github/workflows/tag-changelogs.yaml`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/workflows/tag-changelogs.yaml) |
-| Output | `CHANGELOG/CHANGELOG-<MAJOR>.md` (e.g. `CHANGELOG-028.md`) |
+| Accumulate + release notes | [`.github/workflows/tag-changelogs.yaml`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/workflows/tag-changelogs.yaml) |
+| Stable-release gate | [`.github/workflows/changelog-gate.yaml`](https://github.com/pantavisor/meta-pantavisor/blob/master/.github/workflows/changelog-gate.yaml) |
+| S3 accumulator | `https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/changelog/CHANGELOG-<MAJOR>.md` |
+| Committed output | `CHANGELOG/CHANGELOG-<MAJOR>.md` (written only at stable) |
 
 The generator is a single bash script using `git`, `curl`, `jq`, and `awk`.
-It runs both **in CI** (after the tag build completes) and **locally** (when
-you want to preview a section, regenerate, or run the pre-tag flow).
+It runs **in CI** on every tag (accumulate + release notes) and **locally**
+when you preview a section or run `--finalize` before a stable tag.
 
 ## What goes into a section
 
@@ -46,21 +61,25 @@ For tag `T` (e.g. `028-rc7`):
    / `### CI` / `### Docs` / `### Other`. Hashes are dropped. Aliases:
    `feature` → Features, `doc` → Docs, `build` → CI. `chore`, `style`,
    `changelog`, and `changelogs` subjects are dropped (the last two prevent
-   the autoadd commit from feeding back into itself on re-runs).
+   the `changelogs(...)` commits from feeding back into the changelog on
+   re-runs).
 
 ## Modes
 
 The script auto-detects which mode to run in based on whether the tag exists:
 
-| Mode | Triggered when | Source rev | Release date | Auto-commit? |
-|---|---|---|---|---|
-| **pre-tag** | `<TAG>` does **not** exist as a git tag | `HEAD` | today | yes (default) |
-| **historical** | `<TAG>` exists as a git tag | `<TAG>` | the tag's commit date | no |
+| Mode | Triggered when | Source rev | Release date | Downloads | Auto-commit? |
+|---|---|---|---|---|---|
+| **pre-tag** | `<TAG>` does **not** exist as a git tag | `HEAD` | today | predicted URLs | yes (default) |
+| **historical** | `<TAG>` exists as a git tag | `<TAG>` | the tag's commit date | real hashes from `releases.json` | no |
 
-The pre-tag mode is the production flow: you generate the section just before
-tagging, so the changelog file is part of the very commit that gets tagged.
-The historical mode is for backfill, regeneration, or local previews of past
-releases.
+- **historical** is what CI runs on every tag (`tag-changelogs.yaml`). It
+  writes the file and the workflow uploads it to the [S3
+  accumulator](#s3-accumulator) — no commit.
+- **pre-tag** is local-only now, reached through `--finalize` (see the
+  [stable flow](#stable-flow)). It renders the stable section with predicted
+  download URLs — the build that produces the real hashes runs *after* the
+  tag — and auto-commits.
 
 ## Previous-tag resolution
 
@@ -73,90 +92,106 @@ For tag `T` in major `M`:
 Implementation walks `git tag -l "${M}-rc*"` plus all `^0+[0-9]*$` (stable)
 tags, sorts with `sort -V`, and picks the highest tag less than `T`.
 
+## S3 accumulator
+
+One rolling Markdown document per major stream lives at:
+
+```
+https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/changelog/CHANGELOG-<MAJOR>.md
+```
+
+`tag-changelogs.yaml` refreshes it on **every** tag: it seeds a checkout from
+the current S3 copy, runs `make-changelog.sh --no-commit <TAG>` (historical
+mode) to merge in the tag's section newest-first, then `aws s3 cp`s the result
+back. This is the always-current cross-RC view — RC sections never reach
+`master`. It is also the base that `--finalize` pulls from at stable, and the
+reference the [stable-release gate](#the-stable-release-gate) diffs against.
+
 ## Release flow
 
-There are two supported flows. The **automated flow** is the default; the
-**local pre-tag flow** is still available for releases where you want the
-changelog file inside the tagged commit itself.
+### RC flow
 
-### Automated flow (default)
-
-1. Decide on the tag name (e.g. `028-rc8`) and tag HEAD of `master`:
+1. Tag HEAD of `master` and push:
    ```sh
-   git tag 028-rc8
-   git push origin master 028-rc8
+   git tag 030-rc3
+   git push origin master 030-rc3
    ```
-2. The push triggers `tag-scarthgap.yaml`, which builds every machine and
-   uploads the artifacts to S3.
-3. On completion, `tag-changelogs.yaml` fires via `workflow_run`. It:
-   - Checks out `master` with full history
-   - Runs `make-changelog.sh <TAG>` in **historical mode** — writes the
-     `CHANGELOG/CHANGELOG-<MAJOR>.md` file but does not auto-commit
-   - Renders the section via `make-changelog.sh --stdout <TAG>` to a file
-   - Creates (or updates) the GitHub Release for `<TAG>` with that file as
-     the body — `gh release create --notes-file …` / `gh release edit
-     --notes-file …`. **No build artifacts are attached** — they live on S3
-     and the changelog Downloads table links to them
-   - Opens a PR back to `master` titled
-     `changelogs(<TAG>): autoadd changelog`, with the updated CHANGELOG file
-     as the only diff. Authored using the existing
-     `secrets.PANTAVISOR_TAG_SYNC_TOKEN` PAT (so the resulting PR can
-     trigger downstream workflows if desired).
-4. Review and merge the PR. The release page is already populated regardless
-   of whether the PR is merged — the two are independent outputs.
+2. The push triggers `tag-scarthgap.yaml` (build every machine, upload
+   artifacts + `releases.json` to S3). The `changelog-gate` job passes
+   instantly for RC tags.
+3. On completion `tag-changelogs.yaml` fires: merges `## v030-rc3` into the
+   [S3 accumulator](#s3-accumulator) and creates/updates the GitHub Release
+   for `030-rc3` with the rendered section as its body. **Nothing is committed
+   to `master`.**
 
-If S3 wasn't ready when the workflow first fired (rare race), re-run the
-workflow manually:
+If S3 wasn't ready when the workflow first fired (rare race), re-run it:
 
 ```sh
-gh workflow run tag-changelogs.yaml -f tag=028-rc8
+gh workflow run tag-changelogs.yaml -f tag=030-rc3
 ```
 
-The release notes and PR will be regenerated from the now-current
-`releases.json`.
+### Stable flow
 
-### Local pre-tag flow (optional)
-
-Use this when you want the changelog file to be part of the tagged commit
-itself — for example, when shipping a stable release where the document
-should be reachable at the tag's tree:
+Do this once, after every RC's release workflow has finished (so the S3
+accumulator is complete):
 
 ```sh
-# 1. Make sure HEAD is the commit you want to tag.
-git status
-git log -1
+# 1. HEAD of master is the commit you want to tag.
+git switch master && git pull
 
-# 2. Run the generator with the upcoming tag name. In pre-tag mode (tag
-#    doesn't exist yet) this writes the new section to
-#    CHANGELOG/CHANGELOG-028.md and creates a new commit on top of HEAD with
-#    message "changelogs(028-rc8): autoadd changelog". The Downloads table
-#    is populated with predicted URLs (see "Modes" below).
-./.github/scripts/make-changelog.sh 028-rc8
+# 2. Pull the accumulated changelog into the repo and add the stable
+#    "## v030" section. Downloads use predicted URLs — the build that
+#    produces real hashes runs after the tag. Commits
+#    "changelogs(030): finalize 030 changelog". Errors if 030 is already tagged.
+./.github/scripts/make-changelog.sh --finalize 030
 
-# 3. Inspect the generated section and the commit.
+# 3. Review the commit: it should touch only CHANGELOG/CHANGELOG-030.md and
+#    contain every "## v030-rcN" section plus a new "## v030".
 git show HEAD
 
-# 4. Tag the autoadd commit and push.
-git tag 028-rc8
-git push origin master 028-rc8
+# 4. Push the finalize commit, THEN tag.
+git push origin master
+git tag 030
+git push origin 030
 ```
 
-The CI flow still runs after the tag push: `tag-changelogs.yaml` will
-generate the historical-mode section (with real download SHA256s) and open
-a PR overwriting the predicted section with the live one. Merge that PR to
-update master with real hashes; the tagged commit's section keeps the
-predictions.
+The `030` push runs `changelog-gate` first (see below). Once it passes the
+build proceeds; on completion `tag-changelogs.yaml` refreshes the S3
+accumulator and the GitHub Release for `030` with real download hashes. The
+committed `CHANGELOG/CHANGELOG-030.md` keeps its predicted URLs — the hashed
+copy lives on the S3 accumulator and the Release page.
+
+## The stable-release gate
+
+`changelog-gate.yaml` runs as a `tag-scarthgap.yaml` job that `release` depends
+on. RC tags pass through untouched. For a stable `0NN` tag it fails the run —
+skipping the entire build — unless the tagged commit's
+`CHANGELOG/CHANGELOG-<MAJOR>.md`:
+
+| Check | Fix on failure |
+|---|---|
+| has a `## v<MAJOR>` stable section | run `make-changelog.sh --finalize <MAJOR>` |
+| has a `## v<MAJOR>-rcN` section for every `<MAJOR>-rc*` git tag | re-run `--finalize` after all RC release workflows finish |
+| its RC sections match the S3 accumulator byte-for-byte | re-run `--finalize` (its base was stale) and re-push before tagging |
+
+The `--finalize` commit must be pushed to `master` **before** the stable tag,
+otherwise the tagged tree won't contain it and the gate fails on the first
+check.
 
 ## Flag reference
 
 ```
-make-changelog.sh <TAG>              # write file; auto-commit if pre-tag mode
-make-changelog.sh --no-commit <TAG>  # write file but never commit
-make-changelog.sh --stdout <TAG>     # print section to stdout, no file write, no commit
+make-changelog.sh <TAG>               # write file; auto-commit if pre-tag mode
+make-changelog.sh --no-commit <TAG>   # write file but never commit (CI uses this)
+make-changelog.sh --stdout <TAG>      # print section to stdout, no file write, no commit
+make-changelog.sh --finalize <MAJOR>  # seed the repo file from the S3 accumulator, add the
+                                      # "## v<MAJOR>" stable section, commit
+                                      # "changelogs(<MAJOR>): finalize <MAJOR> changelog"
 ```
 
-`--no-commit` is the right choice for backfill loops or any time you want to
-batch multiple tags into one commit.
+`--finalize` is the only path that writes `CHANGELOG/CHANGELOG-<MAJOR>.md` in
+the repo now. Point `CHANGELOG_S3_URL_BASE` at a `file://` directory to test it
+without S3.
 
 ## Idempotency
 
@@ -164,21 +199,25 @@ Re-running on the same tag is safe: the prior `## v<tag>` section is replaced
 rather than duplicated, the file header is preserved, and the auto-commit
 step is skipped if the file content didn't change.
 
-The autoadd commits themselves (`changelogs(...)`) are filtered out of the
-Changes section, so re-running pre-tag mode after committing once won't pull
-the autoadd commit back in.
+The `changelogs(...)` commits themselves are filtered out of the Changes
+section, so re-running `--finalize` after committing once won't pull the
+finalize commit back in.
 
-## Backfill
+## Regenerating a section
 
-To populate `CHANGELOG/CHANGELOG-028.md` from already-tagged releases:
+To re-render one tag's section (e.g. after fixing `releases.json` or
+`components.json`), run it in historical mode and re-publish the S3
+accumulator:
 
 ```sh
-for tag in $(git tag -l "028-rc*" "028" | sort -V); do
-  ./.github/scripts/make-changelog.sh --no-commit "$tag"
-done
-git add CHANGELOG/CHANGELOG-028.md
-git commit -m "changelogs(028): backfill"
+URL=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/changelog/CHANGELOG-030.md
+curl -sfL -o CHANGELOG/CHANGELOG-030.md "$URL"
+./.github/scripts/make-changelog.sh --no-commit 030-rc2
+# inspect CHANGELOG/CHANGELOG-030.md, then re-upload:
+#   aws s3 cp CHANGELOG/CHANGELOG-030.md s3://$AWS_S3_BUCKET/changelog/CHANGELOG-030.md
 ```
+
+or just `gh workflow run tag-changelogs.yaml -f tag=030-rc2` and let CI do it.
 
 ## Adding a new component
 
