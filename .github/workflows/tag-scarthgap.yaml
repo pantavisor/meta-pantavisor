@@ -17,7 +17,13 @@ jobs:
     uses: ./.github/workflows/sync-pantavisor.yaml
     secrets: inherit
 
+  # Blocks stable releases (0NN) whose tagged commit lacks a finalized
+  # CHANGELOG/CHANGELOG-<MAJOR>.md. RC tags pass through instantly.
+  changelog-gate:
+    uses: ./.github/workflows/changelog-gate.yaml
+    secrets: inherit
+
   release:
-    needs: sync
+    needs: [sync, changelog-gate]
     uses: ./.github/workflows/release.yaml
     secrets: inherit

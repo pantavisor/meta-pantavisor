@@ -87,6 +87,12 @@ This is the source-repo counterpart of meta-pantavisor's own
 multi-component SRCREV sections — those are aggregation-layer concepts that do
 not apply to the single pantavisor source repo.
 
+Note that the pantavisor-side flow still opens a changelog PR per tag. The
+meta-pantavisor side no longer does: RC sections are accumulated on an S3
+document and the repo `CHANGELOG/CHANGELOG-<MAJOR>.md` is committed once per
+major (at stable), gated by `changelog-gate.yaml`. See
+[changelog.md](changelog.md).
+
 For the changelog PR to trigger CI, `pantavisor` needs its own
 `PANTAVISOR_TAG_SYNC_TOKEN` repo secret (same kind of PAT as above, with write
 access to `pantavisor/pantavisor`). The GitHub Release step uses the built-in
