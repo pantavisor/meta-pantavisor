@@ -5,6 +5,9 @@
 **Image artifact:** `pv-flash-bundle-imx8qxp-b0-mek.tar.gz` (eMMC) or
 `pantavisor-starter-imx8qxp-b0-mek*.wic` (SD card)
 
+**Build:** `kas build kas/build-configs/release/imx8qxp-b0-mek-scarthgap.yaml` — see the
+[build config table](/meta-pantavisor/overview/build-system#build-configs).
+
 ## Hardware overview
 
 The i.MX8QXP MEK (Multisensory Enablement Kit) is NXP's own evaluation board

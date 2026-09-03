@@ -4,6 +4,9 @@
 
 **Image artifact:** `pv-flash-bundle-colibri-imx6ull.tar.gz`
 
+**Build:** `kas build kas/build-configs/release/colibri-imx6ull-scarthgap.yaml` — see the
+[build config table](/meta-pantavisor/overview/build-system#build-configs).
+
 ## Entering USB serial download (SDP) mode
 
 The Colibri iMX6ULL ROM enters SDP mode when the `RECOVERY#` pin is held low

@@ -5,6 +5,9 @@
 **Image artifact:** `pv-flash-bundle-imx8mm-var-dart.tar.gz` (eMMC) or
 `pantavisor-starter-imx8mm-var-dart*.wic` (SD card)
 
+**Build:** `kas build kas/build-configs/release/imx8mm-var-dart-scarthgap.yaml` — see the
+[build config table](/meta-pantavisor/overview/build-system#build-configs).
+
 ## Hardware overview
 
 The DART-MX8M-MINI is based on the NXP i.MX8M Mini SoC and is typically used

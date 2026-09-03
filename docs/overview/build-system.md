@@ -65,6 +65,36 @@ KAS is the primary build system. Configuration is composed by layering YAML frag
 | `kas/platforms/*.yaml` | Platform-specific layer includes (sunxi, raspberrypi, etc.) |
 | `kas/with-workspace.yaml` | Overlay for local pantavisor source development |
 
+### Build configs
+
+`kas/build-configs/` holds the build configs you pass to `kas build` directly.
+The `release/` ones pin a machine and are self-contained; the `build-base-*`
+ones are the bases `kas menu` writes into `.config.yaml`, so the machine comes
+from the menu selection:
+
+| Config | Machine | Target |
+|--------|---------|--------|
+| `build-base-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
+| `build-base-toradex-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
+| `build-base-uuu-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
+| `build-base-remix.yaml` | (from `kas menu`) | `pantavisor-remix` |
+| `build-appengine-distro.yaml` | (from `kas menu`) | `pantavisor-appengine-distro` |
+| `release/96boards-orangepi-i96-scarthgap.yaml` | `orangepi-i96` | `pantavisor-starter` |
+| `release/colibri-imx6ull-scarthgap.yaml` | `colibri-imx6ull` | `pantavisor-starter` |
+| `release/docker-armv8-scarthgap.yaml` | `docker-armv8` | `pantavisor-appengine-distro` |
+| `release/docker-x86_64-scarthgap.yaml` | `docker-x86_64` | `pantavisor-appengine-distro` |
+| `release/imx8mm-var-dart-scarthgap.yaml` | `imx8mm-var-dart` | `pantavisor-starter` |
+| `release/imx8mn-var-som-scarthgap.yaml` | `imx8mn-var-som` | `pantavisor-starter` |
+| `release/imx8qxp-b0-mek-scarthgap.yaml` | `imx8qxp-b0-mek` | `pantavisor-starter` |
+| `release/radxa-rock5a-scarthgap.yaml` | `rock-5a` | `pantavisor-starter` |
+| `release/raspberrypi-armv8-scarthgap.yaml` | `raspberrypi-armv8` | `pantavisor-starter` |
+| `release/rockchip-orangepi-5b-scarthgap.yaml` | `orangepi-5b` | `pantavisor-starter` |
+| `release/rpi-scarthgap.yaml` | `raspberrypi` | `pantavisor-starter` |
+| `release/sunxi-bananapi-m2-berry-scarthgap.yaml` | `bananapi-m2-berry` | `pantavisor-starter` |
+| `release/sunxi-orange-pi-3lts-scarthgap.yaml` | `orange-pi-3lts` | `pantavisor-starter` |
+| `release/sunxi-orange-pi-r1-scarthgap.yaml` | `orange-pi-r1` | `pantavisor-starter` |
+| `release/verdin-imx8mm-scarthgap.yaml` | `verdin-imx8mm` | `pantavisor-starter` |
+
 ## Multiconfig Architecture
 
 When using `bsp-multi.yaml`, builds use three separate multiconfigs to avoid TMPDIR conflicts:
@@ -107,10 +137,19 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `squash-zstd` | Zstd squashfs compression |
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
+| `lxc-next` | LXC 6.x (`lxc6-pv`) instead of the default LXC 3.x (`lxc-pv`); also available as the `kas/with-lxc-next.yaml` fragment |
+| `wakelocks` | PM wakelocks + autosleep — adds the `wakelock.cfg` kernel fragment (see [pantavisor wakelocks](/pantavisor/overview/wakelocks)) |
+| `console-logging` | Boot console logging on Raspberry Pi images |
+| `automod` | Automatic kernel module loading (`kmod` in the initramfs) |
+| `caam-nxp` | NXP CAAM secure key support (`caam-nxp.cfg` kernel fragment, `keyctl-caam`) |
+| `dcp` | NXP DCP hardware-bound trusted keys (i.MX6ULL kernel patches, `keyutils`) |
+| `debug-hooks` | Debug hook scripts (`-DPANTAVISOR_DEBUG_HOOKS=ON`) |
+| `appengine` | Container-hosted appengine build (`-DPANTAVISOR_APPENGINE=ON`); appended by the `panta-appengine` distro |
+| `pv-manifest-audit` / `pv-manifest-strict` | [Manifest audit](manifest-audit.md) of the built image; `strict` fails the build on a mismatch |
 
 **Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev`
 
-> **Caution**: `tailscale` and `rngdaemon` appear in the default string, but their gating is inconsistent upstream — for example, `pantavisor-initramfs.bb` checks for a feature named `rngd`, not `rngdaemon`. Verify the recipes if you depend on either.
+> **Caution**: `rngdaemon` appears in the default string, but nothing in the layer gates on that token — `pantavisor-initramfs.bb` checks for a feature named `rngd` instead. Append `rngd` explicitly if you need the RNG daemon.
 
 ### The `+=` vs `:append` Pitfall
 
