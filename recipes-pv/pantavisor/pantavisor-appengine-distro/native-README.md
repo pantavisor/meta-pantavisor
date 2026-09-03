@@ -18,6 +18,7 @@ containers, so it needs a container runtime.
 ```
 pvtest/             pvtest-run, utils, common   the tester half
                     host-common                 shared with test.docker.sh
+                    bin/pvr                     static pvr for this arch
 local/  remote/     the suites
 targets/            per-target container tarballs (starts empty)
 test.native.sh      the runner
@@ -38,6 +39,8 @@ target command is forwarded through `exec=`, so `pvcontrol`, `pventer`,
 apk add bash jq curl openssh-client coreutils sed util-linux-misc flock tar \
         findutils grep gawk diffutils
 ```
+
+(no `pvr` — it ships in this tarball, see below)
 
 Busybox applets are not enough for four of these, which is why the list is
 explicit:
@@ -64,12 +67,20 @@ All present on a default install; `jq` and `curl` are the usual gaps.
 
 ### pvr
 
-Not packaged by any distro — it is the Pantacor Go binary, and the tester uses
-it heavily (clone the device's revision, post new ones). Install it from the
-Pantacor releases and put it on `PATH`:
+The one dependency no distro packages. **It ships in this tarball** as
+`pvtest/bin/pvr`, built static with CGO off: no ELF interpreter, so the same
+binary runs on glibc and musl hosts alike.
 
-```sh
-pvr --version
+It is built for **this tarball's architecture**, so use the tarball matching the
+host that runs the tester — `pantavisor-pvtest-scripts-docker-x86_64.tar.gz` on
+an x86_64 runner, `-docker-armv8` on an arm64 one. A `pvr` on `PATH` always
+wins; the bundled one is used only if it actually executes here, and `check`
+says which is in play:
+
+```
+INFO -- pvr: /usr/bin/pvr (host)
+INFO -- pvr: /path/pvtest/bin/pvr (bundled, static)
+ERROR -- bundled pvr at ... does not run here (wrong architecture?)
 ```
 
 ### Tests' own tools

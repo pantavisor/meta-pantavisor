@@ -54,8 +54,14 @@ for its own MACHINE, installed exactly as in the container flow:
 reports every missing tool and whether the shipped runner supports relocation. Package names
 for Alpine and Debian are in the tarball's `README.md`. The four that busybox cannot cover are
 `coreutils` (`timeout --foreground`), `sed` (`sed -u` for the serial capture), `util-linux-misc`
-(`script`, which wraps every test) and `flock`. `pvr` is not packaged anywhere — install the
-Pantacor binary and put it on `PATH`.
+(`script`, which wraps every test) and `flock`.
+
+`pvr` is the one dependency no distro packages, so the tarball ships it: `pvtest/bin/pvr`, the
+`pvr-static` build (CGO off, hence no ELF interpreter, hence glibc and musl alike). Neither of
+the ordinary builds is usable here — the target one wants `/lib/ld-linux-*.so`, and the native
+one's interpreter is a path inside the build tree. It is built for the tarball's architecture,
+so take the tarball matching the host running the tester; a `pvr` on `PATH` always wins, and the
+bundled one is used only if it actually executes.
 
 ## Running
 
