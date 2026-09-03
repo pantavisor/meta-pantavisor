@@ -441,7 +441,7 @@ _resolve_device_file() {
 }
 
 _dev_name= _dev_type= _dev_ip= _dev_exec= _dev_tty= _dev_baud=
-_dev_hook= _dev_config= _dev_env= _dev_lock_fd=
+_dev_setbootconfig= _dev_setbootconfig_conf= _dev_setbootconfig_base= _dev_lock_fd=
 
 _parse_device_manifest() {
 	local file="$1" line
@@ -464,9 +464,12 @@ _parse_device_manifest() {
 			exec=*) _dev_exec="${line#exec=}" ;;
 			tty=*) _dev_tty="${line#tty=}" ;;
 			baud=*) _dev_baud="${line#baud=}" ;;
-			hook=*) _dev_hook="${line#hook=}" ;;
-			config=*) _dev_config="${line#config=}" ;;
-			env=*) _dev_env="${line#env=}" ;;
+			hook=*) _dev_setbootconfig="${line#hook=}"; pvtest_log WARN "'hook=' is deprecated in '$file', use 'setbootconfig='" ;;
+			config=*) _dev_setbootconfig_conf="${line#config=}"; pvtest_log WARN "'config=' is deprecated in '$file', use 'setbootconfig_conf='" ;;
+			env=*) _dev_setbootconfig_base="${line#env=}"; pvtest_log WARN "'env=' is deprecated in '$file', use 'setbootconfig_base='" ;;
+			setbootconfig=*) _dev_setbootconfig="${line#setbootconfig=}" ;;
+			setbootconfig_conf=*) _dev_setbootconfig_conf="${line#setbootconfig_conf=}" ;;
+			setbootconfig_base=*) _dev_setbootconfig_base="${line#setbootconfig_base=}" ;;
 			""|\#*) ;;
 			*) pvtest_log WARN "ignoring unrecognized line in '$file': $line" ;;
 		esac
@@ -591,7 +594,7 @@ _retype_handle_appengine() {
 	fi
 }
 
-# Execute hook for retyping real devices with settings from ctrl
+# Run the setbootconfig script for retyping real devices with settings from ctrl; contract in docs/overview/testing/automated/device.md
 _retype_handle_device() {
 	local ctrl="$1" id="$2" cfg="$3"
 
@@ -600,39 +603,39 @@ _retype_handle_device() {
 		return 0
 	fi
 
-	if [ -z "$_dev_hook" ]; then
+	if [ -z "$_dev_setbootconfig" ]; then
 		_retype_reply "$ctrl" "$id" "status=unsupported"
 		return 0
 	fi
-	[ -n "$_dev_env" ] && cfg="$_dev_env $cfg"
+	[ -n "$_dev_setbootconfig_base" ] && cfg="$_dev_setbootconfig_base $cfg"
 
 	# Stop getting tty logs from device
 	_stop_device_capture "$_dev_name"
 
-	# Execute the hook itself
-	local hooklog="$work_path/dev-retype-${_dev_name}-${id}.log"
-	local -a hookargs=("$_dev_hook")
-	[ -n "$_dev_config" ] && hookargs+=(-c "$_dev_config")
-	hookargs+=($cfg)
-	local _hook_ok=0
-	if "${hookargs[@]}" > "$hooklog" 2>&1; then
-		_hook_ok=1
+	# Execute the setbootconfig script itself
+	local sbc_log="$work_path/dev-setbootconfig-${_dev_name}-${id}.log"
+	local -a sbc_args=("$_dev_setbootconfig")
+	[ -n "$_dev_setbootconfig_conf" ] && sbc_args+=(-c "$_dev_setbootconfig_conf")
+	sbc_args+=($cfg)
+	local _sbc_ok=0
+	if "${sbc_args[@]}" > "$sbc_log" 2>&1; then
+		_sbc_ok=1
 	else
-		pvtest_log ERROR "device '$_dev_name' hook failed (see $hooklog)"
+		pvtest_log ERROR "device '$_dev_name' setbootconfig failed (see $sbc_log)"
 	fi
 
 	# Resume tty logs from device
 	_start_device_capture "$_dev_name" "$_dev_tty" "$_dev_baud" \
-		|| pvtest_log ERROR "failed to resume tty capture for device '$_dev_name' after hook"
+		|| pvtest_log ERROR "failed to resume tty capture for device '$_dev_name' after setbootconfig"
 
-	if [ "$_hook_ok" = 1 ]; then
+	if [ "$_sbc_ok" = 1 ]; then
 		# Best-effort confirm the board is actually mid-reboot before telling the tester it is ready
 		_wait_tty_activity "$work_path/${_dev_name}.log" 30 \
-			|| pvtest_log WARN "no serial activity from '$_dev_name' within 30s after hook; continuing"
+			|| pvtest_log WARN "no serial activity from '$_dev_name' within 30s after setbootconfig; continuing"
 		_retype_reply "$ctrl" "$id" "ae=$_dev_name" "exec=$_dev_exec" "host=$_dev_ip" \
-			"status=ready" "log=$hooklog"
+			"status=ready" "log=$sbc_log"
 	else
-		_retype_reply "$ctrl" "$id" "status=failed" "log=$hooklog"
+		_retype_reply "$ctrl" "$id" "status=failed" "log=$sbc_log"
 	fi
 }
 
@@ -653,7 +656,7 @@ _retype_service() {
 			rm -f "$req"
 			case "$mech" in
 				container) ( _retype_handle_appengine "$ctrl" "$id" "$S" "$cfg" "$stor" "$rev" "$seed" ) & ;;
-				hook)      ( _retype_handle_device "$ctrl" "$id" "$cfg" ) & ;;
+				setbootconfig) ( _retype_handle_device "$ctrl" "$id" "$cfg" ) & ;;
 				*)         _retype_reply "$ctrl" "$id" "status=unsupported" ;;
 			esac
 		done
@@ -1161,8 +1164,8 @@ run_test() {
 	local retype_mech=none
 	if [ "$pool_mode" = true ]; then
 		retype_mech=container
-	elif [ -n "$_dev_hook" ]; then
-		retype_mech=hook
+	elif [ -n "$_dev_setbootconfig" ]; then
+		retype_mech=setbootconfig
 	fi
 
 	local target_type abs_targets_path=

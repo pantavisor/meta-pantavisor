@@ -29,9 +29,9 @@ Extract the tarball and load the Docker images as described in the tarball's own
 | `exec=` | yes | — | command prefix to run `pvcontrol`/`pventer` on the device → `PVTEST_EXEC` |
 | `tty=` | yes | — | host-local serial device path for console capture. Prefer a stable `/dev/serial/by-id/…` over `/dev/ttyUSBN` |
 | `baud=` | no | `115200` | `stty` baud for the console |
-| `hook=` | no | — | host command that sets the device's boot env and power-cycles it. When set, a test whose `config.env` doesn't match the live device re-types through this hook instead of SKIPping |
-| `config=` | no | — | config file passed to `hook=` as `-c <file>` |
-| `env=` | no | — | this board's base boot env, space-separated `KEY=VALUE`, passed to `hook=` ahead of each test's own tokens. Useful, for example, to set `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct` so every test captures pantavisor's logs on the console |
+| `setbootconfig=` | no | — | host command that writes the device's boot-time config and power-cycles it. When set, a test whose `config.env` doesn't match the live device re-types through this script instead of SKIPping |
+| `setbootconfig_conf=` | no | — | config file passed to `setbootconfig=` as `-c <file>` |
+| `setbootconfig_base=` | no | — | this board's base boot-config tokens, space-separated `KEY=VALUE`, passed to `setbootconfig=` ahead of each test's own tokens. Useful, for example, to set `PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct` so every test captures pantavisor's logs on the console |
 
 Unrecognized keys produce a `WARN` and are ignored.
 
@@ -40,7 +40,7 @@ rather than in a workspace the next install throws away:
 
 ```
 ~/.config/pvtest/
-  rock5a.conf             <- whatever hook=/config= reads. Host-side only
+  rock5a.conf             <- whatever setbootconfig=/setbootconfig_conf= reads. Host-side only
   devices/                <- the only directory bind-mounted into the tester
     rock5a.txt            <- a named manifest, used by --device rock5a
     id_board              <- the SSH key exec= names, 0600
@@ -56,25 +56,52 @@ rather than in a workspace the next install throws away:
 **An installed manifest never implies device mode.** `--device` is the only thing that
 selects a board: a run without it drives the appengine pool, whatever sits in the config dir.
 
-### The re-type hook
+### The setbootconfig script
 
 A board is a slot like any other: the tester asks the host to bring slot 0 up on a given config
 over the same ctrl protocol the appengine pool uses, and the host satisfies it by running this
-board's hook (`PVTEST_RETYPE=hook`) instead of booting a container.
+board's setbootconfig script (`PVTEST_RETYPE=setbootconfig`) instead of booting a container.
 
-A hook is invoked as `hook [-c <config=>] KEY=VALUE ...`, with the manifest's `env=` tokens
-prepended to the test's own (the test wins on any key both set). `env=` exists because a hook
-typically writes the boot env as a full replacement. Leave it empty for a hook that merges.
-
-A board with no `hook=` answers `unsupported`, which is a normal reply rather than an error:
-the tester binds the board as it is and SKIPs any test whose `config.env` it doesn't
+A board with no `setbootconfig=` answers `unsupported`, which is a normal reply rather than an
+error: the tester binds the board as it is and SKIPs any test whose `config.env` it doesn't
 already satisfy — so run device-mode suites **without** `--fail-on-skip` until each test's
 `"devices"` array is triaged.
 
-Path rules: `hook=`/`config=` are consumed host-side only and may point anywhere on the host.
-Paths in `exec=` must be absolute and inside the manifest's own directory — that directory is
-bind-mounted into the tester at the same absolute path, so an SSH key anywhere else is
-invisible to it.
+Path rules: `setbootconfig=`/`setbootconfig_conf=` are consumed host-side only and may point
+anywhere on the host. Paths in `exec=` must be absolute and inside the manifest's own directory
+— that directory is bind-mounted into the tester at the same absolute path, so an SSH key
+anywhere else is invisible to it.
+
+The contract:
+
+```
+setbootconfig contract
+Invocation:  <setbootconfig> [-c <setbootconfig_conf>] KEY=VALUE ...
+Inputs
+  argv    the complete set of boot-config tokens the board must boot with:
+          setbootconfig_base= tokens first, then the test's config.env tokens.
+          A later token wins on a duplicate key. An empty value (KEY=) means
+          "unset, use the default". Write them as a whole; do not merge with
+          whatever the board currently has.
+  -c      setbootconfig_conf=, if set. Opaque to the runner.
+  env     the runner's own environment (under a lab wrapper that includes
+          whatever it exports, e.g. power-port commands). No PVTEST_* is
+          guaranteed. stdin is closed. cwd is unspecified: use absolute paths.
+  console the runner releases tty= before the call and re-opens it after, so
+          the script may open the serial device exclusively.
+Outputs
+  exit 0  the tokens are the board's persistent boot config (they survive the
+          reboots a test itself triggers, until the next call) AND a reboot or
+          power-cycle has been started. Return as soon as it has; do not wait
+          for the board to come back, the runner fences READY itself.
+  exit !0 failure. The runner reports the target as failed for that test.
+  stdout/stderr  captured to <workspace>/dev-setbootconfig-<name>-<id>.log.
+Must not: contact the board over exec= (it is rebooting), change keys it was
+not given (other than by restoring setbootconfig_base=), require a TTY on
+stdin, or leave the serial device open on exit.
+Timing: no timeout is enforced; the runner only WARNs if the console shows no
+activity within 30 s of return.
+```
 
 ### Building target tarballs
 
@@ -173,8 +200,8 @@ useful greps and the result lines. Two deltas against an appengine run:
 
 - there is no `storage/` tree — the device keeps its own on-device storage;
 - pantavisor's own log sources reach `test.log` only if the manifest sets
-  `env=PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The serial console capture always lands
-  in `<name>.log`.
+  `setbootconfig_base=PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`. The serial console capture
+  always lands in `<name>.log`.
 
 ### Expected outcomes
 
@@ -188,12 +215,13 @@ Not every non-PASS is a bug. Triage device results against these classes first:
   BSP need not ship — a missing policy file is fatal to pantavisor init), `local/xconnect/*`
   (they need the `xconnect-dbus-systembus` build feature and its example containers), and
   `local/services/daemons` (it asserts the appengine image's daemon set).
-- **SKIPPED on unmet `config.env` with no `hook=` configured is by design, not a failure.**
-  Without a hook a real device's config is immutable per test, so e.g. the
-  config-overload tests (`PV_POLICY=test`), the secureboot tests (`PV_SECUREBOOT_MODE=strict`)
-  and `on-demand-gc` (`PV_STORAGE_LOGTEMPSIZE=` — persistent logs) skip wherever the device's
-  live config says otherwise. Never change a device's config or BSP just to un-skip a test —
-  configure a `hook=` instead if the device supports boot-time config injection.
+- **SKIPPED on unmet `config.env` with no `setbootconfig=` configured is by design, not a
+  failure.** Without a setbootconfig script a real device's config is immutable per test, so
+  e.g. the config-overload tests (`PV_POLICY=test`), the secureboot tests
+  (`PV_SECUREBOOT_MODE=strict`) and `on-demand-gc` (`PV_STORAGE_LOGTEMPSIZE=` — persistent
+  logs) skip wherever the device's live config says otherwise. Never change a device's config
+  or BSP just to un-skip a test — configure a `setbootconfig=` instead if the device supports
+  boot-time config injection.
 - **Timeouts**: device runs default `PVTEST_TEST_TIMEOUT` to 1800 s (vs 600 s for
   containers) — updates may need real reboots and every forwarded poll pays an ssh
   round-trip.

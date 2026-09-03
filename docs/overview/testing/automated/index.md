@@ -123,7 +123,7 @@ models:
 - **`persistent`**: storage is persistent across test iterations.
 
 A real device is not a separate code path: it is `-p 1` plus the persistent model plus
-`hook`/`none` re-typing.
+`setbootconfig`/`none` re-typing.
 
 ### Volatile Model
 
@@ -194,10 +194,10 @@ the desired env config with the following possible values:
 
 - `container`: for the appengine pool, which just runs a new container generation while keeping
   the persistent storage.
-- `hook`: for real devices, which runs the manifest's `hook=` script to set the boot env and
-  power-cycle the board.
-- `none`: for real devices with no `hook=`. The tester binds the target as it is, and every
-  test whose config the device does not already satisfy is SKIPPED.
+- `setbootconfig`: for real devices, which runs the manifest's `setbootconfig=` script to set
+  the boot config and power-cycle the board.
+- `none`: for real devices with no `setbootconfig=`. The tester binds the target as it is, and
+  every test whose config the device does not already satisfy is SKIPPED.
 
 ```
  ┌────────────────────────────┐

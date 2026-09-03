@@ -59,7 +59,7 @@ device reboots).
 ### Pantavisor specific sources
 
 Enabled by default at appengine workers, needs to be set in the device manifest
-for real devices `env=PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`.
+for real devices `setbootconfig_base=PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct`.
 
 Some relevant Pantavisor modules: `core`, `ctrl`.
 
