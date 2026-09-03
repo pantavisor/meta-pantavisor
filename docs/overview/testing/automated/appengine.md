@@ -230,8 +230,8 @@ lessons that caused real cross-test failures.
     must never reach master: CI/master runs pass `--fail-on-skip`, which fails the run on *any*
     SKIPPED result. Tests that are not ready to run on master live in
     [pvtest-list.md](pvtest-list.md), not as skipped dirs in the tree. This is not the same as
-    a runtime SKIP: on a real device without a re-type hook, a test whose `config.env` the live
-    device doesn't already satisfy is legitimately SKIPPED — see [device.md](device.md).
+    a runtime SKIP: on a real device without a setbootconfig script, a test whose `config.env`
+    the live device doesn't already satisfy is legitimately SKIPPED — see [device.md](device.md).
 11. **Destructive tests must be state-independent.** There is no isolation mechanism — every
     test shares a container with later same-config tests, so a test that destroys device state
     (e.g. a GC test that deletes the factory revision `/storage/trails/0`, or one that fills

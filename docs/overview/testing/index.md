@@ -18,9 +18,9 @@ them, or a real device.
 2. [Running and Authoring pvtests](automated/appengine.md) — running against the appengine
    pool, adding and updating tests and containers, the authoring rules (including the
    cross-target ones), and how CI drives it
-3. [Running Against a Real Device](automated/device.md) — the device manifest, the re-type
-   hook, substituting container tarballs for another architecture or signing CA, and which
-   non-PASS results are expected
+3. [Running Against a Real Device](automated/device.md) — the device manifest, the
+   setbootconfig script, substituting container tarballs for another architecture or signing
+   CA, and which non-PASS results are expected
 4. [pvtest List](automated/pvtest-list.md) — every test by scope and category, with status
 
 ## [Manual](manual/index.md) — hand-driven testing
