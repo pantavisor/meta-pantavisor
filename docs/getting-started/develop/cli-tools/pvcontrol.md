@@ -139,4 +139,4 @@ curl -X POST --header "Content-Type: application/json" \
 ## Official documentation
 
 For the complete on-device tooling reference, see
-[Pantavisor tools](/pantavisor/reference/pantavisor-tools).
+[Pantavisor tools](/pantavisor/tools/pantavisor-tools).
