@@ -74,6 +74,34 @@ config PVBSP_FIRMWARE_PKG
 	default "${MACHINE_FIRMWARE} linux-firmware"
 	depends on BUILD_BSP
 
+menu "Optional overlays"
+
+config OVERLAY_LXC_NEXT
+	bool "lxc-next (LXC 6 runtime)"
+	default y if PLATFORM_DOCKER
+	help
+	  Adds " lxc-next" to PANTAVISOR_FEATURES, selecting the LXC 6 fork
+	  instead of the 3.0 one. This is what the docker appengine machines
+	  build in CI, so leave it on to match them.
+
+config OVERLAY_PERF
+	bool "perf tooling (pv-perf container)"
+	help
+	  Adds " tools-profile" to DISTRO_FEATURES so the kernel recipe builds
+	  the perf package for the pv-perf debug container. perf is deliberately
+	  kept out of PANTAVISOR_FEATURES: in the initramfs it grows past the
+	  128 MB rpi boot partition and breaks the rpiab tryboot installer.
+
+config OVERLAY_WORKSPACE
+	bool "workspace overlay (local pantavisor sources)"
+	help
+	  Builds pantavisor and friends from build/workspace/sources/ instead of
+	  the pinned SRCREV, for local source development. Also enables the
+	  xconnect feature.
+
+endmenu
+
+
 menu "Containers"
 	depends on BUILD_REMIX
 
@@ -586,6 +614,18 @@ config KAS_INCLUDE_MACHINE_TI_BEAGLEPLAY
 config KAS_INCLUDE_MACHINE_RISCV_VISIONFIVE2
 	string
 	default "kas/machines/riscv-visionfive2.yaml" if MACHINE_RISCV_VISIONFIVE2
+
+config KAS_INCLUDE_OVERLAY_LXC_NEXT
+	string
+	default "kas/with-lxc-next.yaml" if OVERLAY_LXC_NEXT
+
+config KAS_INCLUDE_OVERLAY_PERF
+	string
+	default "kas/with-perf.yaml" if OVERLAY_PERF
+
+config KAS_INCLUDE_OVERLAY_WORKSPACE
+	string
+	default "kas/with-workspace.yaml" if OVERLAY_WORKSPACE
 
 config KAS_INCLUDE_BUILD_TYPE
 	string
