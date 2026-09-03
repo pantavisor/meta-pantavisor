@@ -45,11 +45,33 @@ relocate_source() {
 }
 do_patch[postfuncs] += "relocate_source"
 
+# A second, fully static build of the same source. CGO off means the binary
+# carries no ELF interpreter, so one artifact runs on glibc and musl hosts
+# alike — which the ordinary build does not: the target one wants
+# /lib/ld-linux-*.so and the native one an interpreter under ${TMPDIR}.
+# The pvtest native runner ships this for the host it runs on.
+do_compile:append() {
+        export TMPDIR="${GOTMPDIR}"
+        cd ${B}/src/${GO_IMPORT}
+        CGO_ENABLED=0 ${GO} build -mod=vendor -trimpath -o ${B}/pvr-static .
+}
+
+do_install:append() {
+        install -d ${D}${bindir}
+        install -m 755 ${B}/pvr-static ${D}${bindir}/pvr-static
+}
+
+PACKAGES =+ "${PN}-static"
+FILES:${PN}-static = "${bindir}/pvr-static"
+# Nothing to strip or debug-split: a static Go binary has no section header
+INSANE_SKIP:${PN}-static += "already-stripped"
+
 do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
 do_deploy[dirs] += "${DEPLOY_DIR_TOOLS}"
 
 do_deploy() {
         install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOY_DIR_TOOLS}/pvr-${PACKAGE_ARCH}
+        install -m 755 ${B}/pvr-static ${DEPLOY_DIR_TOOLS}/pvr-static-${PACKAGE_ARCH}
 }
 
 addtask deploy after do_install
