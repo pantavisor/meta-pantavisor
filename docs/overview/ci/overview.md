@@ -10,15 +10,17 @@ The CI system builds Yocto images for all supported machines, runs integration t
 ```
 TAG PUSH  (0*  or  *-rc*)
   tag-scarthgap.yaml
-    ├── sync     → sync-pantavisor.yaml       mirror tag to pantavisor/pantavisor
-    └── release  → release.yaml (after sync)
+    ├── sync            → sync-pantavisor.yaml   mirror tag to pantavisor/pantavisor
+    ├── changelog-gate  → changelog-gate.yaml    stable 0NN only: block unless CHANGELOG-NNN.md is finalized
+    └── release         → release.yaml (after sync + changelog-gate)
                     ├── build × N machines    → buildkas-upload.yaml  (kas build + S3 upload)
                     ├── pvtest-local          → call-pvtests.yaml
                     ├── pvtest-remote         → call-pvtests.yaml     (after local)
                     └── summary                 upload per-machine badges to S3
 
   tag-changelogs.yaml  (workflow_run, fires after tag-scarthgap completes)
-    └── changelog       render CHANGELOG-NNN.md, update GitHub Release, open PR to master
+    └── changelog       render section → merge into S3 accumulator CHANGELOG-NNN.md, update GitHub Release
+                        (no commit/PR to master; the repo file is written only by make-changelog.sh --finalize)
 
   tag-docs-scarthgap.yaml  (workflow_run, fires after tag-scarthgap completes)
     └── build-docs      kas build -c create_pantacor_docs pantavisor-starter → upload tarball to S3
@@ -55,9 +57,10 @@ SCHEDULED
 
 | File | Trigger | Role |
 |---|---|---|
-| `tag-scarthgap.yaml` | tag push | Orchestrator: sync → release |
+| `tag-scarthgap.yaml` | tag push | Orchestrator: sync + changelog-gate → release |
 | `release.yaml` | `workflow_call` | Build matrix + pvtests + badge upload |
-| `tag-changelogs.yaml` | `workflow_run` after tag-scarthgap | Changelog generation and GitHub Release |
+| `changelog-gate.yaml` | `workflow_call` | Stable `0NN` only: block release unless `CHANGELOG-NNN.md` is finalized and matches the S3 accumulator |
+| `tag-changelogs.yaml` | `workflow_run` after tag-scarthgap | Merge section into the S3 changelog accumulator; update GitHub Release |
 | `tag-docs-scarthgap.yaml` | `workflow_run` after tag-scarthgap | Build combined docs tarball via `pantavisor-docs` class, upload to S3 |
 | `sync-pantavisor.yaml` | `workflow_call` | Mirror tag to pantavisor/pantavisor |
 | `onpush-scarthgap.yaml` | push to master | Build matrix for onpush machines |
