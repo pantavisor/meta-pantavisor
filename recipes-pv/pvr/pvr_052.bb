@@ -74,12 +74,13 @@ FILES:${PN}-static = "${bindir}/pvr-static"
 # Nothing to strip or debug-split: a static Go binary has no section header
 INSANE_SKIP:${PN}-static += "already-stripped"
 
+# Stage into DEPLOYDIR so sstate captures the files; a setscene restore of a
+# task that wrote to DEPLOY_DIR_TOOLS directly leaves the tools dir empty.
 do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
-do_deploy[dirs] += "${DEPLOY_DIR_TOOLS}"
 
 do_deploy() {
-        install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOY_DIR_TOOLS}/pvr-${PACKAGE_ARCH}
-        install -m 755 ${B}/pvr-static ${DEPLOY_DIR_TOOLS}/pvr-static-${PACKAGE_ARCH}
+        install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOYDIR}/pvr-${PACKAGE_ARCH}
+        install -m 755 ${B}/pvr-static ${DEPLOYDIR}/pvr-static-${PACKAGE_ARCH}
 }
 
 addtask deploy after do_install
