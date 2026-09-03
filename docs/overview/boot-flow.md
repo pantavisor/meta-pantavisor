@@ -17,7 +17,7 @@ root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor
 ```
 
 The kernel + initramfs + device tree are packaged as a FIT image
-(`pantavisor.fit`) that lives inside a versioned [**trail**](../glossary.md#trail)
+(`pantavisor.fit`) that lives inside a versioned [**trail**](glossary.md#trail)
 revision on the storage volume:
 
 ```
