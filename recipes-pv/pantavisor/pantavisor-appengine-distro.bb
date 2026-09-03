@@ -20,7 +20,7 @@ PV_PVTEST_CONTAINERS_ALL = "${PV_PVTEST_CONTAINERS} ${@bb.utils.contains('PANTAV
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 do_create_tarball[depends] += "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_PVTEST_CONTAINERS_ALL').split()])}"
 do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
-do_create_tarball[depends] += "pantavisor:do_deploy"
+do_create_tarball[depends] += "pantavisor:do_deploy pvr:do_deploy"
 
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
@@ -161,6 +161,17 @@ do_create_tarball() {
         fi
     done
     install -m 0644 "${WORKDIR}/native-README.md" "$SCRIPTS_STAGING/README.md"
+
+    # pvr is the one host dependency no distro packages. Ship the static build:
+    # no ELF interpreter, so it runs on glibc and musl hosts of this MACHINE's
+    # architecture alike. test.native.sh prefers a pvr on PATH and only falls
+    # back to this one if it actually executes here.
+    pvr_static="${DEPLOY_DIR_TOOLS}/pvr-static-${PACKAGE_ARCH}"
+    if [ -e "$pvr_static" ]; then
+        install -D -m 0755 "$pvr_static" "$SCRIPTS_STAGING/pvtest/bin/pvr"
+    else
+        bbwarn "no static pvr at $pvr_static; the scripts tarball will require one on PATH"
+    fi
 
     cd "$SCRIPTS_STAGING"
     tar -czf "${WORKDIR}/${SCRIPTS_TARBALL_NAME}" .

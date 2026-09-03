@@ -76,7 +76,27 @@ _scripts_support() {
 # Tools the tester half needs on this host. pvcontrol/pventer/pvcurl/pvtx are
 # NOT among them: with a device manifest every target command is forwarded
 # through exec=, so they run on the board.
-_NATIVE_TOOLS="bash jq curl pvr ssh script flock timeout mktemp sed tar stty"
+_NATIVE_TOOLS="bash jq curl ssh script flock timeout mktemp sed tar stty"
+
+# pvr is the one dependency no distro packages, so the tarball may carry a
+# static build of it. A pvr on PATH always wins; the bundled one is used only
+# if it actually executes here (it is built for the tarball's architecture).
+_bundled_pvr() {
+	local d
+	d=$(_scripts_dir) || return 1
+	printf '%s/bin/pvr' "$d"
+}
+
+_pvr_usable() { [ -x "$1" ] && "$1" --version > /dev/null 2>&1; }
+
+# Echo a directory to prepend to PATH so the runner finds a pvr, or nothing
+_pvr_path_prefix() {
+	local b
+	command -v pvr > /dev/null 2>&1 && return 0
+	b=$(_bundled_pvr) || return 0
+	_pvr_usable "$b" && printf '%s' "${b%/pvr}"
+	return 0
+}
 
 _check_host() {
 	local missing="" t rc=0
@@ -85,6 +105,22 @@ _check_host() {
 	done
 	if [ -n "$missing" ]; then
 		pvtest_log ERROR "missing host tool(s): $missing"
+		rc=1
+	fi
+
+	local _b
+	if command -v pvr > /dev/null 2>&1; then
+		pvtest_log INFO "pvr: $(command -v pvr) (host)"
+	elif _b=$(_bundled_pvr) && [ -e "$_b" ]; then
+		if _pvr_usable "$_b"; then
+			pvtest_log INFO "pvr: $_b (bundled, static)"
+		else
+			pvtest_log ERROR "bundled pvr at $_b does not run here (wrong architecture?)"
+			pvtest_log ERROR "  install pvr on PATH, or use the scripts tarball built for this host's arch"
+			rc=1
+		fi
+	else
+		pvtest_log ERROR "no pvr on PATH and none bundled — install the Pantacor pvr binary"
 		rc=1
 	fi
 
@@ -168,6 +204,12 @@ _run_tester() {
 	local sdir farm_root
 	sdir=$(_scripts_dir) || return 1
 	farm_root="$1"; shift
+
+	# Exported, not passed in env_args: the legacy namespace branch below runs
+	# through a plain `env`, so it has to be on the inherited environment.
+	local _pvrdir
+	_pvrdir=$(_pvr_path_prefix)
+	[ -n "$_pvrdir" ] && export PATH="$_pvrdir:$PATH"
 
 	local -a env_args=(
 		"PVTEST_LIBDIR=$sdir"
