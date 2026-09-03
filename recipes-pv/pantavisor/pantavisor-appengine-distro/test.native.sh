@@ -297,6 +297,7 @@ run_test() {
 	local fail_on_skip="false"
 	local device_file=
 	local ctrl_dir=
+	local _logtee_pid=
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
@@ -468,7 +469,20 @@ run_test() {
 	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
 	pvtest_log INFO "=== persistent pool: ${_nq} test(s) on device '$_dev_name' ==="
 
-	exec > >(tee -a "$work_path/run.log") 2>&1
+	# A fifo, not `exec > >(tee ...)`: process substitution needs /dev/fd, which
+	# a mount namespace need not provide — and if it fails, run.log stays empty
+	# and _print_summary has nothing to summarise.
+	local _logfifo="$work_path/.runlog.fifo"
+	rm -f "$_logfifo"
+	if mkfifo "$_logfifo" 2>/dev/null; then
+		tee -a "$work_path/run.log" < "$_logfifo" &
+		_logtee_pid=$!
+		exec 9>&1                 # keep the real stdout to restore later
+		exec > "$_logfifo" 2>&1
+	else
+		pvtest_log WARN "mkfifo failed; logging to run.log only"
+		exec >> "$work_path/run.log" 2>&1
+	fi
 
 	# Same lifecycle service the container run uses: it answers the tester's
 	# re-type requests by running the manifest's setbootconfig=, or 'unsupported'.
@@ -498,6 +512,16 @@ run_test() {
 
 	local skip_fail=0
 	_print_summary "$work_path/run.log" || skip_fail=1
+
+	# Summary is written, so close the log fifo and drain the tee. Restores the
+	# real stdout from fd 9 rather than guessing /dev/tty, which does not exist
+	# in a detached run.
+	if [ -n "$_logtee_pid" ]; then
+		exec 1>&9 2>&1 9>&-
+		wait "$_logtee_pid" 2>/dev/null || true
+		rm -f "$_logfifo"
+		_logtee_pid=
+	fi
 
 	[ "${CI:-false}" = "true" ] && cp "$work_path/run.log" ./run.log
 
