@@ -67,8 +67,19 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `squash-zstd` | Zstd squashfs compression |
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
+| `lxc-next` | LXC 6.x (`lxc6-pv`) instead of the default LXC 3.x (`lxc-pv`); also available as the `kas/with-lxc-next.yaml` fragment |
+| `wakelocks` | PM wakelocks + autosleep — adds the `wakelock.cfg` kernel fragment (see [pantavisor wakelocks](/pantavisor/overview/wakelocks)) |
+| `console-logging` | Boot console logging on Raspberry Pi images |
+| `automod` | Automatic kernel module loading (`kmod` in the initramfs) |
+| `caam-nxp` | NXP CAAM secure key support (`caam-nxp.cfg` kernel fragment, `keyctl-caam`) |
+| `dcp` | NXP DCP hardware-bound trusted keys (i.MX6ULL kernel patches, `keyutils`) |
+| `debug-hooks` | Debug hook scripts (`-DPANTAVISOR_DEBUG_HOOKS=ON`) |
+| `appengine` | Container-hosted appengine build (`-DPANTAVISOR_APPENGINE=ON`); appended by the `panta-appengine` distro |
+| `pv-manifest-audit` / `pv-manifest-strict` | [Manifest audit](manifest-audit.md) of the built image; `strict` fails the build on a mismatch |
 
 **Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev`
+
+> **Caution**: `rngdaemon` appears in the default string, but nothing in the layer gates on that token — `pantavisor-initramfs.bb` checks for a feature named `rngd` instead. Append `rngd` explicitly if you need the RNG daemon.
 
 ### The `+=` vs `:append` Pitfall
 

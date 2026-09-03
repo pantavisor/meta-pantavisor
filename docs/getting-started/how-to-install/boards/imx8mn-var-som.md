@@ -5,6 +5,9 @@
 **Image artifact:** `pv-flash-bundle-imx8mn-var-som.tar.gz` (eMMC) or
 `pantavisor-starter-imx8mn-var-som*.wic` (SD card)
 
+**Build:** `kas build kas/build-configs/release/imx8mn-var-som-scarthgap.yaml` — see the
+[build config table](/meta-pantavisor/overview/build-system#build-configs).
+
 ## Hardware overview
 
 The VAR-SOM-MX8M-NANO is based on the NXP i.MX8M Nano SoC. It is typically
