@@ -1,29 +1,12 @@
 #!/bin/sh
 #
-# netbench: measure how much network a device spends talking to Pantahub, and
-# publish the answer as device-meta so it shows up on the Hub for the device.
-#
-# Runs as a platform-group container that keeps the host network namespace, so
-# it sees the real uplink both transports use:
-#   - native Pantavisor remote (control.remote=1) talks from the host netns;
-#   - pvsm (control.remote=0) talks from a container that also keeps host net;
-# either way the bytes cross the same interface to the same Hub IP, so counting
-# there is a fair, config-agnostic measurement.
-#
-# Counting uses nftables counters matched on the Hub's IP at the prerouting and
-# postrouting hooks, so it catches traffic whether it originated on the host or
-# was forwarded from another container. Object-blob downloads go to a different
-# host and are NOT counted: this measures the signalling plane, which is what
-# differs between poll and push.
-#
-# The headline is a cumulative average projected to per-day, honest across the
-# poll interval and converging the longer it runs.
+# netbench: count Hub traffic on the host uplink with nftables counters and
+# publish the totals as device-meta. Object downloads go to another host and
+# are not counted.
 
 set -u
 
-# Config, lowest to highest precedence. /etc/netbench.env is generated at image
-# build time with the mode for this variant; /opt/data allows a per-device
-# override without rebuilding; a real environment variable wins over all.
+# Lowest to highest precedence; a real environment variable wins.
 for f in /etc/netbench.env /opt/data/netbench.env /var/netbench/.env; do
 	[ -f "$f" ] && . "$f"
 done
@@ -38,7 +21,7 @@ TABLE="netbench"
 
 log() { echo "netbench: $*"; }
 
-devmeta() {  # KEY VALUE -> PUT /device-meta/<key> over the pv-ctrl socket
+devmeta() {
 	if ! curl -s --max-time 5 --unix-socket "$PVCTRL" \
 		-X PUT -H 'Content-Type: text/plain' --data-binary "$2" \
 		"http://localhost/device-meta/$1" >/dev/null 2>&1; then
@@ -46,30 +29,9 @@ devmeta() {  # KEY VALUE -> PUT /device-meta/<key> over the pv-ctrl socket
 	fi
 }
 
-# nf_tables ships as a kernel module and nothing on the host loads it at boot,
-# so nft would fail with "Protocol not supported". This container declares
-# nf_tables as an OPTIONAL driver (PV_DRIVERS_OPTIONAL) that the bsp defines
-# (bsp/drivers.json alias -> module); pantavisor modprobes it best-effort
-# before starting this container, so nothing needs to be loaded from in here.
-# If it is unavailable the nft guard below still degrades to empty reports.
-
-# Resolve the Hub host to its IPv4 address(es). Tries dig, then busybox
-# nslookup (parsing only the answer section after "Name:", so the DNS server's
-# own address is not mistaken for an answer).
+# Hub IPv4: first the established connection in /proc/net/tcp (ports 443,
+# 8883, 1883; rem_address is little-endian hex), then device-meta, then DNS.
 resolve_ips() {
-	# Preferred source: the Hub IP pantavisor is actually connected to, read
-	# from /proc/net/tcp. The container keeps the host net namespace, so this
-	# lists the host's real sockets, and pantavisor holds a persistent
-	# connection to the Hub even while idle. This needs no resolver (the
-	# container has neither /etc/resolv.conf nor nslookup) and no CGI (which
-	# binds the LAN address, not loopback). rem_address is <hexip>:<hexport>
-	# with the IP in reversed byte order, so 96A20F33 -> 51.15.162.150; ports
-	# of interest are 443 (01BB), 8883 (22B3) and 1883 (075B). The whole match
-	# and hex->dotted conversion is done in awk on purpose: this container's
-	# busybox is a minimal build with no cut/sort applets, so shell-side hex
-	# slicing would fail ("cut: not found" -> empty -> arithmetic error). awk is
-	# always present (used just above), self-contains the parse, and exits on
-	# the first Hub connection.
 	ip=$(awk '
 		function h2d(s,   n,i,c){ n=0; for(i=1;i<=length(s);i++){ c=index("0123456789ABCDEF",toupper(substr(s,i,1)))-1; if(c<0) return -1; n=n*16+c } return n }
 		$4=="01" {
@@ -81,9 +43,6 @@ resolve_ips() {
 			print o; exit
 		}' /proc/net/tcp 2>/dev/null)
 	if [ -n "$ip" ]; then echo "$ip"; return 0; fi
-	# Fallbacks: the pvr CGI's merged device-meta (has pantahub.address), then
-	# DNS. Both usually fail in this container; /proc above is the real path.
-	# grep + shell parameter expansion only (no cut/sed in this busybox).
 	addr="$(curl -s --max-time 5 "$PVCGI/device-meta" 2>/dev/null \
 		| grep -oE '"pantahub\.address":"[0-9.]+' | head -1)"
 	addr="${addr##*\"}"
@@ -111,15 +70,13 @@ setup_counters() {
 	done
 }
 
-counter_bytes() {  # counter-name -> bytes
+counter_bytes() {
 	nft list counter inet "$TABLE" "$1" 2>/dev/null | grep -oE 'bytes [0-9]+' | awk '{print $2}'
 }
 
 cleanup() { nft delete table inet "$TABLE" 2>/dev/null; }
 trap cleanup EXIT INT TERM
 
-# Publish identity immediately, before resolving, so the device shows netbench
-# is alive even while it is still waiting for the Hub address.
 devmeta bench.mode "$MODE"
 devmeta bench.hub.host "$HUB_HOST"
 devmeta bench.iface "$IFACE"
@@ -142,8 +99,6 @@ devmeta bench.status "measuring"
 
 first=1
 while true; do
-	# A short first interval surfaces a data point in ~20s; steady state then
-	# reports every INTERVAL. The per-day projection converges as uptime grows.
 	if [ "$first" = 1 ]; then sleep 20; first=0; else sleep "$INTERVAL"; fi
 
 	now="$(date +%s)"

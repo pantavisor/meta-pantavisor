@@ -22,20 +22,11 @@ SRC_URI += " \
 "
 PSEUDO_IGNORE_PATHS .= ",/tmp,${DEPLOYDIR}"
 
-# Override individual pantahub.config keys without editing the shipped file.
-# Set as varflags from a distro/machine/image config or local.conf, e.g.:
-#   PANTAHUB_CONFIG[creds.host]     = "api.stage.pantahub.com"
-#   PANTAHUB_CONFIG[control.remote] = "0"
-#   PANTAHUB_CONFIG[log.push]       = "false"
-# A flag whose key already exists in pantahub.config rewrites that line; a new
-# key is appended. Values must not contain whitespace.
+# Per-key overrides of the shipped pantahub.config, e.g.:
+#   PANTAHUB_CONFIG[creds.host] = "api.stage.pantahub.com"
 PANTAHUB_CONFIG ?= ""
 
 python () {
-    # getVarFlags' 'expand' arg is an iterable of flag names to expand in this
-    # bitbake (not a bool), so expand=True raises "argument of type 'bool' is
-    # not iterable" once any PANTAHUB_CONFIG[flag] is set. Fetch the flags plain
-    # and expand each value ourselves.
     overrides = []
     for key, val in sorted((d.getVarFlags('PANTAHUB_CONFIG') or {}).items()):
         overrides.append("%s=%s" % (key, d.expand(val)))
