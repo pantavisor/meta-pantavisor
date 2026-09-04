@@ -1,0 +1,83 @@
+#!/bin/sh
+
+. "${PVTEST_LIBDIR:-/usr/share/pantavisor/pvtest}/utils"
+
+device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
+
+# Per-test isolation: clone into a temp checkout dir; never override $HOME.
+checkout="$(mktemp -d)/checkout"
+pvr_clone_local_or_die "$checkout"
+cd "$checkout"
+
+trail_url="https://api.pantahub.com/trails/$device_id"
+
+echo "== post one large object (download throttled to 1 MB/s) =="
+# Exactly ONE new object: a single object is what separates "progress moves
+# mid-object" from "progress jumps at object boundaries". 50 MB at the 1 MB/s
+# throttle from test.json spans many 6 s download heartbeats.
+dd if=/dev/urandom of=pv-example-app/bigfile.bin bs=1M count=50 2>/dev/null
+pvr add pv-example-app/bigfile.bin > /dev/null 2>&1
+pvr commit -m "add single large object to exercise download progress" > /dev/null 2>&1
+rev=$(pvr_post_rev -m "download progress continuous test" "$trail_url")
+[ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
+cloud_step_url="$trail_url/steps/$rev"
+
+echo "== wait for the posted revision to start downloading =="
+wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "DOWNLOADING" 120 \
+    || { echo "ERROR: timeout waiting for revision $rev to start DOWNLOADING" >&2; exit 1; }
+
+echo "== sample progress through the download window =="
+# Local: the per-revision progress via pvcontrol, every second.
+# Cloud: pvr stepinfo, every ~5 s to spare the Hub.
+# Only timing-independent properties are asserted; accumulate booleans.
+loc_intermediate=0; loc_monotonic=1; loc_no_overshoot=1; loc_prev=0
+cld_intermediate=0; cld_monotonic=1; cld_no_overshoot=1; cld_prev=0
+for i in $(seq 1 240); do
+    snap=$(pvcontrol steps show-progress $rev 2>/dev/null)
+    st=$(echo "$snap" | jq -r '.status' 2>/dev/null)
+    if [ "$st" != "DOWNLOADING" ]; then
+        [ "$st" = "NEW" ] || [ "$st" = "QUEUED" ] || break
+        sleep 1; continue
+    fi
+
+    dl=$(echo "$snap" | jq -r '.downloads.total.total_downloaded // 0')
+    sz=$(echo "$snap" | jq -r '.downloads.total.total_size // 0')
+    [ "$dl" -ge "$loc_prev" ] 2>/dev/null || loc_monotonic=0
+    if [ "$sz" -gt 0 ] 2>/dev/null; then
+        [ "$dl" -le "$sz" ] 2>/dev/null || loc_no_overshoot=0
+        [ "$dl" -gt 0 ] 2>/dev/null && [ "$dl" -lt "$sz" ] 2>/dev/null && loc_intermediate=1
+    fi
+    loc_prev="$dl"
+
+    if [ $((i % 5)) -eq 0 ]; then
+        csnap=$(pvr stepinfo "$cloud_step_url" 2>/dev/null | sed -n '/^{/,$p')
+        cst=$(echo "$csnap" | jq -r '.progress.status // empty' 2>/dev/null)
+        if [ "$cst" = "DOWNLOADING" ]; then
+            cdl=$(echo "$csnap" | jq -r '.progress.downloads.total.total_downloaded // 0')
+            csz=$(echo "$csnap" | jq -r '.progress.downloads.total.total_size // 0')
+            [ "$cdl" -ge "$cld_prev" ] 2>/dev/null || cld_monotonic=0
+            if [ "$csz" -gt 0 ] 2>/dev/null; then
+                [ "$cdl" -le "$csz" ] 2>/dev/null || cld_no_overshoot=0
+                [ "$cdl" -gt 0 ] 2>/dev/null && [ "$cdl" -lt "$csz" ] 2>/dev/null && cld_intermediate=1
+            fi
+            cld_prev="$cdl"
+        fi
+    fi
+    sleep 1
+done
+
+echo "local-intermediate-progress-observed: $loc_intermediate"
+echo "local-monotonic-non-decreasing: $loc_monotonic"
+echo "local-no-overshoot: $loc_no_overshoot"
+echo "cloud-intermediate-progress-observed: $cld_intermediate"
+echo "cloud-monotonic-non-decreasing: $cld_monotonic"
+echo "cloud-no-overshoot: $cld_no_overshoot"
+
+echo "== wait for the update to finish locally and on the Hub =="
+wait_for_revision_state "$rev" "UPDATED" \
+    || { echo "ERROR: timeout waiting for revision $rev to reach UPDATED" >&2; exit 1; }
+pvcontrol steps show-progress $rev | jq -Mc 'del(.logs, .downloads) | {status, progress}'
+
+wait_for_value "pvr stepinfo $cloud_step_url 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "UPDATED" 120 \
+    || { echo "ERROR: timeout waiting for cloud UPDATED" >&2; exit 1; }
+echo "cloud-final-status: UPDATED"

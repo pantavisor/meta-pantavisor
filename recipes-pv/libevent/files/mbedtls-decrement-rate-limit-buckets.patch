@@ -1,0 +1,131 @@
+From: Pantacor <dev@pantacor.com>
+Subject: [PATCH] mbedtls: decrement rate-limit buckets on read/write
+
+decrement_buckets and init_bio_counts were wired to a no-op stub for the
+mbedtls bufferevent backend (le_mbedtls_ops), unlike the openssl backend
+which tracks real BIO byte counts. Since the token bucket's consumed-byte
+counter was never updated, bufferevent_get_read_max_() always reported
+the bucket as full, making bufferevent_set_rate_limit() on any
+mbedtls-backed bufferevent silently inert -- confirmed empirically: an
+unpatched build sustained ~300 MB/s through a 1 MiB/s-limited connection
+against a local flooding TLS server, ~300x over the configured cap.
+
+Fix by wrapping the direct-fd mbedtls_net_send()/mbedtls_net_recv() (the
+transport used by bufferevent_mbedtls_socket_new(), i.e. every non-filter
+caller including pantavisor's event_rest.c) with byte-counting variants,
+mirroring how the openssl backend derives its delta from
+BIO_number_read()/BIO_number_written(). The underlying/filter-bufferevent
+transport path (bio_bufferevent_read/write, used only by
+bufferevent_mbedtls_filter_new(), not used by pantavisor) is left as-is.
+
+Verified: the same test against the patched build sustained ~1.05 MB/s,
+matching the configured limit almost exactly.
+
+Signed-off-by: Pantacor <dev@pantacor.com>
+---
+ bufferevent_mbedtls.c | 66 +++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 62 insertions(+), 4 deletions(-)
+
+--- a/bufferevent_mbedtls.c
++++ b/bufferevent_mbedtls.c
+@@ -49,6 +49,11 @@
+ struct mbedtls_context {
+ 	mbedtls_dyncontext *ssl;
+ 	mbedtls_net_context net;
++	/* Cumulative bytes actually moved through the fd, used to feed
++	   decrement_buckets() for rate-limiting (mirrors what
++	   BIO_number_read()/BIO_number_written() give the openssl backend). */
++	unsigned long n_read;
++	unsigned long n_written;
+ };
+ static void *
+ mbedtls_context_init(void *ssl)
+@@ -57,6 +62,8 @@ mbedtls_context_init(void *ssl)
+ 	if (ctx) {
+ 		ctx->ssl = ssl;
+ 		ctx->net.fd = -1;
++		ctx->n_read = 0;
++		ctx->n_written = 0;
+ 	}
+ 	return ctx;
+ }
+@@ -145,6 +152,55 @@ be_mbedtls_get_fd(void *ssl)
+ 	return ctx->net.fd;
+ }
+
++/* mbedtls_ssl_send_t/mbedtls_ssl_recv_t-compatible wrappers around the
++   direct-fd mbedtls_net_send()/mbedtls_net_recv(), counting bytes actually
++   moved through the fd so decrement_buckets() below has something to charge
++   against rate-limiting -- otherwise a single mbedtls_ssl_read()/_write()
++   can move a whole (possibly large) TLS record through the socket while only
++   a fraction of it is returned as plaintext to the caller, and the token
++   bucket is never told about the rest. */
++static int
++mbedtls_net_send_counting(void *ctx, const unsigned char *buf, size_t len)
++{
++	struct mbedtls_context *mctx = ctx;
++	int r = mbedtls_net_send(&mctx->net, buf, len);
++	if (r > 0)
++		mctx->n_written += (unsigned long)r;
++	return r;
++}
++static int
++mbedtls_net_recv_counting(void *ctx, unsigned char *buf, size_t len)
++{
++	struct mbedtls_context *mctx = ctx;
++	int r = mbedtls_net_recv(&mctx->net, buf, len);
++	if (r > 0)
++		mctx->n_read += (unsigned long)r;
++	return r;
++}
++
++static void
++mbedtls_init_bio_counts(struct bufferevent_ssl *bev_ssl)
++{
++	struct mbedtls_context *ctx = bev_ssl->ssl;
++	bev_ssl->counts.n_written = ctx->n_written;
++	bev_ssl->counts.n_read = ctx->n_read;
++}
++
++static void
++mbedtls_decrement_buckets(struct bufferevent_ssl *bev_ssl)
++{
++	struct mbedtls_context *ctx = bev_ssl->ssl;
++	/* These next two subtractions can wrap around. That's okay. */
++	unsigned long w = ctx->n_written - bev_ssl->counts.n_written;
++	unsigned long r = ctx->n_read - bev_ssl->counts.n_read;
++	if (w)
++		bufferevent_decrement_write_buckets_(&bev_ssl->bev, w);
++	if (r)
++		bufferevent_decrement_read_buckets_(&bev_ssl->bev, r);
++	bev_ssl->counts.n_written = ctx->n_written;
++	bev_ssl->counts.n_read = ctx->n_read;
++}
++
+ static int be_mbedtls_bio_set_fd(
+ 	struct bufferevent_ssl *bev_ssl, evutil_socket_t fd);
+
+@@ -256,8 +312,10 @@ be_mbedtls_bio_set_fd(struct bufferevent_ssl *bev_ssl, evutil_socket_t fd)
+ 	struct mbedtls_context *ctx = bev_ssl->ssl;
+ 	if (!bev_ssl->underlying) {
+ 		ctx->net.fd = fd;
+-		mbedtls_ssl_set_bio(
+-			ctx->ssl, &ctx->net, mbedtls_net_send, mbedtls_net_recv, NULL);
++		/* Pass ctx (not &ctx->net) so the counting wrappers below can
++		   reach ctx->n_read/n_written for rate-limit accounting. */
++		mbedtls_ssl_set_bio(ctx->ssl, ctx, mbedtls_net_send_counting,
++			mbedtls_net_recv_counting, NULL);
+ 	} else {
+ 		mbedtls_ssl_set_bio(ctx->ssl, bev_ssl->underlying,
+ 			bio_bufferevent_write, bio_bufferevent_read, NULL);
+@@ -326,8 +384,8 @@ static struct le_ssl_ops le_mbedtls_ops = {
+ 	mbedtls_is_want_write,
+ 	be_mbedtls_get_fd,
+ 	be_mbedtls_bio_set_fd,
+-	(void (*)(struct bufferevent_ssl *))mbedtls_set_ssl_noops,
+-	(void (*)(struct bufferevent_ssl *))mbedtls_set_ssl_noops,
++	mbedtls_init_bio_counts,
++	mbedtls_decrement_buckets,
+ 	conn_closed,
+ 	print_err,
+ };
