@@ -53,6 +53,19 @@ Then, run it using the installed config:
 ./test.docker.sh run local --device rock5a                # devices/rock5a.txt
 ```
 
+A device run only uses the tester container to forward commands over `exec=`, so
+it can also run with no container runtime at all — same suites, same manifest,
+same output:
+
+```
+./test.native.sh check                                    # host readiness
+./test.native.sh run local --device rock5a
+```
+
+`pantavisor-pvtest-scripts-<machine>.tar.gz` is the slim tarball for hosts that
+only ever do that; its `README.md` lists the host packages. The appengine pool
+stays on `test.docker.sh` — its targets *are* containers.
+
 ## Output
 
 Each run creates a workspace with `run.log`, a per runner `<name>.log` console
