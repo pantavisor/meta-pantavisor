@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-rockchip:
-        commit: 778e3c48cb7ffb06839f024197a498c5ceb3dcfc
+        commit: 0d2f157767af62c43acca2f82b8d51cb99aa257a
         path: layers/meta-rockchip
         url: https://github.com/JeffyCN/meta-rockchip
     meta-arm:
@@ -26,7 +26,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 69ae79bf5a01a24491648e2fdea6faf51aeb3bf2
+        commit: b2c16f1e69130558574e1363aff944647fa9cd11
     meta-pantavisor:
     meta-virtualization:
         commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
