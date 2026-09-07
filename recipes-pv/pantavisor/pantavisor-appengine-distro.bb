@@ -5,8 +5,6 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 inherit nopackages
 
-SRC_URI = "${@' '.join(['file://%s' % x for x in (d.getVar('WORKDIR_FILES') + ' ' + d.getVar('PVTEST_HOST_FILES')).split()])}"
-
 ALLOW_EMPTY:${PN} = "1"
 
 PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pantavisor-appengine-tester"
@@ -19,18 +17,18 @@ PV_PVTEST_CONTAINERS_ALL = "${PV_PVTEST_CONTAINERS} ${@bb.utils.contains('PANTAV
 
 do_create_tarball[depends] = "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 do_create_tarball[depends] += "${@' '.join(['%s:do_image_complete' % x for x in d.getVar('PV_PVTEST_CONTAINERS_ALL').split()])}"
-do_create_tarball[depends] += "pantavisor-pvtests-local:do_deploy pantavisor-pvtests-remote:do_deploy"
 do_create_tarball[depends] += "pantavisor:do_deploy pvr:do_deploy"
 
 DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGINE_CONTAINERS').split()])}"
 
+# The host half of pvtest, staged by pantavisor:do_deploy out of the pantavisor
+# source tree. WORKDIR_FILES land flat at the tarball root; PVTEST_HOST_FILES
+# land under another name or path (see below).
+PVTEST_HOST_DIR = "${DEPLOY_DIR_IMAGE}/pvtest/host"
+
 WORKDIR_FILES ?= "test.docker.sh test.native.sh device.txt"
 
-# Host-side helpers that land in the tarball under another name or path, so they
-# are fetched but not part of the flat WORKDIR_FILES copy. common is a verbatim
-# copy of pantavisor's pvtest/common.in: the tester container gets it from the
-# pantavisor-pvtest package, the host gets it from here. Keep both in sync.
-PVTEST_HOST_FILES ?= "tarball-README.md workspace-README.md native-README.md common host-common"
+PVTEST_HOST_FILES ?= "tarball-README.md workspace-README.md native-README.md host-common"
 
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"
 
@@ -72,23 +70,24 @@ do_create_tarball() {
         done
     fi
 
-    # Add files from WORKDIR (SRC_URI files)
-    if [ -n "${WORKDIR_FILES}" ]; then
-        for filename in ${WORKDIR_FILES}; do
-            if [ -e "${WORKDIR}/$filename" ]; then
-                echo "Adding workdir file: ${WORKDIR}/$filename as $filename"
-                cp -v "${WORKDIR}/$filename" "${STAGING_DIR}/"
-                cp -v "${WORKDIR}/$filename" "${DEPLOY_DIR_IMAGE}/"
-            else
-                bbwarn "Workdir file not found: ${WORKDIR}/$filename"
-            fi
-        done
-    fi
+    # Add the host scripts staged by pantavisor:do_deploy. A missing one means a
+    # broken deploy, not a stale SRC_URI, so it is fatal rather than a warning.
+    for filename in ${WORKDIR_FILES} ${PVTEST_HOST_FILES}; do
+        if [ ! -e "${PVTEST_HOST_DIR}/$filename" ]; then
+            bbfatal "pvtest host file not deployed: $filename (expected ${PVTEST_HOST_DIR}/$filename from pantavisor:do_deploy)"
+        fi
+    done
 
-    install -m 0644 "${WORKDIR}/tarball-README.md"   "${STAGING_DIR}/README.md"
-    install -m 0644 "${WORKDIR}/workspace-README.md" "${STAGING_DIR}/workspace-README.md"
-    install -D -m 0644 "${WORKDIR}/common"           "${STAGING_DIR}/pvtest/common"
-    install -D -m 0644 "${WORKDIR}/host-common"      "${STAGING_DIR}/pvtest/host-common"
+    for filename in ${WORKDIR_FILES}; do
+        echo "Adding pvtest host file: $filename"
+        cp -v "${PVTEST_HOST_DIR}/$filename" "${STAGING_DIR}/"
+        cp -v "${PVTEST_HOST_DIR}/$filename" "${DEPLOY_DIR_IMAGE}/"
+    done
+    chmod 0755 "${STAGING_DIR}/test.docker.sh" "${STAGING_DIR}/test.native.sh"
+
+    install -m 0644 "${PVTEST_HOST_DIR}/tarball-README.md"   "${STAGING_DIR}/README.md"
+    install -m 0644 "${PVTEST_HOST_DIR}/workspace-README.md" "${STAGING_DIR}/workspace-README.md"
+    install -D -m 0644 "${PVTEST_HOST_DIR}/host-common"      "${STAGING_DIR}/pvtest/host-common"
 
     # The tester half, for a run with no container runtime. Same three files the
     # tester image installs from the pantavisor-pvtest package.
@@ -163,7 +162,7 @@ do_create_tarball() {
             bbfatal "scripts tarball: missing $item (expected in the staging tree)"
         fi
     done
-    install -m 0644 "${WORKDIR}/native-README.md" "$SCRIPTS_STAGING/README.md"
+    install -m 0644 "${PVTEST_HOST_DIR}/native-README.md" "$SCRIPTS_STAGING/README.md"
 
     # pvr is the one host dependency no distro packages. Ship the static build:
     # no ELF interpreter, so it runs on glibc and musl hosts of this MACHINE's

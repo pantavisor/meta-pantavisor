@@ -18,8 +18,8 @@ feature coverage sits under `local/services/` and `local/runtime/`).
 
 Run the harness from the unpacked distro the build deploys (it already
 contains the generated `bsp.tgz`/`pvr-sdk.tgz`) — see
-[the automated testing guide](../../automated/index.md). Never point `-d` at the
-git-tracked `recipes-pv/pantavisor-pvtests/files` source tree: the heavy
+[the automated testing guide](../../../../../pantavisor/testing/index.md). Never point `-d` at the
+git-tracked `pvtest/` source tree in pantavisor: the heavy
 container tarballs only exist in the build output, so running against the
 source forces them into a tracked directory where they get committed by
 accident.

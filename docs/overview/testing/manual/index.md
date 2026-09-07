@@ -6,7 +6,7 @@ sidebar_position: 2
 
 Driving an appengine container by hand, with no test harness involved — the quick loop while
 coding on pantavisor or on a container recipe. For the structured pvtest suite see
-[Automated Testing](../automated/index.md).
+[Automated Testing](../../../../pantavisor/testing/index.md).
 
 This page covers the layer's half: building the image and getting it onto your docker host.
 Everything about the container once it exists — the entrypoint, its config, storage and log
@@ -34,7 +34,7 @@ plan under [testplans/](testplans/index.md) lists its own.
 
 BitBake may not detect file-level changes inside a recipe's `files/` directory, so force a
 clean rebuild when touching container payloads or test data — see
-[the automated page](../automated/index.md#build) for the full `cleansstate` incantation.
+[the build page](../automated/index.md#build) for the full `cleansstate` incantation.
 
 ## Load
 
