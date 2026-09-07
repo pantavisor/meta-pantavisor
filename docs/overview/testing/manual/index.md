@@ -74,3 +74,4 @@ Per-feature plans, each a manual sequence of setup → execute → verify:
 | [testplan-ipam.md](testplans/testplan-ipam.md) | IPAM pool-based container networking, NAT backend selection |
 | [testplan-pvtx.md](testplans/testplan-pvtx.md) | pvtx transaction tool unit tests (no Pantavisor needed) |
 | [testplan-cgroup.md](testplans/testplan-cgroup.md) | cgroup HYBRID-mode destroy and no-suffix accumulation (lenient + force stop) |
+| [testplan-remote-cancel.md](testplans/testplan-remote-cancel.md) | Owner cancel from the Hub honored while queued or downloading |
