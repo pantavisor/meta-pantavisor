@@ -51,6 +51,10 @@ code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
     "$trail_url/steps/$rev/cancel")
 echo "hub-cancel-http-code: $code"
 
+# Diagnostics only (stderr): show the device actually polled its step.
+polls=$(pv_exec grep -rc "status on Hub" "$storage/logs" 2>/dev/null | awk -F: '{n+=$2} END{print n+0}')
+echo "device polled its step $polls times before the cancel landed" >&2
+
 echo "== wait for the device to report CANCEL =="
 # One download tick is 6 s; the device polls its own step on every tick.
 wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "CANCEL" 60 \
