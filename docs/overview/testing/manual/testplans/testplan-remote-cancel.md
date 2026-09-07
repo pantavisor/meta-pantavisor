@@ -7,7 +7,7 @@ possible in the first place.
 ## 1. What is being tested
 
 - Hub: `PUT /trails/{id}/steps/{rev}/cancel` (owner token) is accepted while the
-  step is `NEW`, `QUEUED` or `DOWNLOADING` (pantahub-base !415). It sets
+  step is `NEW`, `QUEUED`, `DOWNLOADING` or `INPROGRESS` (pantahub-base !415). It sets
   `progress.status` to `CANCEL`.
 - Device: while `QUEUED`/`DOWNLOADING`, Pantavisor re-reads its own step from the
   Hub on every download tick (6 s). On `CANCEL` it aborts in-flight object
@@ -19,8 +19,9 @@ possible in the first place.
   `DOWNLOADING`/`INPROGRESS`. The test reads the step back from the Hub after
   the device went idle to prove that did not happen.
 
-Out of scope: a Hub `WONTGO` set while `INPROGRESS`/`TESTING` is a rollback
-question, not an abort, and is not honored by the device.
+Out of scope: a cancel (or the older `wontgo`) set on the Hub while `INPROGRESS`/
+`TESTING` is never read by the device; it only stops a device that lost track of the
+step from retrying it, which cannot be driven from the appengine harness.
 
 ## 2. Forcing a wide cancel window
 
