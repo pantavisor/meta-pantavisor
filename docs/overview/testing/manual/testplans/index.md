@@ -17,6 +17,7 @@ Structured test plans for each feature area covered by the pvtest suite. Each pl
 5. [pvctrl](testplan-pvctrl.md) — pvcontrol API behavior: state queries, revision control, and boot success
 6. [pvtx](testplan-pvtx.md) — pvtx.d boot-time init script execution and idempotency
 7. [xconnect](testplan-xconnect.md) — service mesh proxy: Unix socket, REST, D-Bus, DRM, and Wayland
+8. [Wakelocks: Orange Pi 3 LTS (crust)](testplan-wakelocks-opi3-crust.md) — manual hardware test plan (not pvtest) for real suspend-to-RAM via crust SCP firmware
 
 ## Adding a New Test Plan
 
