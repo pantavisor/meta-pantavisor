@@ -150,6 +150,7 @@ Remote experience tests require an active Pantacor Hub connection and exercise t
 | `remote/lifecycle/update-retries-pv-crash` | Update retries when PV crashes | ✓ |
 | `remote/lifecycle/update-retries-gc-pressure` | Update retries when PV crashes with GC pressure | ✓ |
 | `remote/lifecycle/claim-after-local-updates` | Claim after local updates with random artifacts | |
+| `remote/lifecycle/download-cancel-mid-transfer` | Owner cancel from the Hub aborts an update mid-download and keeps the partial object | ✓ |
 
 ### control
 
