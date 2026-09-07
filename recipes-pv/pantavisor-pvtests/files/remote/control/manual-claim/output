@@ -1,6 +1,0 @@
-== wait for unclaimed state ==
-claim
-== claim device ==
-== wait for idle (claimed) ==
-idle
-== cleanup ==
