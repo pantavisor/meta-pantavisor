@@ -10,14 +10,17 @@ possible in the first place.
   step is `NEW`, `QUEUED`, `DOWNLOADING` or `INPROGRESS` (pantahub-base !415). It sets
   `progress.status` to `CANCEL`.
 - Device: while `QUEUED`/`DOWNLOADING`, Pantavisor re-reads its own step from the
-  Hub on every download tick (6 s). On `CANCEL` it aborts in-flight object
-  transfers, keeps the partial `<sha>.tmp` objects, reports `CANCEL` with
-  `status-msg` `Cancelled as requested by owner`, and returns to idle on the
-  previous revision.
+  Hub on every download tick (6 s) and only then sends that tick's download
+  progress PUT, so it never overwrites a cancel it has not read yet. On
+  `CANCEL` it aborts in-flight object transfers, keeps the partial `<sha>.tmp`
+  objects, reports `CANCEL` with `status-msg` `Cancelled as requested by owner`,
+  and returns to idle on the previous revision.
 - Non-adherence stays visible: the device progress PUT is unconditional on the
   Hub, so a device that ignores the cancel overwrites `CANCEL` with
   `DOWNLOADING`/`INPROGRESS`. The test reads the step back from the Hub after
-  the device went idle to prove that did not happen.
+  the device went idle to prove that did not happen. The same unconditional
+  PUT means a cancel landing in the short window between the device's poll
+  and its progress PUT is overwritten; the owner (and the test) re-issues it.
 
 Out of scope: a cancel (or the older `wontgo`) set on the Hub while `INPROGRESS`/
 `TESTING` is never read by the device; it only stops a device that lost track of the
@@ -38,7 +41,9 @@ Steps and discriminators printed by `resources/test`:
 2. owner cancel via curl with the bearer from `$HOME/.pvr/auth.json` →
    `hub-cancel-http-code: 200` (a `400` here means the Hub still has the
    `NEW`-only precondition)
-3. `pvcontrol steps show-progress $rev` reaches `CANCEL` within 60 s
+3. `pvcontrol steps show-progress $rev` reaches `CANCEL`; if the Hub shows
+   `DOWNLOADING` again after 15 s the cancel was overwritten by the progress
+   PUT of the same tick and is re-issued (up to 4 attempts, logged to stderr)
 4. `pantahub.state` back to `idle`, `pantavisor.status` `READY`,
    `pantavisor.revision` unchanged → `still-on-previous-revision: 1`
 5. partial size after cancel `>=` size before → `partial-object-kept: 1`
