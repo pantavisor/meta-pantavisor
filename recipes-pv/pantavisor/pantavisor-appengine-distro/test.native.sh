@@ -376,7 +376,7 @@ run_test() {
 	pvtest_log DEBUG "diff=$work_path/results/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
-	allocate_slot
+	allocate_slot || return 1
 	trap '_abort_native' INT TERM
 
 	_parse_device_manifest "$device_file" || { release_slot; return 1; }

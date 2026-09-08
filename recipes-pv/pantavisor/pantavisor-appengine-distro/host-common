@@ -139,7 +139,12 @@ allocate_slot() {
 	slot=0
 	while true; do
 		local sf="/tmp/pv_appengine.slot.${slot}.lock"
-		exec {SLOT_LOCK_FD}>"$sf"
+		SLOT_LOCK_FD=
+		# a failed exec leaves SLOT_LOCK_FD empty; check it explicitly or flock/close below run on '' and wreck fd 1
+		if ! exec {SLOT_LOCK_FD}>"$sf"; then
+			pvtest_log ERROR "cannot open lock file '$sf' (owned by another user under /tmp with fs.protected_regular=1, or /tmp not writable)"
+			return 1
+		fi
 		if flock -nx "$SLOT_LOCK_FD"; then
 			return 0
 		fi
@@ -226,7 +231,11 @@ _lock_device() {
 
 	# The lock names the board, not the run. That is what makes it mutual exclusion
 	safe=$(printf '%s' "$name" | tr -c 'A-Za-z0-9_' '_')
-	exec {fd}>"/tmp/pvtest_device.${safe}.lock"
+	local lf="/tmp/pvtest_device.${safe}.lock"
+	if ! exec {fd}>"$lf"; then
+		pvtest_log ERROR "cannot open lock file '$lf' (owned by another user under /tmp with fs.protected_regular=1, or /tmp not writable)"
+		return 1
+	fi
 	if ! flock -n "$fd"; then
 		eval "exec ${fd}>&-"
 		pvtest_log ERROR "device '$name' is already locked by another test.docker.sh run"
