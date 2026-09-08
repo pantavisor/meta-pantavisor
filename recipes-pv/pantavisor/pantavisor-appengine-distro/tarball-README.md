@@ -11,6 +11,9 @@ containers or a real device.
 ./test.docker.sh install-docker    # load the bundled docker images
 ```
 
+Set `PVTEST_IMAGE_TAG` before `install-docker` (and every `run`/`clean-docker` after it) to
+give each concurrent job on a shared docker daemon its own image tag.
+
 The runner uses `sudo -n` (non-interactive) for a few commands while tests run,
 so those must be allowed without a password. Add this once with `sudo visudo`:
 

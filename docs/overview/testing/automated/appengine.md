@@ -307,15 +307,18 @@ allowances the tarball `README.md` asks for.
 
 | Workflow | Trigger | What it runs |
 |---|---|---|
-| `call-pvtests.yaml` | reusable (`workflow_call`) | The actual run. Inputs: `commit`, `test_path`, `parallel` (default `6`), `model` (default `volatile`; `all` expands to a `["volatile","persistent"]` matrix), `hub` (default `prod`; `all` expands to a `["prod","stage"]` matrix). Downloads the distro artifact, `CI_MODE=true ./test.docker.sh install-docker`, then runs with `-V --fail-on-skip`. Remote scope always runs serial (no `-p`). Uploads the workspace as `pvtest-workspace-<sha7>-<test_path>-<model>-<hub>`. |
+| `call-pvtests.yaml` | reusable (`workflow_call`) | The actual run. Inputs: `commit`, `test_path`, `parallel` (default `6`), `model` (default `volatile`; `all` expands to a `["volatile","persistent"]` matrix), `hub` (default `prod`; `all` expands to a `["prod","stage"]` matrix). Downloads the distro artifact, `CI_MODE=true ./test.docker.sh install-docker` with `PVTEST_IMAGE_TAG` set to `<run_id>-<run_attempt>-<model>-<hub>`, then runs with `-V --fail-on-skip`. Remote scope always runs serial (no `-p`). Uploads the workspace as `pvtest-workspace-<sha7>-<test_path>-<model>-<hub>`, then cleans up with `./test.docker.sh clean-docker`. |
 | `manual-pvtests.yaml` | `workflow_dispatch` | Builds `pantavisor-appengine-distro` for `docker-x86_64`, then calls `call-pvtests.yaml` with the five inputs forwarded. |
 | `schedule-pvtests.yaml` | nightly cron (02:00) + dispatch | Same build, then `parallel: 6`, `model: all`, `hub: all` — the nightly covers both execution models and both Hubs. |
 
 The uploaded workspace artifact carries `README.md`, `run.log`, `results/`, `valgrind/` and
 the `*.log` console captures only: **`storage/` is deliberately excluded**, so a downloaded CI
 workspace has no trails/objects/logs tree to inspect, unlike a local run. Workspaces are
-model- and hub-scoped so matrix legs never collide, and a cleanup step removes all
-`pantavisor-appengine*` containers and images and both workspaces after each run.
+model- and hub-scoped so matrix legs never collide, and a cleanup step runs
+`./test.docker.sh clean-docker` and removes both workspaces after each run. The self-hosted
+runners share one docker daemon, so images are tagged per job (`PVTEST_IMAGE_TAG`) and
+`clean-docker` only untags/removes this job's own tag — a plain `docker rmi`/`docker rm` here
+would drop images a neighbouring job on the same daemon is still using.
 
 ### Hub matrix
 

@@ -95,6 +95,9 @@ jobs:
     env:
       WORKSPACE: /tmp/workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
       PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
+      # runners pvtest-scw/-2/-3 share one docker daemon: tag images per job so a
+      # neighbouring job's cleanup can't untag or re-tag the images this job is using
+      PVTEST_IMAGE_TAG: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.model }}-${{ matrix.hub }}
     steps:
       - name: Download pvtest distro
         uses: actions/download-artifact@v7
@@ -207,15 +210,11 @@ jobs:
       - name: Clean up
         if: always()
         run: |
-          docker ps -aq \
-          | xargs -r docker inspect --format '{{.Image}} {{.ID}}' \
-          | grep -E 'pantavisor-appengine(-netsim|-tester)?' \
-          | awk '{print $2}' \
-          | xargs -r docker rm -f
-
-          docker images --format '{{.Repository}}:{{.Tag}}' \
-          | grep -E '^pantavisor-appengine(-netsim|-tester)?:' \
-          | xargs -r docker rmi -f
+          # scoped to this job's PVTEST_IMAGE_TAG: runners share a docker daemon, so a
+          # bare docker rmi/rm here would untag images a neighbouring job still needs
+          if [ -x "$WORKSPACE/test.docker.sh" ]; then
+            (cd "$WORKSPACE" && ./test.docker.sh clean-docker)
+          fi
 
           rm -rf $WORKSPACE
           sudo rm -rf $PVTEST_WORKSPACE
