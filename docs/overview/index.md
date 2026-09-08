@@ -44,7 +44,7 @@ committing to the Yocto/BitBake build guide below.
 
 ## Continuous Integration
 
-- [Continuous Integration](ci/index.md) — CI system overview, machine matrix, release builds, tag sync, and docs publishing
+- [Continuous Integration](ci/index.md) — CI system overview, machine matrix, release builds, tag sync, runner stack, and docs publishing
 
 ## Also in this section
 

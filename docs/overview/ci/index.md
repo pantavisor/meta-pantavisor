@@ -17,6 +17,7 @@ Documentation for the meta-pantavisor CI system: how workflows are organized, ho
 5. [Versioning](versioning.md) — how `DISTRO_VERSION` is derived from git tags and how to cut a new release tag
 6. [Tag Sync](tag-sync.md) — how `meta-pantavisor` tags are mirrored to `pantavisor/pantavisor` and the PAT setup required
 7. [Changelog](changelog.md) — per-release `CHANGELOG-NNN.md` generator: format, tag conventions, and regen procedure
+8. [Runner Stack](runner-stack.md) — `runner-stack.sh`, for adding/removing self-hosted runner instances on one host to run jobs in parallel
 
 ## Key Rule
 
