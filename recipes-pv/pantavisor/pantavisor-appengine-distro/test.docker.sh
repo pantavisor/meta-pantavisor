@@ -40,6 +40,8 @@ usage() {
     echo "                        manifest file. NAME is"
 	echo "                        ~/.config/pvtest/devices/NAME.txt, FILE is a"
     echo "                        path to the manifest"
+	echo "  --hub URL             Hub the run targets (default:"
+    echo "                        https://api.pantahub.com)"
 	echo "  --model MODEL         persistent (default) or volatile storage"
     echo "                        between tests for each worker slot"
 	echo "  --fail-on-skip        Exit non-zero if any test is SKIPPED, for any"
@@ -65,6 +67,7 @@ usage() {
 	echo "  PVTEST_HOST         Host/IP for pvr HTTP calls (default: localhost)"
 	echo "  PVTEST_DEVICE_TYPE  Target class matched against a test's"
     echo "                      \"devices\" array"
+	echo "  PVTEST_HUB_URL      Same as --hub"
 	echo ""
 	echo "See README.md and docs/overview/testing/automated/."
 	echo ""
@@ -338,6 +341,7 @@ _tester_common_args() {
 		-e VERBOSE="$verbose"
 		-e PH_USER="$PH_USER"
 		-e PH_PASS="$PH_PASS"
+		-e PVTEST_HUB_URL="$PVTEST_HUB_URL"
 		-e PVR_DISABLE_SELF_UPGRADE=true
 		-e PVTEST_DEVICE_TYPE="${PVTEST_DEVICE_TYPE:-appengine}"
 		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct"
@@ -359,6 +363,7 @@ _run_pass() {
 	local _nq
 	_nq=$(printf '%s\n' $pvtest_queue | grep -c .)
 	pvtest_log INFO "=== ${pass_model} pool: ${_nq} test(s) across up to ${parallel} slot(s) ==="
+	pvtest_log INFO "Hub: $PVTEST_HUB_URL"
 
 	# Storage lineage is persistent within a run but always fresh at its start
 	[ "$retype_mech" = "container" ] && rm -rf "$work_path/storage"
@@ -433,6 +438,7 @@ run_test() {
 	local fail_on_skip="false"
 	local device_file=
 	local model="persistent" model_explicit="false"
+	local hub_url=
 
 	if [ -n "$1" ] && [ "$(printf '%s' "$1" | cut -c1)" != "-" ]; then
 		target_path="$1"
@@ -484,6 +490,17 @@ run_test() {
 				device_file="$2"
 				shift 2
 				;;
+			--hub)
+				case "${2:-}" in
+					""|-*)
+						pvtest_log ERROR "--hub needs a URL"
+						usage
+						exit 1
+						;;
+				esac
+				hub_url="$2"
+				shift 2
+				;;
 			--model)
 				model="$2"
 				model_explicit="true"
@@ -500,6 +517,17 @@ run_test() {
 				;;
 		esac
 	done
+
+	PVTEST_HUB_URL="${hub_url:-${PVTEST_HUB_URL:-https://api.pantahub.com}}"
+	PVTEST_HUB_URL="${PVTEST_HUB_URL%/}"
+	case "$PVTEST_HUB_URL" in
+		https://*) ;;
+		*)
+			pvtest_log ERROR "--hub/PVTEST_HUB_URL must be an https:// URL, got '$PVTEST_HUB_URL'"
+			exit 1
+			;;
+	esac
+	export PVTEST_HUB_URL
 
 	[ -n "$work_path" ] || work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 
@@ -754,7 +782,7 @@ run_test() {
 			)
 		else
 			local _icfg
-			_icfg=$(_test_cfg "$test_dir/$target_path")
+			_icfg=$(pvtest_cfg_with_hub "$(_test_cfg "$test_dir/$target_path")" "$PVTEST_HUB_URL")
 			_iae="pantavisor-appengine-${USER}-${slot}-w0-g1"
 			_boot_appengine "$_iae" "$_icfg"
 			iface_args=(
@@ -773,6 +801,7 @@ run_test() {
 			-e VERBOSE="$verbose" \
 			-e PH_USER="$PH_USER" \
 			-e PH_PASS="$PH_PASS" \
+			-e PVTEST_HUB_URL="$PVTEST_HUB_URL" \
 			-e PVR_DISABLE_SELF_UPGRADE=true \
 			"${iface_args[@]}" \
 			"${tester_scope_args[@]}" \

@@ -103,6 +103,18 @@ Timing: no timeout is enforced; the runner only WARNs if the console shows no
 activity within 30 s of return.
 ```
 
+### Hub binding
+
+A board is bound to whichever Pantacor Hub it was provisioned against: its claim state and
+its `PH_CREDS_HOST` config point at one Hub. With `setbootconfig=` set, `--hub`/`PVTEST_HUB_URL`
+reaches the board like any other config: the runner adds `PH_CREDS_HOST=` (and `PH_CREDS_PORT=` when the URL carries a port) to
+a remote test's boot tokens, so the `setbootconfig` script must pass them through like any
+other `KEY=VALUE` argv token (see the contract above). With no `setbootconfig=`, the board's
+config is immutable per test, so a `--hub` that does not match the board's actual Hub makes
+every remote test whose `config.env` requires `PH_CREDS_HOST`/`PH_CREDS_PORT` SKIP as
+unsupported — exactly like any other unmet config (see
+[Expected outcomes](#expected-outcomes)).
+
 ### Building target tarballs
 
 The example containers are ordinary `image` + `container-pvrexport` recipes with no arch

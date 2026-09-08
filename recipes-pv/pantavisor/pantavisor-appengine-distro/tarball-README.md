@@ -24,6 +24,13 @@ Hub-backed tests read credentials from the environment:
 export PH_USER=... PH_PASS=...
 ```
 
+A run targets one Pantacor Hub instance, selected with `--hub URL` (or `PVTEST_HUB_URL`),
+default `https://api.pantahub.com`:
+
+```
+./test.docker.sh run --hub https://api.stage.pantahub.com
+```
+
 ## Appengine testing (default)
 
 ```

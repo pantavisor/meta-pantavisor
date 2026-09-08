@@ -264,6 +264,16 @@ directory, you can cd into it and run `test.docker.sh` without extracting anythi
 `./test.docker.sh -h` lists every command, flag, path selector and environment override. The
 tarball `README.md` has ready-made examples for the appengine pool and for real devices.
 
+A whole run targets one Pantacor Hub instance, selected with `--hub URL` (or the
+`PVTEST_HUB_URL` env var), default `https://api.pantahub.com`:
+
+```bash
+PH_USER=... PH_PASS=... ./test.docker.sh run --hub https://api.stage.pantahub.com
+```
+
+Stage is a separate Hub instance, so it needs its own `PH_USER`/`PH_PASS` account — the same
+credentials that work against `api.pantahub.com` will not authenticate there.
+
 ## Reading a run
 
 Every run creates a workspace that contains a `README.md` inside that documents the full

@@ -20,7 +20,7 @@ curl -s -X PUT \
     -H "Authorization: Bearer $bearer" \
     -H "Content-Type: application/json" \
     -d "{\"$USRMETA_KEY\": \"$USRMETA_VALUE\"}" \
-    "https://api.pantahub.com/devices/$device_id/user-meta" > /dev/null
+    "$PVTEST_HUB_URL/devices/$device_id/user-meta" > /dev/null
 pvcontrol devmeta save "$DEVMETA_KEY" "$DEVMETA_VALUE"
 
 echo "== poll Hub for device-meta sync =="
@@ -29,7 +29,7 @@ hub_devmeta=""
 while [ $i -lt 3 ]; do
     hub_devmeta=$(curl -s \
         -H "Authorization: Bearer $bearer" \
-        "https://api.pantahub.com/devices/$device_id" | \
+        "$PVTEST_HUB_URL/devices/$device_id" | \
         jq -r ".\"device-meta\".\"$DEVMETA_KEY\"")
     [ "$hub_devmeta" = "$DEVMETA_VALUE" ] && break
     sleep "${PH_METADATA_DEVMETA_INTERVAL:-10}"
@@ -54,5 +54,5 @@ echo "== verified values =="
 pvcontrol usrmeta ls | jq -r ".\"$USRMETA_KEY\""
 curl -s \
     -H "Authorization: Bearer $bearer" \
-    "https://api.pantahub.com/devices/$device_id" | \
+    "$PVTEST_HUB_URL/devices/$device_id" | \
     jq -r ".\"device-meta\".\"$DEVMETA_KEY\""

@@ -9,7 +9,7 @@ device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
 checkout="$(mktemp -d)/checkout"
 pvr_clone_local_or_die "$checkout"
 cd "$checkout"
-trail_url="https://api.pantahub.com/trails/$device_id"
+trail_url="$PVTEST_HUB_URL/trails/$device_id"
 
 echo "== post 3 revisions simultaneously =="
 rev1=$(pvr_post_rev -m "first revision" "$trail_url")
