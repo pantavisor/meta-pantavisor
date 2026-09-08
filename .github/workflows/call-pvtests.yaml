@@ -112,14 +112,20 @@ jobs:
         working-directory: ${{ env.WORKSPACE }}
         if: always()
         run: |
-          if [ -f run.log ]; then
+          if [ -f run.log ] && grep -q 'SUMMARY' run.log; then
             {
               echo '```'
               sed -n '/SUMMARY/,$p' run.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
+          elif [ -f run.log ]; then
+            echo "Tests Run Failed (no summary in run log)" >> "$GITHUB_STEP_SUMMARY"
+            # a run.log with no SUMMARY block means setup failed before any test ran; never let that show green
+            exit 1
           else
             echo "Tests Run Failed (no log found)" >> "$GITHUB_STEP_SUMMARY"
+            # a run that never produced a log did not execute any tests; never let that show green
+            exit 1
           fi
 
       - name: Show test.log issues
