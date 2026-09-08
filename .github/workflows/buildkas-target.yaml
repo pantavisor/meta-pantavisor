@@ -27,7 +27,7 @@ jobs:
   build:
     env:
      TMPDIR : "tmp-scarthgap"
-    runs-on: ["self-hosted"]
+    runs-on: ["bsp-builder"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
       volumes:
