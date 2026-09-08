@@ -70,9 +70,12 @@ bundled one is used only if it actually executes.
 ./test.native.sh run local/lifecycle/foo --device rock5a -o   # regenerate a golden
 ./test.native.sh run local/lifecycle/foo --device rock5a -i   # tester shell
 ./test.native.sh run --device rock5a -m                       # shell on the board
+./test.native.sh run remote --device rock5a --hub https://api.stage.pantahub.com
 ```
 
-`--device` is required. `--model` is always `persistent` and `PVTEST_SLOTS` is always 1,
+`--device` is required. `--hub URL` (or `PVTEST_HUB_URL`) selects the Hub as for
+`test.docker.sh`; the board must be provisioned against it, see
+[Hub binding](device.md#hub-binding). `--model` is always `persistent` and `PVTEST_SLOTS` is always 1,
 because there is one board; `-n` and `-V` do not apply. Results land in the workspace exactly
 as they do for a container run — `run.log`, `results/<test>/{test.log,diff}` and the serial
 capture in `<device>.log` — with `workspace-README.md` copied in beside them.

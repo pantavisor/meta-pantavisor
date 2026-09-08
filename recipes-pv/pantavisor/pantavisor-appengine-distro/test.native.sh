@@ -40,6 +40,8 @@ usage() {
 	echo "  -o, --overwrite       Create or overwrite the test golden output"
 	echo "  --fail-on-skip        Exit non-zero if any test is SKIPPED, for any"
     echo "                        reason"
+	echo "  --hub URL             Hub the run targets (default:"
+    echo "                        https://api.pantahub.com)"
 	echo "  -w, --work PATH       Set workspace path for logs (default: mktemp)"
 	echo ""
 	echo "Path selectors for 'run' command:"
@@ -52,6 +54,7 @@ usage() {
 	echo "  PVTEST_SCRIPTS_DIR  Runner scripts to use (default: <distro>/pvtest)"
 	echo "  PVTEST_DEVICE_TYPE  Target class matched against a test's"
     echo "                      \"devices\" array"
+	echo "  PVTEST_HUB_URL      Same as --hub"
 	echo ""
 	echo "The appengine pool needs a container runtime; use test.docker.sh for it."
 	echo ""
@@ -295,7 +298,7 @@ run_test() {
 	local manual="false"
 	local work_path=
 	local fail_on_skip="false"
-	local device_file=
+	local device_file= hub_url=
 	local ctrl_dir=
 	local _logtee_pid=
 
@@ -324,6 +327,17 @@ run_test() {
 				device_file="$2"
 				shift 2
 				;;
+			--hub)
+				case "${2:-}" in
+					""|-*)
+						pvtest_log ERROR "--hub needs a URL"
+						usage
+						exit 1
+						;;
+				esac
+				hub_url="$2"
+				shift 2
+				;;
 			*)
 				pvtest_log ERROR "Unknown argument: $1"
 				usage
@@ -349,6 +363,7 @@ run_test() {
 	fi
 
 	_resolve_device_file || exit 1
+	_resolve_hub_url "$hub_url" || exit 1
 
 	if [ "$interactive" = "true" ] && [ "$overwrite" = "true" ]; then
 		pvtest_log ERROR "Cannot use overwrite and interactive at the same time"
@@ -428,6 +443,7 @@ run_test() {
 		"PVTEST_RETYPE=$retype_mech"
 		"PH_USER=$PH_USER"
 		"PH_PASS=$PH_PASS"
+		"PVTEST_HUB_URL=$PVTEST_HUB_URL"
 		"PVR_DISABLE_SELF_UPGRADE=true"
 		"PV_LOG_SERVER_OUTPUTS=filetree,stdout_direct"
 		"PV_LOG_TIMESTAMP=absolute"
