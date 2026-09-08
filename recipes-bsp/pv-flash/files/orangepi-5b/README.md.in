@@ -1,0 +1,76 @@
+# Pantavisor factory-flash bundle — Orange Pi 5B (RK3588S)
+
+This archive flashes a Pantavisor image to the board's on-board **eMMC** over
+USB, using Rockchip's `rkdeveloptool` and the SoC's USB **Maskrom** recovery
+mode. No SD card is involved.
+
+## Linux host only
+
+The bundled `rkdeveloptool` is a **Linux x86-64** binary and `flash.sh` is a
+POSIX shell script. There is no macOS or Windows path here — run this from a
+Linux PC (a VM with USB pass-through works, WSL2 generally does not because it
+cannot claim the USB device).
+
+## Host prerequisites
+
+| Need | Debian/Ubuntu package | Why |
+|------|-----------------------|-----|
+| `libusb-1.0` runtime | `libusb-1.0-0` | `rkdeveloptool` links it dynamically |
+| `zstd` **or** `gzip` | `zstd` / `gzip` | `flash.sh` decompresses the bundled WIC image (`.wic.zst` or `.wic.gz`) |
+| USB access | — | run as root via `sudo` (what `flash.sh` does), or install the udev rule below |
+
+```bash
+sudo apt install libusb-1.0-0 zstd
+```
+
+Optional udev rule so `rkdeveloptool` works without `sudo`:
+
+```bash
+echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2207", MODE="0666"' \
+    | sudo tee /etc/udev/rules.d/70-rockchip-rkdeveloptool.rules
+sudo udevadm control --reload-rules
+```
+
+## Contents
+
+| File | Purpose |
+|------|---------|
+| `flash.sh` | the flashing script — run this |
+| `rkdeveloptool` | portable Rockchip USB download tool |
+| `loader.bin` | Rockchip USB loader (DDR init + usbplug) sent to SoC SRAM |
+| `@WIC_GZ@` | the Pantavisor disk image (full GPT: bootloader + rootfs) |
+| `pantavisor-starter-orangepi-5b.rootfs.wic.bmap` | block map (informational) |
+
+## Flashing
+
+1. Power the board off and remove any bootable microSD card — otherwise
+   `rkdeveloptool` may write to the SD card instead of eMMC.
+2. Hold the **Maskrom** button (next to the 3.5 mm jack).
+3. Connect a USB-C cable from the board's USB-C port to this host.
+4. Release the button after ~2 s.
+5. Run:
+
+   ```bash
+   ./flash.sh
+   ```
+
+`flash.sh` decompresses the image, waits for the Maskrom device, then runs
+`rkdeveloptool db loader.bin` → `wl 0 <image>` → `rd`. The board reboots from
+eMMC when it finishes.
+
+To verify the host sees the board:
+
+```bash
+sudo ./rkdeveloptool ld
+# DevNo=1  Vid=0x2207,Pid=0x350b,LocationID=...  Maskrom
+```
+
+## Troubleshooting
+
+- **`ld` shows nothing** — the board is not in Maskrom mode. Repeat steps 2-4;
+  hold the button *before* plugging USB.
+- **`wl` reports "device not found"** right after `db` — the SoC re-enumerates
+  in Loader mode; re-run `sudo ./rkdeveloptool ld`, it should now show
+  `Loader`, then re-run `./flash.sh`.
+- **permission denied on the USB device** — use `sudo` or install the udev
+  rule above.

@@ -29,7 +29,7 @@ committing to the Yocto/BitBake build guide below.
 3. [Starter Image](images.md) — how `pantavisor-starter` composes core containers with the BSP into the initial device trail
 4. [Flashing Images](flashing-images.md) — where to get a ready-made image (pantavisor.io/downloads), pvflasher, and which flashing method applies to your board
 5. [Boot Flow](boot-flow.md) — how `boot.cmd.pvgeneric` boots Pantavisor: FIT/trail loading, try-boot, MMC vs NAND/UBIFS, and `PV_BOOT_OEMARGS`
-6. [Flashing NXP devices](pv-flash-bundle.md) — the UUU factory-flash archive recipe (Toradex, Variscite, NXP MEK): design, `PV_FLASH_*` variables, and how to wire up a new machine
+6. [USB factory-flash bundle](pv-flash-bundle.md) — the over-USB factory-flash archive recipe (Toradex, Variscite, NXP MEK via UUU; Rockchip via rkdeveloptool): design, `PV_FLASH_*` variables, and how to wire up a new machine
 
 ## Build Guide
 

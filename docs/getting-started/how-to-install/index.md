@@ -14,7 +14,8 @@ Guides for getting a Pantavisor image onto a device, from SD card flashing to bo
 2. [Docker / Local Target](docker.md) — run Pantavisor locally with Docker for development and testing without hardware
 3. [Toradex](toradex.md) — flash Toradex Colibri and Verdin modules with UUU and the self-contained `pv-flash-bundle`
 4. [UUU](uuu.md) — flash NXP i.MX targets (Variscite DART-MX8M-Mini, VAR-SOM-MX8M-Nano, NXP i.MX8QXP MEK) using the Universal Update Utility and the self-contained `pv-flash-bundle`
-5. [Board Guides](boards/) — board-specific wiring, boot-mode selection, and install notes
+5. [Rockchip](rockchip.md) — flash Rockchip RK3588S targets (Orange Pi 5B) to eMMC over USB Maskrom with `rkdeveloptool` and the self-contained `pv-flash-bundle`
+6. [Board Guides](boards/) — board-specific wiring, boot-mode selection, and install notes
 
 ## Choose Your Method
 
@@ -23,4 +24,5 @@ Guides for getting a Pantavisor image onto a device, from SD card flashing to bo
 | Most boards (SD card slot) | [SD Card](sdcard.md) |
 | Toradex Colibri / Verdin | [Toradex (UUU + pv-flash-bundle)](toradex.md) |
 | NXP i.MX EVK / SOM (Variscite, MEK) | [UUU (pv-flash-bundle)](uuu.md) |
+| Rockchip RK3588S (Orange Pi 5B) | [Rockchip (rkdeveloptool + pv-flash-bundle)](rockchip.md) |
 | Local development | [Docker](docker.md) |

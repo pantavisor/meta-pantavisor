@@ -19,7 +19,7 @@ The following machines are configured in the CI pipeline (`.github/machines.json
 | `rpi` | Raspberry Pi — all targets. Multi-kernel multiconfig covering every board (Pi 1/2/3/4/5, Zero, Compute Module), ARMv6/ARMv7/ARMv8, 32- and 64-bit |
 | `colibri-imx6ull` | Toradex Colibri iMX6ULL |
 | `radxa-rock5a` | Radxa ROCK 5A |
-| `rockchip-orangepi-5b` | Orange Pi 5B (RK3588S), via [JeffyCN/meta-rockchip](https://github.com/JeffyCN/meta-rockchip) |
+| `rockchip-orangepi-5b` | Orange Pi 5B (RK3588S), via [JeffyCN/meta-rockchip](https://github.com/JeffyCN/meta-rockchip); eMMC flashed over USB with [pv-flash-bundle](../getting-started/how-to-install/rockchip.md) |
 | `imx8mn-var-som` | Variscite i.MX 8M Nano SOM |
 | `imx8mm-var-dart` | Variscite DART-MX8M-MINI |
 | `docker-x86_64` | AppEngine testing container (x86_64) |

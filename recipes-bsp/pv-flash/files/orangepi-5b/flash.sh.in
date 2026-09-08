@@ -1,0 +1,32 @@
+#!/bin/sh
+# Factory-flash Pantavisor to Orange Pi 5B (RK3588S) eMMC via rkdeveloptool.
+#
+# Put the board in Maskrom mode first: hold the Maskrom button (next to the
+# 3.5 mm jack), plug a USB-C cable from this host into the board's USB-C port,
+# release the button after ~2 s. The board must have no bootable SD card
+# inserted, or rkdeveloptool may target the SD card instead of eMMC.
+#
+# Host needs libusb-1.0 (the bundled rkdeveloptool links it dynamically) and
+# either a udev rule for Rockchip VID 0x2207 or the sudo used below.
+set -e
+
+wic=@WIC@
+trap 'rm -f "$wic"' EXIT INT TERM
+
+if [ -f "@WIC_ZST@" ]; then
+    echo "Decompressing @WIC_ZST@..."
+    zstd -dc "@WIC_ZST@" > "$wic"
+elif [ -f "@WIC_GZ@" ]; then
+    echo "Decompressing @WIC_GZ@..."
+    zcat "@WIC_GZ@" > "$wic"
+fi   # else an uncompressed @WIC@ is already in the bundle
+
+echo "Waiting for a Rockchip device in Maskrom mode..."
+until sudo ./rkdeveloptool ld | grep -qi maskrom; do sleep 1; done
+
+sudo ./rkdeveloptool db loader.bin
+sleep 2
+sudo ./rkdeveloptool wl 0 "$wic"
+sudo ./rkdeveloptool rd
+
+echo "Done - the board reboots from eMMC."

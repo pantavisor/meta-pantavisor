@@ -1,7 +1,7 @@
 ---
 title: "Board Guides"
 description: "Board-specific install notes: boot-mode selection, carrier board wiring, and flash method."
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Board Guides
