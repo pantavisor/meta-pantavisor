@@ -135,7 +135,11 @@ is the manifest's `type=`:
 ./test.native.sh run local/lifecycle/foo --device rock5a -o   # regenerate golden
 ./test.native.sh run local/lifecycle/foo --device rock5a -i   # tester shell
 ./test.native.sh run --device rock5a -m                       # shell on the board
+./test.native.sh run remote --device rock5a --hub https://api.stage.pantahub.com
 ```
+
+`--hub URL` (or `PVTEST_HUB_URL`, default `https://api.pantahub.com`) selects the
+Hub; `PH_USER`/`PH_PASS` must be an account on it.
 
 Results land in the workspace printed at the start of the run (`-w` to choose
 it): `run.log`, `results/<test>/test.log`, `results/<test>/diff`, and the serial

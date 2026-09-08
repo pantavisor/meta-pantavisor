@@ -155,6 +155,22 @@ release_slot() {
 	SLOT_LOCK_FD=
 }
 
+# --- Hub selection -----------------------------------------------------
+
+# Export PVTEST_HUB_URL from --hub ($1), the env, or the default; pantavisor talks TLS only
+_resolve_hub_url() {
+	PVTEST_HUB_URL="${1:-${PVTEST_HUB_URL:-https://api.pantahub.com}}"
+	PVTEST_HUB_URL="${PVTEST_HUB_URL%/}"
+	case "$PVTEST_HUB_URL" in
+		https://*) ;;
+		*)
+			pvtest_log ERROR "--hub/PVTEST_HUB_URL must be an https:// URL, got '$PVTEST_HUB_URL'"
+			return 1
+			;;
+	esac
+	export PVTEST_HUB_URL
+}
+
 # --- device manifest ---------------------------------------------------
 
 PVTEST_CONFIG_DIR="${PVTEST_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/pvtest}"

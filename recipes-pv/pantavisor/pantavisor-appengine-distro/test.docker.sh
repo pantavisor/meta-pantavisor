@@ -518,16 +518,7 @@ run_test() {
 		esac
 	done
 
-	PVTEST_HUB_URL="${hub_url:-${PVTEST_HUB_URL:-https://api.pantahub.com}}"
-	PVTEST_HUB_URL="${PVTEST_HUB_URL%/}"
-	case "$PVTEST_HUB_URL" in
-		https://*) ;;
-		*)
-			pvtest_log ERROR "--hub/PVTEST_HUB_URL must be an https:// URL, got '$PVTEST_HUB_URL'"
-			exit 1
-			;;
-	esac
-	export PVTEST_HUB_URL
+	_resolve_hub_url "$hub_url" || exit 1
 
 	[ -n "$work_path" ] || work_path=$(mktemp -d -t pv_appengine.XXXXXX)
 
