@@ -53,7 +53,7 @@ pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
 echo "== cleanup =="
 if [ -n "$device_id" ]; then
-	pvr dev delete -y $device_id
+	pvr dev delete -y "$(pvr_device_url "$device_id")"
 fi
 # The newly auto-claimed device (post-reboot registration) is NOT deleted
 # here: persistent_worker's own final-detach hygiene (pvtest-run.in) reads the

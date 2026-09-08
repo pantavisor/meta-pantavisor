@@ -25,7 +25,7 @@ challenge=$(pv_exec cat /run/pantavisor/pv/challenge)
 if [ -z "$device_id" ] || [ -z "$challenge" ]; then
     echo "ERROR: empty device-id or challenge in claim state" >&2; exit 1
 fi
-pvr claim -c "$challenge" "$device_id" </dev/null
+pvr claim -c "$challenge" "$(pvr_device_url "$device_id")" </dev/null
 
 echo "== wait for idle (claimed) =="
 wait_for_value "pvcontrol devmeta ls | jq -r '.\"pantahub.state\"'" "idle" 120 \
@@ -34,5 +34,5 @@ pvcontrol devmeta ls | jq -M -r '.["pantahub.state"]'
 
 echo "== cleanup =="
 if [ -n "$device_id" ]; then
-	pvr dev delete -y $device_id
+	pvr dev delete -y "$(pvr_device_url "$device_id")"
 fi
