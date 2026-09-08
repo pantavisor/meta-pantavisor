@@ -144,7 +144,12 @@ echo "This will install some packages in your system. Do you want to continue? [
 setup_network0() {
 	# flock serializes inspect/create so concurrent callers don't race on docker network create.
 	local lockfile=/tmp/pv_appengine.network0.lock
-	exec {NET0_FD}>"$lockfile"
+	NET0_FD=
+	# a failed exec leaves NET0_FD empty; check it explicitly or flock/close below run on '' and wreck fd 1
+	if ! exec {NET0_FD}>"$lockfile"; then
+		pvtest_log ERROR "cannot open lock file '$lockfile' (owned by another user under /tmp with fs.protected_regular=1, or /tmp not writable)"
+		return 1
+	fi
 	flock "$NET0_FD"
 
 	if ! docker network inspect test-appengine-net >/dev/null 2>&1; then
@@ -623,7 +628,7 @@ run_test() {
 	pvtest_log DEBUG "diff=$work_path/results/<scope>/<category>/<name>/diff"
 	} | tee -a "$work_path/run.log"
 
-	allocate_slot
+	allocate_slot || return 1
 	local tester_name="pantavisor-tester-${USER}-${slot}"
 	local netsim_name="pantavisor-netsim-${USER}-${slot}"
 
@@ -655,7 +660,10 @@ run_test() {
 		exec > >(tee -a "$work_path/run.log") 2>&1
 	fi
 
-	setup_network0
+	if ! setup_network0; then
+		release_slot
+		return 1
+	fi
 
 	if [ "$netsim" = "true" ]; then
 		docker run \
