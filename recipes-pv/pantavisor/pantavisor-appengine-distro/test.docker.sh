@@ -8,6 +8,9 @@ _pvtest_root="$(dirname "$0")"
 . "$_pvtest_root/pvtest/common" || exit 1
 . "$_pvtest_root/pvtest/host-common" || exit 1
 
+# distinct per job on a shared docker daemon, so a neighbour's cleanup can't untag our images
+PVTEST_IMAGE_TAG="${PVTEST_IMAGE_TAG:-latest}"
+
 usage() {
 	echo ""
 	echo "Usage: $0 [options] <command> [arguments]"
@@ -22,6 +25,8 @@ usage() {
 	echo "  install-deps                         Install dependencies (and"
     echo "                                       docker)"
 	echo "  install-docker                       Install docker"
+	echo "  clean-docker                         Remove this job's containers"
+    echo "                                       and untag its images"
 	echo "  install-tarballs <target> [path]...  Install container tarballs for"
     echo "                                       a target"
 	echo "  ls                                   List all tests"
@@ -60,6 +65,9 @@ usage() {
 	echo "  NETSIM_PATH      Path to docker load for netsim container"
 	echo "  TESTER_PATH      Path to docker load for tester container"
 	echo "  APPENGINE_PATH   Path to docker load for appengine container"
+	echo "  PVTEST_IMAGE_TAG Tag the loaded images get and the run uses"
+    echo "                   (default: latest); give each concurrent job on a"
+    echo "                   shared docker daemon its own"
 	echo ""
 	echo "Target overrides:"
 	echo "  PVTEST_EXEC         Command prefix to reach the target (e.g. \"ssh"
@@ -78,19 +86,43 @@ install_docker() {
 	NETSIM_PATH=${NETSIM_PATH:-"pantavisor-appengine-netsim-docker.tar"}
 	if [ -f "$NETSIM_PATH" ]; then
 		docker load -i "$NETSIM_PATH"
-		docker image inspect --format '{{.Id}}' pantavisor-appengine-netsim \
-			> "$(dirname "$0")/netsim.imgid" 2>/dev/null || true
+		[ "$PVTEST_IMAGE_TAG" = "latest" ] \
+			|| docker tag pantavisor-appengine-netsim:latest "pantavisor-appengine-netsim:$PVTEST_IMAGE_TAG"
 	fi
 	TESTER_PATH=${TESTER_PATH:-"pantavisor-appengine-tester-docker.tar"}
 	if [ -f "$TESTER_PATH" ]; then
 		docker load -i "$TESTER_PATH"
-		docker image inspect --format '{{.Id}}' pantavisor-appengine-tester \
-			> "$(dirname "$0")/tester.imgid" 2>/dev/null || true
+		[ "$PVTEST_IMAGE_TAG" = "latest" ] \
+			|| docker tag pantavisor-appengine-tester:latest "pantavisor-appengine-tester:$PVTEST_IMAGE_TAG"
 	fi
 	APPENGINE_PATH=${APPENGINE_PATH:-"pantavisor-appengine-docker.tar"}
 	if [ -f "$APPENGINE_PATH" ]; then
 		docker load -i "$APPENGINE_PATH"
+		[ "$PVTEST_IMAGE_TAG" = "latest" ] \
+			|| docker tag pantavisor-appengine:latest "pantavisor-appengine:$PVTEST_IMAGE_TAG"
 	fi
+}
+
+# scoped counterpart to a bare docker rmi/rm: only this job's tag, safe on a daemon shared with other jobs
+clean_docker() {
+	local names="pantavisor-appengine pantavisor-appengine-netsim pantavisor-appengine-tester"
+
+	# match by the name:tag a container was run with, not by image ID: identical tarballs share IDs across jobs
+	local cid img n match
+	while IFS= read -r cid; do
+		[ -n "$cid" ] || continue
+		img=$(docker inspect --format '{{.Config.Image}}' "$cid" 2>/dev/null) || continue
+		match=false
+		for n in $names; do
+			[ "$img" = "$n:$PVTEST_IMAGE_TAG" ] && { match=true; break; }
+		done
+		[ "$match" = true ] && docker rm -f "$cid" > /dev/null 2>&1
+	done < <(docker ps -aq)
+
+	# no -f: untagging is enough, the image itself goes once its last tag does
+	for n in $names; do
+		docker rmi "$n:$PVTEST_IMAGE_TAG" > /dev/null 2>&1 || true
+	done
 }
 
 
@@ -265,7 +297,7 @@ _boot_appengine() {
 		-e PV_LOG_SERVER_OUTPUTS="filetree,stdout_direct" \
 		-e PV_LOG_TIMESTAMP="absolute" \
 		"${_cfg_env[@]}" \
-		pantavisor-appengine \
+		"pantavisor-appengine:$PVTEST_IMAGE_TAG" \
 			/usr/bin/pv-appengine -c "ph_metadata.devmeta.interval=15" > /dev/null; then
 		return 1
 	fi
@@ -651,10 +683,8 @@ run_test() {
 
 	local _script_dir
 	_script_dir="$(cd "$(dirname "$0")" && pwd)"
-	local tester_image="pantavisor-appengine-tester"
-	[ -f "$_script_dir/tester.imgid" ] && tester_image=$(cat "$_script_dir/tester.imgid")
-	local netsim_image="pantavisor-appengine-netsim"
-	[ -f "$_script_dir/netsim.imgid" ] && netsim_image=$(cat "$_script_dir/netsim.imgid")
+	local tester_image="pantavisor-appengine-tester:$PVTEST_IMAGE_TAG"
+	local netsim_image="pantavisor-appengine-netsim:$PVTEST_IMAGE_TAG"
 
 	if [ "$interactive" = "false" ] && [ "$manual" = "false" ]; then
 		exec > >(tee -a "$work_path/run.log") 2>&1
@@ -735,7 +765,7 @@ run_test() {
 				"${_AE_DOCKER_ARGS[@]}" \
 				-v "$work_path/storage/0":/var/pantavisor/storage \
 				"${manual_cfg_args[@]}" \
-				pantavisor-appengine \
+				"pantavisor-appengine:$PVTEST_IMAGE_TAG" \
 				/usr/bin/pv-appengine -m
 		fi
 		release_slot
@@ -836,7 +866,7 @@ run_test() {
 	[ "$pool_mode" = true ] && rm -rf "$shared_ssh_dir"
 
 	if [ "$pool_mode" = true ] && [ -d "$work_path/storage" ]; then
-		docker run --rm -v "$work_path/storage":/storage pantavisor-appengine \
+		docker run --rm -v "$work_path/storage":/storage "pantavisor-appengine:$PVTEST_IMAGE_TAG" \
 			-c "chown -R $(id -u):$(id -g) /storage" > /dev/null 2>&1 || true
 	fi
 
@@ -903,6 +933,9 @@ case "$command" in
 		;;
 	install-docker)
 		install_docker
+		;;
+	clean-docker)
+		clean_docker
 		;;
 	install-tarballs)
 		install_tarballs "$@"

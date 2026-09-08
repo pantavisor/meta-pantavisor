@@ -259,6 +259,17 @@ Extract the tarball and load the Docker images as described in the tarball's own
 When working directly on the build machine, the deploy directory already contains an unpacked
 directory, you can cd into it and run `test.docker.sh` without extracting anything.
 
+`install-docker` loads the netsim, tester and appengine images tagged `latest`. On a host
+shared by several concurrent jobs on one docker daemon, set `PVTEST_IMAGE_TAG` before
+`install-docker` so each job's images and runs get their own tag instead of colliding on
+`latest`:
+
+```bash
+PVTEST_IMAGE_TAG=jobA ./test.docker.sh install-docker
+PVTEST_IMAGE_TAG=jobA ./test.docker.sh run local
+PVTEST_IMAGE_TAG=jobA ./test.docker.sh clean-docker   # untags/removes only this job's images/containers
+```
+
 ## Invocation
 
 `./test.docker.sh -h` lists every command, flag, path selector and environment override. The
