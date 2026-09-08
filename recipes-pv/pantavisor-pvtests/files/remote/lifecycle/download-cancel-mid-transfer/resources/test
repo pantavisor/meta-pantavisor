@@ -56,9 +56,19 @@ polls=$(pv_exec grep -rc "status on Hub" "$storage/logs" 2>/dev/null | awk -F: '
 echo "device polled its step $polls times before the cancel landed" >&2
 
 echo "== wait for the device to report CANCEL =="
-# One download tick is 6 s; the device polls its own step on every tick.
-wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "CANCEL" 60 \
-    || { echo "ERROR: timeout waiting for revision $rev to report CANCEL" >&2; exit 1; }
+# One download tick is 6 s; the device polls its own step on every tick and
+# only then reports progress. A cancel landing between that poll and the
+# progress PUT is overwritten on the Hub (progress PUTs are unconditional so
+# a non-adhering device stays visible); re-issue it, as an owner would.
+attempt=1
+while ! wait_for_value "pvcontrol steps show-progress $rev | jq -r '.status'" "CANCEL" 15; do
+    hub_now=$(curl -s -H "Authorization: Bearer $bearer" "$trail_url/steps/$rev" | jq -r '.progress.status')
+    [ "$hub_now" = "CANCEL" ] && continue
+    attempt=$((attempt + 1))
+    [ "$attempt" -le 4 ] || { echo "ERROR: revision $rev never reported CANCEL (Hub shows $hub_now)" >&2; exit 1; }
+    echo "cancel overwritten by a progress PUT (Hub shows $hub_now); re-issuing, attempt $attempt" >&2
+    curl -s -o /dev/null -X PUT -H "Authorization: Bearer $bearer" "$trail_url/steps/$rev/cancel"
+done
 pvcontrol steps show-progress $rev | jq -Mc '{status, "status-msg"}'
 
 echo "== device goes back to idle and stays on the previous revision =="
