@@ -110,7 +110,7 @@ boards default to SD, others require a switch change.
 |---|---|
 | Raspberry Pi | No boot-mode switch needed; RPi always tries SD first. The `rpi.yaml` multi-kernel build supports all RPi variants including RPi 5. |
 | Sunxi (Allwinner) | Most boards boot SD by default. Hold the FEL button during power-on only if entering USB recovery mode. |
-| Rockchip / Radxa | If eMMC firmware takes boot priority, disable the eMMC (short its clock pads) so the boot ROM falls back to SD; the Maskrom button is for USB recovery mode instead. |
+| Rockchip / Radxa | If eMMC firmware takes boot priority, disable the eMMC (short its clock pads) so the boot ROM falls back to SD. To flash eMMC directly, use the Maskrom button and [Flashing Rockchip devices](rockchip.md) instead. |
 | TI BeagleBone/Play | Hold the **S2 (Boot)** button while applying power to boot from SD instead of eMMC. |
 | TI AM6x EVB | Set boot switches to SD mode per the EVM hardware guide. |
 | NXP i.MX8QXP MEK | Set SW2 DIP switches to SD card boot mode. |

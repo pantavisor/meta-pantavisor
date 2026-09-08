@@ -1,18 +1,18 @@
 ---
 sidebar_position: 17
 ---
-# Flashing NXP devices
+# USB factory-flash bundle
 
 `pv-flash-bundle` (`recipes-bsp/pv-flash/pv-flash-bundle.bb`) is meta-pantavisor's
-**preferred way to flash i.MX-based NXP devices**: it assembles a self-contained
-factory flash archive for boards that flash via NXP's UUU tool instead of a
-standard `.wic` write. It bundles the image payload, a portable `uuu` binary, a
-recovery U-Boot, and generated flash scripts into a single
-`pv-flash-bundle-${MACHINE}.tar.gz`, so flashing needs nothing beyond a USB
-cable and the extracted archive.
+**preferred way to flash devices that program their on-board storage over USB**
+instead of via a plain `.wic` write — NXP i.MX boards through NXP's UUU tool, and
+Rockchip boards through `rkdeveloptool`. It bundles the image payload, the host
+flashing tool as a portable binary, a boot/recovery loader, and generated flash
+scripts into a single `pv-flash-bundle-${MACHINE}.tar.gz`, so flashing needs
+nothing beyond a USB cable and the extracted archive.
 
-Every currently supported NXP i.MX board in [Getting Started](../getting-started/how-to-install/index.md)
-uses this recipe:
+Every currently supported board in [Getting Started](../getting-started/how-to-install/index.md)
+that flash-over-USB uses this recipe:
 
 - **Toradex** — [Verdin iMX8MM](../getting-started/how-to-install/boards/verdin-imx8mm.md) and
   [Colibri iMX6ULL](../getting-started/how-to-install/boards/colibri-imx6ull.md); see
@@ -22,6 +22,8 @@ uses this recipe:
   [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md) for the end-user procedure.
 - **NXP i.MX8QXP MEK** — [Board Guide](../getting-started/how-to-install/boards/imx8qxp-b0-mek.md); also
   covered by [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md).
+- **Rockchip** — [Orange Pi 5B](../getting-started/how-to-install/boards/orangepi-5b.md) (RK3588S); see
+  [Flashing Rockchip devices](../getting-started/how-to-install/rockchip.md) for the end-user procedure.
 
 This page covers how the recipe itself is built and how to wire up a new
 machine.
@@ -42,6 +44,8 @@ matter of setting variables and dropping in templates, not editing the `.bb`.
 | Variable | Role | Default |
 |---|---|---|
 | `PV_FLASH_IMAGE` | Image recipe whose rootfs goes into the bundle | `pantavisor-starter` |
+| `PV_FLASH_TOOL` | Host flashing tool bundled and driven by `flash.sh`: `uuu` (NXP SDP/fastboot) or `rkdeveloptool` (Rockchip Maskrom) | `uuu` *(set to `rkdeveloptool` for `orangepi-5b`)* |
+| `PV_FLASH_RK_LOADER` | `rkdeveloptool` only: glob for the Rockchip USB loader (DDR init + miniloader/usbplug) in the **main build's** `DEPLOY_DIR_IMAGE`; installed into the bundle as `loader.bin` and passed to `rkdeveloptool db` | *(none, set for `orangepi-5b`)* |
 | `PV_FLASH_RECOVERY_MC` | Multiconfig that builds the recovery U-Boot | *(none)* |
 | `PV_FLASH_RECOVERY_RECIPE` | Recipe to build in that multiconfig (e.g. `u-boot-toradex`) | *(none)* |
 | `PV_FLASH_RECOVERY_IMAGE` | Filename of the recovery U-Boot in the recovery MC's deploy dir | *(none)* |
@@ -50,6 +54,7 @@ matter of setting variables and dropping in templates, not editing the `.bb`.
 | `PV_FLASH_UBIFS` | UBIFS rootfs filename (NAND machines only) | *(none, set for `colibri-imx6ull`)* |
 | `PV_FLASH_UUU_SCRIPT_IN` | `file://uuu.auto.in` template SRC_URI entry | *(none)* |
 | `PV_FLASH_FLASH_SCRIPT_IN` | `file://flash.sh.in` template SRC_URI entry | *(none)* |
+| `PV_FLASH_README_IN` | `file://README.md.in` template SRC_URI entry — an optional `README.md` shipped inside the bundle (host prerequisites, OS constraints) | *(none, set for `orangepi-5b`)* |
 
 Leaving `PV_FLASH_UBIFS`/`PV_FLASH_NAND_UBOOT` empty (the eMMC default) makes
 `do_deploy` bundle whichever compressed WIC image the main build produced —
@@ -61,7 +66,8 @@ UBIFS image.
 1. **Rootfs artifact** — installs `${PV_FLASH_IMAGE}-${MACHINE}.rootfs.ubifs`
    if `PV_FLASH_UBIFS` is set, otherwise whichever of `.wic.zst` / `.wic.gz`
    is present in `DEPLOY_DIR_IMAGE` (+ `.wic.bmap`); both are installed if
-   both exist.
+   both exist, and the uncompressed `.wic` is used as a fallback when the main
+   build produced no compressed variant.
 2. **Recovery U-Boot** — installs `PV_FLASH_RECOVERY_IMAGE` from
    `RECOVERY_DEPLOY_DIR_IMAGE` (`tmp-${DISTRO_CODENAME}-${PV_FLASH_RECOVERY_MC}/deploy/images/${MACHINE}`),
    pulled in via `do_deploy[mcdepends]` on
@@ -76,29 +82,37 @@ UBIFS image.
    present already, since `${PV_FLASH_IMAGE}:do_image_complete` (in
    `do_deploy[depends]`) transitively requires the WKS's bootloader partition
    to be built first.
-5. **UUU binary** — copies `uuu` from `uuu-native:do_populate_sysroot` into
-   the bundle, then runs `patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath ""`
-   so the binary runs on an arbitrary x86-64 Linux host regardless of its
-   build sysroot.
+5. **Flashing tool** — for `PV_FLASH_TOOL = "uuu"` (default), copies `uuu` from
+   `uuu-native:do_populate_sysroot`; for `PV_FLASH_TOOL = "rkdeveloptool"`, copies
+   `rkdeveloptool` from `rkdeveloptool-native:do_populate_sysroot` **and** globs
+   `PV_FLASH_RK_LOADER` out of `${DEPLOY_DIR_IMAGE}` into the bundle as the fixed
+   name `loader.bin` (`do_deploy[depends]` on `virtual/bootloader:do_deploy`
+   guarantees the loader is present). Either way, `patchelf
+   --set-interpreter /lib64/ld-linux-x86-64.so.2 --set-rpath ""` is run on the
+   copied binary so it runs on an arbitrary x86-64 Linux host regardless of its
+   build sysroot. The `rkdeveloptool` build links `libusb-1.0` dynamically, so the
+   flashing host must have that library installed.
 6. **Script generation** — `sed`-expands `@WIC@ @WIC_GZ@ @WIC_ZST@ @UBIFS@ @UBOOT_NAND@ @RECOVERY_IMAGE@`
    in `uuu.auto.in` and `flash.sh.in` (staged via `FILESEXTRAPATHS:prepend`
    from `files/${MACHINE}/`) into `uuu.auto` and `flash.sh` in the bundle.
-   `imx-boot.bin` (from step 4) is referenced as a literal filename in those
-   templates instead, since its bundle name is fixed by the recipe rather
-   than expanded from a variable.
-   Every `flash.sh.in` resolves the tool at run time — `$UUU` if set, else
-   the bundled `./uuu`, else `uuu` on `PATH` — and prefixes `sudo` only when
-   not already root, so a bundle can also be driven from a container or host
-   that ships its own tool (see
-   [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md#notes)).
+   `imx-boot.bin` (step 4) and `loader.bin` (step 5) are referenced as literal
+   filenames in those templates instead, since their bundle names are fixed by
+   the recipe rather than expanded from a variable. If `PV_FLASH_README_IN` is
+   set, `README.md.in` is expanded the same way into `README.md` in the bundle.
+   Every `flash.sh.in` resolves the tool at run time — `$UUU` / `$RKDEVELOPTOOL`
+   if set, else the bundled `./uuu` / `./rkdeveloptool`, else the tool on
+   `PATH` — and prefixes `sudo` only when not already root, so a bundle can
+   also be driven from a container or host that ships its own tool (see
+   [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md#notes) and
+   [Flashing Rockchip devices](../getting-started/how-to-install/rockchip.md#notes)).
 7. **Package** — tars the bundle directory as
    `${PN}-${MACHINE}.tar.gz` and symlinks `${PN}-${MACHINE}-latest.tar.gz`.
 
 ## Per-machine templates
 
-Machine-specific UUU logic lives entirely in `files/<machine>/uuu.auto.in`
-and `files/<machine>/flash.sh.in` — the recipe code is identical for every
-machine.
+Machine-specific flashing logic lives entirely in `files/<machine>/uuu.auto.in`
+(UUU machines) and `files/<machine>/flash.sh.in` — the recipe code is identical
+for every machine.
 
 - **verdin-imx8mm** (eMMC): SDP boot of the recovery U-Boot (SPL then full
   image, VID/PID `0x1b67:0x4fff`), jump to fastboot (`0x1b67:0x4000`), then
@@ -133,6 +147,15 @@ machine.
   — an eMMC-only speed mode) probes before `usdhc2` (`sd-uhs-sdr104` — SD
   card), and no `/aliases` override reorders them, so `usdhc1` gets U-Boot
   device index 0.
+- **orangepi-5b** (eMMC, Rockchip RK3588S — `PV_FLASH_TOOL = "rkdeveloptool"`):
+  no `uuu.auto.in`. `flash.sh.in` waits for a device in USB **Maskrom** mode
+  (`rkdeveloptool ld | grep -i maskrom`), sends the loader to SoC SRAM
+  (`rkdeveloptool db loader.bin`), streams the whole disk image to eMMC
+  (`rkdeveloptool wl 0 @WIC@` — sector 0, so the GPT, idbloader, U-Boot and
+  rootfs are all written), then `rkdeveloptool rd` reboots. `loader.bin` is the
+  JeffyCN `u-boot-rockchip.bb` `loader.bin` (the Rockchip Miniloader, which also
+  provides the `usbplug` that handles `wl`). `flash.sh.in` decompresses
+  `@WIC_ZST@`/`@WIC_GZ@` to `@WIC@` first if the main build compressed it.
 
 ### Why Variscite and the MEK don't need a recovery multiconfig
 
@@ -150,10 +173,11 @@ ever evaluated — confirmed by Variscite's own `var-uuu-installer` recipe (in
 exists for exactly this case: pull the boot binary straight from the main
 build instead of standing up a second multiconfig.
 
-See [Flashing Toradex Modules](../getting-started/how-to-install/toradex.md#how-the-flash-sequence-works)
-and [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md) for the full step-by-step
-sequences and hardware-specific notes (NAND geometry, udev rules, boot-mode
-switches, etc).
+See [Flashing Toradex Modules](../getting-started/how-to-install/toradex.md#how-the-flash-sequence-works),
+[Flashing via NXP uuu](../getting-started/how-to-install/uuu.md), and
+[Flashing Rockchip devices](../getting-started/how-to-install/rockchip.md) for the full
+step-by-step sequences and hardware-specific notes (NAND geometry, udev rules,
+boot-mode switches, Maskrom entry, etc).
 
 ## Build wiring
 
@@ -170,11 +194,17 @@ target:
 ```
 
 ```yaml
-# imx8mm-var-dart-scarthgap.yaml / imx8mn-var-som-scarthgap.yaml / imx8qxp-b0-mek-scarthgap.yaml
+# imx8mm-var-dart-scarthgap.yaml / imx8mn-var-som-scarthgap.yaml /
+# imx8qxp-b0-mek-scarthgap.yaml / rockchip-orangepi-5b-scarthgap.yaml
 target:
 - pantavisor-starter
 - pv-flash-bundle
 ```
+
+The `target:` list comes from the `build-base-*-starter.yaml` a machine's config
+chain ends in (`.github/machines.json`): `build-base-toradex-starter.yaml` adds
+the recovery multiconfig, `build-base-uuu-starter.yaml` and
+`build-base-rkflash-starter.yaml` just add `pv-flash-bundle`.
 
 ```bash
 kas build kas/build-configs/release/verdin-imx8mm-scarthgap.yaml
@@ -183,29 +213,36 @@ kas build kas/build-configs/release/verdin-imx8mm-scarthgap.yaml
 Artifacts land at
 `build/tmp-${codename}/deploy/images/${machine}/pv-flash-bundle-${machine}.tar.gz`.
 
-## Adding a new UUU-flashable machine
+## Adding a new machine
 
-1. Add `recipes-bsp/pv-flash/files/<machine>/uuu.auto.in` and `flash.sh.in`.
-2. Set `PV_FLASH_UUU_SCRIPT_IN:<machine>` / `PV_FLASH_FLASH_SCRIPT_IN:<machine>`
-   to `file://uuu.auto.in` / `file://flash.sh.in` in `pv-flash-bundle.bb`.
-3. Pick a boot-image source, depending on whether the production bootloader
-   already self-enters SDP/fastboot download mode (check the SoC vendor's
-   SPL source for a `CONFIG_SPL_USB_SDP_SUPPORT`-style ROM-level handoff, or
-   look for a vendor-shipped single-build uuu installer recipe as evidence):
-   - **Needs a stripped recovery build** (like Toradex): set
-     `PV_FLASH_RECOVERY_MC` / `PV_FLASH_RECOVERY_RECIPE` / `PV_FLASH_RECOVERY_IMAGE`
-     in the machine's `kas/machines/<machine>.yaml`, and add the recovery
-     multiconfig target to the release build-config.
-   - **Production bootloader already works** (like Variscite): set
-     `PV_FLASH_BOOT_IMAGE:<machine>` (a glob) directly in `pv-flash-bundle.bb`
-     — no new multiconfig, no machine-yaml changes needed for this variable.
+1. Add `recipes-bsp/pv-flash/files/<machine>/flash.sh.in` (and, for UUU
+   machines, `uuu.auto.in`).
+2. Set `PV_FLASH_FLASH_SCRIPT_IN:<machine>` (and `PV_FLASH_UUU_SCRIPT_IN:<machine>`
+   for UUU) to `file://flash.sh.in` / `file://uuu.auto.in` in `pv-flash-bundle.bb`.
+3. Pick the flashing tool and the loader source:
+   - **NXP i.MX, needs a stripped recovery build** (like Toradex): keep
+     `PV_FLASH_TOOL = "uuu"`; set `PV_FLASH_RECOVERY_MC` /
+     `PV_FLASH_RECOVERY_RECIPE` / `PV_FLASH_RECOVERY_IMAGE` in the machine's
+     `kas/machines/<machine>.yaml`, and add the recovery multiconfig target to
+     the release build-config.
+   - **NXP i.MX, production bootloader already self-enters SDP/fastboot** (like
+     Variscite — check the SoC vendor SPL for `CONFIG_SPL_USB_SDP_SUPPORT`, or a
+     vendor single-build uuu installer recipe): keep `PV_FLASH_TOOL = "uuu"`; set
+     `PV_FLASH_BOOT_IMAGE:<machine>` (a glob) directly in `pv-flash-bundle.bb`.
+   - **Rockchip** (like `orangepi-5b`): set `PV_FLASH_TOOL:<machine> = "rkdeveloptool"`
+     and `PV_FLASH_RK_LOADER:<machine>` to the glob for a Maskrom-capable USB
+     loader in the main build's `DEPLOY_DIR_IMAGE` (the JeffyCN BSP deploys
+     `loader.bin`; a mainline-U-Boot BSP has none prebuilt and needs one merged
+     from rkbin with `boot_merger` first).
 4. For NAND machines, also set `PV_FLASH_NAND_UBOOT` / `PV_FLASH_UBIFS`.
-5. Add `pv-flash-bundle` (and the recovery multiconfig target, if used) to
-   the machine's release build-config `target` list.
+5. Point the machine's `.github/machines.json` config chain at the right
+   `build-base-*-starter.yaml`, add `build_target: ""` +
+   `output: "pv-flash-bundle-<machine>.tar.gz"`, then run
+   `.github/scripts/makemachines` and `.github/scripts/makeworkflows`.
 
 No changes to `pv-flash-bundle.bb`'s `do_deploy` logic are needed unless the
 new machine requires a genuinely new flash topology beyond eMMC-wic,
-eMMC-boot-image, or NAND-UBIFS.
+eMMC-boot-image, NAND-UBIFS, or Rockchip Maskrom.
 
 ## Related
 

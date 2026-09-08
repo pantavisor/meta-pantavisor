@@ -64,10 +64,12 @@
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
-			"config": "kas/machines/rockchip-orangepi-5b.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/rockchip-orangepi-5b.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-rkflash-starter.yaml",
 			"name": "rockchip-orangepi-5b",
 			"display_name": "Orange Pi 5B",
-			"description": "Rockchip RK3588S octa-core ARMv8.2 SBC (4x Cortex-A76 + 4x Cortex-A55) with onboard Wi-Fi/Bluetooth and eMMC. BSP via JeffyCN/meta-rockchip. Boots Pantavisor from an SD card.",
+			"description": "Rockchip RK3588S octa-core ARMv8.2 SBC (4x Cortex-A76 + 4x Cortex-A55) with onboard Wi-Fi/Bluetooth and eMMC. BSP via JeffyCN/meta-rockchip. Delivered as a pv-flash-bundle archive and flashed to eMMC over USB Maskrom with rkdeveloptool.",
+			"build_target": "",
+			"output": "pv-flash-bundle-orangepi-5b.tar.gz",
 			"workflows": ["manual", "tag"]
 		},
 		{
