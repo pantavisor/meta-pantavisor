@@ -30,6 +30,16 @@ on:
           - all
         default: "volatile"
 
+      hub:
+        description: 'Hub to run against ("all" runs both, one job each; stage is non-blocking)'
+        required: false
+        type: choice
+        options:
+          - prod
+          - stage
+          - all
+        default: "prod"
+
 jobs:
 
   build-docker-x86_64-scarthgap:
@@ -51,4 +61,5 @@ jobs:
       test_path: ${{ inputs.test_path }}
       parallel: ${{ inputs.parallel }}
       model: ${{ inputs.model }}
+      hub: ${{ inputs.hub }}
     secrets: inherit

@@ -20,12 +20,18 @@ on:
         required: false
         type: string
         default: "volatile"
+      hub:
+        description: 'Hub to run against: prod (api.pantahub.com), stage (api.stage.pantahub.com), or all (both, one job each)'
+        required: false
+        type: string
+        default: "prod"
 jobs:
 
   validate:
     runs-on: ubuntu-latest
     outputs:
       models: ${{ steps.models.outputs.list }}
+      hubs: ${{ steps.hubs.outputs.list }}
     steps:
       - name: Validate test_path input
         id: check
@@ -58,6 +64,22 @@ jobs:
           echo "list=$list" >> $GITHUB_OUTPUT
           echo "=== Model(s): $list ===" >> $GITHUB_STEP_SUMMARY
 
+      # "all" fans the tests job out over both hubs; stage is continue-on-error
+      # so it never blocks landing, whatever it reports.
+      - name: Resolve hub matrix
+        id: hubs
+        run: |
+          case "${{ inputs.hub }}" in
+            all)          list='["prod","stage"]' ;;
+            prod|stage)   list='["${{ inputs.hub }}"]' ;;
+            *)
+              echo "❌ Invalid hub: '${{ inputs.hub }}' (expected prod, stage or all)"
+              exit 1
+              ;;
+          esac
+          echo "list=$list" >> $GITHUB_OUTPUT
+          echo "=== Hub(s): $list ===" >> $GITHUB_STEP_SUMMARY
+
   tests:
     needs: validate
     runs-on: ["pvtest-runner"]
@@ -65,11 +87,14 @@ jobs:
       fail-fast: false
       matrix:
         model: ${{ fromJSON(needs.validate.outputs.models) }}
-    # model-scoped so the two "all" jobs never share a workspace or an artifact
-    # name, whether they land on the same runner or different ones
+        hub: ${{ fromJSON(needs.validate.outputs.hubs) }}
+    # stage must never block landing; prod stays blocking
+    continue-on-error: ${{ matrix.hub == 'stage' }}
+    # model- and hub-scoped so concurrent jobs never share a workspace or an
+    # artifact name, whether they land on the same runner or different ones
     env:
-      WORKSPACE: /tmp/workspace-${{ github.run_id }}-${{ matrix.model }}
-      PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}-${{ matrix.model }}
+      WORKSPACE: /tmp/workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
+      PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
     steps:
       - name: Download pvtest distro
         uses: actions/download-artifact@v7
@@ -88,13 +113,23 @@ jobs:
         env:
           PH_USER: ${{ secrets.PH_USER }}
           PH_PASS: ${{ secrets.PH_PASS }}
+          PH_STAGE_USER: ${{ secrets.PH_STAGE_USER }}
+          PH_STAGE_PASS: ${{ secrets.PH_STAGE_PASS }}
         run: |
           TEST_TARGET="${{ inputs.test_path }}"
+
+          # explicit shell case, not &&/|| — a missing stage secret must fail
+          # loudly, never silently fall back to prod creds
+          case "${{ matrix.hub }}" in
+            prod)  PVTEST_HUB_URL=https://api.pantahub.com ;;
+            stage) PVTEST_HUB_URL=https://api.stage.pantahub.com; PH_USER="$PH_STAGE_USER"; PH_PASS="$PH_STAGE_PASS" ;;
+          esac
+          export PVTEST_HUB_URL PH_USER PH_PASS
 
           echo "=== AppEngine Test Run started at $(date) ==="
 
           echo "------------------------------------------------------"
-          echo "RUNNING: ${TEST_TARGET:-all} (model: ${{ matrix.model }})"
+          echo "RUNNING: ${TEST_TARGET:-all} (model: ${{ matrix.model }}, hub: ${{ matrix.hub }})"
           echo "------------------------------------------------------"
 
           PARALLEL=${{ inputs.parallel }}
@@ -146,7 +181,7 @@ jobs:
           suffix="${suffix//\//-}"
           sha="${{ inputs.commit || github.sha }}"
           sha="${sha:0:7}"
-          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}-${{ matrix.model }}" >> $GITHUB_ENV
+          echo "PVTEST_ARTIFACT_NAME=pvtest-workspace-${sha}-${suffix:-all}-${{ matrix.model }}-${{ matrix.hub }}" >> $GITHUB_ENV
 
           sudo chown -R $(id -u):$(id -g) $PVTEST_WORKSPACE || true
 

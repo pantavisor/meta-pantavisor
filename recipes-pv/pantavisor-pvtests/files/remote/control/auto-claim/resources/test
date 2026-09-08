@@ -20,7 +20,7 @@ autotok_json=$(curl -s -X POST \
 	-H "Authorization: Bearer $bearer" \
 	-H "Content-Type: application/json" \
 	-d '{}' \
-	"https://api.pantahub.com/devices/tokens")
+	"$PVTEST_HUB_URL/devices/tokens")
 autotok=$(echo "$autotok_json" | jq -r '.token')
 autotok_id=$(echo "$autotok_json" | jq -r '.id')
 
@@ -64,5 +64,5 @@ fi
 if [ -n "$autotok_id" ]; then
 	curl -s -X DELETE \
 		-u "$PH_USER:$PH_PASS" \
-		"https://api.pantahub.com/devices/tokens/$autotok_id" > /dev/null 2>&1
+		"$PVTEST_HUB_URL/devices/tokens/$autotok_id" > /dev/null 2>&1
 fi

@@ -10,7 +10,7 @@ checkout="$(mktemp -d)/checkout"
 pvr_clone_local_or_die "$checkout"
 cd "$checkout"
 
-trail_url="https://api.pantahub.com/trails/$device_id"
+trail_url="$PVTEST_HUB_URL/trails/$device_id"
 
 echo "== post revision (same content, makes factory rev GC-able) =="
 revA=$(pvr_post_rev -m "same revision to make factory rev GC-able" "$trail_url")
@@ -40,7 +40,7 @@ echo "== local step progress =="
 pvcontrol steps show-progress $revB | jq -Mc 'del(.logs, .downloads)'
 
 echo "== cloud step status =="
-cloud_step_url="https://api.pantahub.com/trails/$device_id/steps/$revB"
+cloud_step_url="$PVTEST_HUB_URL/trails/$device_id/steps/$revB"
 wait_for_value "pvr stepinfo $cloud_step_url 2>/dev/null | sed -n '/^{/,\$p' | jq -r '.progress.status // empty'" "WONTGO" 60 \
     || { echo "ERROR: timeout waiting for cloud to reflect WONTGO" >&2; exit 1; }
 pvr stepinfo "$cloud_step_url" | sed -n '/^{/,$p' | jq -M '{status: .progress.status, "status-msg": .progress["status-msg"]}'

@@ -19,6 +19,19 @@ tree — cd into it and run `test.docker.sh` without extracting anything.
 `./test.docker.sh -h` lists every command, flag, path selector and environment override. The
 tarball `README.md` has ready-made examples.
 
+### Running against another Hub
+
+```bash
+PH_USER=... PH_PASS=... ./test.docker.sh run remote --hub https://api.stage.pantahub.com
+```
+
+`--hub URL` (or `PVTEST_HUB_URL`) points the whole run at a different Pantacor Hub instance,
+default `https://api.pantahub.com`. Mechanically, the tester adds `PH_CREDS_HOST`/
+`PH_CREDS_PORT` to the required config of any test that declares `PV_CONTROL_REMOTE=1` and
+names no Hub of its own, and those tokens flow through the normal re-type path like any other
+config. Local tests (`PV_CONTROL_REMOTE=0`) are untouched. `PH_USER`/`PH_PASS` must be an
+account on the targeted Hub — see [CI](#ci) for how the stage account is supplied there.
+
 ## Debugging a failing test
 
 Every run creates a workspace with a `README.md` inside that documents the full layout, the
@@ -72,7 +85,7 @@ permissions.
 | `setup.config.env` | per-test env config, as space-separated `KEY=VALUE`. Prefer `setup.config.usrmeta` for keys configurable at runtime | e.g. `"PV_CONTROL_REMOTE=0 PV_SECUREBOOT_MODE=lenient"` |
 | `setup.config.usrmeta` | per-test runtime metadata, space-separated `KEY=VALUE` | e.g. `"PV_LOG_PUSH=1 PH_UPDATER_INTERVAL=5"` |
 | `setup.containers.tarballs` | list of extra container pvrexport tarballs merged on top of the device's factory state to form the test's initial revision | the device/appengine should provide bsp plus a container with the pvr endpoint (e.g. pvr-sdk), so do not add those |
-| `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed in setup | requires `PH_USER`/`PH_PASS` when `"true"` |
+| `setup.self-claim` | `"true"`: claim the device in setup and delete it in teardown; `"false"`: ensure the device is unclaimed in setup | requires `PH_USER`/`PH_PASS` for the targeted Hub (see [Running against another Hub](#running-against-another-hub)) when `"true"` |
 | `setup.commit-initial` | whether the initial revision must be committed as a rollback point before the test body runs | `"true"` costs a full reboot cycle, so set it only when the test triggers a rollback that must land on its own revision, or asserts the initial revision survives a gc. Only affects the persistent model |
 | `test-script` | path to the test script | `"resources/test"` |
 | `skip` | exclude test from runs | `--fail-on-skip` (used on CI/master) fails the run on any SKIPPED |
@@ -194,7 +207,7 @@ lessons that caused real cross-test failures.
    assigned with `pvr_post_rev` (from `utils`):
    ```sh
    device_id=$(pv_exec cat /run/pantavisor/pv/device-id)
-   trail_url="https://api.pantahub.com/trails/$device_id"
+   trail_url="$PVTEST_HUB_URL/trails/$device_id"
    rev=$(pvr_post_rev -m "msg" "$trail_url")
    [ -n "$rev" ] || { echo "ERROR: could not determine posted revision" >&2; exit 1; }
    wait_for_revision_state "$rev" "UPDATED"
@@ -267,6 +280,9 @@ lessons that caused real cross-test failures.
     `wait_for_target_ready`, passing a short label (`"after crash 2"`) whenever a test fences
     more than once — otherwise each fence logs the same lines and the log cannot say which
     one stalled.
+18. **Never hard-code a Hub URL.** A remote test targets whichever Hub the run was pointed at,
+    not always `api.pantahub.com` — use `$PVTEST_HUB_URL` (exported by `utils`; `pvr` follows
+    it via `PVR_BASEURL`) for every Hub API call, as in the `trail_url` line above.
 
 ## Updating expected output for an existing test
 
@@ -289,12 +305,22 @@ allowances the tarball `README.md` asks for.
 
 | Workflow | Trigger | What it runs |
 |---|---|---|
-| `call-pvtests.yaml` | reusable (`workflow_call`) | The actual run. Inputs: `commit`, `test_path`, `parallel` (default `6`), `model` (default `volatile`; `all` expands to a `["volatile","persistent"]` matrix). Downloads the distro artifact, `CI_MODE=true ./test.docker.sh install-docker`, then runs with `-V --fail-on-skip`. Remote scope always runs serial (no `-p`). Uploads the workspace as `pvtest-workspace-<sha7>-<test_path>-<model>`. |
-| `manual-pvtests.yaml` | `workflow_dispatch` | Builds `pantavisor-appengine-distro` for `docker-x86_64`, then calls `call-pvtests.yaml` with the four inputs forwarded. |
-| `schedule-pvtests.yaml` | nightly cron (02:00) + dispatch | Same build, then `parallel: 6`, `model: all` — the nightly covers both execution models. |
+| `call-pvtests.yaml` | reusable (`workflow_call`) | The actual run. Inputs: `commit`, `test_path`, `parallel` (default `6`), `model` (default `volatile`; `all` expands to a `["volatile","persistent"]` matrix), `hub` (default `prod`; `all` expands to a `["prod","stage"]` matrix). Downloads the distro artifact, `CI_MODE=true ./test.docker.sh install-docker`, then runs with `-V --fail-on-skip`. Remote scope always runs serial (no `-p`). Uploads the workspace as `pvtest-workspace-<sha7>-<test_path>-<model>-<hub>`. |
+| `manual-pvtests.yaml` | `workflow_dispatch` | Builds `pantavisor-appengine-distro` for `docker-x86_64`, then calls `call-pvtests.yaml` with the five inputs forwarded. |
+| `schedule-pvtests.yaml` | nightly cron (02:00) + dispatch | Same build, then `parallel: 6`, `model: all`, `hub: all` — the nightly covers both execution models and both Hubs. |
 
 The uploaded workspace artifact carries `README.md`, `run.log`, `results/`, `valgrind/` and
 the `*.log` console captures only: **`storage/` is deliberately excluded**, so a downloaded CI
 workspace has no trails/objects/logs tree to inspect, unlike a local run. Workspaces are
-model-scoped so the two matrix legs don't collide, and a cleanup step removes all
+model- and hub-scoped so matrix legs never collide, and a cleanup step removes all
 `pantavisor-appengine*` containers and images and both workspaces after each run.
+
+### Hub matrix
+
+`hub: prod` (default) runs only against `api.pantahub.com` and blocks landing on failure.
+`hub: stage` or the `stage` leg of `hub: all` runs against `api.stage.pantahub.com` with
+`continue-on-error: true`, so a stage regression is visible in the job summary but never blocks
+a merge or a release. The `tests` job maps `matrix.hub` to `PVTEST_HUB_URL` and, for `stage`,
+swaps `PH_USER`/`PH_PASS` for the `PH_STAGE_USER`/`PH_STAGE_PASS` repository secrets — both
+secrets must be set for stage runs to authenticate; `onpush-scarthgap.yaml` and `release.yaml`
+never pass `hub`, so they stay on `prod`.
