@@ -11,7 +11,7 @@ checkout="$(mktemp -d)/checkout"
 pvr_clone_local_or_die "$checkout"
 cd "$checkout"
 
-trail_url="https://api.pantahub.com/trails/$device_id"
+trail_url="$PVTEST_HUB_URL/trails/$device_id"
 
 echo "== post one large object (download throttled to 1 MB/s) =="
 # 100 MB incompressible object, throttled via PH_UPDATER_DOWNLOAD_RATE_LIMIT
