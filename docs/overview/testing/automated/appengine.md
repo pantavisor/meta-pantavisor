@@ -282,7 +282,9 @@ lessons that caused real cross-test failures.
     one stalled.
 18. **Never hard-code a Hub URL.** A remote test targets whichever Hub the run was pointed at,
     not always `api.pantahub.com` — use `$PVTEST_HUB_URL` (exported by `utils`; `pvr` follows
-    it via `PVR_BASEURL`) for every Hub API call, as in the `trail_url` line above.
+    it via `PVR_BASEURL`) for every Hub API call, as in the `trail_url` line above. Never
+    hand `pvr claim` or `pvr dev delete` a bare device id either: that form is hard-wired to
+    `api.pantahub.com` inside pvr, so pass `$(pvr_device_url "$device_id")` (from `utils`).
 
 ## Updating expected output for an existing test
 
