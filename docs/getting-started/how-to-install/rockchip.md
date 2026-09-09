@@ -77,6 +77,14 @@ first and then enter Maskrom mode.
 
 ## Notes
 
+- `flash.sh` runs the bundled `./rkdeveloptool` by default. To use a host- or
+  container-provided one instead (non-x86-64 host, or a container image that
+  already ships it), point `RKDEVELOPTOOL` at it or drop the bundled copy so
+  the one on `PATH` is used:
+  ```bash
+  RKDEVELOPTOOL=/usr/bin/rkdeveloptool ./flash.sh
+  ```
+  `sudo` is only used when not already running as root.
 - After `db`, the SoC re-enumerates in Loader mode; `flash.sh` waits 2 s before
   `wl`. If `wl` reports no device, re-run `rkdeveloptool ld` — it should now show
   `Loader` rather than `Maskrom`.

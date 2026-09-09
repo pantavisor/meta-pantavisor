@@ -10,6 +10,15 @@
 # either a udev rule for Rockchip VID 0x2207 or the sudo used below.
 set -e
 
+# Flashing tool: $RKDEVELOPTOOL overrides the bundled ./rkdeveloptool, then
+# PATH, so the bundle also works from a container/host that ships its own.
+if [ -n "$RKDEVELOPTOOL" ]; then rkdt="$RKDEVELOPTOOL"
+elif [ -x ./rkdeveloptool ]; then rkdt=./rkdeveloptool
+else rkdt="$(command -v rkdeveloptool)" || { echo "rkdeveloptool not found: set RKDEVELOPTOOL=/path/to/rkdeveloptool" >&2; exit 1; }
+fi
+# sudo only when not already root (containers usually are, and lack sudo).
+[ "$(id -u)" -eq 0 ] && sudo= || sudo=sudo
+
 wic=@WIC@
 trap 'rm -f "$wic"' EXIT INT TERM
 
@@ -22,11 +31,11 @@ elif [ -f "@WIC_GZ@" ]; then
 fi   # else an uncompressed @WIC@ is already in the bundle
 
 echo "Waiting for a Rockchip device in Maskrom mode..."
-until sudo ./rkdeveloptool ld | grep -qi maskrom; do sleep 1; done
+until $sudo "$rkdt" ld | grep -qi maskrom; do sleep 1; done
 
-sudo ./rkdeveloptool db loader.bin
+$sudo "$rkdt" db loader.bin
 sleep 2
-sudo ./rkdeveloptool wl 0 "$wic"
-sudo ./rkdeveloptool rd
+$sudo "$rkdt" wl 0 "$wic"
+$sudo "$rkdt" rd
 
 echo "Done - the board reboots from eMMC."
