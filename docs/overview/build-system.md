@@ -68,9 +68,12 @@ KAS is the primary build system. Configuration is composed by layering YAML frag
 ### Build configs
 
 `kas/build-configs/` holds the build configs you pass to `kas build` directly.
-The `release/` ones pin a machine and are self-contained; the `build-base-*`
-ones are the bases `kas menu` writes into `.config.yaml`, so the machine comes
-from the menu selection:
+The `release/` ones pin a machine and are self-contained. The `build-base-*`
+ones are minimal bases (image target + a couple of features) that expect a
+machine fragment prepended, as in `.github/machines.json`. `kas menu` does not
+use these files — it writes its own `.config.yaml` from `Kconfig`, including the
+`pantavisor-starter` + `pv-flash-bundle` (± recovery multiconfig) target set for
+factory-flash machines via the "Also build pv-flash-bundle" prompt.
 
 | Config | Machine | Target |
 |--------|---------|--------|

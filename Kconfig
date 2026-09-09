@@ -69,6 +69,32 @@ config KAS_TARGET_BUILD
 	default "pantavisor-appengine-distro" if BUILD_APPENGINE
 	default BUILD_APPENGINE_IMAGE if BUILD_TYPE_APPENGINE_CUSTOM
 
+# USB factory-flash bundle. Machines select PVFLASH_BUNDLE_CAPABLE (and, for
+# Toradex, TORADEX_RECOVERY_MC) below; keep that list in sync with the
+# extra_targets in .github/machines.json.
+config PVFLASH_BUNDLE_CAPABLE
+	bool
+
+config TORADEX_RECOVERY_MC
+	bool
+
+config BUILD_PVFLASH_BUNDLE
+	bool "Also build pv-flash-bundle (USB factory-flash archive)"
+	depends on PVFLASH_BUNDLE_CAPABLE && BUILD_STARTER
+	default y
+	help
+	  Adds pv-flash-bundle to the build targets, matching what CI produces
+	  for this machine (.github/machines.json extra_targets). Toradex
+	  machines also build the tezi-recovery multiconfig.
+
+config KAS_TARGET_PVFLASH_RECOVERY
+	string
+	default "mc:tezi-recovery:u-boot-toradex" if BUILD_PVFLASH_BUNDLE && TORADEX_RECOVERY_MC
+
+config KAS_TARGET_PVFLASH_BUNDLE
+	string
+	default "pv-flash-bundle" if BUILD_PVFLASH_BUNDLE
+
 config PVBSP_FIRMWARE_PKG
 	string "BSP Firmware"
 	default "${MACHINE_FIRMWARE} linux-firmware"
@@ -347,16 +373,19 @@ config MACHINE_IMX8MN_VAR_SOM
 	bool "imx8mn-var-som"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
 	select PLATFORM_VARISCITE
+	select PVFLASH_BUNDLE_CAPABLE
 
 config MACHINE_IMX8MM_VAR_DART
 	bool "imx8mm-var-dart"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_VARISCITE
 	select PLATFORM_VARISCITE
+	select PVFLASH_BUNDLE_CAPABLE
 
 config MACHINE_IMX8QXP_B0_MEK
 	bool "imx8qxp-b0-mek"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NXP
 	select PLATFORM_NXP
+	select PVFLASH_BUNDLE_CAPABLE
 
 config MACHINE_IMX8QXP_MEK
 	bool "imx8qxp-mek"
@@ -368,12 +397,16 @@ config MACHINE_COLIBRI_IMX6ULL
         depends on CODENAME_SCARTHGAP
         depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
         select PLATFORM_TORADEX
+        select PVFLASH_BUNDLE_CAPABLE
+        select TORADEX_RECOVERY_MC
 
 config MACHINE_VERDIN_IMX8MM
         bool "verdin-imx8mm"
         depends on CODENAME_SCARTHGAP
         depends on MACHINE_FILTER_ALL || MACHINE_FILTER_TORADEX
         select PLATFORM_TORADEX
+        select PVFLASH_BUNDLE_CAPABLE
+        select TORADEX_RECOVERY_MC
 
 config MACHINE_CORAL_DEV
 	bool "Google Coral Dev"
@@ -400,6 +433,7 @@ config MACHINE_ROCKCHIP_ORANGEPI_5B
 	bool "rockchip orangepi 5b"
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_ROCKCHIP
 	select PLATFORM_ROCKCHIP
+	select PVFLASH_BUNDLE_CAPABLE
 
 config MACHINE_SUNXI_BANANAPI_M2_BERRY
 	bool "bananapi m2 berry"
