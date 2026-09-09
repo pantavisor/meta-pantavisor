@@ -86,6 +86,11 @@ UBIFS image.
    `imx-boot.bin` (from step 4) is referenced as a literal filename in those
    templates instead, since its bundle name is fixed by the recipe rather
    than expanded from a variable.
+   Every `flash.sh.in` resolves the tool at run time — `$UUU` if set, else
+   the bundled `./uuu`, else `uuu` on `PATH` — and prefixes `sudo` only when
+   not already root, so a bundle can also be driven from a container or host
+   that ships its own tool (see
+   [Flashing via NXP uuu](../getting-started/how-to-install/uuu.md#notes)).
 7. **Package** — tars the bundle directory as
    `${PN}-${MACHINE}.tar.gz` and symlinks `${PN}-${MACHINE}-latest.tar.gz`.
 

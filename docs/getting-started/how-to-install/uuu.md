@@ -110,6 +110,14 @@ boot from eMMC.
 
 ## Notes
 
+- `flash.sh` runs the bundled `./uuu` by default. To use a host- or
+  container-provided `uuu` instead (e.g. a non-x86-64 host, or a container
+  image that already ships NXP's tool), point `UUU` at it or drop the bundled
+  copy so the one on `PATH` is picked up:
+  ```bash
+  UUU=/usr/bin/uuu ./flash.sh
+  ```
+  `sudo` is only used when not already running as root.
 - uuu requires root or udev rules granting access to the USB device.
   Add the NXP vendor udev rule if you get permission errors:
   ```bash

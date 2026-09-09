@@ -2,5 +2,13 @@
 # Flash Pantavisor to Colibri iMX6ULL NAND via UUU.
 # Put the module in USB SDP mode (hold RECOVERY# low during power-on), then run:
 #   ./flash.sh
+# Flashing tool: $UUU overrides the bundled ./uuu, then PATH, so the bundle
+# also works from a container/host that ships its own uuu.
+if [ -n "$UUU" ]; then uuu="$UUU"
+elif [ -x ./uuu ]; then uuu=./uuu
+else uuu="$(command -v uuu)" || { echo "uuu not found: set UUU=/path/to/uuu" >&2; exit 1; }
+fi
+# sudo only when not already root (containers usually are, and lack sudo).
+[ "$(id -u)" -eq 0 ] && sudo= || sudo=sudo
 echo "Flashing Pantavisor to Colibri iMX6ULL NAND..."
-sudo ./uuu ./
+$sudo "$uuu" ./

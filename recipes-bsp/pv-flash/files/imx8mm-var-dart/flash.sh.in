@@ -1,6 +1,14 @@
 #!/bin/sh
 # Decompress the WIC image before flashing: uuu's -raw2sparse requires an
 # uncompressed input.  The .wic is removed on exit whether flash succeeds or not.
+# Flashing tool: $UUU overrides the bundled ./uuu, then PATH, so the bundle
+# also works from a container/host that ships its own uuu.
+if [ -n "$UUU" ]; then uuu="$UUU"
+elif [ -x ./uuu ]; then uuu=./uuu
+else uuu="$(command -v uuu)" || { echo "uuu not found: set UUU=/path/to/uuu" >&2; exit 1; }
+fi
+# sudo only when not already root (containers usually are, and lack sudo).
+[ "$(id -u)" -eq 0 ] && sudo= || sudo=sudo
 wic=@WIC@
 trap 'rm -f "$wic"' EXIT INT TERM
 echo "Downloading Pantavisor Image..."
@@ -11,4 +19,4 @@ else
     echo "Decompressing @WIC_GZ@..."
     zcat @WIC_GZ@ > "$wic"
 fi
-sudo ./uuu ./
+$sudo "$uuu" ./
