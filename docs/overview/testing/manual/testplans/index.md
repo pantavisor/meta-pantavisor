@@ -19,6 +19,7 @@ Structured test plans for each feature area covered by the pvtest suite. Each pl
 7. [xconnect](testplan-xconnect.md) — service mesh proxy: Unix socket, REST, D-Bus, DRM, and Wayland
 8. [Remote Update Cancel](testplan-remote-cancel.md) — owner cancel from the Hub honored while queued or downloading
 9. [Object Download Resume](testplan-object-download-resume.md) — HTTP Range-based resume of interrupted OTA object downloads
+10. [Download Progress](testplan-download-progress.md) — continuous mid-object OTA download-progress reporting, local and on the Hub
 
 ## Adding a New Test Plan
 

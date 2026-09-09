@@ -76,3 +76,4 @@ Per-feature plans, each a manual sequence of setup → execute → verify:
 | [testplan-cgroup.md](testplans/testplan-cgroup.md) | cgroup HYBRID-mode destroy and no-suffix accumulation (lenient + force stop) |
 | [testplan-remote-cancel.md](testplans/testplan-remote-cancel.md) | Owner cancel from the Hub honored while queued or downloading |
 | [testplan-object-download-resume.md](testplans/testplan-object-download-resume.md) | Object download resumed with an HTTP Range request after an interruption |
+| [testplan-download-progress.md](testplans/testplan-download-progress.md) | Download progress reported continuously while an object is in flight, on the device and on the Hub |
