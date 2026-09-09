@@ -46,7 +46,7 @@ Every build produces some subset of the following:
 | `pv-flash-bundle-<machine>` | UUU factory flash bundle (`pv-flash-bundle-*.tar.gz`) — Toradex, Variscite, NXP MEK | both |
 | `sdk-artifact-<machine>` | Yocto SDK installer (`panta*.sh`) | both |
 
-## UUU Factory-Flash Builds (Toradex, Variscite, NXP MEK)
+## USB Factory-Flash Builds (Toradex, Variscite, NXP MEK, Rockchip)
 
 Toradex machines (`verdin-imx8mm`, `colibri-imx6ull`) use a multi-target build
 that produces three artifacts in a single `kas build` invocation:
@@ -58,10 +58,11 @@ target:
   - pv-flash-bundle             # self-contained factory flash archive
 ```
 
-Variscite machines (`imx8mm-var-dart`, `imx8mn-var-som`) and the NXP eval
-board (`imx8qxp-b0-mek`) only need two targets — no recovery multiconfig,
-since their production bootloader already works for UUU flashing (see the
-`pv-flash-bundle` section below):
+Variscite machines (`imx8mm-var-dart`, `imx8mn-var-som`), the NXP eval board
+(`imx8qxp-b0-mek`) and the Rockchip board (`rockchip-orangepi-5b`) only need two
+targets — no recovery multiconfig. The NXP boards' production bootloader already
+works for UUU flashing; the Rockchip board flashes over USB Maskrom with
+`rkdeveloptool` (see the `pv-flash-bundle` section below):
 
 ```
 target:
