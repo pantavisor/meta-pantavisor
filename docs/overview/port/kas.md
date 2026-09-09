@@ -27,6 +27,7 @@ Walk through the prompts:
    - `pantavisor-remix` — Same base, but lets you choose which containers to pre-install.
    - `pantavisor-bsp` — BSP-only image (no pre-installed containers).
 4. **Machine**: Select your target from the list — your new machine file should appear here.
+5. **Also build pv-flash-bundle** (only shown for factory-flash machines — Toradex, Variscite, NXP MEK, Rockchip — with `pantavisor-starter` selected): on by default, matching CI. Adds `pv-flash-bundle` (and, for Toradex, the `mc:tezi-recovery:u-boot-toradex` multiconfig) to the build targets.
 
 After saving the configuration, the build starts automatically, or run it manually:
 
