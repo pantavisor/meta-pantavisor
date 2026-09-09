@@ -75,8 +75,6 @@ from the menu selection:
 | Config | Machine | Target |
 |--------|---------|--------|
 | `build-base-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
-| `build-base-toradex-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
-| `build-base-pvflash-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
 | `build-base-remix.yaml` | (from `kas menu`) | `pantavisor-remix` |
 | `build-appengine-distro.yaml` | (from `kas menu`) | `pantavisor-appengine-distro` |
 | `release/96boards-orangepi-i96-scarthgap.yaml` | `orangepi-i96` | `pantavisor-starter` |
@@ -94,6 +92,13 @@ from the menu selection:
 | `release/sunxi-orange-pi-3lts-scarthgap.yaml` | `orange-pi-3lts` | `pantavisor-starter` |
 | `release/sunxi-orange-pi-r1-scarthgap.yaml` | `orange-pi-r1` | `pantavisor-starter` |
 | `release/verdin-imx8mm-scarthgap.yaml` | `verdin-imx8mm` | `pantavisor-starter` |
+
+The `release/*.yaml` `Target` column shows `pantavisor-starter`, but the
+factory-flash machines also build `pv-flash-bundle` (and, for Toradex, the
+`mc:tezi-recovery:u-boot-toradex` multiconfig). Those extras are declared per
+machine as `extra_targets` in `.github/machines.json` and appended to the
+`target:` list by `.github/scripts/makemachines` — there is no dedicated
+`build-base-*-starter.yaml` for them.
 
 ## Multiconfig Architecture
 

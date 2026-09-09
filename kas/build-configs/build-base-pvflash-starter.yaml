@@ -1,9 +1,0 @@
-_source_dir: .
-header:
-  version: 16
-  includes:
-    - kas/build-configs/build-base-starter.yaml
-
-target:
-- pantavisor-starter
-- pv-flash-bundle

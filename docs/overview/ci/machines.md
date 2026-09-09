@@ -89,10 +89,16 @@ Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
 - `kas/with-lxc-next.yaml` — LXC 6.x instead of LXC 3.x
-- `kas/build-configs/build-base-toradex-starter.yaml` — Toradex targets, incl. recovery multiconfig (see below)
-- `kas/build-configs/build-base-pvflash-starter.yaml` — `pantavisor-starter` + `pv-flash-bundle` (Variscite, NXP MEK, Rockchip — see below)
 
-`makemachines` resolves each fragment's `SRCREV` pins and writes a single self-contained `kas/build-configs/release/<name>-scarthgap.yaml` that can reproduce the build without network access to layer repos.
+Every machine's chain ends in `build-base-starter.yaml`; a machine that needs
+more than `pantavisor-starter` built (the factory-flash machines, see below)
+declares the extra targets as `extra_targets` in its `machines.json` entry
+rather than swapping in a different base fragment.
+
+`makemachines` resolves each fragment's `SRCREV` pins, appends `extra_targets`
+to the dumped `target:` list, and writes a single self-contained
+`kas/build-configs/release/<name>-scarthgap.yaml` that can reproduce the build
+without network access to layer repos.
 
 ## USB Factory-Flash Machines (Toradex, Variscite, NXP MEK, Rockchip)
 
@@ -101,32 +107,38 @@ archive (NXP i.MX via UUU, Rockchip via `rkdeveloptool`), instead of shipping a
 bare `.wic`. See [pv-flash-bundle](../pv-flash-bundle.md) for how the recipe
 itself works.
 
-`verdin-imx8mm` and `colibri-imx6ull` replace `build-base-starter.yaml` with
-`build-base-toradex-starter.yaml`, which specifies three build targets — a
-recovery U-Boot is needed because meta-pantavisor's `pv.distroboot.cfg`
-overrides the production bootcmd:
+Each of these machines sets `extra_targets` in its `machines.json` entry;
+`makemachines` appends them to the release yaml's `target:` list.
+
+`verdin-imx8mm` and `colibri-imx6ull` add two extras — a recovery U-Boot is
+needed because meta-pantavisor's `pv.distroboot.cfg` overrides the production
+bootcmd:
+
+```json
+"extra_targets": ["mc:tezi-recovery:u-boot-toradex", "pv-flash-bundle"]
+```
+
+so the generated `target:` list is:
 
 ```yaml
 target:
-  - pantavisor-starter
-  - mc:tezi-recovery:u-boot-toradex
-  - pv-flash-bundle
+- pantavisor-starter
+- mc:tezi-recovery:u-boot-toradex
+- pv-flash-bundle
 ```
 
-The `tezi-recovery` multiconfig (`DISTRO = "tezi"`) builds the recovery U-Boot
-used to enter fastboot mode during UUU flashing. Its output lands in
+The `tezi-recovery` multiconfig (`DISTRO = "tezi"`, enabled by
+`BBMULTICONFIG:append` in `kas/platforms/toradex.yaml`) builds the recovery
+U-Boot used to enter fastboot mode during UUU flashing. Its output lands in
 `tmp-scarthgap-tezi-recovery/` and is picked up by `pv-flash-bundle`.
 
 `imx8mm-var-dart`, `imx8mn-var-som`, `imx8qxp-b0-mek` and `rockchip-orangepi-5b`
-replace `build-base-starter.yaml` with `build-base-pvflash-starter.yaml` instead
-— just two targets, no recovery multiconfig. The NXP boards' production
+add just `pv-flash-bundle` — no recovery multiconfig. The NXP boards' production
 bootloaders already self-enter SDP/fastboot download mode; the Rockchip board
 uses `rkdeveloptool` + USB Maskrom, which needs no recovery build either:
 
-```yaml
-target:
-  - pantavisor-starter
-  - pv-flash-bundle
+```json
+"extra_targets": ["pv-flash-bundle"]
 ```
 
 All six machines set `"build_target": ""` (so `kas build` runs with no

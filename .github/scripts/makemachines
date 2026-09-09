@@ -26,6 +26,10 @@ Usage: $0 [--remake]
               release yamls refreshed without bumping any upstream
               refs. Repos that did not exist in the prior committed
               file fall back to the snippet's pinned commit.
+
+Either mode also appends a machine's "extra_targets" (from machines.json)
+to the dumped "target:" list, so e.g. pv-flash-bundle or a recovery
+multiconfig needs no dedicated build-base-*-starter.yaml.
 EOF
             exit 0
             ;;
@@ -40,6 +44,10 @@ yocto_branch=$(jq -r .yocto_branch .github/machines.json)
 
 configs=$(jq -r '.machines[] | .config' .github/machines.json)
 names=$(jq -r '.machines[] | .name' .github/machines.json)
+# Space-separated extra bitbake targets appended to the dumped `target:` list
+# (empty for most machines). Lets a machine build pv-flash-bundle / a recovery
+# multiconfig without a dedicated build-base-*-starter.yaml.
+extras=$(jq -r '.machines[] | (.extra_targets // []) | join(" ")' .github/machines.json)
 
 if [ "$REMAKE" -eq 1 ]; then
     echo "Processing machines for branch: $yocto_branch (--remake: keeping committed revs)"
@@ -50,6 +58,7 @@ echo ""
 
 readarray -t config_array <<< "$configs"
 readarray -t name_array <<< "$names"
+readarray -t extra_array <<< "$extras"
 
 merge_commits() {
     # $1 = old (committed) yaml, $2 = freshly-dumped yaml. Rewrites $2
@@ -124,6 +133,48 @@ with open(new_path, 'w') as f:
 PY
 }
 
+apply_extra_targets() {
+    # $1 = dumped release yaml, $2 = space-separated extra bitbake targets.
+    # Appends each (de-duplicated, order preserved) as a `- <target>` line to
+    # the `target:` block. kas dump always emits `target:` as a block sequence
+    # at column 0, so anchor on that; fail loudly if the shape ever changes.
+    local out="$1"
+    local extra="$2"
+    [ -z "$extra" ] && return 0
+    python3 - "$out" "$extra" <<'PY'
+import sys
+
+out_path, extra = sys.argv[1], sys.argv[2].split()
+with open(out_path) as f:
+    lines = f.readlines()
+
+res = []
+i, n = 0, len(lines)
+injected = False
+while i < n:
+    line = lines[i]
+    res.append(line)
+    i += 1
+    if line.rstrip('\n') != 'target:':
+        continue
+    seen = []
+    while i < n and lines[i].startswith('- '):
+        seen.append(lines[i][2:].strip())
+        res.append(lines[i])
+        i += 1
+    for t in extra:
+        if t not in seen:
+            res.append('- %s\n' % t)
+    injected = True
+
+if not injected:
+    sys.exit("apply_extra_targets: no 'target:' block in %s" % out_path)
+
+with open(out_path, 'w') as f:
+    f.writelines(res)
+PY
+}
+
 for i in "${!config_array[@]}"; do
     cc="${config_array[$i]}"
     m="${name_array[$i]}"
@@ -153,6 +204,8 @@ for i in "${!config_array[@]}"; do
         rm -f "$out" "$out".bak
         KAS_WORK_DIR=. kas dump --update --resolve-refs "kas/sourcedir.yaml:$cc" > "$out"
     fi
+
+    apply_extra_targets "$out" "${extra_array[$i]}"
 
     echo "- Created config for machine: $m"
     echo ""
