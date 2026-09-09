@@ -201,13 +201,19 @@ target:
 - pv-flash-bundle
 ```
 
-The `target:` list comes from the `build-base-*-starter.yaml` a machine's config
-chain ends in (`.github/machines.json`): `build-base-toradex-starter.yaml` adds
-`pv-flash-bundle` plus the recovery multiconfig, while
-`build-base-pvflash-starter.yaml` just adds `pv-flash-bundle` (used by every
-non-Toradex bundle machine — Variscite, NXP MEK, Rockchip). A machine's own
-`kas/machines/<machine>.yaml` cannot contribute here: kas *replaces* `target`
-with the value from the last file in the chain, and the machine yaml is first.
+Every machine's config chain ends in the same `build-base-starter.yaml` (which
+sets `target: [pantavisor-starter]`). The extra targets are declared per machine
+as `extra_targets` in `.github/machines.json` and appended to the `target:` list
+by `.github/scripts/makemachines`:
+
+```json
+"extra_targets": ["pv-flash-bundle"]                                   // Variscite, NXP MEK, Rockchip
+"extra_targets": ["mc:tezi-recovery:u-boot-toradex", "pv-flash-bundle"] // Toradex
+```
+
+This can't live in `kas/machines/<machine>.yaml`: kas *replaces* `target` with
+the value from the last file in the chain, and the machine yaml is first — so
+`makemachines` does the append after `kas dump`.
 
 ```bash
 kas build kas/build-configs/release/verdin-imx8mm-scarthgap.yaml
@@ -238,11 +244,10 @@ Artifacts land at
      `loader.bin`; a mainline-U-Boot BSP has none prebuilt and needs one merged
      from rkbin with `boot_merger` first).
 4. For NAND machines, also set `PV_FLASH_NAND_UBOOT` / `PV_FLASH_UBIFS`.
-5. End the machine's `.github/machines.json` config chain with
-   `build-base-pvflash-starter.yaml` (or `build-base-toradex-starter.yaml` for
-   the recovery-multiconfig case) — this is what puts `pv-flash-bundle` on the
-   `target:` list; the machine yaml can't. Add `build_target: ""` +
-   `output: "pv-flash-bundle-<machine>.tar.gz"`, then run
+5. In the machine's `.github/machines.json` entry set
+   `"extra_targets": ["pv-flash-bundle"]` (add `"mc:tezi-recovery:u-boot-toradex"`
+   first for the recovery-multiconfig case), `"build_target": ""` and
+   `"output": "pv-flash-bundle-<machine>.tar.gz"`, then run
    `.github/scripts/makemachines` and `.github/scripts/makeworkflows`.
 
 No changes to `pv-flash-bundle.bb`'s `do_deploy` logic are needed unless the

@@ -93,10 +93,11 @@ so it does not override the `fastboot usb 0` bootcmd.
 ## Building
 
 ```bash
-# Full Toradex starter build (includes pv-flash-bundle for both machines):
-kas build kas/build-configs/build-base-toradex-starter.yaml
+# Full build for a machine (image + recovery U-Boot + pv-flash-bundle):
+kas build kas/build-configs/release/verdin-imx8mm-scarthgap.yaml
+kas build kas/build-configs/release/colibri-imx6ull-scarthgap.yaml
 
-# Bundle only (set MACHINE appropriately before running):
+# Bundle only, from inside a kas shell:
 bitbake pv-flash-bundle
 ```
 

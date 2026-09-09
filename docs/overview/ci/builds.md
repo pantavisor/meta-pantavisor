@@ -48,8 +48,13 @@ Every build produces some subset of the following:
 
 ## USB Factory-Flash Builds (Toradex, Variscite, NXP MEK, Rockchip)
 
+These machines declare `extra_targets` in `.github/machines.json`;
+`makemachines` appends them to the release yaml's `target:` list (there is no
+per-flavour `build-base-*-starter.yaml`).
+
 Toradex machines (`verdin-imx8mm`, `colibri-imx6ull`) use a multi-target build
-that produces three artifacts in a single `kas build` invocation:
+that produces three artifacts in a single `kas build` invocation
+(`extra_targets: ["mc:tezi-recovery:u-boot-toradex", "pv-flash-bundle"]`):
 
 ```
 target:
@@ -60,9 +65,10 @@ target:
 
 Variscite machines (`imx8mm-var-dart`, `imx8mn-var-som`), the NXP eval board
 (`imx8qxp-b0-mek`) and the Rockchip board (`rockchip-orangepi-5b`) only need two
-targets — no recovery multiconfig. The NXP boards' production bootloader already
-works for UUU flashing; the Rockchip board flashes over USB Maskrom with
-`rkdeveloptool` (see the `pv-flash-bundle` section below):
+targets — no recovery multiconfig (`extra_targets: ["pv-flash-bundle"]`). The
+NXP boards' production bootloader already works for UUU flashing; the Rockchip
+board flashes over USB Maskrom with `rkdeveloptool` (see the `pv-flash-bundle`
+section below):
 
 ```
 target:
