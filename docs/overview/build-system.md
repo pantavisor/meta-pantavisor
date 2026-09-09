@@ -76,7 +76,7 @@ from the menu selection:
 |--------|---------|--------|
 | `build-base-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
 | `build-base-toradex-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
-| `build-base-uuu-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
+| `build-base-pvflash-starter.yaml` | (from `kas menu`) | `pantavisor-starter` |
 | `build-base-remix.yaml` | (from `kas menu`) | `pantavisor-remix` |
 | `build-appengine-distro.yaml` | (from `kas menu`) | `pantavisor-appengine-distro` |
 | `release/96boards-orangepi-i96-scarthgap.yaml` | `orangepi-i96` | `pantavisor-starter` |

@@ -203,8 +203,11 @@ target:
 
 The `target:` list comes from the `build-base-*-starter.yaml` a machine's config
 chain ends in (`.github/machines.json`): `build-base-toradex-starter.yaml` adds
-the recovery multiconfig, `build-base-uuu-starter.yaml` and
-`build-base-rkflash-starter.yaml` just add `pv-flash-bundle`.
+`pv-flash-bundle` plus the recovery multiconfig, while
+`build-base-pvflash-starter.yaml` just adds `pv-flash-bundle` (used by every
+non-Toradex bundle machine — Variscite, NXP MEK, Rockchip). A machine's own
+`kas/machines/<machine>.yaml` cannot contribute here: kas *replaces* `target`
+with the value from the last file in the chain, and the machine yaml is first.
 
 ```bash
 kas build kas/build-configs/release/verdin-imx8mm-scarthgap.yaml
@@ -235,8 +238,10 @@ Artifacts land at
      `loader.bin`; a mainline-U-Boot BSP has none prebuilt and needs one merged
      from rkbin with `boot_merger` first).
 4. For NAND machines, also set `PV_FLASH_NAND_UBOOT` / `PV_FLASH_UBIFS`.
-5. Point the machine's `.github/machines.json` config chain at the right
-   `build-base-*-starter.yaml`, add `build_target: ""` +
+5. End the machine's `.github/machines.json` config chain with
+   `build-base-pvflash-starter.yaml` (or `build-base-toradex-starter.yaml` for
+   the recovery-multiconfig case) — this is what puts `pv-flash-bundle` on the
+   `target:` list; the machine yaml can't. Add `build_target: ""` +
    `output: "pv-flash-bundle-<machine>.tar.gz"`, then run
    `.github/scripts/makemachines` and `.github/scripts/makeworkflows`.
 

@@ -89,17 +89,17 @@ Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
 - `kas/with-lxc-next.yaml` — LXC 6.x instead of LXC 3.x
-- `kas/build-configs/build-base-toradex-starter.yaml` — Toradex-specific targets (see below)
-- `kas/build-configs/build-base-uuu-starter.yaml` — Variscite/NXP-MEK UUU targets (see below)
+- `kas/build-configs/build-base-toradex-starter.yaml` — Toradex targets, incl. recovery multiconfig (see below)
+- `kas/build-configs/build-base-pvflash-starter.yaml` — `pantavisor-starter` + `pv-flash-bundle` (Variscite, NXP MEK, Rockchip — see below)
 
 `makemachines` resolves each fragment's `SRCREV` pins and writes a single self-contained `kas/build-configs/release/<name>-scarthgap.yaml` that can reproduce the build without network access to layer repos.
 
-## UUU Factory-Flash Machines (Toradex, Variscite, NXP MEK)
+## USB Factory-Flash Machines (Toradex, Variscite, NXP MEK, Rockchip)
 
-These machines build `pv-flash-bundle`, a self-contained UUU factory-flash
-archive, instead of shipping a bare `.wic`. See
-[pv-flash-bundle](../pv-flash-bundle.md) for how the recipe itself
-works.
+These machines build `pv-flash-bundle`, a self-contained over-USB factory-flash
+archive (NXP i.MX via UUU, Rockchip via `rkdeveloptool`), instead of shipping a
+bare `.wic`. See [pv-flash-bundle](../pv-flash-bundle.md) for how the recipe
+itself works.
 
 `verdin-imx8mm` and `colibri-imx6ull` replace `build-base-starter.yaml` with
 `build-base-toradex-starter.yaml`, which specifies three build targets — a
@@ -117,10 +117,11 @@ The `tezi-recovery` multiconfig (`DISTRO = "tezi"`) builds the recovery U-Boot
 used to enter fastboot mode during UUU flashing. Its output lands in
 `tmp-scarthgap-tezi-recovery/` and is picked up by `pv-flash-bundle`.
 
-`imx8mm-var-dart`, `imx8mn-var-som`, and `imx8qxp-b0-mek` replace
-`build-base-starter.yaml` with `build-base-uuu-starter.yaml` instead — just
-two targets, no recovery multiconfig, since these boards' production
-bootloaders already self-enter SDP/fastboot download mode:
+`imx8mm-var-dart`, `imx8mn-var-som`, `imx8qxp-b0-mek` and `rockchip-orangepi-5b`
+replace `build-base-starter.yaml` with `build-base-pvflash-starter.yaml` instead
+— just two targets, no recovery multiconfig. The NXP boards' production
+bootloaders already self-enter SDP/fastboot download mode; the Rockchip board
+uses `rkdeveloptool` + USB Maskrom, which needs no recovery build either:
 
 ```yaml
 target:
@@ -128,7 +129,7 @@ target:
   - pv-flash-bundle
 ```
 
-All five machines set `"build_target": ""` (so `kas build` runs with no
+All six machines set `"build_target": ""` (so `kas build` runs with no
 `--target` override and builds every target in the config's `target:` list)
 and `"output"` to just the bundle's own glob, e.g.:
 
@@ -143,10 +144,11 @@ copy would be redundant. The "Archive pv-flash-bundle artifacts" step in
 before uploading; it isn't an independent capture, it depends on `output`
 including the bundle's glob.
 
-See [docs/ci/builds.md — UUU Factory-Flash Builds](builds.md#uuu-factory-flash-builds-toradex-variscite-nxp-mek),
-[docs/how-to-install/toradex.md](../../getting-started/how-to-install/toradex.md), and
-[docs/how-to-install/uuu.md](../../getting-started/how-to-install/uuu.md) for the flash bundle
-contents and flashing procedures.
+See [docs/ci/builds.md — USB Factory-Flash Builds](builds.md#usb-factory-flash-builds-toradex-variscite-nxp-mek-rockchip),
+[docs/how-to-install/toradex.md](../../getting-started/how-to-install/toradex.md),
+[docs/how-to-install/uuu.md](../../getting-started/how-to-install/uuu.md), and
+[docs/how-to-install/rockchip.md](../../getting-started/how-to-install/rockchip.md) for the
+flash bundle contents and flashing procedures.
 
 ## Automated Machine Updates
 

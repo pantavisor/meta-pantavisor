@@ -24,7 +24,7 @@
 			"sdk": 1
 		},
 		{
-			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
+			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-pvflash-starter.yaml",
 			"name": "imx8qxp-b0-mek",
 			"display_name": "NXP i.MX 8QuadXPlus MEK",
 			"description": "NXP i.MX 8QXP B0 Multisensory Evaluation Kit. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool rather than as a raw SD image.",
@@ -64,7 +64,7 @@
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
-			"config": "kas/machines/rockchip-orangepi-5b.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-rkflash-starter.yaml",
+			"config": "kas/machines/rockchip-orangepi-5b.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-pvflash-starter.yaml",
 			"name": "rockchip-orangepi-5b",
 			"display_name": "Orange Pi 5B",
 			"description": "Rockchip RK3588S octa-core ARMv8.2 SBC (4x Cortex-A76 + 4x Cortex-A55) with onboard Wi-Fi/Bluetooth and eMMC. BSP via JeffyCN/meta-rockchip. Delivered as a pv-flash-bundle archive and flashed to eMMC over USB Maskrom with rkdeveloptool.",
@@ -73,7 +73,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
+			"config": "kas/machines/imx8mn-var-som.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-pvflash-starter.yaml",
 			"name": "imx8mn-var-som",
 			"display_name": "Variscite VAR-SOM-MX8M-NANO",
 			"description": "NXP i.MX 8M Nano quad-core Cortex-A53 SoM on the Variscite Symphony carrier. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool.",
@@ -82,7 +82,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-uuu-starter.yaml",
+			"config": "kas/machines/imx8mm-var-dart.yaml:kas/scarthgap.yaml:kas/scarthgap-var.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-pvflash-starter.yaml",
 			"name": "imx8mm-var-dart",
 			"display_name": "Variscite DART-MX8M-MINI",
 			"description": "NXP i.MX 8M Mini quad-core Cortex-A53 SoM on the Variscite VAR-DT8MCustomBoard. Delivered as a pv-flash-bundle archive and flashed over USB with the NXP UUU tool.",
