@@ -18,6 +18,7 @@ Structured test plans for each feature area covered by the pvtest suite. Each pl
 6. [pvtx](testplan-pvtx.md) — pvtx.d boot-time init script execution and idempotency
 7. [xconnect](testplan-xconnect.md) — service mesh proxy: Unix socket, REST, D-Bus, DRM, and Wayland
 8. [Remote Update Cancel](testplan-remote-cancel.md) — owner cancel from the Hub honored while queued or downloading
+9. [Object Download Resume](testplan-object-download-resume.md) — HTTP Range-based resume of interrupted OTA object downloads
 
 ## Adding a New Test Plan
 
