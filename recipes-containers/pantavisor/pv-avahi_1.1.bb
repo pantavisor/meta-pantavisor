@@ -27,14 +27,38 @@ PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
 
 PVR_APP_ADD_EXTRA_ARGS += " \
     --volume ovl:/tmp:permanent \
+    --status-goal MOUNTED \
 "
 
-PVR_APP_ADD_GROUP = "platform"
+# app, not platform: pv-avahi is just a daemon in the host net namespace, and
+# staying passive (status-goal MOUNTED) until on-demand D-Bus activation
+# starts it needs the app group's "container" restart policy so it can also
+# be stopped/started manually via the containers API. args.json's PV_GROUP
+# already said "app" (fix(pv-avahi): move container to app group /
+# fix(pv-avahi): drop system restart policy), but this --group flag was
+# never updated to match and silently overrode it at build time.
+PVR_APP_ADD_GROUP = "app"
 
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
+
+# WORKAROUND for a `pvr app add` bug (isolated 2026-07-22): passing
+# --status-goal together with --group silently drops the top-level "type"
+# and "config" keys from the generated run.json. Without "type", pantavisor's
+# _pv_platforms_get_ctrl(p->type) calls strcmp() on a NULL p->type and
+# segfaults the whole mainloop on every boot that reconciles this platform
+# (confirmed via on-device core dump + gdb backtrace, platforms.c:691). Patch
+# the fields back in via the PVR_APP_POST_FIXUP hook (container-pvrexport.bbclass),
+# which runs after `pvr app add` but before signing/export -- appending
+# directly to IMAGE_CMD:pvrexportit runs too late (that class body still has
+# `pvr sig add` + `pvr export` after the point any :append lands, so the
+# already-packaged pvrexport.tgz never saw the fix).
+pv_avahi_fixup_runjson() {
+    jq '. + {"type": "lxc", "config": "lxc.container.conf"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+}
+PVR_APP_POST_FIXUP = "pv_avahi_fixup_runjson"
 
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}
