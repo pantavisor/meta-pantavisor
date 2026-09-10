@@ -5,14 +5,18 @@ name: "ontag: generate changelog and release notes"
 # render the section for the tag, then:
 #   1. Merges the section into the per-major S3 accumulator
 #      (s3://$AWS_S3_BUCKET/changelog/CHANGELOG-<MAJOR>.md), the rolling
-#      cross-RC changelog document. Nothing is committed to master.
+#      cross-RC changelog document. RC sections stop here — they are never
+#      committed to master.
 #   2. Creates (or updates) the GitHub Release for the tag with the section
 #      as its body.
+#   3. For a stable tag only, commits the rendered CHANGELOG/CHANGELOG-<MAJOR>.md
+#      to master. A stable release is cut on a branch off the validated RC tag,
+#      so the `--finalize` commit never reaches master on its own; and by this
+#      point releases.json has the stable artifacts, so the committed file gets
+#      real download hashes instead of the tag's predicted URLs.
 #
 # The build artifacts are not attached to GitHub Releases — they live on S3
-# and the changelog Downloads table links to them. The repo's
-# CHANGELOG/CHANGELOG-<MAJOR>.md is written only by `make-changelog.sh
-# --finalize` just before a stable tag (see docs/overview/ci/changelog.md).
+# and the changelog Downloads table links to them.
 #
 # Manual re-run via workflow_dispatch is supported for cases where S3 wasn't
 # yet populated when the workflow first fired.
@@ -109,3 +113,65 @@ jobs:
               --title "$TAG" \
               --notes-file /tmp/release-notes.md
           fi
+
+      # RC sections live only on the S3 accumulator and must never reach
+      # master, so this is guarded to stable 0NN tags.
+      - name: Commit the finalized changelog to master
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$TAG" =~ ^0[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not a stable release tag — not committing."
+            exit 0
+          fi
+
+          FILE="CHANGELOG/CHANGELOG-${MAJOR}.md"
+          cp "$FILE" /tmp/changelog-final.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # master may have moved while the release was building. The generated
+          # file is authoritative in full, so re-apply it onto a fresh master
+          # rather than merging or rebasing.
+          for attempt in 1 2 3; do
+            git fetch origin master
+            git reset --hard origin/master
+            mkdir -p CHANGELOG
+            cp /tmp/changelog-final.md "$FILE"
+
+            # Stage before comparing: on the first stable of a new major the
+            # file is untracked, and git diff ignores untracked paths.
+            git add -- "$FILE"
+            if git diff --cached --quiet -- "$FILE"; then
+              echo "$FILE on master is already up to date — nothing to commit."
+              exit 0
+            fi
+
+            git commit -m "changelogs(${MAJOR}): finalize ${MAJOR} changelog"
+
+            if git push origin HEAD:master; then
+              echo "Pushed $FILE to master."
+              exit 0
+            fi
+            echo "Push rejected on attempt ${attempt}."
+          done
+
+          # The accumulator and the GitHub Release are already published, so a
+          # failure here must not red-X the release. Hand the maintainer the
+          # recovery steps instead.
+          echo "::warning::Could not push ${FILE} to master. Apply it by hand (see the job summary)."
+          {
+            echo "## Changelog not committed to master"
+            echo ""
+            echo "\`${FILE}\` was published to the S3 accumulator and the \`${TAG}\` release,"
+            echo "but pushing it to \`master\` failed (branch protection, or master moved). Run:"
+            echo ""
+            echo '```sh'
+            echo "git switch master && git pull"
+            echo "curl -sfL -o ${FILE} \\"
+            echo "  https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/changelog/CHANGELOG-${MAJOR}.md"
+            echo "git add -- ${FILE}"
+            echo "git commit -m 'changelogs(${MAJOR}): finalize ${MAJOR} changelog'"
+            echo "git push origin master"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
