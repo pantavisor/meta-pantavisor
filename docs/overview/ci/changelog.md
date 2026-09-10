@@ -95,10 +95,19 @@ For tag `T` in major `M`:
 - `T == M-rc1`: previous = the most recent prior stable (e.g. `M-1`).
 
 Implementation walks `git tag -l "${M}-rc*"` plus all `^0+[0-9]*$` (stable)
-tags, sorts with `sort -V`, and picks the highest tag less than `T`. `sort -V`
-orders `030` *before* `030-rc3`, so a stable tag never selects one of its own
-RCs — which is what you want: a stable section should span the whole
-`029 → 030` stream, not the empty range between the last RC and the tag.
+tags, sorts with `sort -V`, and picks the highest tag less than `T` — while
+skipping `M` itself, whatever `T` is.
+
+That skip matters because `sort -V` orders `030` *before* `030-rc1`, which is
+backwards here: the stable ships after every RC in its stream. Without it the
+comparison misfires in both directions — a stable tag ties with itself and
+becomes its own predecessor (this is why the committed `v029` section reads
+`Previous (029)` and *"no commits between 029 and 029"*), and once `030`
+exists, regenerating `030-rc1` picks it up as "previous". Skipping `M` covers
+both, since `M == T` for a stable tag.
+
+So a stable section spans the whole `029 → 030` stream rather than the empty
+range between the last RC and the tag, which is what you want.
 
 **The Downloads table is the exception.** Predicting it from the previous
 *stable* would use a board list several releases old (`029` still shipped

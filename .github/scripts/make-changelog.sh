@@ -164,10 +164,14 @@ determine_previous_tag() {
     while IFS= read -r t; do
         [ -z "$t" ] && continue
         [[ "$t" =~ ^[0-9]+$ ]] || continue
-        # Skip the tag itself. Without this a stable tag that already exists
-        # selects itself (the sort comparison is a tie), which is how the v029
-        # section ended up reporting "no commits between 029 and 029".
-        [ "$t" = "$tag" ] && continue
+        # Never let a stream's own stable tag be its predecessor. sort -V
+        # orders "030" before "030-rc1", which is wrong for this scheme: the
+        # stable ships after every RC. Untreated this bites twice — a stable
+        # tag selects itself (the comparison is a tie), which is how the v029
+        # section came to report "no commits between 029 and 029"; and once
+        # the stable exists, regenerating any of its RCs picks it up as
+        # "previous". $major covers both, since $major == $tag for a stable.
+        [ "$t" = "$major" ] && continue
         [ "$(printf '%s\n%s\n' "$t" "$tag" | sort -V | head -n 1)" = "$t" ] && candidates+=("$t")
     done < <(git tag -l "0*")
 
