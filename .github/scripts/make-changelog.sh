@@ -18,14 +18,16 @@
 #   historical (tag already exists)
 #     SRCREVs are read from <TAG>; git log range is <PREV>..<TAG>; release
 #     date is the tag's commit date; downloads come from releases.json.
-#     No commit is made — useful for regeneration or preview. This is the
-#     mode CI runs (tag-changelogs.yaml); CI uploads the merged file to the
-#     per-major S3 accumulator instead of committing it.
+#     No commit is made by this script — useful for regeneration or preview.
+#     This is the mode CI runs (tag-changelogs.yaml): CI uploads the merged
+#     file to the per-major S3 accumulator, and for a stable tag also commits
+#     the refreshed file to master itself.
 #
 # RC changelog sections are never committed to the repo: they live only on
 # the S3 accumulator (CHANGELOG_S3_URL_BASE/CHANGELOG-<MAJOR>.md). The repo
-# file is written exactly once per major, by --finalize, just before the
-# stable tag is cut.
+# file is created once per major, by --finalize, just before the stable tag is
+# cut — with predicted download URLs, since the build runs after the tag —
+# and tag-changelogs.yaml then refreshes it with the real hashes.
 #
 # Usage:
 #   make-changelog.sh <TAG>              # pre-tag: write file + commit; or historical: write file
@@ -60,7 +62,7 @@ for arg in "$@"; do
         --no-commit) NO_COMMIT=1 ;;
         --finalize)  FINALIZE=1 ;;
         -h|--help)
-            sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
+            sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'
             exit 0
             ;;
         -*)
@@ -162,6 +164,10 @@ determine_previous_tag() {
     while IFS= read -r t; do
         [ -z "$t" ] && continue
         [[ "$t" =~ ^[0-9]+$ ]] || continue
+        # Skip the tag itself. Without this a stable tag that already exists
+        # selects itself (the sort comparison is a tie), which is how the v029
+        # section ended up reporting "no commits between 029 and 029".
+        [ "$t" = "$tag" ] && continue
         [ "$(printf '%s\n%s\n' "$t" "$tag" | sort -V | head -n 1)" = "$t" ] && candidates+=("$t")
     done < <(git tag -l "0*")
 
@@ -174,6 +180,20 @@ determine_previous_tag() {
 PREV_TAG="$(determine_previous_tag "$TAG")"
 PREV_RELEASE_TYPE="$(prev_release_type_for "$PREV_TAG")"
 echo "Prev:    ${PREV_TAG:-(none)}" >&2
+
+# The downloads predictor needs the board list that will actually be built.
+# For a stable tag that is the newest RC of the same major, not PREV_TAG (the
+# previous stable), whose board set can be several releases stale. Component
+# versions and Changes deliberately keep using PREV_TAG: a stable section is
+# meant to span the whole stream.
+if [[ "$TAG" == *-rc* ]]; then
+    SHAPE_TAG="$PREV_TAG"
+else
+    SHAPE_TAG="$(git tag -l "${MAJOR}-rc*" | sort -V | tail -n 1)"
+    [ -z "$SHAPE_TAG" ] && SHAPE_TAG="$PREV_TAG"
+fi
+SHAPE_RELEASE_TYPE="$(prev_release_type_for "$SHAPE_TAG")"
+echo "Shape:   ${SHAPE_TAG:-(none)}" >&2
 
 # --- helpers ---------------------------------------------------------------
 
@@ -214,7 +234,8 @@ fi
 DOWNLOADS_SECTION="$(
     jq -r \
         --arg type "$RELEASE_TYPE" --arg tag "$TAG" \
-        --arg prev_type "$PREV_RELEASE_TYPE" --arg prev_tag "$PREV_TAG" '
+        --arg prev_type "$PREV_RELEASE_TYPE" --arg prev_tag "$PREV_TAG" \
+        --arg shape_type "$SHAPE_RELEASE_TYPE" --arg shape_tag "$SHAPE_TAG" '
         def render_row(predicted):
             "\n| " + .name +
             " | " + (
@@ -244,24 +265,24 @@ DOWNLOADS_SECTION="$(
             "|---|---|---|---|---|" +
             (entries | map(render_row(predicted)) | add // "");
 
-        def predicted_from(prev_entries):
-            prev_entries | map(
+        def predicted_from(entries; from_tag):
+            entries | map(
                 select(.name) | {
                     name,
                     full_image: {
-                        url: (if (.full_image.url // "") != "" then (.full_image.url | gsub($prev_tag; $tag)) else "" end),
+                        url: (if (.full_image.url // "") != "" then (.full_image.url | gsub(from_tag; $tag)) else "" end),
                         sha256: ""
                     },
                     pvrexports: {
-                        url: (if (.pvrexports.url // "") != "" and ((.pvrexports.sha256 // "") != "") then (.pvrexports.url | gsub($prev_tag; $tag)) else "" end),
+                        url: (if (.pvrexports.url // "") != "" and ((.pvrexports.sha256 // "") != "") then (.pvrexports.url | gsub(from_tag; $tag)) else "" end),
                         sha256: ""
                     },
                     bsp: {
-                        url: (if (.bsp.url // "") != "" and ((.bsp.sha256 // "") != "") then (.bsp.url | gsub($prev_tag; $tag)) else "" end),
+                        url: (if (.bsp.url // "") != "" and ((.bsp.sha256 // "") != "") then (.bsp.url | gsub(from_tag; $tag)) else "" end),
                         sha256: ""
                     },
                     sdk: {
-                        url: (if (.sdk.url // "") != "" then (.sdk.url | gsub($prev_tag; $tag)) else "" end),
+                        url: (if (.sdk.url // "") != "" then (.sdk.url | gsub(from_tag; $tag)) else "" end),
                         sha256: ""
                     }
                 }
@@ -275,11 +296,15 @@ DOWNLOADS_SECTION="$(
 
         (.[$type][$tag] | normalize_entry) as $current |
         ((if $prev_tag == "" then null else .[$prev_type][$prev_tag] end) | normalize_entry) as $prev |
+        ((if $shape_tag == "" then null else .[$shape_type][$shape_tag] end) | normalize_entry) as $shaped |
+        (if ($shaped | length) > 0
+         then {tag: $shape_tag, devices: $shaped}
+         else {tag: $prev_tag, devices: $prev} end) as $shape |
         if ($current | length) > 0 then
             render_table($current; false)
-        elif ($prev | length) > 0 then
-            "_Predicted artifact URLs based on the previous release `" + $prev_tag + "`. The links will activate once the build pipeline uploads the artifacts to S3 — until then they will 404._\n\n" +
-            render_table(predicted_from($prev); true)
+        elif ($shape.devices | length) > 0 then
+            "_Predicted artifact URLs based on `" + $shape.tag + "`. The links will activate once the build pipeline uploads the artifacts to S3 — until then they will 404._\n\n" +
+            render_table(predicted_from($shape.devices; $shape.tag); true)
         else
             "_(no artifacts recorded in releases.json yet, and no previous release to predict from)_"
         end
@@ -351,13 +376,13 @@ emit_changes() {
                 line = lines[i]
                 if (line == "") continue
 
-                if (match(line, /^([a-z]+)(\(([^)]+)\))?(!)?:[ \t]+(.+)$/, m) == 0) {
+                if (!parse_commit(line)) {
                     other[++n_other] = "- **(uncategorized)**: " line
                     continue
                 }
-                type = m[1]
-                scope = m[3]
-                subject = m[5]
+                type = c_type
+                scope = c_scope
+                subject = c_subject
                 prefix = (scope != "") ? ("**" scope "**: ") : ""
                 bullet = "- " prefix subject
 
@@ -379,6 +404,34 @@ emit_changes() {
             emit("CI", ci, n_ci)
             emit("Docs", docs, n_docs)
             emit("Other", other, n_other)
+        }
+        # Split a Conventional-Commits subject into type/scope/subject.
+        # Written for POSIX awk on purpose: the capture-array form
+        # match(str, re, arr) is a gawk extension, and /usr/bin/awk is mawk on
+        # a stock Debian/Ubuntu workstation — where this script is run by hand
+        # for --finalize.
+        function parse_commit(line,    op, cp, rest) {
+            c_type = ""; c_scope = ""; c_subject = ""
+
+            if (line ~ /^[a-z]+\(/) {
+                op = index(line, "(")
+                cp = index(line, ")")
+                if (cp <= op + 1) return 0     # unclosed, or an empty "()"
+                c_type  = substr(line, 1, op - 1)
+                c_scope = substr(line, op + 1, cp - op - 1)
+                rest    = substr(line, cp + 1)
+            } else if (match(line, /^[a-z]+/)) {
+                c_type = substr(line, 1, RLENGTH)
+                rest   = substr(line, RLENGTH + 1)
+            } else {
+                return 0
+            }
+
+            sub(/^!/, "", rest)                # breaking-change marker
+            if (rest !~ /^:[ \t]+[^ \t]/) return 0
+            c_subject = substr(rest, 2)
+            sub(/^[ \t]+/, "", c_subject)
+            return 1
         }
         function emit(title, arr, n,    i) {
             if (n == 0) return
@@ -437,20 +490,17 @@ covers one tag — release candidates and the final stable — newest first.
 
 Generated by [\`make-changelog.sh\`](../.github/scripts/make-changelog.sh).
 Release-candidate sections are accumulated on the per-major S3 document by
-[\`tag-changelogs.yaml\`](../.github/workflows/tag-changelogs.yaml); this repo
-copy is written once per major by \`make-changelog.sh --finalize\` just before
-the stable tag. See [\`docs/overview/ci/changelog.md\`](../docs/overview/ci/changelog.md).
+[\`tag-changelogs.yaml\`](../.github/workflows/tag-changelogs.yaml). This repo
+copy is created by \`make-changelog.sh --finalize\` just before the stable tag,
+then refreshed by \`tag-changelogs.yaml\` once the stable build has published
+its artifacts. See [\`docs/overview/ci/changelog.md\`](../docs/overview/ci/changelog.md).
 "
 
 NEW_FILE="$(mktemp)"
 if [ -f "$CHANGELOG_FILE" ]; then
-    awk -v top="${NEW_FILE}.top" -v body="${NEW_FILE}.body" '
-        BEGIN { mode="top" }
-        /^## v/ { mode="body" }
-        {
-            if (mode == "top") print > top
-            else                print > body
-        }
+    awk -v body="${NEW_FILE}.body" '
+        /^## v/ { in_body=1 }
+        in_body { print > body }
     ' "$CHANGELOG_FILE"
 
     if [ -f "${NEW_FILE}.body" ]; then
@@ -461,17 +511,18 @@ if [ -f "$CHANGELOG_FILE" ]; then
         mv "${NEW_FILE}.body.clean" "${NEW_FILE}.body"
     fi
 
+    # Always rewrite the header rather than carrying the existing one forward:
+    # the S3 accumulator keeps whatever header it was first created with, and
+    # older copies still link to workflows and doc paths that no longer exist.
+    # Safe to replace — changelog-gate.yaml only diffs "## v<MAJOR>-rcN"
+    # section bodies, so the header sits outside every check it makes.
     {
-        if [ -s "${NEW_FILE}.top" ]; then
-            cat "${NEW_FILE}.top"
-        else
-            printf '%s\n' "$FILE_HEADER"
-        fi
+        printf '%s\n' "$FILE_HEADER"
         printf '%s\n\n' "$SECTION"
         [ -f "${NEW_FILE}.body" ] && cat "${NEW_FILE}.body"
     } > "$NEW_FILE"
 
-    rm -f "${NEW_FILE}.top" "${NEW_FILE}.body"
+    rm -f "${NEW_FILE}.body"
 else
     {
         printf '%s\n' "$FILE_HEADER"
