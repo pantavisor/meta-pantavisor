@@ -12,11 +12,14 @@ Where those sections live depends on the tag:
 - **Release candidates** (`0NN-rcN`) are accumulated onto a per-major document
   on S3 (the [S3 accumulator](#s3-accumulator)). They are never committed to
   `master`.
-- **The final stable** (`0NN`) is committed once, into
-  [`CHANGELOG/CHANGELOG-<MAJOR>.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG),
-  by a maintainer running `make-changelog.sh --finalize` just before tagging.
-  A [CI gate](#the-stable-release-gate) blocks the stable release build if that
-  commit is missing or stale.
+- **The final stable** (`0NN`) is committed into
+  [`CHANGELOG/CHANGELOG-<MAJOR>.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG)
+  by a maintainer running `make-changelog.sh --finalize` just before tagging,
+  then refreshed on `master` by `tag-changelogs.yaml` once the release build
+  has published its artifacts — so the version on `master` carries real
+  download hashes rather than the tagged commit's predicted URLs. A
+  [CI gate](#the-stable-release-gate) blocks the stable release build if the
+  finalize commit is missing or stale.
 
 Every tag — RC and stable — also gets a GitHub Release whose body is the
 rendered section.
@@ -46,9 +49,9 @@ For tag `T` (e.g. `028-rc7`):
    rendered as a table with image, pvexports, BSP, and SDK download links plus
    the first 12 chars of each `sha256`. Cells with empty URLs or hashes render
    as `—`. **In pre-tag mode** (see below) `releases.json` doesn't yet have an
-   entry for `<T>`; the script falls back to the previous tag's entry and
-   substitutes `<T>` in the URLs, emitting "Pending" links and an italic note
-   above the table. The links 404 until the build pipeline uploads the
+   entry for `<T>`; the script falls back to the
+   [shape source](#previous-tag-resolution)'s entry and substitutes `<T>` in
+   the URLs, emitting "Pending" links and an italic note above the table. The links 404 until the build pipeline uploads the
    artifacts to S3, after which they activate at exactly those URLs. SHA256
    columns are blank in predicted mode (the hashes aren't known yet).
 2. **Component versions** — for every recipe in
@@ -75,7 +78,9 @@ The script auto-detects which mode to run in based on whether the tag exists:
 
 - **historical** is what CI runs on every tag (`tag-changelogs.yaml`). It
   writes the file and the workflow uploads it to the [S3
-  accumulator](#s3-accumulator) — no commit.
+  accumulator](#s3-accumulator). The script itself never commits in this mode;
+  for a **stable** tag the workflow then commits the result to `master` in a
+  step of its own.
 - **pre-tag** is local-only now, reached through `--finalize` (see the
   [stable flow](#stable-flow)). It renders the stable section with predicted
   download URLs — the build that produces the real hashes runs *after* the
@@ -85,12 +90,27 @@ The script auto-detects which mode to run in based on whether the tag exists:
 
 For tag `T` in major `M`:
 
-- `T == M` (final stable): previous = highest `M-rc*`.
+- `T == M` (final stable): previous = the most recent prior **stable** (e.g. `M-1`).
 - `T == M-rcN` and `N > 1`: previous = `M-rc<N-1>` (or the immediate predecessor in `sort -V` order across the stream).
 - `T == M-rc1`: previous = the most recent prior stable (e.g. `M-1`).
 
 Implementation walks `git tag -l "${M}-rc*"` plus all `^0+[0-9]*$` (stable)
-tags, sorts with `sort -V`, and picks the highest tag less than `T`.
+tags, sorts with `sort -V`, and picks the highest tag less than `T`. `sort -V`
+orders `030` *before* `030-rc3`, so a stable tag never selects one of its own
+RCs — which is what you want: a stable section should span the whole
+`029 → 030` stream, not the empty range between the last RC and the tag.
+
+**The Downloads table is the exception.** Predicting it from the previous
+*stable* would use a board list several releases old (`029` still shipped
+`raspberrypi-armv8`, and `030` added three machines it never had). So the
+predictor uses a separate **shape source**: for a stable tag, the highest
+`M-rc*` entry present in `releases.json`; for an RC tag, the previous tag as
+before. The script logs both:
+
+```
+Prev:    029        <- Component versions and Changes
+Shape:   030-rc3    <- Downloads table
+```
 
 ## S3 accumulator
 
@@ -132,12 +152,16 @@ gh workflow run tag-changelogs.yaml -f tag=030-rc3
 
 ### Stable flow
 
-Do this once, after every RC's release workflow has finished (so the S3
-accumulator is complete):
+A stable release is cut from **the RC you validated**, not from `master`.
+`master` has usually moved on by then, and tagging it would ship source that
+no RC was ever tested against. So branch off the chosen RC tag and put the
+finalize commit there:
 
 ```sh
-# 1. HEAD of master is the commit you want to tag.
-git switch master && git pull
+# 1. Branch off the RC that passed. Do this after every RC's release workflow
+#    has finished, so the S3 accumulator is complete.
+git fetch --tags
+git switch -c release/030 030-rc3
 
 # 2. Pull the accumulated changelog into the repo and add the stable
 #    "## v030" section. Downloads use predicted URLs — the build that
@@ -149,17 +173,33 @@ git switch master && git pull
 #    contain every "## v030-rcN" section plus a new "## v030".
 git show HEAD
 
-# 4. Push the finalize commit, THEN tag.
-git push origin master
-git tag 030
-git push origin 030
+# 4. Tag it. The tag MUST be annotated (-a) — see below.
+git tag -a 030 -m "Release 030"
+git describe            # must print exactly 030
+
+# 5. Push. `release/030` is optional but worth keeping as the anchor for any
+#    later 030.x patch release.
+git push origin 030 release/030
 ```
+
+Why this is safe, and why the tag sits one commit *above* the RC:
+
+- The finalize commit touches only `CHANGELOG/`, which no recipe, class or
+  distro conf reads. It cannot change build output, so the RC's sstate stays
+  valid and the release build is a warm rebuild rather than a cold one.
+- `DISTRO_VERSION` comes from `git describe` (see
+  [versioning.md](versioning.md)). A tag on its own commit resolves
+  unambiguously to `030`. Tagging the RC's commit directly would leave two
+  tags on one commit, and a *lightweight* `030` there loses the tie-break to
+  the annotated `030-rc3` — the images would report `030-rc3`.
 
 The `030` push runs `changelog-gate` first (see below). Once it passes the
 build proceeds; on completion `tag-changelogs.yaml` refreshes the S3
-accumulator and the GitHub Release for `030` with real download hashes. The
-committed `CHANGELOG/CHANGELOG-030.md` keeps its predicted URLs — the hashed
-copy lives on the S3 accumulator and the Release page.
+accumulator and the GitHub Release for `030` with real download hashes, and
+commits the refreshed `CHANGELOG/CHANGELOG-030.md` to `master` — which is also
+how the finalize commit reaches `master`, since it was made on `release/030`.
+If that push is blocked, the workflow says so with the manual steps in its job
+summary instead of failing the release.
 
 ## The stable-release gate
 
@@ -174,9 +214,11 @@ skipping the entire build — unless the tagged commit's
 | has a `## v<MAJOR>-rcN` section for every `<MAJOR>-rc*` git tag | re-run `--finalize` after all RC release workflows finish |
 | its RC sections match the S3 accumulator byte-for-byte | re-run `--finalize` (its base was stale) and re-push before tagging |
 
-The `--finalize` commit must be pushed to `master` **before** the stable tag,
-otherwise the tagged tree won't contain it and the gate fails on the first
-check.
+The gate reads the **tagged commit's** tree, so the `--finalize` commit has to
+be the one you tag (or an ancestor of it) — that is why the
+[stable flow](#stable-flow) makes it on `release/<MAJOR>` and tags there. It
+does not need to be on `master` first; `tag-changelogs.yaml` lands it on
+`master` after the build.
 
 ## Flag reference
 
