@@ -27,7 +27,6 @@ PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
 
 PVR_APP_ADD_EXTRA_ARGS += " \
     --volume ovl:/tmp:permanent \
-    --status-goal MOUNTED \
 "
 
 # app, not platform: pv-avahi is just a daemon in the host net namespace, and
@@ -44,19 +43,13 @@ PVR_SIG_ADD_ARGS = "--part ${PN}"
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
 
-# WORKAROUND for a `pvr app add` bug (isolated 2026-07-22): passing
-# --status-goal together with --group silently drops the top-level "type"
-# and "config" keys from the generated run.json. Without "type", pantavisor's
-# _pv_platforms_get_ctrl(p->type) calls strcmp() on a NULL p->type and
-# segfaults the whole mainloop on every boot that reconciles this platform
-# (confirmed via on-device core dump + gdb backtrace, platforms.c:691). Patch
-# the fields back in via the PVR_APP_POST_FIXUP hook (container-pvrexport.bbclass),
-# which runs after `pvr app add` but before signing/export -- appending
-# directly to IMAGE_CMD:pvrexportit runs too late (that class body still has
-# `pvr sig add` + `pvr export` after the point any :append lands, so the
-# already-packaged pvrexport.tgz never saw the fix).
+# Passive until on-demand D-Bus activation. Not passed as `pvr app add
+# --status-goal MOUNTED`: pvr's run.json template treats a MOUNTED goal as a
+# volume-only entity and drops type/config and the lxc.container.conf render,
+# so the container could never be started. Add it as a normal lxc app and set
+# the goal afterwards via the PVR_APP_POST_FIXUP hook (container-pvrexport).
 pv_avahi_fixup_runjson() {
-    jq '. + {"type": "lxc", "config": "lxc.container.conf"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+    jq '. + {"status_goal": "MOUNTED"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
 }
 PVR_APP_POST_FIXUP = "pv_avahi_fixup_runjson"
 
