@@ -38,7 +38,7 @@ repos:
             meta-imx-sdk:
         commit: a0cf309d2e2d544111e520f572db8dff335eca01
     meta-arm:
-        commit: 045eb74bd9abe7d9ccf365a2417e440ce83bcbb0
+        commit: 0a4b911d9fd63ab29c4532a907fae3282dbdcfe4
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -57,7 +57,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b2c16f1e69130558574e1363aff944647fa9cd11
+        commit: 77d1feb37e280733684ae8a9449fb031d5d7ff40
     meta-pantavisor:
     meta-virtualization:
         commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
