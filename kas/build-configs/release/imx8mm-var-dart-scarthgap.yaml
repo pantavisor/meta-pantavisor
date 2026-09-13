@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 2a107933d0b967ab7e3425688eda1752f044d010
+        commit: 7b9a9adb7dfbe590635bbf5b3dd18e46b16c01e1
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -33,7 +33,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 3148bb4a349e4d6d8f2cf0e49562a89aa3fec42a
+        commit: 2a03434fe537c93e008ce31c664ebe174aa82340
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
@@ -80,7 +80,7 @@ repos:
         layers:
             meta-arm:
             meta-arm-toolchain:
-        commit: 045eb74bd9abe7d9ccf365a2417e440ce83bcbb0
+        commit: 0a4b911d9fd63ab29c4532a907fae3282dbdcfe4
     poky:
         patches:
             fit-image-multiconfig:
@@ -94,7 +94,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b2c16f1e69130558574e1363aff944647fa9cd11
+        commit: 77d1feb37e280733684ae8a9449fb031d5d7ff40
     meta-pantavisor:
     meta-virtualization:
         commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
