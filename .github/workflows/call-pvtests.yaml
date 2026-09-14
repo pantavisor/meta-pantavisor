@@ -64,8 +64,8 @@ jobs:
           echo "list=$list" >> $GITHUB_OUTPUT
           echo "=== Model(s): $list ===" >> $GITHUB_STEP_SUMMARY
 
-      # "all" fans the tests job out over both hubs; stage is continue-on-error
-      # so it never blocks landing, whatever it reports.
+      # "all" fans the tests job out over both hubs; a failure on either turns
+      # the run red.
       - name: Resolve hub matrix
         id: hubs
         run: |
@@ -88,8 +88,6 @@ jobs:
       matrix:
         model: ${{ fromJSON(needs.validate.outputs.models) }}
         hub: ${{ fromJSON(needs.validate.outputs.hubs) }}
-    # stage must never block landing; prod stays blocking
-    continue-on-error: ${{ matrix.hub == 'stage' }}
     # model- and hub-scoped so concurrent jobs never share a workspace or an
     # artifact name, whether they land on the same runner or different ones
     env:

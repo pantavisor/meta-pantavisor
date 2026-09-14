@@ -31,7 +31,7 @@ on:
         default: "volatile"
 
       hub:
-        description: 'Hub to run against ("all" runs both, one job each; stage is non-blocking)'
+        description: 'Hub to run against ("all" runs both, one job each)'
         required: false
         type: choice
         options:
