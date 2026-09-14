@@ -23,7 +23,9 @@ SRC_URI = "https://github.com/nmeum/android-tools/releases/download/${PV}/androi
 "
 SRC_URI[sha256sum] = "2725d09f892a3a38e534429f47a321f58ecf6a3169caa42c915fb2cb7d46be0e"
 
-DEPENDS = "brotli libusb1 lz4 pcre2 protobuf protobuf-native zstd"
+# googletest is not for tests: libziparchive's public zip_writer.h includes
+# <gtest/gtest_prod.h> for FRIEND_TEST unconditionally. Header-only.
+DEPENDS = "brotli googletest libusb1 lz4 pcre2 protobuf protobuf-native zstd"
 
 inherit cmake pkgconfig bash-completion
 
