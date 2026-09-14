@@ -236,7 +236,7 @@ new `avahi-reader` role:
 the generated policy's `send_interface`, `send_member` and `send_path`
 attributes:
 ```xml
-<policy user="pv-role-avahi-reader">
+<policy user="pv-dbus-avahi-reader">
   <allow send_destination="org.freedesktop.Avahi"
          send_interface="org.freedesktop.Avahi.Server"
          send_member="GetVersionString"/>
@@ -432,9 +432,10 @@ docker exec pva-test pvcontrol graph ls
     --target pv-example-system-dbus-client-denied
 ```
 
-Pantavisor allocates a stable UID per role, generates a default-deny policy
-under `/run/pv/dbus/policy.d`, and the proxy masquerades each connection to its
-role UID. Check the consumer logs for a successful call:
+Pantavisor allocates a stable UID per role, generates the per-role allow
+policy under `/run/pv/dbus/policy.d` on top of the daemon's default-deny base
+config, and the proxy masquerades each connection to its role UID. Check the
+consumer logs for a successful call:
 ```bash
 docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-system-dbus-client/lxc/console.log
 # Expected: method return with org.pantavisor.Example response
