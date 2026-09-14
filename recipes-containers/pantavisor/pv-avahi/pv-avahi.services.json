@@ -13,8 +13,10 @@
           "role": "avahi-reader",
           "interfaces": ["org.freedesktop.Avahi.Server"],
           "members": ["GetVersionString"]
-        }
+        },
+        "avahi-limited"
       ],
+      "policy": "dbus/avahi-policy.xml",
       "activation": {
         "mode": "on-demand"
       }

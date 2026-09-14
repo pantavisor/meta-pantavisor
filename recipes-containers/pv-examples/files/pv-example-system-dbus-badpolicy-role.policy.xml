@@ -1,0 +1,5 @@
+<busconfig>
+  <policy user="@role:nosuchrole@">
+    <deny send_destination="org.pantavisor.BadRole"/>
+  </policy>
+</busconfig>

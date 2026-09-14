@@ -1,0 +1,7 @@
+<busconfig>
+  <policy user="@role:avahi-limited@">
+    <deny send_destination="org.freedesktop.Avahi"
+          send_interface="org.freedesktop.Avahi.Server"
+          send_member="GetHostName"/>
+  </policy>
+</busconfig>
