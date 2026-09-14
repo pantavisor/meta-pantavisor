@@ -42,7 +42,7 @@ PVRIMAGE_AUTO_MDEV = "1"
 
 PVR_APP_ADD_GROUP = "platform"
 # `+=` discards the class's ??= default, so /var is restated here rather than
-# inherited: sysvinit and rsyslog need it writable.
+# inherited: sysvinit needs /var/run and /var/lock writable.
 PVR_APP_ADD_EXTRA_ARGS += " --config=Entrypoint=/sbin/init \
                             --volume ovl:/var:permanent \
                             --volume ovl:/tmp:permanent"
