@@ -217,6 +217,44 @@ Two consumer containers demonstrate the allow list from both sides:
   which is **not** in the `allow` list, so the generated default-deny policy
   **refuses** its otherwise-identical calls.
 
+### Consumer `names` Form
+
+A consumer can declare the well-known names it needs instead of hardcoding a
+bus socket. Pantavisor derives `bus`, the link `name`, and `target` from each
+name's owner; `role` stays required, since `allow` lists are written against
+it:
+
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "monitor", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+`pv-avahi-browse` (`recipes-containers/pantavisor/pv-avahi-browse/args.json`)
+uses exactly this to reach `pv-avahi`'s `org.freedesktop.Avahi`.
+
+- Each entry in `names` must resolve to an export with a matching `owns` in
+  the state; a name nobody owns fails validation.
+- `target` defaults to `/run/dbus/system_bus_socket` for `system-bus`; only
+  one entry per bus may take the default.
+- A string element (`"org.freedesktop.Avahi"`) is shorthand for
+  `{"name": "org.freedesktop.Avahi", "activation": {"mode": "none"}}`.
+
+:::note
+The legacy socket form (`name`, `type`, `role`, `target`, no `names`) keeps
+working unchanged — use it for a provider-owned bus pantavisor knows nothing
+about, as `pv-example-system-dbus-server`/`-client`/`-client-denied` above
+still do.
+:::
+
+Check the resolved link with the device online:
+```bash
+docker exec pva-test pvcontrol graph ls
+# Expected: a "consumes": "org.freedesktop.Avahi" entry for pv-avahi-browse
+```
+
 ### Build and Verify
 
 ```bash
@@ -235,7 +273,10 @@ docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-system-db
 
 A container requesting a role not in the `allow` list is denied by the generated
 policy (`AccessDenied`), and a state that exports the reserved `system-bus` name
-or double-owns a well-known name is rejected at validation.
+or double-owns a well-known name is rejected at validation. A `names` entry
+that names nobody in the state is rejected the same way, before any container
+runs — `pv-example-system-dbus-names-orphan` names `org.pantavisor.NoSuchService`
+purely to exercise this negative path.
 
 ---
 
