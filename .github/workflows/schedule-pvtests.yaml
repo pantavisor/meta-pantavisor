@@ -23,6 +23,6 @@ jobs:
       parallel: "6"
       # nightly covers both assignment models, so a regression in either is caught
       model: all
-      # nightly covers both Hubs; stage is non-blocking
+      # nightly covers both Hubs, so a regression against either is caught
       hub: all
     secrets: inherit
