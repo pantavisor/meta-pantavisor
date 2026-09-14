@@ -4,7 +4,7 @@ HOMEPAGE = "https://github.com/nxp-imx/mfgtools"
 
 # Copy of meta-freescale's recipes-devtools/uuu/uuu_git.bb (scarthgap), plus one
 # musl patch. It lives here because the lab-controller machines
-# (raspberrypi-armv8, orangepi-5b) do not pull meta-freescale, and pv-labutils
+# (raspberrypi, orangepi-5b) do not pull meta-freescale, and pv-labutils
 # needs uuu to flash i.MX targets. Keep PV/SRCREV in sync with meta-freescale
 # scarthgap.
 #
