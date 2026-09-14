@@ -25,14 +25,21 @@ SRC_URI[sha256sum] = "2725d09f892a3a38e534429f47a321f58ecf6a3169caa42c915fb2cb7d
 
 # googletest is not for tests: libziparchive's public zip_writer.h includes
 # <gtest/gtest_prod.h> for FRIEND_TEST unconditionally. Header-only.
-DEPENDS = "brotli googletest libusb1 lz4 pcre2 protobuf protobuf-native zstd"
+DEPENDS = "brotli googletest lz4 pcre2 protobuf protobuf-native zstd"
 
 inherit cmake pkgconfig bash-completion
 
 # Bundled fmt is what upstream builds and tests against (12.0); meta-oe
 # scarthgap ships 10.2.1.
+#
+# Bundled libusb (1.0.29, static, netlink hotplug) because adb's
+# usb_libusb_device.cpp uses the SuperSpeedPlus x2 API - LIBUSB_SPEED_SUPER_PLUS_X2
+# and libusb_get_ssplus_usb_device_capability_descriptor - which arrived in
+# libusb 1.0.28; poky scarthgap has 1.0.27. udev stays off: a container has no
+# udev, and every other libusb user in pv-labutils keeps the system libusb1.
 EXTRA_OECMAKE = " \
     -DANDROID_TOOLS_USE_BUNDLED_FMT=ON \
+    -DANDROID_TOOLS_USE_BUNDLED_LIBUSB=ON \
     -DProtobuf_PROTOC_EXECUTABLE=${STAGING_BINDIR_NATIVE}/protoc \
 "
 
