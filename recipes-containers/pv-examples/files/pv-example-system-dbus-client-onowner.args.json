@@ -1,0 +1,15 @@
+{
+    "PV_GROUP": "app",
+    "PV_SERVICES_REQUIRED": [
+        {
+            "type": "dbus",
+            "role": "operator",
+            "names": [
+                {
+                    "name": "org.freedesktop.Avahi",
+                    "activation": { "mode": "on-owner" }
+                }
+            ]
+        }
+    ]
+}
