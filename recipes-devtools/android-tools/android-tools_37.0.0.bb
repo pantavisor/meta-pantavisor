@@ -25,7 +25,7 @@ SRC_URI[sha256sum] = "2725d09f892a3a38e534429f47a321f58ecf6a3169caa42c915fb2cb7d
 
 # googletest is not for tests: libziparchive's public zip_writer.h includes
 # <gtest/gtest_prod.h> for FRIEND_TEST unconditionally. Header-only.
-DEPENDS = "brotli googletest lz4 pcre2 protobuf protobuf-native zstd"
+DEPENDS = "abseil-cpp brotli googletest lz4 pcre2 protobuf protobuf-native zstd"
 
 inherit cmake pkgconfig bash-completion
 
@@ -42,6 +42,13 @@ EXTRA_OECMAKE = " \
     -DANDROID_TOOLS_USE_BUNDLED_LIBUSB=ON \
     -DProtobuf_PROTOC_EXECUTABLE=${STAGING_BINDIR_NATIVE}/protoc \
 "
+
+# protobuf 4.x's generated .pb.cc code calls abseil directly (CHECK macros ->
+# absl::log_internal), but module-mode FindProtobuf hands the build a bare
+# libprotobuf.so with none of the transitive absl link deps that config mode
+# would carry. Let ld follow libprotobuf.so's own DT_NEEDED entries to resolve
+# them - the same line Alpine's APKBUILD uses for the same reason.
+LDFLAGS:append = " -Wl,--copy-dt-needed-entries"
 
 # Vendored BoringSSL is built as static libraries and linked in.
 COMPATIBLE_HOST:powerpc = "(null)"
