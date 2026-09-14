@@ -296,6 +296,96 @@ docker exec -it pva-test pventer -c pv-example-system-dbus-reader \
 # avahi-reader's narrowed member list
 ```
 
+### Policy Fragments
+
+An export's `policy` field names a raw D-Bus policy fragment, as a path
+RELATIVE TO THE CONTAINER'S OWN TRAIL DIRECTORY. Pantavisor resolves it,
+validates it, and splices it into the generated bus policy after the
+generated rules. Where a JSON `allow` entry can only narrow to an
+interface/member/path triple, a fragment can express anything `<policy>`,
+`<allow>` and `<deny>` support — `send_path`, multiple rules per role, mixed
+`allow`/`deny` — as long as it only touches that export's own `owns` name and
+one of its own `allow` roles.
+
+`pv-avahi` adds a fourth `allow` entry, `avahi-limited`, granted full access
+by JSON, and narrows it down to "everything except `GetHostName`" with a
+fragment:
+```json
+{
+  "owns": "org.freedesktop.Avahi",
+  "role": "avahi-service",
+  "allow": ["operator", "monitor", { "role": "avahi-reader", "...": "..." }, "avahi-limited"],
+  "policy": "dbus/avahi-policy.xml"
+}
+```
+
+`recipes-containers/pantavisor/pv-avahi/avahi-policy.xml`:
+```xml
+<busconfig>
+  <policy user="@role:avahi-limited@">
+    <deny send_destination="org.freedesktop.Avahi"
+          send_interface="org.freedesktop.Avahi.Server"
+          send_member="GetHostName"/>
+  </policy>
+</busconfig>
+```
+
+`@role:avahi-limited@` is a placeholder pantavisor substitutes with the
+role's masqueraded uid; a `<policy>` element may only ever key on
+`user="@role:<name>@"` for a role already present in that same export's
+`allow` list. The recipe ships the fragment via its
+`PVR_APP_POST_FIXUP` hook (`container-pvrexport.bbclass`), which runs after
+`pvr app add` and before signing:
+```sh
+install -d ${PN}/dbus
+install -m 0644 ${WORKDIR}/avahi-policy.xml ${PN}/dbus/avahi-policy.xml
+```
+so on a running device the fragment is the file at
+`/storage/trails/<rev>/pv-avahi/dbus/avahi-policy.xml`, the same path `pvr
+device clone`/`pvr checkout` shows under `pv-avahi/dbus/avahi-policy.xml` in
+a trail checkout.
+
+`pv-example-system-dbus-limited`
+(`recipes-containers/pv-examples/files/pv-example-system-dbus-limited.args.json`)
+attaches under the narrowed `avahi-limited` role:
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "avahi-limited", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+:::note
+JSON says WHO may call (which roles are in `allow`); a fragment may only
+narrow HOW an already-allowed role calls, never grant access to a role
+outside that `allow` list or to a name the export does not `own`.
+:::
+
+Validation rejects, and therefore rolls the deploy back on, a fragment that:
+- contains any element other than `busconfig`, `policy`, `allow`, `deny`
+  (`include`, `includedir`, `listen`, `type`, `auth`, `servicedir`, `limit`,
+  `selinux`, `apparmor` are all refused);
+- gives `<policy>` anything but `user="@role:<name>@"`, names a role that
+  does not resolve, or names a role not in that export's own `allow` list;
+- gives `<allow>`/`<deny>` anything but `send_*`/`receive_*`/`own`/
+  `own_prefix` (`eavesdrop` is refused);
+- has `own`/`own_prefix`/`send_destination`/`receive_sender` name anything
+  other than one of that container's own `owns` names.
+
+Four containers each exercise exactly one of these rejections:
+
+| Container | `owns` | Fragment problem |
+|-----------|--------|-------------------|
+| `pv-example-system-dbus-badpolicy-include` | `org.pantavisor.BadInclude` | forbidden `<includedir>` element |
+| `pv-example-system-dbus-badpolicy-foreign` | `org.pantavisor.BadForeign` | `<deny>` names `org.freedesktop.Avahi`, a name it does not own |
+| `pv-example-system-dbus-badpolicy-role` | `org.pantavisor.BadRole` | `<policy>` references `@role:nosuchrole@`, which resolves to nothing |
+| `pv-example-system-dbus-badpin` | none (`"services": []`) | pins a role uid (`roles: {"badpin-role": {"uid": 1234}}`) with no `owns` export on the platform — only a provider may pin a role uid |
+
+None of the four ever runs a real D-Bus server; each is a busybox sleep loop
+whose sole purpose is to fail state validation the moment its revision is
+applied.
+
 ### Consumer `names` Form
 
 A consumer can declare the well-known names it needs instead of hardcoding a
