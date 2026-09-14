@@ -21,6 +21,7 @@ SRC_URI += "file://args.json \
             file://ssh.service \
             file://pv-avahi-config \
             file://pv-avahi.services.json \
+            file://avahi-policy.xml \
 "
 
 PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
@@ -48,8 +49,11 @@ PVR_SIG_ADD_ARGS = "--part ${PN}"
 # volume-only entity and drops type/config and the lxc.container.conf render,
 # so the container could never be started. Add it as a normal lxc app and set
 # the goal afterwards via the PVR_APP_POST_FIXUP hook (container-pvrexport).
+# Also ships the raw policy fragment narrowing the avahi-limited role.
 pv_avahi_fixup_runjson() {
     jq '. + {"status_goal": "MOUNTED"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+    install -d ${PN}/dbus
+    install -m 0644 ${WORKDIR}/avahi-policy.xml ${PN}/dbus/avahi-policy.xml
 }
 PVR_APP_POST_FIXUP = "pv_avahi_fixup_runjson"
 

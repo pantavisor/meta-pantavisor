@@ -1,0 +1,5 @@
+<busconfig>
+  <policy user="@role:operator@">
+    <deny send_destination="org.freedesktop.Avahi"/>
+  </policy>
+</busconfig>
