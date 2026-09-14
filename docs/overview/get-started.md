@@ -53,6 +53,14 @@ is a worktree pointer file it bind-mounts the main repo at its host path
 correctly) and bind-mounts `KAS_BUILD_DIR` at its host path (so the relative
 cache symlinks resolve through the same parent-dir hierarchy as on the host).
 
+A pre-existing `build/conf` may be stale: older KAS kept checkouts under
+`work/`, current KAS uses `layers/` and rewrites `build/conf` on the next
+build. Always go through `kas-container` rather than sourcing a layer's
+`oe-init-build-env` against a hand-written `bblayers.conf` — that way you get
+the shared sstate/downloads and the pinned checkouts. If a root-level `poky/`
+sits next to `layers/poky`, it is a stale second checkout; `layers/poky` is the
+one KAS uses.
+
 ### Typical flow
 
 ```bash
@@ -80,6 +88,23 @@ kas build .config.yaml
 # Or build directly with a release config
 ./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
 ```
+
+### Verify a Recipe Change
+
+Build one recipe and its dependencies instead of the full image:
+
+```bash
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
+```
+
+To resolve the dependency graph without building:
+
+```bash
+./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
+```
+
+Swap `docker-x86_64-scarthgap.yaml` for the release config matching your machine
+(see `kas/build-configs/release/`).
 
 ### Workspace Build (local source development)
 

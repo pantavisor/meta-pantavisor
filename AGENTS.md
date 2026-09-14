@@ -74,6 +74,38 @@ PANTAVISOR_FEATURES:append = " appengine"
 
 **machines.json**: Always run `.github/scripts/makeworkflows` after editing `.github/machines.json`. Commit machines.json and the generated workflow files together.
 
+## Building & Verifying Changes
+
+KAS is the only supported way to build this layer. Do not hand-write
+`build/conf/bblayers.conf`, source `layers/poky/oe-init-build-env`, or bitbake
+against a layer checkout directly — that bypasses the shared `SSTATE_DIR`/
+`DL_DIR` and the pinned checkouts. Full guide:
+[docs/overview/get-started.md](docs/overview/get-started.md).
+
+Do branch work in a worktree so caches are shared with the main checkout:
+
+```bash
+./worktree-create.sh ../meta-pantavisor-foo feature/foo
+cd ../meta-pantavisor-foo
+```
+
+Verify a recipe change with a release config and `--target`:
+
+```bash
+# build just <recipe> and its deps (not the whole image)
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
+
+# cheap parse/dependency-resolution check, no build
+./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
+```
+
+- A pre-existing `build/conf` may be stale: older KAS kept checkouts under
+  `work/`, current KAS uses `layers/` and regenerates `build/conf`. Trust the
+  KAS config over an old `build/`.
+- If a root-level `poky/` exists next to `layers/poky`, it is a stale second
+  checkout of a different Yocto release. `layers/poky` is the one KAS uses —
+  never read classes from, or build against, the root one.
+
 ## Development Guidelines
 
 - **Pull requests**: Open as drafts (`gh pr create --draft`) while still iterating. Note that the build/test matrix in `onpush-scarthgap.yaml` is gated `if: needs.check-draft.outputs.is_draft != 'true'`, so **CI does not run on drafts** — a draft only ever shows the cheap `check-draft`/`summary` jobs. To get real CI feedback you must `gh pr ready`. When promoting, keep a background monitor on the PR (`gh pr checks <n>`) that reports a failing build back to the developer here.
