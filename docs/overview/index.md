@@ -30,17 +30,18 @@ committing to the Yocto/BitBake build guide below.
 4. [Flashing Images](flashing-images.md) — where to get a ready-made image (pantavisor.io/downloads), pvflasher, and which flashing method applies to your board
 5. [Boot Flow](boot-flow.md) — how `boot.cmd.pvgeneric` boots Pantavisor: FIT/trail loading, try-boot, MMC vs NAND/UBIFS, and `PV_BOOT_OEMARGS`
 6. [USB factory-flash bundle](pv-flash-bundle.md) — the over-USB factory-flash archive recipe (Toradex, Variscite, NXP MEK via UUU; Rockchip via rkdeveloptool): design, `PV_FLASH_*` variables, and how to wire up a new machine
+7. [Lab controller container (pv-labutils)](pv-labutils.md) — the `pv-labutils` container recipe: package split, GPIO reset/recovery control (`pv-gpio-set`, `raspi-gpio`), and mdev device-access rules
 
 ## Build Guide
 
-7. [Get Started](get-started.md) — prerequisites, repository setup, git worktrees, and your first KAS build
-8. [Managing Layers with repo](repo-manifest.md) — fold meta-pantavisor into an existing `repo`/`manifest.xml` multi-layer workflow
-9. [Supported Devices](supported-device.md) — machines supported and built by CI
-10. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
-11. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
-12. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
-13. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
-14. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
+8. [Get Started](get-started.md) — prerequisites, repository setup, git worktrees, and your first KAS build
+9. [Managing Layers with repo](repo-manifest.md) — fold meta-pantavisor into an existing `repo`/`manifest.xml` multi-layer workflow
+10. [Supported Devices](supported-device.md) — machines supported and built by CI
+11. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
+12. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
+13. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
+14. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
+15. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
 
 ## Continuous Integration
 
