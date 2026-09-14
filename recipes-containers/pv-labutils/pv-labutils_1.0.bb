@@ -15,7 +15,17 @@ IMAGE_FSTYPES = "pvrexportit"
 
 # core-image rather than `inherit image`: labutils runs OpenRC as /sbin/init,
 # and packagegroup-core-boot's sysvinit is the equivalent that exists here.
-IMAGE_INSTALL += "packagegroup-pv-labutils rsyslog"
+# Set outright, not appended: core-image's default also carries
+# packagegroup-base-extended, which on a board machine drags the machine's
+# MACHINE_EXTRA_RRECOMMENDS (Wi-Fi/BT firmware, kernel modules) into a container.
+IMAGE_INSTALL = "packagegroup-core-boot packagegroup-pv-labutils"
+IMAGE_LINGUAS = ""
+
+# No syslog daemon. labutils ran rsyslog only to mirror syslog() to the console,
+# but rsyslog RCONFLICTS busybox-syslog, which this distro's busybox RPROVIDES
+# (a stub for packagegroup-core-boot; trim.cfg removes the real syslogd applet),
+# so it can never be installed here. The lab tools all write to stdout, which
+# Pantavisor already captures into `pvcontrol logs`.
 
 # core-image marks these noexec; SRC_URI needs them back.
 do_fetch[noexec] = "0"
@@ -41,13 +51,3 @@ PVR_APP_ADD_EXTRA_ARGS += " --config=Entrypoint=/sbin/init \
 PVR_SIG_ADD_ARGS = "--part ${PN}"
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
-
-# labutils points every facility at the console so lab output shows up in
-# `pvcontrol logs`; left at the default, rsyslog writes into the container
-# overlay where nothing reads it.
-configure_rsyslog_console() {
-    printf '\n# pv-labutils: mirror everything to the container console\n*.*\t/dev/console\n' \
-        >> ${IMAGE_ROOTFS}${sysconfdir}/rsyslog.conf
-}
-
-ROOTFS_POSTPROCESS_COMMAND += "configure_rsyslog_console; "
