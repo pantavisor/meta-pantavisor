@@ -217,6 +217,85 @@ Two consumer containers demonstrate the allow list from both sides:
   which is **not** in the `allow` list, so the generated default-deny policy
   **refuses** its otherwise-identical calls.
 
+### Policy Narrowing and Role UID Pinning
+
+An `allow` entry may also be an object that narrows a role instead of granting
+it full access to the owned name. `pv-avahi`
+(`recipes-containers/pantavisor/pv-avahi/pv-avahi.services.json`) adds a third
+`allow` entry, alongside the unchanged `"operator"`/`"monitor"` strings, for a
+new `avahi-reader` role:
+```json
+{
+  "role": "avahi-reader",
+  "interfaces": ["org.freedesktop.Avahi.Server"],
+  "members": ["GetVersionString"]
+}
+```
+
+`interfaces`, `members` and `paths` are all optional and map one-to-one onto
+the generated policy's `send_interface`, `send_member` and `send_path`
+attributes:
+```xml
+<policy user="pv-role-avahi-reader">
+  <allow send_destination="org.freedesktop.Avahi"
+         send_interface="org.freedesktop.Avahi.Server"
+         send_member="GetVersionString"/>
+  <allow receive_sender="org.freedesktop.Avahi"/>
+</policy>
+```
+
+:::note
+`receive_sender` is never narrowed — replies and signals from the owner still
+reach any allowed caller. Only the `send_*` side is restricted.
+:::
+
+A top-level `roles` map pins a role name to a real uid instead of one from
+pantavisor's synthetic pool (base 90000). `pv-avahi` pins its own owner role:
+```json
+"roles": {
+  "avahi-service": { "uid": 4242 }
+}
+```
+
+Use a pin for a legacy daemon that authorizes callers via
+`GetConnectionUnixUser` rather than the generated bus policy — it then sees
+the pinned uid instead of one from the pool. Only a provider (a service that
+declares an `owns` export) may pin a role; pins are device-wide by role name,
+so two providers pinning the same role to different uids fails state
+validation.
+
+:::note
+Never pin uid 0 to a role that a real caller also holds: `pv-xconnect`'s
+ownership monitor authenticates as uid 0, so a uid-0 pin would make that
+role's policy also match the monitor's own connection.
+:::
+
+`pv-example-system-dbus-reader`
+(`recipes-containers/pv-examples/files/pv-example-system-dbus-reader.args.json`)
+attaches under the narrowed `avahi-reader` role:
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "avahi-reader", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+Its allowed call succeeds; anything outside the narrowed interface/member is
+refused by the generated policy:
+```bash
+docker exec -it pva-test pventer -c pv-example-system-dbus-reader \
+    dbus-send --system --print-reply --dest=org.freedesktop.Avahi / \
+    org.freedesktop.Avahi.Server.GetVersionString
+# Expected: method return with the avahi-daemon version string
+
+docker exec -it pva-test pventer -c pv-example-system-dbus-reader \
+    dbus-send --system --print-reply --dest=org.freedesktop.Avahi / \
+    org.freedesktop.Avahi.Server.GetHostName
+# Expected: org.freedesktop.DBus.Error.AccessDenied — GetHostName is not in
+# avahi-reader's narrowed member list
+```
+
 ### Consumer `names` Form
 
 A consumer can declare the well-known names it needs instead of hardcoding a
