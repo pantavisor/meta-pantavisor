@@ -1,9 +1,8 @@
 {
-    "PV_GROUP": "app",
     "PV_SERVICES_REQUIRED": [
         {
             "type": "dbus",
-            "role": "monitor",
+            "role": "avahi-reader",
             "names": ["org.freedesktop.Avahi"]
         }
     ]

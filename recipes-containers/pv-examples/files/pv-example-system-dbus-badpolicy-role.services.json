@@ -1,0 +1,13 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [
+    {
+      "type": "dbus",
+      "bus": "system-bus",
+      "owns": "org.pantavisor.BadRole",
+      "role": "bad-role-service",
+      "allow": ["operator"],
+      "policy": "dbus/policy.xml"
+    }
+  ]
+}

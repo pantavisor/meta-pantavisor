@@ -1,0 +1,9 @@
+{
+  "#spec": "service-manifest-xconnect@1",
+  "services": [],
+  "roles": {
+    "badpin-role": {
+      "uid": 1234
+    }
+  }
+}
