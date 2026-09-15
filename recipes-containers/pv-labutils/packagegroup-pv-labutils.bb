@@ -35,9 +35,18 @@ RDEPENDS:${PN}-flash = "\
 
 SUMMARY:${PN}-power = "Per-port USB and mains power switching"
 RDEPENDS:${PN}-power = "\
+    libgpiod-tools \
     uhubctl \
     sispmctl \
 "
+
+# Board-specific GPIO header pin-name/function reference, added per machine as
+# board support lands. `rpi` is in MACHINEOVERRIDES for every Raspberry Pi
+# machine (meta-raspberrypi also gates raspi-gpio's own COMPATIBLE_MACHINE on
+# it), so this covers raspberrypi/raspberrypi4-64/etc. without listing each
+# one; `raspi-gpio funcs` prints the 40-pin header's BCM/physical mapping
+# alongside gpioset/gpioget from libgpiod-tools.
+RDEPENDS:${PN}-power:append:rpi = " raspi-gpio"
 
 SUMMARY:${PN}-serial = "Serial consoles"
 RDEPENDS:${PN}-serial = "\
@@ -66,6 +75,7 @@ RDEPENDS:${PN}-shell = "\
     rsync \
     socat \
     sudo \
+    tar \
     vim \
     xz \
 "

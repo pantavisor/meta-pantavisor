@@ -31,7 +31,14 @@ IMAGE_LINGUAS = ""
 do_fetch[noexec] = "0"
 do_unpack[noexec] = "0"
 
-SRC_URI += "file://pv-labutils.args.json"
+SRC_URI += "file://pv-labutils.args.json file://pv-gpio-set.sh"
+
+install_scripts() {
+    install -d ${IMAGE_ROOTFS}${bindir}
+    install -m 0755 ${WORKDIR}/pv-gpio-set.sh ${IMAGE_ROOTFS}${bindir}/pv-gpio-set
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 # Permissive mdev: reaching USB hubs, SD muxes, DFU/fastboot endpoints and tty
 # devices on the host is the entire point of this container. This plus the
