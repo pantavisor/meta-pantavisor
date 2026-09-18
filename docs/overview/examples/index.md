@@ -14,7 +14,7 @@ containers. `pvwificonnect` is a core container documented here as a feature.
 ## Topics
 
 1. [xconnect Examples](xconnect-examples.md) — Unix socket, REST, D-Bus, DRM, and Wayland proxy patterns with provider/consumer container pairs
-2. [pvwificonnect](pvwificonnect.md) — WiFi provisioning container: access point, captive portal, tethering, and connection watcher
+2. [pvwificonnect](pvwificonnect.md) — WiFi provisioning container: Improv BLE provisioning, setup access point, captive portal, tethering, and connection watcher
 
 ## Related
 

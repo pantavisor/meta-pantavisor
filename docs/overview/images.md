@@ -54,7 +54,7 @@ The core containers in the starter mix:
 |-----------|---------|
 | `pv-pvr-sdk` | PVR SDK / local management container |
 | `pv-alpine-connman` | ConnMan network backend (the WiFi/networking stack) |
-| `pvwificonnect` | WiFi provisioning — AP, captive portal, tethering (see [pvwificonnect](examples/pvwificonnect.md)) |
+| `pvwificonnect` | WiFi provisioning — Improv BLE, setup AP, captive portal, tethering (see [pvwificonnect](examples/pvwificonnect.md)) |
 | `pv-avahi` | mDNS/zeroconf service discovery |
 
 The `pantavisor-bsp` pvrexport (kernel, initramfs, DTBs, modules, firmware) is
