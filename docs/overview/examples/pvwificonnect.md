@@ -13,7 +13,7 @@ whichever is convenient for the device in front of you:
 
 | Transport | How you reach the device | Typical client |
 |-----------|--------------------------|----------------|
-| **WiFi access point** | The device broadcasts a setup SSID (default `pvwificonnect` / `1234567890`); you join it and use the web page it serves. | Phone/laptop browser, or `pvwificonnect-cli` on the device |
+| **WiFi access point** | The device broadcasts a setup SSID (default `pvwificonnect` / `1234567890`); you join it and use the web page it serves. | Phone/laptop browser |
 | **Bluetooth LE (Improv WiFi)** | The device advertises the [Improv WiFi](https://www.improv-wifi.com/ble/) BLE service; you send SSID + password over BLE without joining any WiFi network. | [hub.pantacor.com/provision-wifi](https://hub.pantacor.com/provision-wifi) or `pvr wifi` |
 
 BLE provisioning is enabled by default and starts automatically when a
@@ -27,7 +27,6 @@ drive the same backend, so a device can be provisioned either way.
 | **Access point** | Broadcasts a setup SSID (default `pvwificonnect` / `1234567890`) so a phone/laptop can connect to the device. |
 | **Captive portal** | Redirects connecting clients to a web setup page (opt-in via `captive_portal`). |
 | **Improv WiFi over BLE** | Advertises the Improv GATT service so a browser or CLI can scan, provision, identify, rename, and read claim material over Bluetooth (`ble`, on by default). |
-| **Improv WiFi over serial** | `pvwificonnect-cli improv-serial` speaks the Improv serial protocol on stdin/stdout for UART-based provisioning. |
 | **Internet tethering** | Shares the device's uplink (`eth0`, `wwan0`, …) to AP clients (opt-in via `tethering`). |
 | **Auto mode** | Picks portal vs. tethering automatically based on connectivity (`auto_mode`, on by default). |
 | **Connection watcher** | Background loop that re-triggers AP/tethering setup when connectivity is lost (`watcher`). |
@@ -39,7 +38,7 @@ It is built three ways in this layer:
 | Recipe | Produces |
 |--------|----------|
 | `recipes-containers/pantavisor/pvwificonnect_v1.8.2.bb` | The pvrexport container (this doc). |
-| `recipes-containers/pantavisor/pvwificonnect-app_v1.8.2.bb` | The `pvwificonnect` + `pvwificonnect-cli` binaries built from source. |
+| `recipes-containers/pantavisor/pvwificonnect-app_v1.8.2.bb` | The `pvwificonnect` binary built from source. |
 | `recipes-containers/pantavisor/pv-pvwificonnect_v1.8.2.bb` | The prebuilt Docker-image variant. |
 
 ## Network backend dependency
@@ -133,14 +132,16 @@ Example with BLE named and the captive portal on:
 
 ### Environment variables
 
-Set in the container's Docker config (`recipes-containers/pantavisor/pvwificonnect/config.json`):
+Environment overrides `config.json`. The container's Docker config
+(`recipes-containers/pantavisor/pvwificonnect/config.json`) sets the first two;
+the rest are unset unless you add them:
 
-| Variable | Meaning | Default |
-|----------|---------|---------|
-| `PV_WIFI_CONNECT_WATCHER` | Enable the connection watcher | `false` |
-| `PV_WIFI_CONNECT_INTERVAL` | Watcher interval (Go duration) | `1m` |
-| `PV_WIFI_CONNECT_MAX_RETRIES` | Max consecutive watcher failures | `3` |
-| `PV_WIFI_CONNECT_BLE` | Enable/disable BLE provisioning (`0` or `false` disables); takes precedence over `ble.enabled` | unset |
+| Variable | Meaning | Shipped value | App default |
+|----------|---------|---------------|-------------|
+| `PV_WIFI_CONNECT_WATCHER` | Enable the connection watcher | `true` | `false` |
+| `PV_WIFI_CONNECT_INTERVAL` | Watcher interval (Go duration) | `1m` | `1m` |
+| `PV_WIFI_CONNECT_MAX_RETRIES` | Max consecutive watcher failures | *(unset)* | `3` |
+| `PV_WIFI_CONNECT_BLE` | Enable/disable BLE provisioning (`0` or `false` disables); takes precedence over `ble.enabled` | *(unset)* | enabled |
 
 ### Container runtime args
 
@@ -157,6 +158,9 @@ Set in the container's Docker config (`recipes-containers/pantavisor/pvwificonne
     "PV_VOLUME_IMPORTS": ["os:/pvrun/dbus:/var/run/dbus"]
 }
 ```
+
+The recipe additionally attaches `--volume ovl:/tmp:permanent`, so the `/tmp`
+volume the container declares survives revision changes.
 
 ## Provisioning over Bluetooth (Improv WiFi)
 
@@ -208,16 +212,6 @@ group, or root. Addresses are MACs (`AA:BB:CC:DD:EE:FF`), as printed by
 
 Claim material only exists after the device's first rendezvous with Pantacor
 Hub, so `claim-info` retries (default: every 5s for up to 60s) until it shows up.
-
-### Over serial
-
-Where BLE is not an option, `pvwificonnect-cli improv-serial` speaks the
-[Improv serial protocol](https://www.improv-wifi.com/serial/) on stdin/stdout,
-for example bridged to a UART:
-
-```bash
-socat /dev/ttyUSB0,raw,echo=0 EXEC:'pvwificonnect-cli improv-serial',pty,raw,echo=0
-```
 
 ## Provisioning over the setup hotspot
 
@@ -309,30 +303,9 @@ curl -X POST -H 'Content-Type: application/json' \
 ```
 
 Both `ssid` and `password` are required — the portal rejects an empty password
-with `400`, so open networks cannot be joined this way; use `pvwificonnect-cli`
-for those. When the hotspot is up, the POST returns immediately and the join
+with `400`, so open networks cannot be joined this way. When the hotspot is up, the POST returns immediately and the join
 happens in the background, because answering after the AP has been torn down
 would never reach the client.
-
-## On-device CLI
-
-The `pvwificonnect-cli` binary (installed to `/usr/bin` by `pvwificonnect-app`)
-drives the same backend from inside the container — handy from a serial console
-or a `pventer` shell:
-
-```bash
-pvwificonnect-cli wizard              # interactive scan + connect
-pvwificonnect-cli scan --json
-pvwificonnect-cli connect -s MyNetwork -p MyPassword
-pvwificonnect-cli status
-pvwificonnect-cli stored              # saved networks
-pvwificonnect-cli start-ap / stop-ap / ap-status
-```
-
-When the `pvwificonnect` daemon is running it owns the ConnMan agent, so
-`connect` and `wizard` post credentials to the daemon instead of driving
-ConnMan directly. Use `--no-daemon` to force the direct path, and
-`--platform connman|networkmanager` to skip backend auto-detection.
 
 ## Building
 

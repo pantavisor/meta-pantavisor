@@ -12,7 +12,7 @@ device that boots Pantavisor and brings up a usable system out of the box.
 ```bitbake
 inherit image pvroot-image pantavisor-docs
 
-PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi"
+PVROOT_CONTAINERS_CORE ?= "pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi pv-avahi-browse"
 PVROOT_IMAGE_BSP       ?= "core-image-minimal"
 ```
 
@@ -44,7 +44,7 @@ The default trail is built from two variables (see
 
 | Variable | Role | Default |
 |----------|------|---------|
-| `PVROOT_CONTAINERS_CORE` | Containers baked **into the initial trail** (`pvr deploy` into `/trails/0`) | `pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi` |
+| `PVROOT_CONTAINERS_CORE` | Containers baked **into the initial trail** (`pvr deploy` into `/trails/0`) | `pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi pv-avahi-browse` |
 | `PVROOT_CONTAINERS` | Containers staged as **factory packages** (`factory-pkgs.d/`), installed on first boot | *(none)* |
 | `PVROOT_IMAGE_BSP` | Proto rootfs the BSP's modules/firmware come from | `core-image-minimal` |
 
@@ -56,6 +56,7 @@ The core containers in the starter mix:
 | `pv-alpine-connman` | ConnMan network backend (the WiFi/networking stack) |
 | `pvwificonnect` | WiFi provisioning — Improv BLE, setup AP, captive portal, tethering (see [pvwificonnect](examples/pvwificonnect.md)) |
 | `pv-avahi` | mDNS/zeroconf service discovery |
+| `pv-avahi-browse` | mDNS browse consumer against the hosted D-Bus system bus |
 
 The `pantavisor-bsp` pvrexport (kernel, initramfs, DTBs, modules, firmware) is
 **always** mixed in, regardless of the container list — that is what makes the
