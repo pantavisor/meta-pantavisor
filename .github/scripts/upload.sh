@@ -30,11 +30,23 @@ aws configure set aws_secret_access_key $AWS_SECRET_KEY
 
 if [ -d "images" ]; then
     FILES_IMAGES=( $(ls images) )
-    
-    if [ ${#FILES_IMAGES[@]} -gt 0 ]; then
+
+    # Some machines' whole deploy output IS already a single compressed
+    # archive (pv-flash-bundle-*.tar.gz, pantavisor-appengine-distro-*.tar.gz,
+    # *.rootfs.wic.gz). Re-tarring that would nest an archive inside another
+    # one, so upload it as-is instead, keeping its real extension.
+    if [ ${#FILES_IMAGES[@]} -eq 1 ] && [[ "${FILES_IMAGES[0]}" =~ \.(tar\.gz|wic\.gz)$ ]]; then
+        EXT="${BASH_REMATCH[1]}"
+        TAR_IMAGES="$MACHINE_NAME-$TAG.$EXT"
+        echo "processing: ${FILES_IMAGES[0]} (already compressed, uploading as-is)"
+        cp "images/${FILES_IMAGES[0]}" "$TAR_IMAGES"
+
+        IMAGES_CSUM=$(sha256sum "$TAR_IMAGES" | cut -d' ' -f1)
+        aws s3 cp "$TAR_IMAGES" "s3://$AWS_S3_BUCKET/$TAG/$MACHINE_NAME/$TAR_IMAGES"
+    elif [ ${#FILES_IMAGES[@]} -gt 0 ]; then
         echo "processing: ${FILES_IMAGES[*]}"
         tar -czf "$TAR_IMAGES" -C images "${FILES_IMAGES[@]}"
-        
+
         IMAGES_CSUM=$(sha256sum "$TAR_IMAGES" | cut -d' ' -f1)
         aws s3 cp "$TAR_IMAGES" "s3://$AWS_S3_BUCKET/$TAG/$MACHINE_NAME/$TAR_IMAGES"
     else
