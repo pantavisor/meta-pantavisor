@@ -11,7 +11,7 @@ repos:
         path: layers/meta-sunxi
         url: https://github.com/linux-sunxi/meta-sunxi
     meta-arm:
-        commit: 045eb74bd9abe7d9ccf365a2417e440ce83bcbb0
+        commit: 0a4b911d9fd63ab29c4532a907fae3282dbdcfe4
         layers:
             meta-arm:
             meta-arm-toolchain:
@@ -30,10 +30,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b2c16f1e69130558574e1363aff944647fa9cd11
+        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
     meta-pantavisor:
     meta-virtualization:
-        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
+        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:

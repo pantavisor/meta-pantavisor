@@ -11,7 +11,7 @@ repos:
         path: layers/meta-raspberrypi
         url: https://github.com/agherzan/meta-raspberrypi
     meta-qt5:
-        commit: 227cf5e7b64c93dfc1a45f235c466db8c3fd8707
+        commit: 916d37e38077850ff5a0ac4fce6f2a55ba5b2a86
         path: layers/meta-qt5
         url: https://github.com/meta-qt5/meta-qt5/
     poky:
@@ -27,10 +27,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b2c16f1e69130558574e1363aff944647fa9cd11
+        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
     meta-pantavisor:
     meta-virtualization:
-        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
+        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:

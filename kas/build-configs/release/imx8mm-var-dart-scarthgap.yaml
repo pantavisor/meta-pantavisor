@@ -5,7 +5,7 @@ repos:
     meta-freescale:
         url: https://github.com/Freescale/meta-freescale.git
         path: layers/meta-freescale
-        commit: 4143744bc82508f00395a0ffe30e624b2341176a
+        commit: ce51eb5486e87a34f04f0367351e3217855b17ba
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 2a107933d0b967ab7e3425688eda1752f044d010
+        commit: 5e39f3c87de79653a2a8d699d4e9faa3e4b72bf4
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -33,7 +33,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 3148bb4a349e4d6d8f2cf0e49562a89aa3fec42a
+        commit: 2a03434fe537c93e008ce31c664ebe174aa82340
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
@@ -80,7 +80,7 @@ repos:
         layers:
             meta-arm:
             meta-arm-toolchain:
-        commit: 045eb74bd9abe7d9ccf365a2417e440ce83bcbb0
+        commit: 0a4b911d9fd63ab29c4532a907fae3282dbdcfe4
     poky:
         patches:
             fit-image-multiconfig:
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: b2c16f1e69130558574e1363aff944647fa9cd11
+        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
     meta-pantavisor:
     meta-virtualization:
-        commit: f980aefbc8b3eeafb8d144e7fdac3c3b701a4fea
+        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:
