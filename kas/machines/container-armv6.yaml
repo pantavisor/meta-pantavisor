@@ -7,8 +7,11 @@ header:
   # is increased on every format change.
   version: 16
   includes:
-    - kas/platforms/docker.yaml
+    - kas/platforms/container.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: docker-x86_64
+machine: container-armv6
+local_conf_header:
+  kas-appengine: |
+    CORE_IMAGE_EXTRA_INSTALL += "pantavisor"
 

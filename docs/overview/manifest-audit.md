@@ -57,7 +57,7 @@ ${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}-${DISTRO_CODENAME}.manifest.reference
 ```
 pv-initramfs_panta-raspberrypi-armv8-scarthgap.manifest.reference.txt
 pv-initramfs_panta-bananapi-m2-berry-scarthgap.manifest.reference.txt
-pv-appengine_panta-appengine-docker-x86_64-scarthgap.manifest.reference.txt
+pv-appengine_panta-appengine-container-x86_64-scarthgap.manifest.reference.txt
 ```
 
 The underscore separates the recipe prefix from the distro/machine/codename

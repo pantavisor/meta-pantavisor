@@ -25,10 +25,10 @@ not inside `build/`. You can see the exact layout kas expects by dumping any
 config:
 
 ```bash
-kas dump --resolve-refs kas/build-configs/release/docker-x86_64-scarthgap.yaml
+kas dump --resolve-refs kas/build-configs/release/container-x86_64-scarthgap.yaml
 ```
 
-For the `docker-x86_64-scarthgap` target, this resolves to:
+For the `container-x86_64-scarthgap` target, this resolves to:
 
 | Repo | Path (relative to meta-pantavisor root) |
 |------|------------------------------------------|
@@ -82,7 +82,7 @@ under `layers/`, matching the table above exactly.
 From the workspace root (where `repo sync` placed `meta-pantavisor`):
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
 ```
 
 No `_source_dir` override is needed — the build config already points kas

@@ -12,7 +12,7 @@ For pv-ctrl API tests, see [testplan-pvctrl.md](testplan-pvctrl.md).
 ### Build Appengine Image and Example Containers
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client \
     --target pv-example-cleanexit \
@@ -29,7 +29,7 @@ For pv-ctrl API tests, see [testplan-pvctrl.md](testplan-pvctrl.md).
 | `pv-example-app` | `container` | none | Yes (shell trap) | Tests lenient stop path (graceful exit via SIGTERM) |
 
 ```bash
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 ### Common Setup
@@ -39,10 +39,10 @@ docker rm -f pva-test 2>/dev/null
 docker volume rm storage-test 2>/dev/null
 mkdir -p pvtx.d
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-cleanexit.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-app.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-cleanexit.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-app.pvrexport.tgz pvtx.d/
 
 docker run --name pva-test -d --privileged \
     -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \

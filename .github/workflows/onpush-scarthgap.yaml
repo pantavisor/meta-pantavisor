@@ -64,21 +64,21 @@ jobs:
       sdk: ${{ matrix.sdk }}
     secrets: inherit
 
-  build-docker:
+  build-container:
     needs: check-draft
     if: needs.check-draft.outputs.is_draft != 'true'
-    name: "build (docker-x86_64-scarthgap)"
+    name: "build (container-x86_64-scarthgap)"
     uses: ./.github/workflows/buildkas-target.yaml
     with:
-      configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-      machine_name: docker-x86_64-scarthgap
+      configs: kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+      machine_name: container-x86_64-scarthgap
       build_target: pantavisor-appengine-distro
       output: "pantavisor-appengine-distro-*.tar.gz"
       sdk: 0
     secrets: inherit
 
   pvtest-local:
-    needs: build-docker
+    needs: build-container
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       test_path: local
@@ -87,7 +87,7 @@ jobs:
     secrets: inherit
 
   summary:
-    needs: [check-draft, build-hw, build-docker]
+    needs: [check-draft, build-hw, build-container]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -63,14 +63,14 @@ Not automated (kept manual):
 
 ```bash
 # Build with workspace overlay (for testing local pantavisor changes)
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
 # Build example containers for xconnect tests
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client
 
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 ### Launch Appengine
@@ -80,8 +80,8 @@ docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
 mkdir -p pvtx.d
 
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
 
 docker run --name pva-test -d --privileged \
     -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \

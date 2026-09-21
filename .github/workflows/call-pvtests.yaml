@@ -100,7 +100,7 @@ jobs:
       - name: Download pvtest distro
         uses: actions/download-artifact@v7
         with:
-          name: pvtest-distro-docker-x86_64-scarthgap
+          name: pvtest-distro-container-x86_64-scarthgap
           path: ${{ env.WORKSPACE }}
 
       - name: Load Docker images

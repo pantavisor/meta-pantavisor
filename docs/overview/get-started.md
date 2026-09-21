@@ -66,7 +66,7 @@ one KAS uses.
 ```bash
 ./worktree-create.sh ../meta-pantavisor-foo feature/foo
 cd ../meta-pantavisor-foo
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
 # ... hack, commit, push ...
 cd -
 ./worktree-remove.sh ../meta-pantavisor-foo
@@ -86,7 +86,7 @@ kas menu Kconfig
 kas build .config.yaml
 
 # Or build directly with a release config
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
 ```
 
 ### Verify a Recipe Change
@@ -94,16 +94,16 @@ kas build .config.yaml
 Build one recipe and its dependencies instead of the full image:
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml --target <recipe>
 ```
 
 To resolve the dependency graph without building:
 
 ```bash
-./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
+./kas-container shell kas/build-configs/release/container-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
 ```
 
-Swap `docker-x86_64-scarthgap.yaml` for the release config matching your machine
+Swap `container-x86_64-scarthgap.yaml` for the release config matching your machine
 (see `kas/build-configs/release/`).
 
 ### Workspace Build (local source development)
@@ -111,7 +111,7 @@ Swap `docker-x86_64-scarthgap.yaml` for the release config matching your machine
 Adds `kas/with-workspace.yaml` to create a devtool workspace with editable pantavisor source. See [pantavisor-development.md](pantavisor-development.md).
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 ```
 
 **Note on pvr**: When using a custom pvr binary from the workspace, auto-updates are disabled by setting `PVR_DISABLE_SELF_UPGRADE=1`. This is handled automatically by `container-pvrexport.bbclass`.
@@ -129,7 +129,7 @@ Adds `kas/with-workspace.yaml` to create a devtool workspace with editable panta
 
 Build a specific target:
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target pantavisor-appengine
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml --target pantavisor-appengine
 ```
 
 `pantavisor-appengine-distro` and `pantavisor-remix` also have their own dedicated kas configs, so they can be built directly instead of via `--target`:
@@ -165,7 +165,7 @@ After building the appengine image, see [manual testing](testing/manual/index.md
 
 Quick smoke test:
 ```bash
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
 docker run --name pva-test -d --privileged \
     -v $(pwd)/pvtx.d:/usr/lib/pantavisor/pvtx.d \

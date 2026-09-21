@@ -310,7 +310,7 @@ would never reach the client.
 ## Building
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pvwificonnect
 ```
 

@@ -331,11 +331,11 @@ The badge URLs in `README.md` and `docs/ci/status.md` point to these S3 objects 
 
 ## pvtests Pipeline
 
-pvtests run against the `docker-x86_64-scarthgap` appengine distro image. They require a dedicated `pvtest-runner` runner with Docker available.
+pvtests run against the `container-x86_64-scarthgap` appengine distro image. They require a dedicated `pvtest-runner` runner with Docker available.
 
 The `call-pvtests.yaml` reusable workflow:
 
-1. Downloads the `pvtest-distro-docker-x86_64-scarthgap` artifact.
+1. Downloads the `pvtest-distro-container-x86_64-scarthgap` artifact.
 2. Installs Docker images via `test.docker.sh install-docker`.
 3. Runs `test.docker.sh run <test_path>` (no retries — failures surface directly).
 4. Appends the SUMMARY section of `test.docker.log` to the step summary.

@@ -7,10 +7,10 @@ header:
   # is increased on every format change.
   version: 16
   includes:
-    - kas/platforms/docker.yaml
+    - kas/platforms/container.yaml
 
 # The machine as it is written into the `local.conf` of bitbake.
-machine: docker-armv8
+machine: container-armv8
 local_conf_header:
   kas-machine-genericarm64: |
     #    HOSTTOOLS += "docker fakeroot"

@@ -91,7 +91,7 @@ lines += [
 ]
 
 # Dedicated named build job + pvtest jobs for each pvtest machine.
-# Job ID is "build-<first-segment-of-machine-name>" (e.g. docker-x86_64 → build-docker).
+# Job ID is "build-<first-segment-of-machine-name>" (e.g. container-x86_64 → build-container).
 pvtest_build_job_ids = []
 for m in pvtest_machines:
     name = m["name"]

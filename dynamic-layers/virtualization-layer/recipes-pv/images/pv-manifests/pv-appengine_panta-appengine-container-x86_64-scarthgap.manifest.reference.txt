@@ -1,6 +1,6 @@
 # pv-manifest-audit v1
 # format: type mode uid gid path[ -> symlink-target | major,minor]
-# machine: docker-x86_64
+# machine: container-x86_64
 # distro:  panta-appengine (scarthgap)
 # prefix:  pv-appengine
 # exclude: /var/lib/rpm /var/lib/dnf /var/lib/opkg /usr/lib/opkg /var/cache/ldconfig /var/cache/dnf /var/cache/yum

@@ -35,13 +35,13 @@ This is interactive and will prompt before making system changes. You only need 
 After building `pantavisor-appengine-distro`, the deploy directory contains an unpacked directory alongside the tarball:
 
 ```
-build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-distro-docker-x86_64-<version>/
+build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-distro-container-x86_64-<version>/
 ```
 
 cd into it and load the Docker images directly — no extraction step needed:
 
 ```bash
-cd build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-distro-docker-x86_64-<version>/
+cd build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-distro-container-x86_64-<version>/
 ./test.docker.sh install-docker
 ```
 
@@ -51,7 +51,7 @@ Extract the tarball and load all required Docker images into a working directory
 
 ```bash
 mkdir -p <workdir> && cd <workdir>
-tar -xzf /path/to/pantavisor-appengine-distro-docker-x86_64-*.tar.gz
+tar -xzf /path/to/pantavisor-appengine-distro-container-x86_64-*.tar.gz
 chmod +x test.docker.sh
 ./test.docker.sh install-docker
 ```

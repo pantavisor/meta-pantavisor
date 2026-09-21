@@ -93,10 +93,10 @@ Verify a recipe change with a release config and `--target`:
 
 ```bash
 # build just <recipe> and its deps (not the whole image)
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml --target <recipe>
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml --target <recipe>
 
 # cheap parse/dependency-resolution check, no build
-./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
+./kas-container shell kas/build-configs/release/container-x86_64-scarthgap.yaml -c "bitbake -n <recipe>"
 ```
 
 - A pre-existing `build/conf` may be stale: older KAS kept checkouts under

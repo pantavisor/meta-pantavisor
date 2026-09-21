@@ -42,11 +42,11 @@ on:
 
 jobs:
 
-  build-docker-x86_64-scarthgap:
+  build-container-x86_64-scarthgap:
     uses: ./.github/workflows/buildkas-target.yaml
     with:
-      configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-      machine_name: docker-x86_64-scarthgap
+      configs: kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+      machine_name: container-x86_64-scarthgap
       build_target: pantavisor-appengine-distro
       output: pantavisor-appengine-distro-*.tar.gz
       sdk: 0
@@ -54,7 +54,7 @@ jobs:
     secrets: inherit
 
   start-pvtest:
-    needs: build-docker-x86_64-scarthgap
+    needs: build-container-x86_64-scarthgap
     uses: ./.github/workflows/call-pvtests.yaml
     with:
       commit: ${{ inputs.commit }}

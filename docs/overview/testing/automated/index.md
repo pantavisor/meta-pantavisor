@@ -42,14 +42,14 @@ picks it up if the build is pointed at the pantavisor checkout that has it — e
 `PANTAVISOR_SRCREV`, or with `devtool modify pantavisor` for local work:
 
 ```bash
-./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c \
+./kas-container shell kas/build-configs/release/container-x86_64-scarthgap.yaml -c \
     'devtool modify pantavisor && bitbake -c build pantavisor-appengine-distro'
 ```
 
 Force a clean rebuild when BitBake does not notice the change:
 
 ```bash
-./kas-container shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c \
+./kas-container shell kas/build-configs/release/container-x86_64-scarthgap.yaml -c \
     'bitbake -c cleansstate pantavisor pantavisor-appengine-distro pantavisor-bsp pantavisor-default-skel \
      && bitbake -c build pantavisor-appengine-distro'
 ```
@@ -91,7 +91,7 @@ A fixture recipe is a container image, independent of pantavisor's source, so no
 is involved:
 
 ```bash
-kas shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c 'bitbake <name>'
+kas shell kas/build-configs/release/container-x86_64-scarthgap.yaml -c 'bitbake <name>'
 # -> build/tmp-scarthgap/deploy/images/<machine>/<name>.pvrexport.tgz
 ```
 

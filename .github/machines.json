@@ -106,20 +106,20 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
+			"config": "kas/machines/container-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
-			"name": "docker-x86_64",
+			"name": "container-x86_64",
 			"display_name": "AppEngine test container (x86_64)",
 			"description": "Not a flashable board: an x86_64 container image that runs the Pantavisor AppEngine and the pvtest suite under Docker on CI and developer workstations.",
 			"pvtest": ["local"],
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
-			"config": "kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
+			"config": "kas/machines/container-armv8.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
-			"name": "docker-armv8",
+			"name": "container-armv8",
 			"display_name": "AppEngine test container (aarch64)",
 			"description": "Not a flashable board: an aarch64 container image that runs the Pantavisor AppEngine and the pvtest suite. Runs natively on arm64 hosts, or on x86_64 through binfmt/qemu-aarch64.",
 			"workflows": ["manual", "tag"]

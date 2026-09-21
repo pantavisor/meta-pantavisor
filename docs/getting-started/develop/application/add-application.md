@@ -93,10 +93,10 @@ free.
 Build it and inspect the result:
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-myapp
 
-pvr inspect build/tmp-scarthgap/deploy/images/docker-x86_64/pv-myapp.pvrexport.tgz
+pvr inspect build/tmp-scarthgap/deploy/images/container-x86_64/pv-myapp.pvrexport.tgz
 ```
 
 Full recipe reference, `services.json`/`args.json` details, and the

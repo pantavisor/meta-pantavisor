@@ -9,7 +9,7 @@ Yocto/OpenEmbedded layer for building [Pantavisor](https://pantavisor.io), a con
 kas menu Kconfig
 
 # Build for x86_64 (appengine / Docker)
-./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
 
 # Build for Raspberry Pi
 ./kas-container build kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml
@@ -49,7 +49,7 @@ See [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-d
 | imx8mm-var-dart-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/stable/badges/imx8mm-var-dart-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 | sunxi-orange-pi-r1-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/stable/badges/sunxi-orange-pi-r1-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 | rpi-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/stable/badges/rpi-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
-| docker-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/stable/badges/docker-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| container-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/stable/badges/container-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 <!-- BUILD_SUMMARY_STABLE_END -->
 
 ### Release Candidate [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/tag.json)](https://github.com/pantavisor/meta-pantavisor/releases)
@@ -66,5 +66,5 @@ See [docs/how-to-build/pantavisor-development.md](docs/how-to-build/pantavisor-d
 | imx8mm-var-dart-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/imx8mm-var-dart-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 | sunxi-orange-pi-r1-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/sunxi-orange-pi-r1-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 | rpi-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/rpi-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
-| docker-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/docker-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
+| container-x86_64-scarthgap | [![](https://img.shields.io/endpoint?url=https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/latest/release-candidate/badges/container-x86_64-scarthgap.json)](https://github.com/pantavisor/meta-pantavisor/actions/workflows/tag-scarthgap.yaml) |
 <!-- BUILD_SUMMARY_RC_END -->

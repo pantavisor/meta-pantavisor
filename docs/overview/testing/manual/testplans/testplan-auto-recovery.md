@@ -23,13 +23,13 @@ For pv-ctrl API tests, see [testplan-pvctrl.md](testplan-pvctrl.md).
 ### Build Appengine Image and Test Containers
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-recovery \
     --target pv-example-stabilize \
     --target pv-example-random \
     --target pv-example-app-crash
 
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 ### Common Setup
@@ -57,7 +57,7 @@ docker volume rm storage-test
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-recovery.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-recovery.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -116,7 +116,7 @@ docker exec pva-test grep -i "recover" /var/pantavisor/storage/logs/0/pantavisor
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-stabilize.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-stabilize.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -170,7 +170,7 @@ docker exec pva-test pvcontrol ls
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-random.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-random.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute

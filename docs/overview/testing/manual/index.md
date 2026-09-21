@@ -17,7 +17,7 @@ lives.
 ## Build
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
 ```
 
 To test local pantavisor changes, build with the `:kas/with-workspace.yaml` overlay.
@@ -39,14 +39,14 @@ clean rebuild when touching container payloads or test data — see
 ## Load
 
 ```bash
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 Container pvrexports for the appengine's first-boot `pvtx.d`:
 
 ```bash
 mkdir -p pvtx.d
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-*.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-*.pvrexport.tgz pvtx.d/
 ```
 
 From here, see the pantavisor repo's `docs/overview/appengine.md` for how to start and drive

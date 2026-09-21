@@ -64,7 +64,7 @@ local_conf_header:
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
-machine: docker-x86_64
+machine: container-x86_64
 defaults:
     repos:
         branch: scarthgap

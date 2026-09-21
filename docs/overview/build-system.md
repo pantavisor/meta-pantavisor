@@ -82,8 +82,8 @@ factory-flash machines via the "Also build pv-flash-bundle" prompt.
 | `build-appengine-distro.yaml` | (from `kas menu`) | `pantavisor-appengine-distro` |
 | `release/96boards-orangepi-i96-scarthgap.yaml` | `orangepi-i96` | `pantavisor-starter` |
 | `release/colibri-imx6ull-scarthgap.yaml` | `colibri-imx6ull` | `pantavisor-starter` |
-| `release/docker-armv8-scarthgap.yaml` | `docker-armv8` | `pantavisor-appengine-distro` |
-| `release/docker-x86_64-scarthgap.yaml` | `docker-x86_64` | `pantavisor-appengine-distro` |
+| `release/container-armv8-scarthgap.yaml` | `container-armv8` | `pantavisor-appengine-distro` |
+| `release/container-x86_64-scarthgap.yaml` | `container-x86_64` | `pantavisor-appengine-distro` |
 | `release/imx8mm-var-dart-scarthgap.yaml` | `imx8mm-var-dart` | `pantavisor-starter` |
 | `release/imx8mn-var-som-scarthgap.yaml` | `imx8mn-var-som` | `pantavisor-starter` |
 | `release/imx8qxp-b0-mek-scarthgap.yaml` | `imx8qxp-b0-mek` | `pantavisor-starter` |
@@ -229,7 +229,7 @@ Build outputs are in `build/tmp-{codename}/deploy/images/{machine}/`:
 | `*.wic` / `*.wic.bz2` | Complete disk images |
 | `pantavisor-initramfs-*.cpio.gz` | Initramfs image |
 | `pantavisor-appengine-docker.tar` | Docker image for manual appengine testing |
-| `pantavisor-appengine-distro-docker-x86_64-*.tar.gz` | Self-contained test bundle: Docker images + `test.docker.sh` runner |
+| `pantavisor-appengine-distro-container-x86_64-*.tar.gz` | Self-contained test bundle: Docker images + `test.docker.sh` runner |
 
 ## Supported Yocto Releases
 

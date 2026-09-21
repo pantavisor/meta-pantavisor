@@ -13,8 +13,8 @@
 # the image when the pantavisor-pvtest package is included.  Build the image
 # with the standard appengine config:
 #
-#   ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml
-#   docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+#   ./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml
+#   docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 #
 # See docs/testing/testplans/testplan-pvtx.md for full documentation.
 
@@ -67,8 +67,8 @@ echo "Checking image ${IMAGE} ..."
 if ! docker image inspect "${IMAGE}" >/dev/null 2>&1; then
     echo "Error: image '${IMAGE}' not found." >&2
     echo "Build it first:" >&2
-    echo "  ./kas-container build .github/configs/release/docker-x86_64-scarthgap.yaml" >&2
-    echo "  docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-tester-docker.tar" >&2
+    echo "  ./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml" >&2
+    echo "  docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-tester-docker.tar" >&2
     exit 1
 fi
 

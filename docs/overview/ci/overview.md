@@ -36,13 +36,13 @@ MANUAL  (workflow_dispatch)
     └── build × all manual machines  → buildkas-target.yaml
 
   manual-pvtests.yaml
-    ├── build docker-x86_64-scarthgap  → buildkas-target.yaml
+    ├── build container-x86_64-scarthgap  → buildkas-target.yaml
     └── start-pvtest                   → call-pvtests.yaml
 
 
 SCHEDULED
   schedule-pvtests.yaml       daily 02:00
-    ├── build docker-x86_64-scarthgap  → buildkas-target.yaml
+    ├── build container-x86_64-scarthgap  → buildkas-target.yaml
     ├── local                          → call-pvtests.yaml
     └── remote                         → call-pvtests.yaml  (after local)
 

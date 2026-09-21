@@ -11,9 +11,9 @@ For pv-ctrl API tests (daemons, graph, metadata, objects, etc.), see [testplan-p
 ### Build Appengine Image
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml
 
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 > To test local pantavisor changes, build with the `:kas/with-workspace.yaml`
@@ -45,13 +45,13 @@ docker volume rm storage-test
 ### Setup
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pv-example-unix-server \
     --target pv-example-unix-client
 
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-unix-client.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -102,13 +102,13 @@ docker exec pva-test ls -la /proc/$CLIENT_PID/root/run/pv/services/
 ### Setup
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pv-example-dbus-server \
     --target pv-example-dbus-client
 
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-dbus-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-dbus-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-dbus-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-dbus-client.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -158,13 +158,13 @@ docker exec pva-test cat /var/pantavisor/storage/logs/0/pv-example-dbus-client/l
 ### Setup
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pv-example-rest-server \
     --target pv-example-rest-client
 
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-rest-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-rest-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-rest-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-rest-client.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -205,13 +205,13 @@ plugin shares this teardown path; its example additionally requires a
 # Load VKMS on host (if no real GPU)
 sudo modprobe vkms
 
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml \
     --target pv-example-drm-provider \
     --target pv-example-drm-master
 
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-drm-provider.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-drm-master.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-drm-provider.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-drm-master.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute

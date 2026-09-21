@@ -9,7 +9,7 @@ Tests for IPAM (IP Address Management) pool-based container networking via the a
 ### Build Appengine Image and Test Containers
 
 ```bash
-./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
+./kas-container build kas/build-configs/release/container-x86_64-scarthgap.yaml:kas/with-workspace.yaml \
     --target pv-example-device-ipam \
     --target pv-example-device-ipam-2pools \
     --target pv-example-device-ipam-lxcbr \
@@ -24,7 +24,7 @@ Tests for IPAM (IP Address Management) pool-based container networking via the a
     --target pv-example-ipam-static \
     --target pantavisor-appengine
 
-docker load < build/tmp-scarthgap/deploy/images/docker-x86_64/pantavisor-appengine-docker.tar
+docker load < build/tmp-scarthgap/deploy/images/container-x86_64/pantavisor-appengine-docker.tar
 ```
 
 ### Common Setup
@@ -56,9 +56,9 @@ docker volume rm storage-test
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-client.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-client.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -115,8 +115,8 @@ docker exec pva-test ip addr show pvbr0
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-ipam-valid.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -167,9 +167,9 @@ The `device-ipam-2pools` export defines:
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam-2pools.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-lab-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam-2pools.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-lab-server.pvrexport.tgz pvtx.d/
 ```
 
 ### Execute
@@ -259,8 +259,8 @@ Reuse the Test 1 single-pool setup (`pv-example-device-ipam` + `pv-example-net-s
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
 
 docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
 docker run --name pva-test -d --privileged \
@@ -323,9 +323,9 @@ The `pv-example-ipam-nopool` recipe ships with `PV_NETWORK_POOL: "does-not-exist
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-nopool.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-server.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-ipam-nopool.pvrexport.tgz pvtx.d/
 
 docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
 docker run --name pva-test -d --privileged \
@@ -427,9 +427,9 @@ The test pairs three artifacts:
 
 ```bash
 rm -f pvtx.d/*.pvrexport.tgz
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-device-ipam-lxcbr.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-ipam-static.pvrexport.tgz pvtx.d/
-cp build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-net-pvcnet.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-device-ipam-lxcbr.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-ipam-static.pvrexport.tgz pvtx.d/
+cp build/tmp-scarthgap/deploy/images/container-x86_64/pv-example-net-pvcnet.pvrexport.tgz pvtx.d/
 
 docker rm -f pva-test 2>/dev/null; docker volume rm storage-test 2>/dev/null
 docker run --name pva-test -d --privileged \

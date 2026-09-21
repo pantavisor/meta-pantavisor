@@ -6,7 +6,7 @@ include pantavisor-appengine.inc
 # Tester adds significantly more packages on top of base appengine, so
 # it gets its own audit reference under a distinct prefix.
 PV_MANIFEST_PREFIX = "pv-appengine-tester"
-SRC_URI += " file://pv-appengine-tester_panta-appengine-docker-x86_64-scarthgap.manifest.reference.txt"
+SRC_URI += " file://pv-appengine-tester_panta-appengine-container-x86_64-scarthgap.manifest.reference.txt"
 
 DOCKER_IMAGE_NAME = "${PN}"
 DOCKER_IMAGE_TAG = "1.0"

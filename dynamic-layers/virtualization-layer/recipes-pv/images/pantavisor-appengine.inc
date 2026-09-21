@@ -15,7 +15,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/pv-manifests:"
 # the tester variant) override PV_MANIFEST_PREFIX and append their own
 # reference to SRC_URI.
 SRC_URI += " \
-    file://pv-appengine_panta-appengine-docker-x86_64-scarthgap.manifest.reference.txt \
+    file://pv-appengine_panta-appengine-container-x86_64-scarthgap.manifest.reference.txt \
 "
 
 DOCKER_IMAGE_NAME = "pantavisor-appengine"

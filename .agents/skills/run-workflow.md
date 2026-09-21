@@ -17,7 +17,7 @@ The user may invoke this skill with a hint in their message (e.g. "run test work
    ```
    #  File                               Name
    1. manual-pvtests.yaml                MAN: start pvtests
-   2. manual-scarthgap-docker-x86_64.yaml  MAN: docker-x86_64-scarthgap
+   2. manual-scarthgap-container-x86_64.yaml  MAN: container-x86_64-scarthgap
    ...
    ```
    Extract the workflow `name:` field for the display name. If no runnable workflows found, say so and stop.
