@@ -38,7 +38,19 @@ install_scripts() {
     install -m 0755 ${WORKDIR}/pv-gpio-set.sh ${IMAGE_ROOTFS}${bindir}/pv-gpio-set
 }
 
-ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
+# base-files' `hostname:pn-base-files` default is `${MACHINE}`, but that
+# override is scoped to the base-files recipe, which is shared by every
+# image built for the same MACHINE - setting it there would rename every
+# container built alongside this one, not just pv-labutils. Overwrite the
+# already-installed /etc/hostname (and the matching /etc/hosts entry
+# base-files wrote) here instead, so only this image gets a stable,
+# machine-independent hostname.
+set_hostname() {
+    echo "${PN}" > ${IMAGE_ROOTFS}${sysconfdir}/hostname
+    sed -i "s/^127.0.1.1.*/127.0.1.1 ${PN}/" ${IMAGE_ROOTFS}${sysconfdir}/hosts
+}
+
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; set_hostname; "
 
 # Permissive mdev (files/pv-labutils.mdev.json, picked up over the
 # PVRIMAGE_AUTO_MDEV default because container-pvrexport prefers an explicit
