@@ -66,10 +66,11 @@ jobs:
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
           BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
+          mkdir -p dist
           for pattern in ${{ inputs.output }}; do
-            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \;
+            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \; -exec cp {} dist/ \;
           done
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; 2>/dev/null || true
+          find build/${{ env.TMPDIR }}/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; -exec cp {} dist/ \; 2>/dev/null || true
 
           find build/${{ env.TMPDIR }}/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
           find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
@@ -93,4 +94,12 @@ jobs:
         with:
           name: pvtest-distro-${{ inputs.machine_name }}
           path: pvtest-distro/
+          if-no-files-found: ignore
+
+      - name: Archive build output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-${{ inputs.machine_name }}
+          path: dist/
           if-no-files-found: ignore

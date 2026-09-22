@@ -1,0 +1,122 @@
+{
+  "yocto_branch": "scarthgap",
+  "containers": [
+    {
+      "name": "pv-labutils",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-labutils",
+      "output": "pv-labutils.pvrexport.tgz",
+      "display_name": "Lab controller utilities",
+      "description": "Flashing, power-switching, serial and shell tooling for a Pantacor lab controller container.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-avahi",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-avahi",
+      "output": "pv-avahi.pvrexport.tgz",
+      "display_name": "Avahi mDNS container",
+      "description": "mDNS/service discovery container, also used as an xconnect pvtest fixture.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pvwificonnect",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pvwificonnect",
+      "output": "pvwificonnect.pvrexport.tgz",
+      "display_name": "WiFi Connect container",
+      "description": "Manages Wi-Fi connections, including BLE and hotspot provisioning, on Pantacor-enabled devices.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-avahi-browse",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-avahi-browse",
+      "output": "pv-avahi-browse.pvrexport.tgz",
+      "display_name": "Avahi mDNS browse container",
+      "description": "mDNS browse consumer over a hosted D-Bus system bus, also used as an xconnect pvtest fixture.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-netbench",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-netbench",
+      "output": "pv-netbench.pvrexport.tgz",
+      "display_name": "Network usage benchmark container",
+      "description": "Measures Pantahub network usage and publishes it as device-meta.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-alpine-connman",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-alpine-connman",
+      "output": "pv-alpine-connman.pvrexport.tgz",
+      "display_name": "Alpine ConnMan container",
+      "description": "Alpine-based ConnMan network manager container, fetched prebuilt from the pv-platforms registry.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-alpine-dbus",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-alpine-dbus",
+      "output": "pv-alpine-dbus.pvrexport.tgz",
+      "display_name": "Alpine D-Bus container",
+      "description": "Hosted D-Bus system bus container, pulled prebuilt from Docker Hub (asac/alpine-dbus).",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-awconnect",
+      "machine": ["docker-x86_64", "docker-armv8"],
+      "build_target": "pv-awconnect",
+      "output": "pv-awconnect.pvrexport.tgz",
+      "display_name": "AWConnect WiFi provisioning container",
+      "description": "Legacy WiFi provisioning appliance container, fetched prebuilt from the pv-platforms registry. No arm32v6 asset is published, so docker-armv6 is excluded.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-debian-nm",
+      "machine": ["docker-x86_64"],
+      "build_target": "pv-debian-nm",
+      "output": "pv-debian-nm.pvrexport.tgz",
+      "display_name": "Debian NetworkManager container",
+      "description": "Debian-based NetworkManager container, fetched prebuilt from the pv-platforms registry. Only an amd64 asset is published, so this targets docker-x86_64 only.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-pvr-sdk",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-pvr-sdk",
+      "output": "pv-pvr-sdk.pvrexport.tgz",
+      "display_name": "pvr SDK container",
+      "description": "Pantavisor pvr SDK container, fetched prebuilt from the pv-platforms registry.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-pvsm",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-pvsm",
+      "output": "pv-pvsm.pvrexport.tgz",
+      "display_name": "PVSM container",
+      "description": "Pantavisor state machine (pvsm) container, fetched prebuilt from the pvsm registry.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-pvwificonnect",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-pvwificonnect",
+      "output": "pv-pvwificonnect.pvrexport.tgz",
+      "display_name": "WiFi Connect container (prebuilt)",
+      "description": "WiFi Connect container fetched prebuilt from the pvwificonnect registry, as distinct from the pvwificonnect container built from source in this same list.",
+      "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-tailscale",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-tailscale",
+      "output": "pv-tailscale.pvrexport.tgz",
+      "display_name": "Tailscale container",
+      "description": "Tailscale VPN container, fetched prebuilt from the ph-tailscale registry.",
+      "workflows": ["manual", "tag"]
+    }
+  ]
+}

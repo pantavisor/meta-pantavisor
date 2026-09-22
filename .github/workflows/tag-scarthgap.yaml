@@ -27,3 +27,8 @@ jobs:
     needs: [sync, changelog-gate]
     uses: ./.github/workflows/release.yaml
     secrets: inherit
+
+  release-containers:
+    needs: [sync, changelog-gate]
+    uses: ./.github/workflows/release-containers.yaml
+    secrets: inherit

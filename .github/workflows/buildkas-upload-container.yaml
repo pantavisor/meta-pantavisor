@@ -1,0 +1,75 @@
+name: 'Build and Upload Container'
+
+on:
+  workflow_call:
+    inputs:
+      machine_name:
+        required: true
+        type: string
+      container_name:
+        required: true
+        type: string
+      machine:
+        required: true
+        type: string
+      configs:
+        required: true
+        type: string
+      build_target:
+        required: false
+        type: string
+      output:
+        required: false
+        type: string
+
+jobs:
+  build:
+    env:
+     TMPDIR : "tmp-scarthgap"
+    runs-on: ["bsp-builder"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v6
+      - name: Fetch tags
+        run: |
+          git config --global --add safe.directory '*'
+          git fetch --tags --force --depth=${{ inputs.fetch-depth || 1 }}
+      - name: setup workspace
+        run: |
+         chown -R builder:builder $RUNNER_WORKSPACE
+         chown -R builder:builder /__w
+         mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+         su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+         git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      - name: build
+        run: |
+         BUILD_TARGET="${{ inputs.build_target }}"
+         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
+
+      # Organize file for upload-container.sh
+      - name: copy files
+        run: |
+         chmod -R 777 $GITHUB_WORKSPACE
+
+         BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
+
+         mkdir -p pvexports
+         for pattern in ${{ inputs.output }}; do
+            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} pvexports \;
+         done
+
+      - name: Upload to S3
+        run: |
+          .github/scripts/upload-container.sh \
+           ${{ secrets.AWS_ACCESS_KEY_ID }} \
+           ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+           ${{ secrets.AWS_S3_BUCKET }} \
+           ${{ github.ref_name }} \
+           ${{ inputs.machine_name }} \
+           ${{ inputs.container_name }} \
+           ${{ inputs.machine }} \
