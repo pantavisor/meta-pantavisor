@@ -113,8 +113,11 @@ jobs:
         working-directory: ${{ env.WORKSPACE }}
         env:
           PH_USER: ${{ secrets.PH_USER }}
-          PH_PASS: ${{ secrets.PH_PASS }}
+          PH_TOKEN: ${{ secrets.PH_TOKEN }}
           PH_STAGE_USER: ${{ secrets.PH_STAGE_USER }}
+          PH_STAGE_TOKEN: ${{ secrets.PH_STAGE_TOKEN }}
+          # deprecated, PH_TOKEN fallback
+          PH_PASS: ${{ secrets.PH_PASS }}
           PH_STAGE_PASS: ${{ secrets.PH_STAGE_PASS }}
         run: |
           TEST_TARGET="${{ inputs.test_path }}"
@@ -123,9 +126,9 @@ jobs:
           # loudly, never silently fall back to prod creds
           case "${{ matrix.hub }}" in
             prod)  PVTEST_HUB_URL=https://api.pantahub.com ;;
-            stage) PVTEST_HUB_URL=https://api.stage.pantahub.com; PH_USER="$PH_STAGE_USER"; PH_PASS="$PH_STAGE_PASS" ;;
+            stage) PVTEST_HUB_URL=https://api.stage.pantahub.com; PH_USER="$PH_STAGE_USER"; PH_TOKEN="$PH_STAGE_TOKEN"; PH_PASS="$PH_STAGE_PASS" ;;
           esac
-          export PVTEST_HUB_URL PH_USER PH_PASS
+          export PVTEST_HUB_URL PH_USER PH_TOKEN PH_PASS
 
           echo "=== AppEngine Test Run started at $(date) ==="
 
