@@ -344,7 +344,7 @@ The `call-pvtests.yaml` reusable workflow:
 
 `test_path` controls which tests run:
 - `local` — tests that run entirely on the runner (no network to Pantahub)
-- `remote` — tests that connect to Pantahub (require `PH_USER`/`PH_PASS` secrets)
+- `remote` — tests that connect to Pantahub (require `PH_USER`/`PH_TOKEN` secrets, a Pantahub personal token)
 - empty — run all tests
 
 In `release.yaml`, `pvtest-remote` runs with `if: always()` so it executes even if `pvtest-local` fails, and its results don't block the `summary` job.
