@@ -33,11 +33,15 @@ YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
 
 
 rm -f .github/workflows/manual-$YOCTO_BRANCH*
+rm -f .github/workflows/manual-containers-$YOCTO_BRANCH*
 rm -f .github/workflows/onpush-$YOCTO_BRANCH*
 rm -f .github/workflows/release.yaml
+rm -f .github/workflows/release-containers.yaml
 
 .github/scripts/make-manual-dispatch.py
+.github/scripts/make-containers-dispatch.py
 .github/scripts/make-tag-matrix.py
+.github/scripts/make-containers-tag-matrix.py
 .github/scripts/make-onpush-matrix.py
 .github/scripts/update-readme-board.py
 
