@@ -3,8 +3,8 @@ header:
 _source_dir: .
 repos:
     meta-orangepi-i96:
-        branch: feat/pantavisor-wic
-        commit: e76a83c4a7c733b619b2610caf6ecb42ab02330f
+        branch: main
+        commit: 60e3c303a8c50793a517e5425e412f3a90929da7
         path: layers/meta-orangepi-i96
         url: https://github.com/pantavisor/meta-orangepi-i96
     poky:
