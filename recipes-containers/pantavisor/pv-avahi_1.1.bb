@@ -30,7 +30,7 @@ PVR_APP_ADD_EXTRA_ARGS += " \
 "
 
 # app, not platform: pv-avahi is just a daemon in the host net namespace, and
-# staying passive (status-goal MOUNTED) until on-demand D-Bus activation
+# staying passive (status goal STAGED) until on-demand D-Bus activation
 # starts it needs the app group's "container" restart policy so it can also
 # be stopped/started manually via the containers API. args.json's PV_GROUP
 # already said "app" (fix(pv-avahi): move container to app group /
@@ -43,15 +43,7 @@ PVR_SIG_ADD_ARGS = "--part ${PN}"
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
 
-# Passive until on-demand D-Bus activation. Not passed as `pvr app add
-# --status-goal MOUNTED`: pvr's run.json template treats a MOUNTED goal as a
-# volume-only entity and drops type/config and the lxc.container.conf render,
-# so the container could never be started. Add it as a normal lxc app and set
-# the goal afterwards via the PVR_APP_POST_FIXUP hook (container-pvrexport).
-pv_avahi_fixup_runjson() {
-    jq '. + {"status_goal": "MOUNTED"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
-}
-PVR_APP_POST_FIXUP = "pv_avahi_fixup_runjson"
+# Passive until on-demand D-Bus activation: PV_STATUS_GOAL STAGED in args.json.
 
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}
