@@ -30,24 +30,32 @@ There is no Ethernet on this board, so WiFi is the only network path.
 
 ## Writing the SD card
 
-The build does not emit a ready-to-flash `.img`. The bootloader is a hybrid —
-the vendor SPL (DDR and clock init) followed by a modern U-Boot stage-2 — and it
-has to be placed at a raw offset ahead of the partition table, which a plain
-rootfs image cannot express. Assemble it with:
+The build emits a ready-to-flash image, written like any other WIC image
+(see [sdcard.md](../sdcard.md)):
 
 ```sh
-DEPLOY=<build>/tmp-scarthgap/deploy/images/orangepi-i96 \
-BL=bootloader.rda \
-OUT=orangepi-i96.img \
-sh recipes-bsp/u-boot/files/mk-sd-image.sh
+build/tmp-scarthgap/deploy/images/orangepi-i96/pantavisor-starter-orangepi-i96.rootfs.wic.gz
+build/tmp-scarthgap/deploy/images/orangepi-i96/pantavisor-starter-orangepi-i96.rootfs.wic.bmap
 ```
 
-Then write `orangepi-i96.img` to the card with any of the usual tools.
+```sh
+pvflasher copy pantavisor-starter-orangepi-i96.rootfs.wic.gz /dev/sdX \
+    --bmap pantavisor-starter-orangepi-i96.rootfs.wic.bmap
+```
 
-`bootloader.rda` is produced by `package-bootloader.sh` in the BSP layer. A blob
-built before the board's pad-map fix boots normally but leaves the board with no
-SDIO and therefore no WiFi, which looks exactly like a driver fault — see
-section 15 of `MODEM-WIFI-PORT.md` in the BSP layer if you hit that.
+The image carries the bootloader at SD offset 0x20000, ahead of the partition
+table. It is a hybrid: the vendor SPL (DDR and clock init), then a modern
+U-Boot stage-2 that runs the generic Pantavisor boot script. The build
+assembles it and deploys it as `bootloader.rda`; this is automatic, no action
+needed. A blob built before the board's pad-map fix boots normally but leaves
+the board with no SDIO and therefore no WiFi, which looks exactly like a
+driver fault. If you hit that, see section 15 of `MODEM-WIFI-PORT.md` in the
+BSP layer.
+
+If the console shows nothing at all, not even the `RDA8810 Boot_ROM` banner,
+check the serial wiring before suspecting the image. The ROM prints that
+banner with or without a card, so silence means the adapter's RX is not on the
+board's TX.
 
 ## First boot
 
