@@ -14,3 +14,13 @@ repos:
     url: "https://github.com/pantavisor/meta-orangepi-i96"
     path: layers/meta-orangepi-i96
     branch: main
+
+local_conf_header:
+  platform-96boards: |
+    # Boot through the generic pantavisor boot.scr: kernel, initrd and a
+    # flat-named dtb (matching u-boot's ${fdtfile}) out of the BSP trail.
+    PV_UBOOT_AUTOFDT = "1"
+    PV_UBOOT_FLATFDT = "1"
+    # Flashable SD image: bootloader.rda + boot partition + pantavisor storage
+    # (layout in meta-orangepi-i96 wic/orangepi-i96.wks)
+    IMAGE_FSTYPES:append:pn-pantavisor-starter = " wic.gz wic.bmap"

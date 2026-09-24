@@ -3,8 +3,8 @@ header:
 _source_dir: .
 repos:
     meta-orangepi-i96:
-        branch: main
-        commit: b4fed49e5d3f69afefd1c8e78967d435d5f6b9e0
+        branch: feat/pantavisor-wic
+        commit: e76a83c4a7c733b619b2610caf6ecb42ab02330f
         path: layers/meta-orangepi-i96
         url: https://github.com/pantavisor/meta-orangepi-i96
     poky:
@@ -39,6 +39,14 @@ machine: orangepi-i96
 local_conf_header:
     pv-flash-readme: |
         PV_FLASH_README = "docs/flashing/sdcard.md"
+    platform-96boards: |
+        # Boot through the generic pantavisor boot.scr: kernel, initrd and a
+        # flat-named dtb (matching u-boot's ${fdtfile}) out of the BSP trail.
+        PV_UBOOT_AUTOFDT = "1"
+        PV_UBOOT_FLATFDT = "1"
+        # Flashable SD image: bootloader.rda + boot partition + pantavisor storage
+        # (layout in meta-orangepi-i96 wic/orangepi-i96.wks)
+        IMAGE_FSTYPES:append:pn-pantavisor-starter = " wic.gz wic.bmap"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
