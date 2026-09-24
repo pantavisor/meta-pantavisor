@@ -61,7 +61,7 @@ PV_MANIFEST_REFERENCE_NAME ??= "${PV_MANIFEST_PREFIX}_${DISTRO}-${MACHINE}${@'-'
 # files themselves (binaries, libs, configs).
 PV_MANIFEST_EXCLUDES ??= "/var/lib/rpm /var/lib/dnf /var/lib/opkg /usr/lib/opkg /var/cache/ldconfig /var/cache/dnf /var/cache/yum"
 
-python do_pv_manifest_audit() {
+python pv_manifest_audit() {
     import os, stat, difflib
 
     rootfs = d.getVar('IMAGE_ROOTFS')
@@ -71,8 +71,8 @@ python do_pv_manifest_audit() {
     # manifest.txt + manifest.patch survive a bb.fatal in strict mode.
     # IMGDEPLOYDIR is per-recipe staging that bitbake only rsyncs to
     # DEPLOY_DIR_IMAGE on successful task completion — a strict-mode
-    # abort in do_pv_manifest_audit would otherwise leave the
-    # diagnostic artifact stranded in WORKDIR where CI never finds it.
+    # abort in do_rootfs would otherwise leave the diagnostic artifact
+    # stranded in WORKDIR where CI never finds it.
     deploy_dir = d.getVar('DEPLOY_DIR_IMAGE')
     workdir = d.getVar('WORKDIR') or ''
     ref_name = d.getVar('PV_MANIFEST_REFERENCE_NAME')
@@ -248,13 +248,26 @@ python do_pv_manifest_audit() {
                 "PANTAVISOR_FEATURES to gate the build)")
 }
 
-# Dedicated task, not a ROOTFS_POSTPROCESS_COMMAND: [nostamp] so it re-runs
-# every build (a postprocess is skipped whenever do_rootfs is served from
-# stamp/sstate, silently bypassing the gate).
-addtask do_pv_manifest_audit after do_rootfs before do_image
-do_pv_manifest_audit[nostamp] = "1"
-do_pv_manifest_audit[vardeps] += "PANTAVISOR_FEATURES PV_MANIFEST_PREFIX PV_MANIFEST_REFERENCE_NAME PV_MANIFEST_EXCLUDES"
-
-# Run under pseudo so os.lstat() records the image's uid/gid, not the builder's.
-do_pv_manifest_audit[fakeroot] = "1"
-do_pv_manifest_audit[depends] += "virtual/fakeroot-native:do_populate_sysroot"
+# Run inside do_rootfs, as the last rootfs post-process step, so the audit
+# sees the rootfs exactly when it exists. A separate task between do_rootfs
+# and do_image cannot be made safe with rm_work: rm_work keeps the do_rootfs
+# and do_image stamps but deletes IMAGE_ROOTFS and every other stamp, so such
+# a task re-runs on the next build over an empty rootfs, and re-running it
+# forces do_image to pack that empty tree (an initramfs of 505 bytes, whose
+# kernel panics with "No working init found").
+#
+# The gate still holds on every build. Being a ROOTFS_POSTPROCESS_COMMAND,
+# this function and the variables it reads (PANTAVISOR_FEATURES, so the
+# audit/strict mode, PV_MANIFEST_REFERENCE_NAME, PV_MANIFEST_EXCLUDES) are
+# part of the do_rootfs signature, and so is the reference file's checksum,
+# through SRC_URI. A strict failure fails do_rootfs, which leaves no stamp,
+# so the next build re-runs it. A valid do_rootfs stamp, or a do_image_complete
+# restored from sstate, therefore always stands for a run in which this same
+# audit, in this same mode, against this same reference, passed.
+ROOTFS_POSTPROCESS_COMMAND:append = " pv_manifest_audit; "
+# image.bbclass turns the command list into do_rootfs vardeps, but the token is
+# "pv_manifest_audit;" (the ';' keeps kirkstone's split working) and matches no
+# function, so name it explicitly or the mode/reference never reach the hash.
+do_rootfs[vardeps] += "pv_manifest_audit"
+# IMAGE_NAME carries the build timestamp; keep it out of the signature.
+pv_manifest_audit[vardepsexclude] += "DATETIME DATE"

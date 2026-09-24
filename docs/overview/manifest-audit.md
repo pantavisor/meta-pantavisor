@@ -201,16 +201,29 @@ Currently inherited by:
 
 ## Implementation
 
-`classes/pv-manifest-audit.bbclass` adds a dedicated `do_pv_manifest_audit`
-task that runs after `do_rootfs` and before `do_image`. It is marked
-`[fakeroot]`, so it runs under pseudo and the uid/gid recorded in the manifest
-are the same ones that end up in the cpio / tarball.
+`classes/pv-manifest-audit.bbclass` adds `pv_manifest_audit` as the last
+`ROOTFS_POSTPROCESS_COMMAND`, so the audit runs inside `do_rootfs`, under
+pseudo. The uid/gid recorded in the manifest are the ones that end up in the
+cpio or tarball.
 
-The task is marked `[nostamp]`, so it re-runs on **every** build. This is
-deliberate: a `ROOTFS_POSTPROCESS_COMMAND` only executes while `do_rootfs`
-itself runs, so once the rootfs stamp is valid or the image is restored from
-sstate via setscene, the gate would be silently skipped — a strict-mode
-deviation would fail the first build but pass every rebuild. As a `nostamp`
-task consuming the live `IMAGE_ROOTFS`, it always runs (and forces `do_rootfs`
-to produce a real rootfs), so a strict deviation keeps failing until the
-reference is updated.
+A strict deviation keeps failing until the reference is updated, on every
+build. It fails `do_rootfs`, which then has no stamp and re-runs next time.
+The function, the variables it reads (`PANTAVISOR_FEATURES`, and so the
+audit/strict mode, `PV_MANIFEST_REFERENCE_NAME`, `PV_MANIFEST_EXCLUDES`) and
+the reference file (through `SRC_URI`) are all part of the `do_rootfs`
+signature. So a valid rootfs stamp, or an image restored from sstate, always
+stands for a run where the same audit passed in the same mode against the same
+reference.
+
+It deliberately is not a separate task. With `rm_work`, a task between
+`do_rootfs` and `do_image` re-runs over a rootfs that `rm_work` already
+deleted, and drags `do_image` along. The earlier `[nostamp]` task did exactly
+that: every incremental build packed an empty image, for example a 505-byte
+initramfs whose kernel panics with `No working init found`. Check a deployed
+initramfs with:
+
+```sh
+zcat build/tmp-scarthgap/deploy/images/<machine>/pantavisor-initramfs-<machine>.cpio.gz | cpio -t | wc -l
+```
+
+A real one lists several hundred entries; a handful means an empty image.
