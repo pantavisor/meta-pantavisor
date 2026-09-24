@@ -27,9 +27,7 @@ ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
 
 PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/usr/bin/pv-dbus-system-client"
 
-# Passive until on-owner D-Bus activation; pvr's --status-goal MOUNTED drops
-# type/config and skips the lxc.container.conf render, so fix it up after add.
-pv_example_system_dbus_client_onowner_fixup_runjson() {
-    jq '. + {"status_goal": "MOUNTED"}' ${PN}/run.json > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
-}
-PVR_APP_POST_FIXUP = "pv_example_system_dbus_client_onowner_fixup_runjson"
+# Passive until on-owner D-Bus activation: PV_LIFECYCLE_GOAL STAGED in
+# args.json, PV_STATUS_GOAL left unset so the fallback on Pantavisor
+# predating pantavisor#827/#828 is MOUNTED (parked, never auto-started) —
+# needs the pvr 054 backport, see recipes-pv/pvr/pvr_054.bb.
