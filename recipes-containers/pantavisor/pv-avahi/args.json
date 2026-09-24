@@ -1,5 +1,6 @@
 {
     "PV_GROUP": "app",
+    "PV_STATUS_GOAL": "STAGED",
     "PV_SERVICES_REQUIRED": [
         {
             "name": "system-bus",
