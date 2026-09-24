@@ -21,6 +21,7 @@ SRC_URI += "file://args.json \
             file://ssh.service \
             file://pv-avahi-config \
             file://pv-avahi.services.json \
+            file://avahi-policy.xml \
 "
 
 PV_CONFIG_OVERLAY_DIR = "pv-avahi-config"
@@ -44,6 +45,12 @@ PVR_SIG_ADD_ARGS = "--part ${PN}"
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport
 
 # Passive until on-demand D-Bus activation: PV_STATUS_GOAL STAGED in args.json.
+# Ships the raw policy fragment narrowing the avahi-limited role.
+pv_avahi_add_policy_fragment() {
+    install -d ${PN}/dbus
+    install -m 0644 ${WORKDIR}/avahi-policy.xml ${PN}/dbus/avahi-policy.xml
+}
+PVR_APP_POST_FIXUP = "pv_avahi_add_policy_fragment"
 
 install_scripts() {
     install -d ${IMAGE_ROOTFS}${bindir}

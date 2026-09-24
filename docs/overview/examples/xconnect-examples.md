@@ -217,6 +217,213 @@ Two consumer containers demonstrate the allow list from both sides:
   which is **not** in the `allow` list, so the generated default-deny policy
   **refuses** its otherwise-identical calls.
 
+### Policy Narrowing and Role UID Pinning
+
+An `allow` entry may also be an object that narrows a role instead of granting
+it full access to the owned name. `pv-avahi`
+(`recipes-containers/pantavisor/pv-avahi/pv-avahi.services.json`) adds a third
+`allow` entry, alongside the unchanged `"operator"`/`"monitor"` strings, for a
+new `avahi-reader` role:
+```json
+{
+  "role": "avahi-reader",
+  "interfaces": ["org.freedesktop.Avahi.Server"],
+  "members": ["GetVersionString"]
+}
+```
+
+`interfaces`, `members` and `paths` are all optional and map one-to-one onto
+the generated policy's `send_interface`, `send_member` and `send_path`
+attributes:
+```xml
+<policy user="pv-dbus-avahi-reader">
+  <allow send_destination="org.freedesktop.Avahi"
+         send_interface="org.freedesktop.Avahi.Server"
+         send_member="GetVersionString"/>
+  <allow receive_sender="org.freedesktop.Avahi"/>
+</policy>
+```
+
+:::note
+`receive_sender` is never narrowed — replies and signals from the owner still
+reach any allowed caller. Only the `send_*` side is restricted.
+:::
+
+A top-level `roles` map pins a role name to a real uid instead of one from
+pantavisor's synthetic pool (base 90000). `pv-avahi` pins its own owner role:
+```json
+"roles": {
+  "avahi-service": { "uid": 4242 }
+}
+```
+
+Use a pin for a legacy daemon that authorizes callers via
+`GetConnectionUnixUser` rather than the generated bus policy — it then sees
+the pinned uid instead of one from the pool. Only a provider (a service that
+declares an `owns` export) may pin a role; pins are device-wide by role name,
+so two providers pinning the same role to different uids fails state
+validation.
+
+:::note
+Never pin uid 0 to a role that a real caller also holds: `pv-xconnect`'s
+ownership monitor authenticates as uid 0, so a uid-0 pin would make that
+role's policy also match the monitor's own connection.
+:::
+
+`pv-example-system-dbus-reader`
+(`recipes-containers/pv-examples/files/pv-example-system-dbus-reader.args.json`)
+attaches under the narrowed `avahi-reader` role:
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "avahi-reader", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+Its allowed call succeeds; anything outside the narrowed interface/member is
+refused by the generated policy:
+```bash
+docker exec -it pva-test pventer -c pv-example-system-dbus-reader \
+    dbus-send --system --print-reply --dest=org.freedesktop.Avahi / \
+    org.freedesktop.Avahi.Server.GetVersionString
+# Expected: method return with the avahi-daemon version string
+
+docker exec -it pva-test pventer -c pv-example-system-dbus-reader \
+    dbus-send --system --print-reply --dest=org.freedesktop.Avahi / \
+    org.freedesktop.Avahi.Server.GetHostName
+# Expected: org.freedesktop.DBus.Error.AccessDenied — GetHostName is not in
+# avahi-reader's narrowed member list
+```
+
+### Policy Fragments
+
+An export's `policy` field names a raw D-Bus policy fragment, as a path
+RELATIVE TO THE CONTAINER'S OWN TRAIL DIRECTORY. Pantavisor resolves it,
+validates it, and splices it into the generated bus policy after the
+generated rules. Where a JSON `allow` entry can only narrow to an
+interface/member/path triple, a fragment can express anything `<policy>`,
+`<allow>` and `<deny>` support — `send_path`, multiple rules per role, mixed
+`allow`/`deny` — as long as it only touches that export's own `owns` name and
+one of its own `allow` roles.
+
+`pv-avahi` adds a fourth `allow` entry, `avahi-limited`, granted full access
+by JSON, and narrows it down to "everything except `GetHostName`" with a
+fragment:
+```json
+{
+  "owns": "org.freedesktop.Avahi",
+  "role": "avahi-service",
+  "allow": ["operator", "monitor", { "role": "avahi-reader", "...": "..." }, "avahi-limited"],
+  "policy": "dbus/avahi-policy.xml"
+}
+```
+
+`recipes-containers/pantavisor/pv-avahi/avahi-policy.xml`:
+```xml
+<busconfig>
+  <policy user="@role:avahi-limited@">
+    <deny send_destination="org.freedesktop.Avahi"
+          send_interface="org.freedesktop.Avahi.Server"
+          send_member="GetHostName"/>
+  </policy>
+</busconfig>
+```
+
+`@role:avahi-limited@` is a placeholder pantavisor substitutes with the
+role's masqueraded uid; a `<policy>` element may only ever key on
+`user="@role:<name>@"` for a role already present in that same export's
+`allow` list. The recipe ships the fragment via its
+`PVR_APP_POST_FIXUP` hook (`container-pvrexport.bbclass`), which runs after
+`pvr app add` and before signing:
+```sh
+install -d ${PN}/dbus
+install -m 0644 ${WORKDIR}/avahi-policy.xml ${PN}/dbus/avahi-policy.xml
+```
+so on a running device the fragment is the file at
+`/storage/trails/<rev>/pv-avahi/dbus/avahi-policy.xml`, the same path `pvr
+device clone`/`pvr checkout` shows under `pv-avahi/dbus/avahi-policy.xml` in
+a trail checkout.
+
+`pv-example-system-dbus-limited`
+(`recipes-containers/pv-examples/files/pv-example-system-dbus-limited.args.json`)
+attaches under the narrowed `avahi-limited` role:
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "avahi-limited", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+:::note
+JSON says WHO may call (which roles are in `allow`); a fragment may only
+narrow HOW an already-allowed role calls, never grant access to a role
+outside that `allow` list or to a name the export does not `own`.
+:::
+
+Validation rejects, and therefore rolls the deploy back on, a fragment that:
+- contains any element other than `busconfig`, `policy`, `allow`, `deny`
+  (`include`, `includedir`, `listen`, `type`, `auth`, `servicedir`, `limit`,
+  `selinux`, `apparmor` are all refused);
+- gives `<policy>` anything but `user="@role:<name>@"`, names a role that
+  does not resolve, or names a role not in that export's own `allow` list;
+- gives `<allow>`/`<deny>` anything but `send_*`/`receive_*`/`own`/
+  `own_prefix` (`eavesdrop` is refused);
+- has `own`/`own_prefix`/`send_destination`/`receive_sender` name anything
+  other than one of that container's own `owns` names.
+
+Four containers each exercise exactly one of these rejections:
+
+| Container | `owns` | Fragment problem |
+|-----------|--------|-------------------|
+| `pv-example-system-dbus-badpolicy-include` | `org.pantavisor.BadInclude` | forbidden `<includedir>` element |
+| `pv-example-system-dbus-badpolicy-foreign` | `org.pantavisor.BadForeign` | `<deny>` names `org.freedesktop.Avahi`, a name it does not own |
+| `pv-example-system-dbus-badpolicy-role` | `org.pantavisor.BadRole` | `<policy>` references `@role:nosuchrole@`, which resolves to nothing |
+| `pv-example-system-dbus-badpin` | none (`"services": []`) | pins a role uid (`roles: {"badpin-role": {"uid": 1234}}`) with no `owns` export on the platform — only a provider may pin a role uid |
+
+None of the four ever runs a real D-Bus server; each is a busybox sleep loop
+whose sole purpose is to fail state validation the moment its revision is
+applied.
+
+### Consumer `names` Form
+
+A consumer can declare the well-known names it needs instead of hardcoding a
+bus socket. Pantavisor derives `bus`, the link `name`, and `target` from each
+name's owner; `role` stays required, since `allow` lists are written against
+it:
+
+```json
+{
+  "PV_SERVICES_REQUIRED": [
+    { "type": "dbus", "role": "monitor", "names": ["org.freedesktop.Avahi"] }
+  ]
+}
+```
+
+`pv-avahi-browse` (`recipes-containers/pantavisor/pv-avahi-browse/args.json`)
+uses exactly this to reach `pv-avahi`'s `org.freedesktop.Avahi`.
+
+- Each entry in `names` must resolve to an export with a matching `owns` in
+  the state; a name nobody owns fails validation.
+- `target` defaults to `/run/dbus/system_bus_socket` for `system-bus`; only
+  one entry per bus may take the default.
+- A string element (`"org.freedesktop.Avahi"`) is shorthand for
+  `{"name": "org.freedesktop.Avahi", "activation": {"mode": "none"}}`.
+
+:::note
+The legacy socket form (`name`, `type`, `role`, `target`, no `names`) keeps
+working unchanged — use it for a provider-owned bus pantavisor knows nothing
+about, as `pv-example-system-dbus-server`/`-client`/`-client-denied` above
+still do.
+:::
+
+Check the resolved link with the device online:
+```bash
+docker exec pva-test pvcontrol graph ls
+# Expected: a "consumes": "org.freedesktop.Avahi" entry for pv-avahi-browse
+```
+
 ### Build and Verify
 
 ```bash
@@ -225,9 +432,10 @@ Two consumer containers demonstrate the allow list from both sides:
     --target pv-example-system-dbus-client-denied
 ```
 
-Pantavisor allocates a stable UID per role, generates a default-deny policy
-under `/run/pv/dbus/policy.d`, and the proxy masquerades each connection to its
-role UID. Check the consumer logs for a successful call:
+Pantavisor allocates a stable UID per role, generates the per-role allow
+policy under `/run/pv/dbus/policy.d` on top of the daemon's default-deny base
+config, and the proxy masquerades each connection to its role UID. Check the
+consumer logs for a successful call:
 ```bash
 docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-system-dbus-client/lxc/console.log
 # Expected: method return with org.pantavisor.Example response
@@ -235,7 +443,10 @@ docker exec pva-test tail -f /var/pantavisor/storage/logs/0/pv-example-system-db
 
 A container requesting a role not in the `allow` list is denied by the generated
 policy (`AccessDenied`), and a state that exports the reserved `system-bus` name
-or double-owns a well-known name is rejected at validation.
+or double-owns a well-known name is rejected at validation. A `names` entry
+that names nobody in the state is rejected the same way, before any container
+runs — `pv-example-system-dbus-names-orphan` names `org.pantavisor.NoSuchService`
+purely to exercise this negative path.
 
 ---
 
