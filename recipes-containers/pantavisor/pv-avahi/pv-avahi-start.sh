@@ -94,8 +94,27 @@ fi
 read_meta
 write_service
 
-avahi-daemon -f "$CONF" &
-apid=$!
+# Start avahi-daemon and confirm it stayed up. After a restart the previous
+# daemon has exited, but the hosted bus may not have released its
+# org.freedesktop.Avahi name yet; the new daemon then fails "Failed to acquire
+# D-Bus name" and exits at once. Retry until the name is free. Giving up ends
+# this script, which stops the container, which with restart_policy "system"
+# reboots the board, so only do that when avahi really cannot start.
+START_TRIES=${PV_AVAHI_START_TRIES:-10}
+start_avahi() {
+	n=0
+	while [ "$n" -lt "$START_TRIES" ]; do
+		n=$((n + 1))
+		avahi-daemon -f "$CONF" &
+		apid=$!
+		sleep 2
+		kill -0 "$apid" 2>/dev/null && return 0
+		echo "pv-avahi: avahi-daemon exited during startup (try $n/$START_TRIES), retrying" >&2
+	done
+	return 1
+}
+
+start_avahi || exit 1
 
 # device-id/challenge are written by Pantavisor asynchronously (after the device
 # registers with pantahub), which can happen long after this container started
@@ -114,8 +133,7 @@ while kill -0 "$apid" 2>/dev/null; do
 		# pv-avahid, which does `rc-service avahi-daemon restart` on change).
 		kill "$apid" 2>/dev/null
 		wait "$apid" 2>/dev/null
-		avahi-daemon -f "$CONF" &
-		apid=$!
+		start_avahi || exit 1
 		last="$cur"
 	fi
 done
