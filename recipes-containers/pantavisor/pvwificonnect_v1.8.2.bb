@@ -44,6 +44,17 @@ PVR_APP_ADD_GROUP = "platform"
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
 
+ROOTFS_POSTPROCESS_COMMAND += "set_hostname; "
+
+# Make the container's hostname its own name: overwrite the /etc/hostname
+# (and the matching /etc/hosts entry base-files wrote, whose
+# `hostname:pn-base-files` default is `${MACHINE}`) so pvwificonnect runs
+# under a stable, machine-independent identity.
+set_hostname() {
+    echo "${PN}" > ${IMAGE_ROOTFS}${sysconfdir}/hostname
+    sed -i "s/^127.0.1.1.*/127.0.1.1 ${PN}/" ${IMAGE_ROOTFS}${sysconfdir}/hosts
+}
+
 do_image_pvrexportit:append() {
     export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
     export PVR_DISABLE_SELF_UPGRADE=1

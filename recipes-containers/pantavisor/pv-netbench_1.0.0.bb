@@ -46,7 +46,16 @@ install_netbench() {
     install -d ${IMAGE_ROOTFS}/proc ${IMAGE_ROOTFS}/sys ${IMAGE_ROOTFS}/tmp
 }
 
-ROOTFS_POSTPROCESS_COMMAND += "install_netbench; "
+ROOTFS_POSTPROCESS_COMMAND += "install_netbench; set_hostname; "
+
+# Make the container's hostname its own name: overwrite the /etc/hostname
+# (and the matching /etc/hosts entry base-files wrote, whose
+# `hostname:pn-base-files` default is `${MACHINE}`) so the benchmark device
+# identity stays stable and machine-independent.
+set_hostname() {
+    echo "${PN}" > ${IMAGE_ROOTFS}${sysconfdir}/hostname
+    sed -i "s/^127.0.1.1.*/127.0.1.1 ${PN}/" ${IMAGE_ROOTFS}${sysconfdir}/hosts
+}
 
 # ROOTFS_POSTPROCESS_COMMAND bodies are not in do_rootfs's signature.
 do_rootfs[vardeps] += "BENCH_MODE BENCH_HUB_HOST"
