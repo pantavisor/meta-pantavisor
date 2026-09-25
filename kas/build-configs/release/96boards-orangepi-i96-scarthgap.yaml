@@ -47,6 +47,10 @@ local_conf_header:
         # Flashable SD image: bootloader.rda + boot partition + pantavisor storage
         # (layout in meta-orangepi-i96 wic/orangepi-i96.wks)
         IMAGE_FSTYPES:append:pn-pantavisor-starter = " wic.gz wic.bmap"
+        # The i96 reaches Hub only over its slow SDIO WiFi (~120-230 KB/s up): give
+        # a Hub request 30 min instead of 60 s, so a large object transfer is not
+        # cut short.
+        PANTAHUB_CONFIG[PH_LIBEVENT_HTTP_TIMEOUT] = "1800"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
