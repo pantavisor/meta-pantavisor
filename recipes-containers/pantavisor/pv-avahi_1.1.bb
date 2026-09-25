@@ -55,4 +55,13 @@ install_scripts() {
 # (it copies ${PN}.services.json into the container's services.json), so no
 # manual install into the rootfs is needed.
 
-ROOTFS_POSTPROCESS_COMMAND += "install_scripts; "
+ROOTFS_POSTPROCESS_COMMAND += "install_scripts; set_hostname; "
+
+# Make the container's hostname its own name: overwrite the /etc/hostname
+# (and the matching /etc/hosts entry base-files wrote, whose
+# `hostname:pn-base-files` default is `${MACHINE}`) so pv-avahi publishes
+# under a stable, machine-independent identity.
+set_hostname() {
+    echo "${PN}" > ${IMAGE_ROOTFS}${sysconfdir}/hostname
+    sed -i "s/^127.0.1.1.*/127.0.1.1 ${PN}/" ${IMAGE_ROOTFS}${sysconfdir}/hosts
+}
