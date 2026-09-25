@@ -5,7 +5,7 @@ Ports gitlab.com/pantacor/pv-platforms/labutils to a Yocto-built container."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit core-image container-pvrexport
+inherit image container-pvrexport
 
 IMAGE_BASENAME = "pv-labutils"
 
@@ -13,11 +13,12 @@ IMAGE_BASENAME = "pv-labutils"
 # every image; this one must only ever produce a pvrexport.
 IMAGE_FSTYPES = "pvrexportit"
 
-# core-image rather than `inherit image`: labutils runs OpenRC as /sbin/init,
-# and packagegroup-core-boot's sysvinit is the equivalent that exists here.
-# Set outright, not appended: core-image's default also carries
-# packagegroup-base-extended, which on a board machine drags the machine's
-# MACHINE_EXTRA_RRECOMMENDS (Wi-Fi/BT firmware, kernel modules) into a container.
+# `inherit image` rather than core-image: it carries none of core-image's
+# defaults, notably packagegroup-base-extended, which on a board machine
+# drags the machine's MACHINE_EXTRA_RRECOMMENDS (Wi-Fi/BT firmware, kernel
+# modules) into a container. What labutils lost from core-image is restated
+# here: it runs sysvinit as /sbin/init (packagegroup-core-boot; the upstream
+# apk platform boots OpenRC, sysvinit is the equivalent that exists here).
 IMAGE_INSTALL = "packagegroup-core-boot packagegroup-pv-labutils"
 IMAGE_LINGUAS = ""
 
@@ -27,7 +28,7 @@ IMAGE_LINGUAS = ""
 # so it can never be installed here. The lab tools all write to stdout, which
 # Pantavisor already captures into `pvcontrol logs`.
 
-# core-image marks these noexec; SRC_URI needs them back.
+# The image class marks these noexec; SRC_URI needs them back.
 do_fetch[noexec] = "0"
 do_unpack[noexec] = "0"
 
