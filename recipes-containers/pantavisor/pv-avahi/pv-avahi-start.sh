@@ -32,10 +32,19 @@ read_meta_field /pantavisor/device-net devnet
 localdomain=${devnet:-local}
 sed -i "s/^domain-name=.*/domain-name=$localdomain/" "$CONF"
 
+# On a device whose Hub connection is held by pv-mqtt-sdk, pantavisor's own
+# Hub client is off: it never writes /pantavisor/challenge, and writes
+# /pantavisor/device-id only from the next boot. The agent publishes both as
+# local device-meta while the device is unclaimed (never sent to the Hub,
+# removed once claimed), so fall back to those.
+SDK_CLAIM_META=/pantavisor/device-meta/pantavisor.sdk.claim
+
 read_meta() {
 	read_meta_field /pantavisor/device-id deviceid
 	read_meta_field /pantavisor/challenge challenge
 	read_meta_field /pantavisor/pantahub-host phurl
+	[ -n "$deviceid" ] || read_meta_field "$SDK_CLAIM_META.device-id" deviceid
+	[ -n "$challenge" ] || read_meta_field "$SDK_CLAIM_META.challenge" challenge
 }
 
 # Rebuild the service file from the pristine template each time, so cleared
@@ -116,8 +125,8 @@ start_avahi() {
 
 start_avahi || exit 1
 
-# device-id/challenge are written by Pantavisor asynchronously (after the device
-# registers with pantahub), which can happen long after this container started
+# device-id/challenge are written by Pantavisor (or pv-mqtt-sdk) asynchronously
+# (after the device registers with pantahub), which can happen long after this container started
 # (e.g. only once Wi-Fi is provisioned). Re-publish on change instead of
 # snapshotting once at boot.
 # ponytail: 5s poll; switch to inotify on /pantavisor only if this proves too slow.
