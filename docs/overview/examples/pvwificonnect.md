@@ -37,9 +37,9 @@ It is built three ways in this layer:
 
 | Recipe | Produces |
 |--------|----------|
-| `recipes-containers/pantavisor/pvwificonnect_v1.9.0.bb` | The pvrexport container (this doc). |
-| `recipes-containers/pantavisor/pvwificonnect-app_v1.9.0.bb` | The `pvwificonnect` binary built from source. |
-| `recipes-containers/pantavisor/pv-pvwificonnect_v1.9.0.bb` | The prebuilt Docker-image variant. |
+| `recipes-containers/pantavisor/pvwificonnect_v1.9.1.bb` | The pvrexport container (this doc). |
+| `recipes-containers/pantavisor/pvwificonnect-app_v1.9.1.bb` | The `pvwificonnect` binary built from source. |
+| `recipes-containers/pantavisor/pv-pvwificonnect_v1.9.1.bb` | The prebuilt Docker-image variant. |
 
 ## Network backend dependency
 

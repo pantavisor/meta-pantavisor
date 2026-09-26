@@ -32,10 +32,11 @@ SRC_URI += "file://args.json \
 # holding only the roles, which container-pvrexport prefers over args.json.
 PVR_APP_ADD_GROUP = "platform"
 # Credentials, the revision queue and the in-flight record must survive
-# reboots: an update reboots the device mid-install.
-PVR_APP_ADD_EXTRA_ARGS += " \
-    --volume ovl:/var/pv-mqtt-sdk:permanent \
-"
+# reboots (an update reboots the device mid-install): config.json's Volumes
+# makes /var/pv-mqtt-sdk the permanent docker--var-pv-mqtt-sdk volume, the
+# same as the exports CI builds from the Docker image. No ovl volume: the
+# state would live in its upper layer, which a CI-built update does not
+# mount, and the agent would lose it on its first update.
 
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
