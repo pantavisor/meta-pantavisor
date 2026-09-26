@@ -36,7 +36,9 @@ PVR_APP_ADD_GROUP = "platform"
 # makes /var/pv-mqtt-sdk the permanent docker--var-pv-mqtt-sdk volume, the
 # same as the exports CI builds from the Docker image. No ovl volume: the
 # state would live in its upper layer, which a CI-built update does not
-# mount, and the agent would lose it on its first update.
+# mount, and the agent would lose it on its first update. Set explicitly:
+# container-pvrexport otherwise defaults to an ovl volume on all of /var.
+PVR_APP_ADD_EXTRA_ARGS = ""
 
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
