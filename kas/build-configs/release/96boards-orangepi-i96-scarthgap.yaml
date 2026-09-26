@@ -35,10 +35,7 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
-machine: orangepi-i96
 local_conf_header:
-    pv-flash-readme: |
-        PV_FLASH_README = "docs/flashing/sdcard.md"
     platform-96boards: |
         # Boot through the generic pantavisor boot.scr: kernel, initrd and a
         # flat-named dtb (matching u-boot's ${fdtfile}) out of the BSP trail.
@@ -51,6 +48,8 @@ local_conf_header:
         # a Hub request 30 min instead of 60 s, so a large object transfer is not
         # cut short.
         PANTAHUB_CONFIG[PH_LIBEVENT_HTTP_TIMEOUT] = "1800"
+    pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
@@ -76,6 +75,7 @@ local_conf_header:
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
+machine: orangepi-i96
 defaults:
     repos:
         branch: scarthgap

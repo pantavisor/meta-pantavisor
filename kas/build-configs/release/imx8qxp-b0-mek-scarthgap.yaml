@@ -11,7 +11,7 @@ repos:
         path: layers/meta-freescale-3rdparty
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
     meta-freescale-distro:
-        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+        commit: 2642b34e4c66ec1419e7f3a7a77a20b09e49e26b
         path: layers/meta-freescale-distro
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-openembedded:
