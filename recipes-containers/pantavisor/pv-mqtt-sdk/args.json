@@ -1,6 +1,11 @@
 {
     "PV_GROUP": "platform",
-    "PV_LXC_CAP_KEEP": ["none"],
+    "PV_ROLES": [
+        "mgmt"
+    ],
+    "PV_LXC_CAP_KEEP": [
+        "none"
+    ],
     "PV_RESTART_POLICY": "system",
     "PV_SECURITY_WITH_STORAGE": "yes",
     "PV_STATUS_GOAL": "STARTED"

@@ -27,8 +27,9 @@ SRC_URI += "file://args.json \
             file://config.json \
 "
 
-# mgmt: the agent installs revisions and writes meta through pv-ctrl.
-PVR_APP_ADD_ROLES = "mgmt"
+# PV_ROLES (mgmt: the agent installs revisions and writes meta through
+# pv-ctrl) is in args.json: PVR_APP_ADD_ROLES would write a ${PN}.args.json
+# holding only the roles, which container-pvrexport prefers over args.json.
 PVR_APP_ADD_GROUP = "platform"
 # Credentials, the revision queue and the in-flight record must survive
 # reboots: an update reboots the device mid-install.
