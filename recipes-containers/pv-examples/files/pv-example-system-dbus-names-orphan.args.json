@@ -1,0 +1,9 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        {
+            "type": "dbus",
+            "role": "operator",
+            "names": ["org.pantavisor.NoSuchService"]
+        }
+    ]
+}

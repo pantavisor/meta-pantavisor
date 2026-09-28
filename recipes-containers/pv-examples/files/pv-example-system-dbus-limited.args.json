@@ -1,0 +1,5 @@
+{
+    "PV_SERVICES_REQUIRED": [
+        { "type": "dbus", "role": "avahi-limited", "names": ["org.freedesktop.Avahi"] }
+    ]
+}

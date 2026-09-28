@@ -1,0 +1,6 @@
+<busconfig>
+  <includedir>/etc/dbus-1/system.d</includedir>
+  <policy user="@role:operator@">
+    <deny send_destination="org.pantavisor.BadInclude"/>
+  </policy>
+</busconfig>
