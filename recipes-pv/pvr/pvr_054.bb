@@ -18,9 +18,17 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 S = "${WORKDIR}"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
+# 0001: backport of pvr!504 and pvr!505 (both merged upstream, no tagged
+# release carrying them yet). Applies against the pvr.${PV}.src.tar.gz
+# layout, i.e. under ${S}/pvr-${PV}/ before relocate_source moves it into
+# ${S}/src/${GO_IMPORT} — hence patchdir=pvr-${PV}. Drop when pvr 055 is
+# tagged, in favour of a plain SRCREV/PV bump.
 SRC_URI = " \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
         https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
+        file://0001-templates-add-PV_LIFECYCLE_GOAL-and-STAGED-renderin.patch;patchdir=pvr-${PV} \
 "
 
 SRC_URI[pvr.sha256sum] = "5552f8c5b20e4e74728f02754c6d098c9c9442b4c3ebb97e1278fbcaed95e619"

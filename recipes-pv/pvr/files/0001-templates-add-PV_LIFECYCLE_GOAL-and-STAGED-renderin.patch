@@ -1,0 +1,302 @@
+From 2095f4b919b03ab5781ea9393b89183484d4bc7b Mon Sep 17 00:00:00 2001
+From: Alexander Sack <alexander.sack@pantacor.com>
+Date: Mon, 28 Sep 2026 12:09:59 +0000
+Subject: [PATCH] templates: add PV_LIFECYCLE_GOAL and PV_STATUS_GOAL=STAGED
+ rendering
+
+Pantavisor is adding a STAGED lifecycle goal (pantavisor#827): the
+run.json `status_goal` a revision carries must stay one of MOUNTED/
+STARTED/READY, since older Pantavisor rejects a revision with any
+other value; a separate `lifecycle_goal` key (MOUNTED/STAGED/STARTED/
+READY) is the preferred goal read by newer Pantavisor and ignored by
+old builds. pvr's builtin lxc/docker template had no path to that
+run.json shape: it only ever rendered a single status_goal, and
+PV_STATUS_GOAL=MOUNTED always rendered a data-only container (no
+type, no config, no lxc.container.conf).
+
+Add PV_LIFECYCLE_GOAL, a new template arg rendered verbatim as
+"lifecycle_goal" alongside "status_goal" (forced to PV_STATUS_GOAL
+when it is MOUNTED/STARTED/READY, else MOUNTED). The container
+renders in full (type, config, lxc.container.conf) whenever the
+preferred goal (PV_LIFECYCLE_GOAL if set, else PV_STATUS_GOAL) is not
+MOUNTED. As a shorthand for callers that only set PV_STATUS_GOAL,
+PV_STATUS_GOAL=STAGED (with no PV_LIFECYCLE_GOAL) renders the same
+run.json as PV_LIFECYCLE_GOAL=STAGED. `pvr app add` gains a
+--lifecycle-goal flag (PVR_LIFECYCLE_GOAL env var).
+
+docs/PVR_TEMPLATES.md is intentionally left untouched here:
+pvr_054.bb fetches docs via a separate archive (DOCS_SRC_URI)
+relocated into ${S}/docs after do_patch runs, so a docs hunk against
+this src.tar.gz layout would not apply; the upstream doc update lands
+with the actual release instead.
+
+Squashes two upstream commits, cherry-picked onto the 054 tag:
+f1c440a1477f461f7142c217234233cbca02770f (PV_STATUS_MOUNTED, merged
+via pvr!504) and 2c57b45d8465f56c1ab1376310455024e2d47755
+(PV_LIFECYCLE_GOAL, superseding PV_STATUS_MOUNTED, via pvr!505).
+
+Upstream-Status: Backport [https://gitlab.com/pantacor/pvr/-/merge_requests/504 https://gitlab.com/pantacor/pvr/-/merge_requests/505, commits f1c440a1 2c57b45d]
+---
+ cmd/app/appadd.go                  |  11 ++-
+ templates/builtin-lxc-docker.go    |  28 +++++-
+ templates/compile-template_test.go | 139 +++++++++++++++++++++++++++++
+ 3 files changed, 173 insertions(+), 5 deletions(-)
+
+diff --git a/cmd/app/appadd.go b/cmd/app/appadd.go
+index 258da002..f270b5d8 100644
+--- a/cmd/app/appadd.go
++++ b/cmd/app/appadd.go
+@@ -34,7 +34,8 @@ var SourceFlagUsage = "Comma separated priority list of source (valid sources: \
+ var RunlevelFlagUsage = "Runlevel to install container to (valid runlevels: \"data\", \"root\", \"platform\" and \"app\") (deprecated) (default: \"app\")"
+ var GroupFlagUsage = "Group to install container to (default: last group in groups.json, if exists)"
+ var RestartPolicyFlagUsage = "Restart policy in case of container modification (valid policies: \"system\" and \"container\")"
+-var StatusGoalFlagUsage = "Status goal for container after bootup (valid goals: \"MOUNTED\", \"STARTED\" and \"READY\")"
++var StatusGoalFlagUsage = "Status goal for container after bootup (valid goals: \"MOUNTED\", \"STARTED\", \"READY\" and \"STAGED\")"
++var LifecycleGoalFlagUsage = "Lifecycle goal for container after bootup, preferred over --status-goal by newer Pantavisor (unrecognized goals fall back to --status-goal, or \"MOUNTED\" if unset)"
+ 
+ func CommandAppAdd() cli.Command {
+ 	cmd := cli.Command{
+@@ -157,6 +158,9 @@ func CommandAppAdd() cli.Command {
+ 			if c.String("status-goal") != "" {
+ 				app.TemplateArgs["PV_STATUS_GOAL"] = c.String("status-goal")
+ 			}
++			if c.String("lifecycle-goal") != "" {
++				app.TemplateArgs["PV_LIFECYCLE_GOAL"] = c.String("lifecycle-goal")
++			}
+ 			if c.String("base") != "" {
+ 				app.DoOverlay = true
+ 				app.Base = strings.Trim(c.String("base"), "/")
+@@ -230,6 +234,11 @@ func CommandAppAdd() cli.Command {
+ 			Usage:  StatusGoalFlagUsage,
+ 			EnvVar: "PVR_STATUS_GOAL",
+ 		},
++		cli.StringFlag{
++			Name:   "lifecycle-goal",
++			Usage:  LifecycleGoalFlagUsage,
++			EnvVar: "PVR_LIFECYCLE_GOAL",
++		},
+ 		cli.StringFlag{
+ 			Name:   "base",
+ 			Usage:  "Base rootfs to create patch from",
+diff --git a/templates/builtin-lxc-docker.go b/templates/builtin-lxc-docker.go
+index bc676424..f2b2197e 100644
+--- a/templates/builtin-lxc-docker.go
++++ b/templates/builtin-lxc-docker.go
+@@ -19,8 +19,14 @@ package templates
+ const (
+ 	LXC_CONTAINER_CONF = `
+ {{- $runlevel := .Source.args.PV_RUNLEVEL }}
++{{- $lifecycleGoal := .Source.args.PV_LIFECYCLE_GOAL | pvr_ifNull "__null__" }}
++{{- $statusGoalRaw := .Source.args.PV_STATUS_GOAL | pvr_ifNull "__null__" }}
++{{- $preferredGoal := $statusGoalRaw }}
++{{- if ne $lifecycleGoal "__null__" }}{{- $preferredGoal = $lifecycleGoal }}
++{{- else if eq $statusGoalRaw "STAGED" }}{{- $preferredGoal = "STAGED" }}
++{{- end }}
+ {{- if and (.Source.args.PV_RUNLEVEL | pvr_ifNull "__null__" | ne "data")
+-           (.Source.args.PV_STATUS_GOAL | pvr_ifNull "__null__" | ne "MOUNTED") -}}
++           (ne $preferredGoal "MOUNTED") -}}
+ 	{{ "" -}}
+ {{- if .Source.args.LXC_TTY_MIN }}
+ lxc.tty.min = {{ .Source.args.LXC_TTY_MIN }}
+@@ -226,11 +232,22 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ {{- if not $persistence -}}
+ {{- $persistence = sprig_dict -}}
+ {{- end -}}
++{{- $lifecycleGoal := .Source.args.PV_LIFECYCLE_GOAL | pvr_ifNull "__null__" -}}
++{{- $statusGoalRaw := .Source.args.PV_STATUS_GOAL | pvr_ifNull "__null__" -}}
++{{- $lifecycleSet := ne $lifecycleGoal "__null__" -}}
++{{- $stagedShorthand := and (not $lifecycleSet) (eq $statusGoalRaw "STAGED") -}}
++{{- $dualGoalMode := or $lifecycleSet $stagedShorthand -}}
++{{- $effectiveLifecycleGoal := $lifecycleGoal -}}
++{{- if $stagedShorthand }}{{- $effectiveLifecycleGoal = "STAGED" }}{{- end -}}
++{{- $effectiveStatusGoal := "MOUNTED" -}}
++{{- if or (eq $statusGoalRaw "MOUNTED") (eq $statusGoalRaw "STARTED") (eq $statusGoalRaw "READY") }}{{- $effectiveStatusGoal = $statusGoalRaw }}{{- end -}}
++{{- $preferredGoal := $statusGoalRaw -}}
++{{- if $dualGoalMode }}{{- $preferredGoal = $effectiveLifecycleGoal }}{{- end -}}
+ {
+ 	"#spec": "service-manifest-run@1",
+ 	"name":"{{- .Source.name -}}",
+ 	{{- if and (.Source.args.PV_RUNLEVEL | pvr_ifNull "__null__" | ne "data")
+-           (.Source.args.PV_STATUS_GOAL | pvr_ifNull "__null__" | ne "MOUNTED") }}
++           (ne $preferredGoal "MOUNTED") }}
+ 	"config": "lxc.container.conf",
+ 	{{- end }}
+ 	{{- if .Source.args.PV_CONDITIONS }}
+@@ -274,7 +291,10 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ 	{{- if .Source.args.PV_RESTART_POLICY }}
+ 	"restart_policy": "{{- .Source.args.PV_RESTART_POLICY }}",
+ 	{{- end }}
+-	{{- if .Source.args.PV_STATUS_GOAL }}
++	{{- if $dualGoalMode }}
++	"status_goal": "{{- $effectiveStatusGoal }}",
++	"lifecycle_goal": "{{- $effectiveLifecycleGoal }}",
++	{{- else if .Source.args.PV_STATUS_GOAL }}
+ 	"status_goal": "{{- .Source.args.PV_STATUS_GOAL }}",
+ 	{{- end }}
+ 	{{- $devlog := .Source.args.PV_DEV_LOG | pvr_ifNull "__null__" | print }}
+@@ -340,7 +360,7 @@ lxc.mount.entry = /volumes/{{- $source -}}/
+ 		}
+ 	},
+ 	{{- if and (.Source.args.PV_RUNLEVEL | pvr_ifNull "__null__" | ne "data")
+-           (.Source.args.PV_STATUS_GOAL | pvr_ifNull "__null__" | ne "MOUNTED") }}
++           (ne $preferredGoal "MOUNTED") }}
+ 	{{- if .Source.exports }}"exports": {{ .Source.exports | sprig_toPrettyJson | sprig_indent 8 }},{{- end }}
+ 	{{- if .Source.logs }}"logs": {{  .Source.logs | sprig_toPrettyJson | sprig_indent 8 }},{{- end }}
+ 	"type":"lxc",
+diff --git a/templates/compile-template_test.go b/templates/compile-template_test.go
+index 30b9538d..63cb328c 100644
+--- a/templates/compile-template_test.go
++++ b/templates/compile-template_test.go
+@@ -37,6 +37,7 @@ func TestCompileTemplate(t *testing.T) {
+ 	t.Run("PV_VOLUME_MOUNTS LXC_CONTAINER_CONF", testLXCContainerConf_PV_VOLUME_MOUNTS)
+ 	t.Run("PV_VOLUME_IMPORTS named origin", testLXCContainerConf_PV_VOLUME_IMPORTS_NamedOrigin)
+ 	t.Run("PV_DEV_LOG dev-log in RUN_JSON", testRunJSON_DevLog)
++	t.Run("PV_STATUS_GOAL / PV_LIFECYCLE_GOAL combinations", testStatusAndLifecycleGoals)
+ }
+ 
+ func ErrorIf(t *testing.T, test bool, args ...interface{}) {
+@@ -351,3 +352,141 @@ func testRunJSON_DevLog(t *testing.T) {
+ 	ErrorIfNot(t, strings.Contains(out, `"dev-log": true`),
+ 		`PV_DEV_LOG=true (bool) should render "dev-log": true, but got: `+out)
+ }
++
++// testStatusAndLifecycleGoals covers PV_STATUS_GOAL / PV_LIFECYCLE_GOAL and
++// their interaction:
++//
++//   - status_goal is the fallback read by older Pantavisor (status_goal only,
++//     prefix-matched); it must always be one of MOUNTED/STARTED/READY, so an
++//     unset or STAGED PV_STATUS_GOAL falls back to MOUNTED.
++//   - lifecycle_goal is the preferred goal read by newer Pantavisor
++//     (pantavisor#827/#828); it is rendered verbatim, with no validation, so
++//     future goals pass through.
++//   - PV_STATUS_GOAL=STAGED without PV_LIFECYCLE_GOAL is shorthand for
++//     PV_LIFECYCLE_GOAL=STAGED with status_goal falling back to MOUNTED.
++//   - The container renders in full (type/config/lxc.container.conf, exactly
++//     as STARTED would) whenever the preferred goal (PV_LIFECYCLE_GOAL if
++//     set, else PV_STATUS_GOAL) is not MOUNTED; data-only only when it is.
++func testStatusAndLifecycleGoals(t *testing.T) {
++	renderRunJSON := func(args map[string]interface{}) string {
++		result, _ := compileTemplate(RUN_JSON, map[string]interface{}{
++			"Source": map[string]interface{}{
++				"name": "cont",
++				"args": args,
++			},
++			"Docker": map[string]interface{}{},
++		})
++		return string(result)
++	}
++	renderLXCConf := func(args map[string]interface{}) string {
++		result, _ := compileTemplate(LXC_CONTAINER_CONF, map[string]interface{}{
++			"Source": map[string]interface{}{
++				"name": "cont",
++				"args": args,
++			},
++			"Docker": map[string]interface{}{},
++		})
++		return string(result)
++	}
++
++	cases := []struct {
++		name              string
++		args              map[string]interface{}
++		wantStatusGoal    string
++		wantLifecycleGoal string // "" means lifecycle_goal must not be rendered
++		wantFull          bool   // false means data-only
++	}{
++		{
++			name:              "STAGED shorthand",
++			args:              map[string]interface{}{"PV_STATUS_GOAL": "STAGED"},
++			wantStatusGoal:    "MOUNTED",
++			wantLifecycleGoal: "STAGED",
++			wantFull:          true,
++		},
++		{
++			name:              "LIFECYCLE=STAGED + STATUS=MOUNTED",
++			args:              map[string]interface{}{"PV_LIFECYCLE_GOAL": "STAGED", "PV_STATUS_GOAL": "MOUNTED"},
++			wantStatusGoal:    "MOUNTED",
++			wantLifecycleGoal: "STAGED",
++			wantFull:          true,
++		},
++		{
++			name:              "LIFECYCLE=STAGED + STATUS=STARTED",
++			args:              map[string]interface{}{"PV_LIFECYCLE_GOAL": "STAGED", "PV_STATUS_GOAL": "STARTED"},
++			wantStatusGoal:    "STARTED",
++			wantLifecycleGoal: "STAGED",
++			wantFull:          true,
++		},
++		{
++			name:              "LIFECYCLE=STAGED alone",
++			args:              map[string]interface{}{"PV_LIFECYCLE_GOAL": "STAGED"},
++			wantStatusGoal:    "MOUNTED",
++			wantLifecycleGoal: "STAGED",
++			wantFull:          true,
++		},
++		{
++			name:              "LIFECYCLE=FUTUREGOAL + STATUS=READY (pass-through)",
++			args:              map[string]interface{}{"PV_LIFECYCLE_GOAL": "FUTUREGOAL", "PV_STATUS_GOAL": "READY"},
++			wantStatusGoal:    "READY",
++			wantLifecycleGoal: "FUTUREGOAL",
++			wantFull:          true,
++		},
++		{
++			name:              "LIFECYCLE=MOUNTED alone",
++			args:              map[string]interface{}{"PV_LIFECYCLE_GOAL": "MOUNTED"},
++			wantStatusGoal:    "MOUNTED",
++			wantLifecycleGoal: "MOUNTED",
++			wantFull:          false,
++		},
++		{
++			name:              "plain MOUNTED unchanged",
++			args:              map[string]interface{}{"PV_STATUS_GOAL": "MOUNTED"},
++			wantStatusGoal:    "MOUNTED",
++			wantLifecycleGoal: "",
++			wantFull:          false,
++		},
++		{
++			name:              "plain STARTED unchanged",
++			args:              map[string]interface{}{"PV_STATUS_GOAL": "STARTED"},
++			wantStatusGoal:    "STARTED",
++			wantLifecycleGoal: "",
++			wantFull:          true,
++		},
++	}
++
++	for _, c := range cases {
++		t.Run(c.name, func(t *testing.T) {
++			runJSON := renderRunJSON(c.args)
++			lxcConf := renderLXCConf(c.args)
++
++			wantStatusGoalLine := `"status_goal": "` + c.wantStatusGoal + `"`
++			ErrorIfNot(t, strings.Contains(runJSON, wantStatusGoalLine),
++				c.name+`: expected `+wantStatusGoalLine+`, but got: `+runJSON)
++
++			if c.wantLifecycleGoal != "" {
++				wantLifecycleGoalLine := `"lifecycle_goal": "` + c.wantLifecycleGoal + `"`
++				ErrorIfNot(t, strings.Contains(runJSON, wantLifecycleGoalLine),
++					c.name+`: expected `+wantLifecycleGoalLine+`, but got: `+runJSON)
++			} else {
++				ErrorIf(t, strings.Contains(runJSON, "lifecycle_goal"),
++					c.name+`: must not render lifecycle_goal, but got: `+runJSON)
++			}
++
++			if c.wantFull {
++				ErrorIfNot(t, strings.Contains(runJSON, `"config": "lxc.container.conf"`),
++					c.name+`: expected "config": "lxc.container.conf" (full container), but got: `+runJSON)
++				ErrorIfNot(t, strings.Contains(runJSON, `"type":"lxc"`),
++					c.name+`: expected "type":"lxc" (full container), but got: `+runJSON)
++				ErrorIf(t, lxcConf == "",
++					c.name+": expected a non-empty lxc.container.conf, but got an empty one")
++			} else {
++				ErrorIf(t, strings.Contains(runJSON, `"config": "lxc.container.conf"`),
++					c.name+`: data-only rendering must not reference lxc.container.conf, but got: `+runJSON)
++				ErrorIf(t, strings.Contains(runJSON, `"type":"lxc"`),
++					c.name+`: data-only rendering must not set type, but got: `+runJSON)
++				ErrorIfNot(t, lxcConf == "",
++					c.name+": data-only rendering must produce an empty lxc.container.conf, but got: "+lxcConf)
++			}
++		})
++	}
++}
+-- 
+2.34.1
+
