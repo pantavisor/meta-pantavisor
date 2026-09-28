@@ -6,7 +6,13 @@
       "bus": "system-bus",
       "owns": "org.freedesktop.Avahi",
       "role": "avahi-service",
-      "allow": ["operator", "monitor"]
+      "allow": [
+        "operator",
+        "monitor"
+      ],
+      "activation": {
+        "mode": "on-demand"
+      }
     }
   ]
 }
