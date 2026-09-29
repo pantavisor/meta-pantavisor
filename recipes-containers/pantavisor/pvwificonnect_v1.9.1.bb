@@ -44,11 +44,7 @@ PVR_APP_ADD_GROUP = "platform"
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
 
-do_image_pvrexportit:append() {
-    export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
-    export PVR_DISABLE_SELF_UPGRADE=1
-    cd ${PVSTATE}
-
+pvr_app_postprocess() {
     args_json=""
     if [ -f ${WORKDIR}/${PN}.args.json ]; then
         args_json="${WORKDIR}/${PN}.args.json"
@@ -81,12 +77,6 @@ do_image_pvrexportit:append() {
             ${PN}/src.json > ${PN}/src.json.tmp && mv ${PN}/src.json.tmp ${PN}/src.json
     fi
 
-    pvr add
-    pvr commit
-    pvr sig up
-    pvr add
-    pvr commit
-    pvr export ${IMGDEPLOYDIR}/${PN}.pvrexport.tgz
 }
 
 # do_deploy hook for pvroot-image consumption is provided by container-pvrexport

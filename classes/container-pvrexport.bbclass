@@ -9,7 +9,7 @@ IMAGE_CLASSES:remove = "image_populate_mfgtool"
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES:append = " pvrexportit "
 
-inherit pvr-ca
+inherit pvr-ca dockerarch
 
 python __anonymous() {
     pn = d.getVar("PN")
@@ -61,6 +61,11 @@ PVR_APP_ADD_ROLES ??= ""
 PVRIMAGE_AUTO_MDEV ??= "1"
 
 PVR_SIG_ADD_ARGS ??= "--noconfig --part ${PN}"
+
+# Image recipes can add metadata before the first commit and signature.
+pvr_app_postprocess() {
+    :
+}
 
 # Define a config overlay directory that the image recipe will make available
 # in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
@@ -115,6 +120,7 @@ fakeroot IMAGE_CMD:pvrexportit(){
         $args ${PVR_APP_ADD_EXTRA_ARGS} \
         --format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
         ${PN}
+    pvr_app_postprocess
     # Flag local Yocto-built container so hub.pantacor.com can distinguish from
     # upstream docker-pulled builds (which set docker_source: "remote,local").
     if [ -f ${PN}/src.json ]; then
