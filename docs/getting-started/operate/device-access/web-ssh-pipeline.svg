@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 250" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Browser, Hub API, MQTT broker, device agent and dropbear; the SSH bytes travel encrypted end to end">
+  <defs>
+    <path id="lane" d="M 150 120 L 800 120"/>
+    <path id="back" d="M 800 120 L 150 120"/>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a94a3"/></marker>
+  </defs>
+  <style>
+    .box{fill:#f4f6f9;stroke:#c9d1dc;stroke-width:1.2}
+    .t{font-size:14px;font-weight:600;fill:#1b2430}
+    .s{font-size:10.5px;fill:#5c6b7a;font-family:ui-monospace,Menlo,monospace}
+    .n{font-size:12px;fill:#5c6b7a}
+    .enc{stroke:#c26a05;stroke-width:2.5;opacity:.55}
+  </style>
+  <line x1="150" y1="120" x2="800" y2="120" stroke="#c9d1dc" stroke-width="1.5" stroke-dasharray="3 4"/>
+  <line class="enc" x1="150" y1="120" x2="800" y2="120"/>
+  <g>
+    <rect class="box" x="30" y="82" width="120" height="76" rx="10"/><text class="t" x="90" y="115" text-anchor="middle">Browser</text><text class="s" x="90" y="133" text-anchor="middle">xterm + Go/WASM</text><text class="s" x="90" y="147" text-anchor="middle">SSH client</text>
+    <rect class="box" x="235" y="82" width="130" height="76" rx="10"/><text class="t" x="300" y="115" text-anchor="middle">Hub API</text><text class="s" x="300" y="133" text-anchor="middle">WebSocket ⇄ relay</text><text class="s" x="300" y="147" text-anchor="middle">sessions + audit</text>
+    <rect class="box" x="370" y="82" width="120" height="76" rx="10"/><text class="t" x="430" y="115" text-anchor="middle">MQTT</text><text class="s" x="430" y="133" text-anchor="middle">ph/v1/dev/&lt;id&gt;/</text><text class="s" x="430" y="147" text-anchor="middle">ssh/…</text>
+    <rect class="box" x="555" y="82" width="130" height="76" rx="10"/><text class="t" x="620" y="115" text-anchor="middle">pv-mqtt-sdk</text><text class="s" x="620" y="133" text-anchor="middle">relay + key install</text><text class="s" x="620" y="147" text-anchor="middle">127.0.0.1:8222</text>
+    <rect class="box" x="730" y="82" width="140" height="76" rx="10"/><text class="t" x="800" y="115" text-anchor="middle">dropbear</text><text class="s" x="800" y="133" text-anchor="middle">_pv_ · container</text><text class="s" x="800" y="147" text-anchor="middle">fallbear-cmd</text>
+  </g>
+  <g>
+    <rect x="-26" y="-9" width="52" height="18" rx="4" fill="#c26a05"/><text x="0" y="4" text-anchor="middle" font-size="10" fill="#fff" font-family="ui-monospace,Menlo,monospace">bytes</text>
+    <animateMotion dur="4s" repeatCount="indefinite" begin="0s"><mpath href="#lane"/></animateMotion>
+  </g>
+  <g>
+    <rect x="-26" y="-9" width="52" height="18" rx="4" fill="#c26a05"/><text x="0" y="4" text-anchor="middle" font-size="10" fill="#fff" font-family="ui-monospace,Menlo,monospace">bytes</text>
+    <animateMotion dur="4s" repeatCount="indefinite" begin="2s"><mpath href="#back"/></animateMotion>
+  </g>
+  <g transform="translate(455 40)"><rect x="0" y="6" width="20" height="16" rx="3" fill="none" stroke="#c26a05" stroke-width="1.6"/><path d="M 4 6 v -6 a 6 6 0 0 1 12 0 v 6" fill="none" stroke="#c26a05" stroke-width="1.6"/><text class="n" x="30" y="19">SSH encryption runs between the browser and dropbear; everything in between carries ciphertext</text></g>
+  <rect x="690" y="180" width="150" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/><text class="s" x="765" y="199" text-anchor="middle">pvr-sdk.authorized_keys</text>
+  <path d="M 620 158 C 620 190 680 195 690 195" fill="none" stroke="#1e7f4f" stroke-width="1.4" marker-end="url(#arr)"/>
+  <text class="n" x="560" y="235">one key line per live session, removed when it ends</text>
+</svg>

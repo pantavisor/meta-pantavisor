@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Sequence of one web SSH session: key pair, session start, start notice, key install and ready, ticket and WebSocket, encrypted SSH, stop">
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a5967"/></marker></defs>
+  <style>
+    .h{font-size:13px;font-weight:600;fill:#1b2430}
+    .m{font-size:11.5px;fill:#1b2430;font-family:ui-monospace,Menlo,monospace}
+    .n{font-size:11px;fill:#5c6b7a}
+    .life{stroke:#c9d1dc;stroke-width:1.2;stroke-dasharray:4 4}
+    .msg{stroke:#4a5967;stroke-width:1.3;fill:none;marker-end:url(#a)}
+    .enc{stroke:#c26a05;stroke-width:2.2;fill:none;marker-end:url(#a)}
+    .step{font-size:11px;font-weight:600;fill:#c26a05}
+  </style>
+  <g class="h" text-anchor="middle">
+    <text x="90" y="24">Browser</text><text x="300" y="24">Hub API</text><text x="510" y="24">MQTT</text><text x="690" y="24">Agent</text><text x="840" y="24">dropbear</text>
+  </g>
+  <g class="life"><line x1="90" y1="34" x2="90" y2="450"/><line x1="300" y1="34" x2="300" y2="450"/><line x1="510" y1="34" x2="510" y2="450"/><line x1="690" y1="34" x2="690" y2="450"/><line x1="840" y1="34" x2="840" y2="450"/></g>
+
+  <text class="step" x="14" y="62">1</text><rect x="40" y="50" width="100" height="22" rx="5" fill="#fbebd2" stroke="#c26a05"/><text class="n" x="90" y="65" text-anchor="middle">ed25519 key pair</text>
+  <text class="step" x="14" y="100">2</text><path class="msg" d="M 90 100 H 296"/><text class="m" x="195" y="94" text-anchor="middle">POST ssh-sessions {target, pubkey}</text>
+  <path class="msg" d="M 300 122 H 94"/><text class="m" x="195" y="136" text-anchor="middle">201 {id, expires_at, deadline}</text>
+  <text class="step" x="14" y="166">3</text><path class="msg" d="M 300 166 H 686"/><text class="m" x="495" y="160" text-anchor="middle">ssh/session {start, pubkey, target, expires_at, deadline}</text>
+  <text class="step" x="14" y="200">4</text><rect x="600" y="188" width="180" height="22" rx="5" fill="#d8f0e3" stroke="#1e7f4f"/><text class="n" x="690" y="203" text-anchor="middle">append key line, dial 127.0.0.1:8222</text>
+  <path class="msg" d="M 690 232 H 304"/><text class="m" x="495" y="226" text-anchor="middle">ssh/&lt;sid&gt;/down {seq 0}  — ready</text>
+  <text class="step" x="14" y="268">5</text><path class="msg" d="M 90 268 H 296"/><text class="m" x="195" y="262" text-anchor="middle">POST …/ticket → 30 s single-use</text>
+  <path class="msg" d="M 90 292 H 296"/><text class="m" x="195" y="286" text-anchor="middle">WebSocket, subprotocol ticket.&lt;t&gt;</text>
+  <path class="enc" d="M 90 330 H 836"/><path class="enc" d="M 840 352 H 94"/>
+  <text class="m" x="465" y="324" text-anchor="middle">SSH handshake and session, end to end (frames seq 0,1,2… each way)</text>
+  <text class="n" x="465" y="370" text-anchor="middle">the Hub and the agent see ciphertext; the Hub holds no key that can log in</text>
+  <text class="step" x="14" y="412">6</text><path class="msg" d="M 300 412 H 686"/><text class="m" x="495" y="406" text-anchor="middle">ssh/session {stop}  (tab closed, idle 15 min, lease, 60 min)</text>
+  <rect x="600" y="426" width="180" height="22" rx="5" fill="#d8f0e3" stroke="#1e7f4f"/><text class="n" x="690" y="441" text-anchor="middle">close socket, remove key line, audit</text>
+</svg>

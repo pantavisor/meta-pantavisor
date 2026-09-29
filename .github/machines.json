@@ -49,6 +49,13 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
+			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml:kas/with-mqtt-sdk.yaml",
+			"name": "rpi-mqtt-sdk",
+			"display_name": "Raspberry Pi (all versions), Pantahub MQTT agent",
+			"description": "The Raspberry Pi image with the pv-mqtt-sdk container holding the Pantahub link over MQTT instead of Pantavisor's remote control, which is disabled. The device registers, takes updates, syncs device-meta and user-meta and streams live logs through the agent. Boots Pantavisor from an SD card.",
+			"workflows": ["manual", "tag"]
+		},
+		{
 			"config": "kas/machines/colibri-imx6ull.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"extra_targets": ["mc:tezi-recovery:u-boot-toradex", "pv-flash-bundle"],
 			"name": "colibri-imx6ull",
