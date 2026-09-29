@@ -1,0 +1,11 @@
+header:
+  version: 14
+
+# The starter image with the pv-mqtt-sdk agent holding the Pantahub link
+# instead of pantavisor: remote control and log push are off, and the agent
+# registers the device, installs pushed revisions and syncs meta over MQTT.
+local_conf_header:
+  mqtt-sdk: |
+    PANTAVISOR_CONFIG[PV_CONTROL_REMOTE]  = "0"
+    PANTAVISOR_CONFIG[PV_LOG_PUSH]        = "0"
+    PVROOT_CONTAINERS_CORE = "pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi pv-avahi-browse pv-mqtt-sdk"

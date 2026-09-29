@@ -12,6 +12,8 @@ A Pantavisor device exposes several access points depending on your connectivity
 | [Local network — SSH](./local-network/) | Day-to-day management once the device is on a network |
 | [pvtx web UI](./pvtx-ui/) | Browse container status, view logs, upload container packages without the CLI |
 | [Pantahub — remote](./remote-pantahub/) | OTA updates, log streaming, and device management from anywhere |
+| [Terminal in the browser](./web-ssh/) | A shell on the host or in a container from the device page, SSH end to end over the device's MQTT connection |
+| [Live logs](./live-logs/) | Stream any log file to the web UI while you watch, filtered on the device |
 
 ### Serial Console
 
@@ -23,4 +25,4 @@ Once the device has an IP address (via Ethernet or Wi-Fi), you can reach it over
 
 ### Pantahub
 
-Devices that are claimed on [Pantahub](https://hub.pantacor.com) can be managed from anywhere. The `pvr` CLI authenticates to Pantahub and lets you clone, modify, and push device state remotely — the device polls for updates and applies them as OTA revisions. Logs are streamed to Pantahub in real time.
+Devices that are claimed on [Pantahub](https://hub.pantacor.com) can be managed from anywhere. The `pvr` CLI authenticates to Pantahub and lets you clone, modify, and push device state remotely — the device polls for updates and applies them as OTA revisions. Logs are streamed to Pantahub in real time. Devices managed by the Pantahub MQTT agent also offer a [terminal in the browser](./web-ssh/) and [live log streaming](./live-logs/) straight from the device page.

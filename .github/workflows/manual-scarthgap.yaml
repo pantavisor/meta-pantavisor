@@ -21,6 +21,7 @@ on:
           - imx8qxp-b0-mek
           - raspberrypi-armv8
           - rpi
+          - rpi-mqtt-sdk
           - colibri-imx6ull
           - radxa-rock5a
           - rockchip-orangepi-5b

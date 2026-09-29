@@ -42,6 +42,11 @@ jobs:
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
             sdk: 0
+          - machine_name: rpi-mqtt-sdk-scarthgap
+            configs: kas/build-configs/release/rpi-mqtt-sdk-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+            build_target: pantavisor-starter
+            output: "pantavisor-starter*.rootfs.wic*"
+            sdk: 0
           - machine_name: colibri-imx6ull-scarthgap
             configs: kas/build-configs/release/colibri-imx6ull-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 

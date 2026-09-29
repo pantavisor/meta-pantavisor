@@ -1,0 +1,10 @@
+{
+    "Entrypoint": ["/usr/bin/pv-mqtt-sdk", "run"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "WorkingDir": "/",
+    "Volumes": {
+        "/var/pv-mqtt-sdk": {}
+    }
+}
