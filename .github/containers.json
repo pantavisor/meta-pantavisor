@@ -88,7 +88,7 @@
       "build_target": "pv-pvr-sdk",
       "output": "pv-pvr-sdk.pvrexport.tgz",
       "display_name": "pvr SDK container",
-      "description": "Pantavisor pvr SDK container, fetched prebuilt from the pv-platforms registry.",
+      "description": "Pantavisor pvr SDK container, built from source from the pv-platforms pvr-sdk repository.",
       "workflows": ["manual", "tag"]
     },
     {
