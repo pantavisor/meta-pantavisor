@@ -67,6 +67,11 @@ pvr_app_postprocess() {
     :
 }
 
+# Image recipes can add signatures for other parts carried by the export.
+pvr_extra_signatures() {
+    :
+}
+
 # Define a config overlay directory that the image recipe will make available
 # in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
 # This directory will be added to the pvrexport as _config/${PN}
@@ -159,6 +164,7 @@ EOF1
     pvr add
     pvr commit
     pvr sig add ${PVR_SIG_ADD_ARGS}
+    pvr_extra_signatures
     pvr add
     pvr commit
     mkdir -p ${IMGDEPLOYDIR}/
