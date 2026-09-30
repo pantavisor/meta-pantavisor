@@ -28,6 +28,7 @@ SRC_URI += "git://gitlab.com/pantacor/pv-platforms/pvr-sdk;protocol=https;branch
     file://pv-pvr-sdk.config.json \
     file://pv-pvr-sdk-config \
     file://pv-pvr-sdk-start.sh \
+    file://0001-pvr-auto-follow-fix-shell-syntax-errors.patch;apply=no \
 "
 
 # image.bbclass wipes ${S} at the start of do_rootfs, so the checkout lives
@@ -49,6 +50,10 @@ EXTRA_USERS_PARAMS = "\
 "
 
 install_sdk() {
+    # SDK_SRC is not ${S}, so the patch class does not apply it. It fixes
+    # pvr-auto-follow, which does not parse at v1.3.3.
+    patch -p1 -d ${SDK_SRC} -i ${WORKDIR}/0001-pvr-auto-follow-fix-shell-syntax-errors.patch
+
     # pvcontrol and JSON.sh come from the pantavisor-pvcontrol / json-sh packages,
     # which container-pvrexport installs; the SDK's own copies are older forks.
     # The syslog bits configure a daemon this image does not carry,

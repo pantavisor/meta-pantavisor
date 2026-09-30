@@ -6,6 +6,12 @@
 
 rm -rf /var/pvr-sdk/tmp/*
 
+# pvcontrol prefers pvcurl, which stages every request in fixed /tmp/http_*
+# files, so concurrent calls clobber each other. The CGIs behind httpd hit this
+# when pvr fetches objects in parallel (empty objects, "wrong sha"). curl is
+# installed, so make pvcontrol use it.
+export CURL_CMD=curl
+
 # These two background themselves and return.
 /usr/bin/pv-httpd
 /usr/bin/pv-socat
@@ -25,8 +31,19 @@ trap stop_all TERM INT
 
 start /usr/sbin/dropbear -F -E -R -p :22
 start /usr/bin/pv-user-meta-sync
-start /usr/bin/pvr-auto-follow
 start /usr/bin/pvr-sdk-httpd
+
+# pvr-auto-follow runs under set -e and exits on any failing command. Under
+# OpenRC that was a logged service failure; watched directly it would stop the
+# container and reboot the device (restart policy system). So the retry loop is
+# what gets watched, not the script.
+(
+	while true; do
+		/usr/bin/pvr-auto-follow
+		sleep 30
+	done
+) &
+pids="$pids $!"
 
 while true; do
 	for pid in $pids; do

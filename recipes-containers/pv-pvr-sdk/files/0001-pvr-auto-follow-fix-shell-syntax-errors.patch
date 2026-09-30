@@ -1,0 +1,77 @@
+From 69ba5dd1c2e063cd7e168a967c115ee7a9b16a2d Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Wed, 30 Sep 2026 17:55:09 -0300
+Subject: [PATCH] pvr-auto-follow: fix shell syntax errors and cmdline handling
+
+The script never parsed under busybox ash: an unterminated backtick on the
+auto-follow.disabled lookup, and a 'while ...; then' that should be a
+do/done loop. So the daemon exited at once.
+
+Also:
+- use the POSIX parse_config() form instead of the bash-only 'function'
+- a comment ending in a backslash split the /proc/cmdline pipeline, so the
+  cmdline variables were never appended to the config; move the comment
+- the object GC loop used the undefined $test instead of $line
+- treat auto-follow.disabled=false as enabled, not disabled
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ files/usr/bin/pvr-auto-follow | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/files/usr/bin/pvr-auto-follow b/files/usr/bin/pvr-auto-follow
+index b7fa0fa..b9a74f9 100755
+--- a/files/usr/bin/pvr-auto-follow
++++ b/files/usr/bin/pvr-auto-follow
+@@ -4,7 +4,7 @@ set -e
+ 
+ PVR=/usr/bin/pvr
+ 
+-function parse_config() {
++parse_config() {
+         set -a
+         . $1
+         set +a
+@@ -23,13 +23,14 @@ done
+ 
+ disabled=
+ if [ -f /etc/pvr-sdk/config.json ]; then
+-	disabled=`cat /etc/pvr-sdk/config.json | jq -r ".[\"auto-follow\"].disabled"
++	disabled=`cat /etc/pvr-sdk/config.json | jq -r ".[\"auto-follow\"].disabled"`
+ 	disabled=${disabled#null}
++	disabled=${disabled#false}
+ fi
+ 
+-while [ -n "$disabled" ]; then
++while [ -n "$disabled" ]; do
+ 	sleep 30
+-fi
++done
+ 
+ creds_id=
+ creds_prn=
+@@ -45,10 +46,11 @@ do
+         echo "Pantacor Hub credentials configuration..."
+         cp -f /storage/config/pantahub.config $tmpconf
+         sed -i '/^creds.*=/!d;s/creds./creds_/' $tmpconf || true
++        # vars starting w/ 0-9 are invalid in sh - the last sed escapes them
+         cat /proc/cmdline  | \
+ 		sed -e 's/ /\n/g' | \
+ 		sed -e '/^[^=]*$/d;s/^\([^=]*\)\./\1_/' | \
+-		sed -e 's/^\([0-9]\)/_num__\1/' # vars starting w/ 0-9 are invalid in sh - escape them \
++		sed -e 's/^\([0-9]\)/_num__\1/' \
+ 			>> $tmpconf
+         parse_config $tmpconf || true
+         if [ -n "$creds_prn" -a -n "$creds_secret" -a -n "$creds_host" -a -n "$creds_port" ]; then
+@@ -114,7 +116,7 @@ while true; do
+                                         cat /tmp/all-used.txt
+                                         # here we remove all objects not found in all-used
+                                         ls ~/.pvr/objects/ | while read -r line; do
+-                                                grep -q "$line" /tmp/all-used.txt || ( echo "garbage collecting: ~/.pvr/objects/$test" && rm -f ~/.pvr/objects/$test )
++                                                grep -q "$line" /tmp/all-used.txt || ( echo "garbage collecting: ~/.pvr/objects/$line" && rm -f ~/.pvr/objects/$line )
+                                         done
+                                 fi
+                         else
+-- 
+2.43.0
+
