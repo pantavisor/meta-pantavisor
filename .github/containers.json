@@ -117,6 +117,15 @@
       "display_name": "Tailscale container",
       "description": "Tailscale VPN container, fetched prebuilt from the ph-tailscale registry.",
       "workflows": ["manual", "tag"]
+    },
+    {
+      "name": "pv-mqtt-sdk",
+      "machine": ["docker-x86_64", "docker-armv6", "docker-armv8"],
+      "build_target": "pv-mqtt-sdk",
+      "output": "pv-mqtt-sdk.pvrexport.tgz",
+      "display_name": "Pantahub MQTT agent container",
+      "description": "Pantahub MQTT agent, built from source: push updates, device-meta and user-meta for Pantavisor devices with remote control disabled.",
+      "workflows": ["manual", "tag"]
     }
   ]
 }

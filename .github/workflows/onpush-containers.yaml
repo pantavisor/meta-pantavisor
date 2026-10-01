@@ -1,0 +1,86 @@
+name: "onpush: containers"
+
+# Builds only the containers whose recipes changed, one machine after
+# another, as per-container artifacts; nothing is uploaded to S3. The
+# path-to-container mapping lives in .github/scripts/changed-containers.
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'recipes-containers/**'
+  pull_request:
+    types: [ready_for_review]
+    paths:
+      - 'recipes-containers/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: ${{ (github.event.pull_request.head.ref || github.ref_name) != 'master' }}
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      containers: ${{ steps.detect.outputs.containers }}
+      machines: ${{ steps.detect.outputs.machines }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Same draft gate as onpush-scarthgap: drafts build nothing until
+          # ready_for_review.
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            draft=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$GITHUB_REF_NAME" --json isDraft --jq '.[0].isDraft // false')
+            if [ "$draft" = true ]; then
+              echo "$GITHUB_REF_NAME has a draft PR; skipping"
+              echo "containers=" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            range="$PR_BASE...$PR_HEAD"
+          elif git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..$GITHUB_SHA"
+          else
+            # New branch or force-push: everything since it left master.
+            base=$(git merge-base origin/master "$GITHUB_SHA")
+            [ "$base" != "$GITHUB_SHA" ] || base="$GITHUB_SHA~1"
+            range="$base..$GITHUB_SHA"
+          fi
+          echo "changes in $range"
+
+          containers=$(git diff --name-only "$range" | .github/scripts/changed-containers)
+          machines=$(jq -c --arg c "$containers" '
+            [.containers[] | select(.name as $n | any($c | splits(" +"); . == $n)) | .machine[]]
+            | unique' .github/containers.json)
+          echo "containers: ${containers:-none}"
+          echo "machines: $machines"
+          echo "containers=$containers" >> $GITHUB_OUTPUT
+          echo "machines=$machines" >> $GITHUB_OUTPUT
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.containers != ''
+    name: "build (${{ matrix.machine }})"
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        machine: ${{ fromJSON(needs.detect.outputs.machines) }}
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/buildkas-containers.yaml
+    with:
+      machine: ${{ matrix.machine }}
+      containers: ${{ needs.detect.outputs.containers }}
+    secrets: inherit
