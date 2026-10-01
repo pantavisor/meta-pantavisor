@@ -78,9 +78,18 @@ INSANE_SKIP:${PN}-static += "already-stripped"
 # task that wrote to DEPLOY_DIR_TOOLS directly leaves the tools dir empty.
 do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
 
+# -native/-nativesdk deploy under the host arch (x86_64), which another recipe
+# or MACHINE sharing this TMPDIR can also claim (the sstate manifest is
+# per-MACHINE), tripping "trying to install files into a shared area". Keep the
+# plain ${PACKAGE_ARCH} name for the target recipe, which the appengine distro
+# reads, and tag the others with the class and MACHINE so they cannot overlap it.
+PVR_DEPLOY_SUFFIX = "${PACKAGE_ARCH}"
+PVR_DEPLOY_SUFFIX:class-native = "${PACKAGE_ARCH}-native-${MACHINE}"
+PVR_DEPLOY_SUFFIX:class-nativesdk = "${PACKAGE_ARCH}-nativesdk-${MACHINE}"
+
 do_deploy() {
-        install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOYDIR}/pvr-${PACKAGE_ARCH}
-        install -m 755 ${B}/pvr-static ${DEPLOYDIR}/pvr-static-${PACKAGE_ARCH}
+        install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOYDIR}/pvr-${PVR_DEPLOY_SUFFIX}
+        install -m 755 ${B}/pvr-static ${DEPLOYDIR}/pvr-static-${PVR_DEPLOY_SUFFIX}
 }
 
 addtask deploy after do_install
