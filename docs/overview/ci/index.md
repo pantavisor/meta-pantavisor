@@ -13,10 +13,11 @@ Documentation for the meta-pantavisor CI system: how workflows are organized, ho
 1. [Overview](overview.md) — workflow map showing how tag pushes trigger sync, release builds, pvtest runs, and artifact uploads
 2. [Machines](machines.md) — the `.github/machines.json` schema and how to add or modify a machine; always run `makeworkflows` after editing
 3. [Builds](builds.md) — per-machine build workflows, sstate sharing, S3 artifact layout, and badge generation
-4. [Status](status.md) — reading build status badges and CI run summaries
-5. [Versioning](versioning.md) — how `DISTRO_VERSION` is derived from git tags and how to cut a new release tag
-6. [Tag Sync](tag-sync.md) — how `meta-pantavisor` tags are mirrored to `pantavisor/pantavisor` and the PAT setup required
-7. [Changelog](changelog.md) — per-release changelog: RC sections accumulate on an S3 document, the repo `CHANGELOG-NNN.md` is committed once per major via `--finalize`, and `changelog-gate.yaml` blocks a stable release without it
+4. [Containers](containers.md) — building all containers for a machine in one kas run: `containers.json`, `container-targets`, manual/tag/on-push workflows
+5. [Status](status.md) — reading build status badges and CI run summaries
+6. [Versioning](versioning.md) — how `DISTRO_VERSION` is derived from git tags and how to cut a new release tag
+7. [Tag Sync](tag-sync.md) — how `meta-pantavisor` tags are mirrored to `pantavisor/pantavisor` and the PAT setup required
+8. [Changelog](changelog.md) — per-release changelog: RC sections accumulate on an S3 document, the repo `CHANGELOG-NNN.md` is committed once per major via `--finalize`, and `changelog-gate.yaml` blocks a stable release without it
 
 ## Key Rule
 

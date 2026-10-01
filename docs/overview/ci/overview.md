@@ -72,6 +72,7 @@ SCHEDULED
 | `buildkas-upload.yaml` | `workflow_call` | Reusable: build + S3 upload (tag builds) |
 | `buildkas-target.yaml` | `workflow_call` | Reusable: build + GitHub artifacts (dev builds) |
 | `call-pvtests.yaml` | `workflow_call` | Reusable: run pvtests suite |
+| `release-containers.yaml`, `manual-containers-scarthgap.yaml`, `onpush-containers.yaml` | tag / dispatch / push | Container builds; see [Container Builds](containers.md) |
 
 ## Scripts
 
