@@ -1,0 +1,50 @@
+#!/bin/bash
+# Resolve the containers in .github/containers.json that build for a machine,
+# so all of them go through a single kas/bitbake run:
+#
+#   ./kas-container build $(.github/scripts/container-targets docker-x86_64) \
+#       kas/build-configs/release/containers/docker-x86_64-scarthgap.yaml -- -k
+#
+# The --target flags go before the config: kas rejects "-- -k" otherwise.
+#
+# Usage: container-targets [--workflow manual|tag] [--container "NAME..."]
+#                          [--list name|build_target|output] <machine>
+#
+# Without --list, prints "--target <build_target>" flags for kas. With --list,
+# prints that field one per line (what the CI workflows loop over).
+# --container takes a space-separated list of names to narrow it down. Prints
+# nothing when no container matches, so callers can treat empty as an error.
+
+set -euo pipefail
+
+CONTAINERS_JSON="$(dirname "$0")/../containers.json"
+
+workflow=""
+container=""
+list=""
+while [ $# -gt 1 ]; do
+    case "$1" in
+        --workflow)  workflow="$2"; shift 2 ;;
+        --container) container="$2"; shift 2 ;;
+        --list)      list="$2"; shift 2 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+done
+[ $# -eq 1 ] || { echo "usage: $0 [--workflow W] [--container \"NAME...\"] [--list FIELD] <machine>" >&2; exit 2; }
+machine="$1"
+
+values=$(jq -r --arg m "$machine" --arg w "$workflow" --arg c "$container" --arg f "${list:-build_target}" '
+    .containers[]
+    | select(.machine | index($m))
+    | select($w == "" or (.workflows | index($w)))
+    | .name as $n
+    | select($c == "" or any($c | splits(" +"); . == $n))
+    | if $f == "build_target" then (.build_target // .name) else .[$f] end
+' "$CONTAINERS_JSON")
+
+if [ -n "$list" ]; then
+    [ -z "$values" ] || printf '%s\n' "$values"
+else
+    for t in $values; do printf -- '--target %s ' "$t"; done
+    echo
+fi

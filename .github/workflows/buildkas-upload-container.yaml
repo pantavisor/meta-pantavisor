@@ -1,31 +1,26 @@
-name: 'Build and Upload Container'
+name: 'Build and Upload Containers'
 
 on:
   workflow_call:
     inputs:
-      machine_name:
-        required: true
-        type: string
-      container_name:
-        required: true
-        type: string
       machine:
         required: true
         type: string
       configs:
         required: true
         type: string
-      build_target:
+      workflow:
+        description: 'containers.json "workflows" entry selecting which containers to build'
         required: false
         type: string
-      output:
-        required: false
-        type: string
+        default: tag
 
 jobs:
   build:
     env:
      TMPDIR : "tmp-scarthgap"
+     MACHINE: ${{ inputs.machine }}
+     WORKFLOW: ${{ inputs.workflow }}
     runs-on: ["bsp-builder"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
@@ -37,7 +32,7 @@ jobs:
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
-          git fetch --tags --force --depth=${{ inputs.fetch-depth || 1 }}
+          git fetch --tags --force --depth=1
       - name: setup workspace
         run: |
          chown -R builder:builder $RUNNER_WORKSPACE
@@ -46,30 +41,45 @@ jobs:
          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
 
+      # All containers for this machine in one bitbake run; -k keeps one
+      # broken recipe from blocking the rest, and the upload step below
+      # still publishes whatever did build.
       - name: build
         run: |
-         BUILD_TARGET="${{ inputs.build_target }}"
-         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
+         TARGETS=$(.github/scripts/container-targets --workflow "$WORKFLOW" "$MACHINE")
+         [ -n "$TARGETS" ] || { echo "::error::no $WORKFLOW containers list $MACHINE"; exit 1; }
+         # --target must precede the config for kas to accept "-- -k".
+         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build $TARGETS ${{ inputs.configs }} -- -k"
 
-      # Organize file for upload-container.sh
       - name: copy files
+        if: always()
         run: |
          chmod -R 777 $GITHUB_WORKSPACE
-
-         BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
-
          mkdir -p pvexports
-         for pattern in ${{ inputs.output }}; do
-            find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} pvexports \;
-         done
+         find build/${{ env.TMPDIR }}/deploy/images/ -maxdepth 2 -name "*.pvrexport.tgz" -exec cp {} pvexports \; || true
 
       - name: Upload to S3
+        if: always()
         run: |
-          .github/scripts/upload-container.sh \
-           ${{ secrets.AWS_ACCESS_KEY_ID }} \
-           ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-           ${{ secrets.AWS_S3_BUCKET }} \
-           ${{ github.ref_name }} \
-           ${{ inputs.machine_name }} \
-           ${{ inputs.container_name }} \
-           ${{ inputs.machine }} \
+          echo "## Containers ($MACHINE)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Container | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          rc=0
+          branch=$(jq -r .yocto_branch .github/containers.json)
+          for name in $(.github/scripts/container-targets --workflow "$WORKFLOW" --list name "$MACHINE"); do
+            if .github/scripts/upload-container.sh \
+                 ${{ secrets.AWS_ACCESS_KEY_ID }} \
+                 ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+                 ${{ secrets.AWS_S3_BUCKET }} \
+                 ${{ github.ref_name }} \
+                 "$name-$MACHINE-$branch" \
+                 "$name" \
+                 "$MACHINE"; then
+              echo "| $name | ✅ |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| $name | ❌ |" >> $GITHUB_STEP_SUMMARY
+              rc=1
+            fi
+          done
+          exit $rc

@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Map changed paths (one per line on stdin) to containers.json containers.
+
+A path under recipes-containers/ belongs to the container whose name its file
+or any parent directory is named after, taking the longest name that is the
+whole stem or a "<name>-" prefix of it, with "_<version>" and extensions
+dropped. So pv-avahi-browse_1.0.bb is pv-avahi-browse (not pv-avahi),
+pvwificonnect-app_v1.9.1.bb is pvwificonnect, and anything in pv-labutils/
+is pv-labutils.
+
+A file matching no name (a shared pantavisor/files/mdev.json) belongs to the
+containers whose recipes mention its basename. Paths that still match
+nothing (pv-examples/ fixtures, debug/) are not shipped containers and are
+ignored. Each decision is logged to stderr; stdout is the space-separated
+names, empty when nothing changed.
+"""
+
+import json
+import os
+import re
+import sys
+
+ROOT = "recipes-containers/"
+
+with open(os.path.join(os.path.dirname(__file__), "..", "containers.json")) as f:
+    names = sorted((c["name"] for c in json.load(f)["containers"]), key=len, reverse=True)
+
+
+def owner(component):
+    stem = re.sub(r"_[^_/]*$", "", component.split(".")[0])
+    for n in names:
+        if stem == n or stem.startswith(n + "-"):
+            return n
+    return None
+
+
+def recipe_owners():
+    """Map each container to the text of the recipes it owns."""
+    texts = {}
+    for d, _, files in os.walk(ROOT):
+        for fn in files:
+            if not fn.endswith((".bb", ".bbappend", ".inc")):
+                continue
+            path = os.path.join(d, fn)
+            n = path_owner(path)
+            if n:
+                with open(path, errors="replace") as f:
+                    texts.setdefault(n, []).append(f.read())
+    return texts
+
+
+def path_owner(path):
+    # Innermost component wins: pantavisor/files/pv-pvr-sdk/README.md is
+    # pv-pvr-sdk even though "pantavisor" and "files" match nothing.
+    for comp in reversed(path[len(ROOT):].split("/")):
+        n = owner(comp)
+        if n:
+            return n
+    return None
+
+
+changed = set()
+recipes = None
+for path in (line.strip() for line in sys.stdin):
+    if not path.startswith(ROOT):
+        continue
+    n = path_owner(path)
+    if n:
+        print(f"{path}: {n}", file=sys.stderr)
+        changed.add(n)
+        continue
+    if recipes is None:
+        recipes = recipe_owners()
+    # Whole filename only: mdev.json must not match pv-labutils.mdev.json.
+    ref = re.compile(r"(?<![\w.-])" + re.escape(os.path.basename(path)) + r"(?![\w.-])")
+    users = sorted(n for n, texts in recipes.items() if any(ref.search(t) for t in texts))
+    print(f"{path}: {' '.join(users) or 'no shipped container, ignored'}", file=sys.stderr)
+    changed.update(users)
+
+print(" ".join(n for n in sorted(changed)))

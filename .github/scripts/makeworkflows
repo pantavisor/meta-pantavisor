@@ -34,6 +34,7 @@ YOCTO_BRANCH=$(jq -r .yocto_branch .github/machines.json)
 
 rm -f .github/workflows/manual-$YOCTO_BRANCH*
 rm -f .github/workflows/manual-containers-$YOCTO_BRANCH*
+rm -f .github/workflows/buildkas-containers.yaml
 rm -f .github/workflows/onpush-$YOCTO_BRANCH*
 rm -f .github/workflows/release.yaml
 rm -f .github/workflows/release-containers.yaml

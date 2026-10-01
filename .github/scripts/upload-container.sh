@@ -22,11 +22,15 @@ DESCRIPTION=$(jq -r --arg n "$CONTAINER_NAME" \
 aws configure set aws_access_key_id $AWS_KEY_ID
 aws configure set aws_secret_access_key $AWS_SECRET_KEY
 
-PVREXPORT_FILE=$(find pvexports -maxdepth 1 -name "*pvrexport.tgz" | head -1)
+# pvexports/ holds every container built for this machine, so pick ours by
+# its declared output name rather than whatever pvrexport comes first.
+OUTPUT=$(jq -r --arg n "$CONTAINER_NAME" \
+  '.containers[] | select(.name == $n) | .output // empty' "$CONTAINERS_JSON")
+PVREXPORT_FILE="pvexports/$OUTPUT"
 
-if [ -z "$PVREXPORT_FILE" ]; then
-    echo "warning: no pvrexport.tgz found in pvexports/ — nothing to upload" >&2
-    exit 0
+if [ -z "$OUTPUT" ] || [ ! -f "$PVREXPORT_FILE" ]; then
+    echo "error: $CONTAINER_NAME: ${OUTPUT:-no output} not found in pvexports/" >&2
+    exit 1
 fi
 
 # MACHINE is "docker-x86_64"/"docker-armv6"/"docker-armv8"; strip the
@@ -35,7 +39,7 @@ ARCH="${MACHINE#docker-}"
 PVREXPORT_NAME="${CONTAINER_NAME}-${ARCH}.pvrexport.tgz"
 PVREXPORT_CSUM=$(sha256sum "$PVREXPORT_FILE" | cut -d' ' -f1)
 
-aws s3 cp "$PVREXPORT_FILE" "s3://$AWS_S3_BUCKET/containers/$TAG/$MACHINE_NAME/$PVREXPORT_NAME"
+aws s3 cp "$PVREXPORT_FILE" "s3://$AWS_S3_BUCKET/containers/$TAG/$MACHINE_NAME/$PVREXPORT_NAME" || exit 1
 
 RELEASE_TYPE=""
 if [[ "$TAG" == *"-rc"* ]]; then

@@ -10,8 +10,14 @@ on:
         required: true
         type: string
       build_target:
+        description: 'Space-separated; each word becomes its own --target in one kas run'
         required: false
         type: string
+      keep_going:
+        description: 'Pass -k to bitbake so one failing target does not stop the others'
+        required: false
+        type: boolean
+        default: false
       output:
         required: false
         type: string
@@ -53,8 +59,12 @@ jobs:
 
       - name: build
         run: |
-           BUILD_TARGET="${{ inputs.build_target }}"
-           su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
+           TARGETS=""
+           for t in ${{ inputs.build_target }}; do TARGETS="$TARGETS --target $t"; done
+           KEEP_GOING="${{ inputs.keep_going && ' -- -k' || '' }}"
+           # --target must precede the config: kas' argparse rejects "-- -k"
+           # once options follow the config positional.
+           su - builder -c "cd $GITHUB_WORKSPACE && env && kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
 
       - name: build with sdk
         if: inputs.sdk == 1

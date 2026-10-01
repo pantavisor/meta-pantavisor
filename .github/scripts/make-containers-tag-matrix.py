@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 """Generate the release-containers workflow from containers.json.
 
-Flattens each container's "machine" list into one matrix entry per
-(container, machine) pair — a container listing 3 machines gets 3 build+upload
-jobs, one listing 1 machine gets just 1.
-
-Tag/release builds skip docker-x86_64: only the arm machines get built and
-uploaded to S3 on tag. A container whose "machine" list is arm-only anyway
-is unaffected; one that's x86_64-only (e.g. pv-debian-nm) drops out of the
-tag matrix entirely — it's still buildable through manual dispatch.
+One matrix entry per machine: each job builds every tag-listed container for
+that machine in a single kas run, then uploads them one by one. Machines run
+one after another (max-parallel: 1), which also keeps the jobs from
+read-modify-writing containers-releases.json at once. The container
+list itself is resolved at build time by .github/scripts/container-targets, so
+adding a container to an existing machine needs no regeneration.
 """
 
 import json
-
-TAG_EXCLUDED_MACHINES = {"docker-x86_64"}
 
 with open(".github/containers.json") as f:
     data = json.load(f)
@@ -22,27 +18,7 @@ branch = data["yocto_branch"]
 containers = [c for c in data["containers"] if "tag" in c.get("workflows", [])]
 outfile = ".github/workflows/release-containers.yaml"
 
-SUMMARY_JOB = [
-    "",
-    "  summary:",
-    "    needs: build",
-    "    if: always()",
-    "    runs-on: ubuntu-latest",
-    "    steps:",
-    "      - name: Checkout",
-    "        uses: actions/checkout@v6",
-    "        with:",
-    "          ref: ${{ github.ref }}",
-    "      - name: Build Summary",
-    "        env:",
-    "          GH_TOKEN: ${{ github.token }}",
-    "        run: |",
-    '          echo "## Container Build Summary" >> $GITHUB_STEP_SUMMARY',
-    '          echo "" >> $GITHUB_STEP_SUMMARY',
-    '          echo "| Container | Result |" >> $GITHUB_STEP_SUMMARY',
-    '          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY',
-    """          gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs | jq -r '.jobs[] | select(.name | contains("build (")) | "| " + (.name | capture("build \\\\((?<m>[^)]+)\\\\)").m) + " | " + (if .conclusion == "success" then "✅" elif .conclusion == "failure" then "❌" elif .conclusion == "cancelled" then "🚫" elif .conclusion == "skipped" then "⏭️" else (.conclusion // "🔄") end) + " |"' >> $GITHUB_STEP_SUMMARY""",
-]
+machines = sorted({m for c in containers for m in c.get("machine", [])})
 
 release_lines = [
     "# ##############################################################################",
@@ -59,44 +35,28 @@ release_lines = [
     "",
     "jobs:",
     "  build:",
-    '    name: "build (${{ matrix.machine_name }})"',
+    '    name: "build (${{ matrix.machine }})"',
     "    strategy:",
     "      fail-fast: false",
+    "      max-parallel: 1",
     "      matrix:",
     "        include:",
 ]
 
-for c in containers:
-    name = c["name"]
-    build_target = c.get("build_target", name)
-    output = c.get("output", "").strip()
-    machines = [m for m in c.get("machine", []) if m not in TAG_EXCLUDED_MACHINES]
-    if not machines:
-        print(f"skipping {name} from release-containers.yaml: no non-x86_64 machine listed")
-        continue
-    for machine in machines:
-        release_lines += [
-            f"          - container_name: {name}",
-            f"            machine: {machine}",
-            f"            machine_name: {name}-{machine}-{branch}",
-            f"            configs: kas/build-configs/release/containers/{machine}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
-            f"            build_target: {build_target}",
-            f'            output: "{output}"',
-        ]
+for machine in machines:
+    release_lines += [
+        f"          - machine: {machine}",
+        f"            configs: kas/build-configs/release/containers/{machine}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
+    ]
 
 release_lines += [
     "    uses: ./.github/workflows/buildkas-upload-container.yaml",
     "    with:",
     "      configs: ${{ matrix.configs }}",
-    "      machine_name: ${{ matrix.machine_name }}",
-    "      container_name: ${{ matrix.container_name }}",
     "      machine: ${{ matrix.machine }}",
-    "      build_target: ${{ matrix.build_target }}",
-    "      output: ${{ matrix.output }}",
+    "      workflow: tag",
     "    secrets: inherit",
 ]
-
-release_lines += SUMMARY_JOB
 
 with open(outfile, "w") as f:
     f.write("\n".join(release_lines) + "\n")

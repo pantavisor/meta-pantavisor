@@ -10,11 +10,21 @@ name: "manual containers: scarthgap"
 on:
   workflow_dispatch:
     inputs:
-      container:
-        description: 'Container to build'
+      machine:
+        description: 'Target architecture'
         required: true
         type: choice
         options:
+          - docker-armv6
+          - docker-armv8
+          - docker-x86_64
+      container:
+        description: 'Container to build ("all" = every container supporting the machine, in one kas run)'
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
           - pv-labutils
           - pv-avahi
           - pvwificonnect
@@ -28,43 +38,15 @@ on:
           - pv-pvsm
           - pv-pvwificonnect
           - pv-tailscale
-      machine:
-        description: 'Target architecture'
-        required: true
-        type: choice
-        options:
-          - docker-armv6
-          - docker-armv8
-          - docker-x86_64
+          - pv-mqtt-sdk
 
 jobs:
-  resolve:
-    runs-on: ubuntu-latest
-    outputs:
-      build_target: ${{ steps.lookup.outputs.build_target }}
-      output: ${{ steps.lookup.outputs.output }}
-    steps:
-      - uses: actions/checkout@v6
-      - id: lookup
-        run: |
-          container="${{ inputs.container }}"
-          machine="${{ inputs.machine }}"
-          machines=$(jq -c --arg c "$container" '.containers[] | select(.name == $c) | .machine' .github/containers.json)
-          if ! jq -e --arg m "$machine" 'index($m) != null' <<< "$machines" > /dev/null; then
-            echo "::error::$container does not support machine $machine (supported: $(jq -c . <<< "$machines"))"
-            exit 1
-          fi
-          build_target=$(jq -r --arg c "$container" '.containers[] | select(.name == $c) | .build_target' .github/containers.json)
-          output=$(jq -r --arg c "$container" '.containers[] | select(.name == $c) | .output' .github/containers.json)
-          echo "build_target=$build_target" >> $GITHUB_OUTPUT
-          echo "output=$output" >> $GITHUB_OUTPUT
-
   build:
-    needs: resolve
-    uses: ./.github/workflows/buildkas-target.yaml
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/buildkas-containers.yaml
     with:
-      configs: kas/build-configs/release/containers/${{ inputs.machine }}-scarthgap.yaml:kas/build-configs/shared-vols.yaml
-      machine_name: ${{ inputs.container }}-${{ inputs.machine }}-scarthgap
-      build_target: ${{ needs.resolve.outputs.build_target }}
-      output: ${{ needs.resolve.outputs.output }}
+      machine: ${{ inputs.machine }}
+      containers: ${{ inputs.container }}
     secrets: inherit
