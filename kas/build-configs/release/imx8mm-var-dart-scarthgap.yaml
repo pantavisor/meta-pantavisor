@@ -5,7 +5,7 @@ repos:
     meta-freescale:
         url: https://github.com/Freescale/meta-freescale.git
         path: layers/meta-freescale
-        commit: ce51eb5486e87a34f04f0367351e3217855b17ba
+        commit: e82db4ef75d390cd9e4a06b8caf0f67668ddea94
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
@@ -13,12 +13,12 @@ repos:
     meta-freescale-distro:
         url: https://github.com/Freescale/meta-freescale-distro.git
         path: layers/meta-freescale-distro
-        commit: b9d6a5d9931922558046d230c1f5f4ef6ee72345
+        commit: 2642b34e4c66ec1419e7f3a7a77a20b09e49e26b
     meta-variscite-bsp:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 5e39f3c87de79653a2a8d699d4e9faa3e4b72bf4
+        commit: ef9ae705c5c22e5772cc93b64f6dcd55600cf2b6
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -28,7 +28,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 75853a038ec4686bd5b834062ba4987ace8ec816
+        commit: 9babc67e0be8b4458e5531ba963d2bbfc9ec315b
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
@@ -62,7 +62,7 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: b5874ea07d69919d9b40d59f2c2f0bbd24bc3259
+        commit: 0f00f8b9a21950640da8c5707343e5540133f86e
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
@@ -94,7 +94,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
+        commit: 3a3d07f625aee7b87ea1026526b756447c357652
     meta-pantavisor:
     meta-virtualization:
         commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
