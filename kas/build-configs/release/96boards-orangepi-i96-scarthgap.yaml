@@ -20,14 +20,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
+        commit: 3a3d07f625aee7b87ea1026526b756447c357652
     meta-pantavisor:
     meta-virtualization:
         commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: b5874ea07d69919d9b40d59f2c2f0bbd24bc3259
+        commit: 0f00f8b9a21950640da8c5707343e5540133f86e
         layers:
             meta-filesystems:
             meta-networking:
@@ -35,10 +35,7 @@ repos:
             meta-python:
         path: layers/meta-openembedded
         url: https://github.com/openembedded/meta-openembedded.git
-machine: orangepi-i96
 local_conf_header:
-    pv-flash-readme: |
-        PV_FLASH_README = "docs/flashing/sdcard.md"
     platform-96boards: |
         # Boot through the generic pantavisor boot.scr: kernel, initrd and a
         # flat-named dtb (matching u-boot's ${fdtfile}) out of the BSP trail.
@@ -51,6 +48,8 @@ local_conf_header:
         # a Hub request 30 min instead of 60 s, so a large object transfer is not
         # cut short.
         PANTAHUB_CONFIG[PH_LIBEVENT_HTTP_TIMEOUT] = "1800"
+    pv-flash-readme: |
+        PV_FLASH_README = "docs/flashing/sdcard.md"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |
@@ -76,6 +75,7 @@ local_conf_header:
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
+machine: orangepi-i96
 defaults:
     repos:
         branch: scarthgap

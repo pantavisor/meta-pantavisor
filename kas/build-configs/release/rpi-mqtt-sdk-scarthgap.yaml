@@ -1,5 +1,5 @@
 header:
-    version: 16
+    version: 14
 _source_dir: .
 repos:
     meta-raspberrypi:
@@ -27,14 +27,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: cbd62bb2a9f2ab3466a0f72f4289bc86ca20a019
+        commit: 3a3d07f625aee7b87ea1026526b756447c357652
     meta-pantavisor:
     meta-virtualization:
         commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: b5874ea07d69919d9b40d59f2c2f0bbd24bc3259
+        commit: 0f00f8b9a21950640da8c5707343e5540133f86e
         layers:
             meta-filesystems:
             meta-networking:
@@ -77,14 +77,14 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
-    mqtt-sdk: |
-        PANTAVISOR_CONFIG[PV_CONTROL_REMOTE]  = "0"
-        PANTAVISOR_CONFIG[PV_LOG_PUSH]        = "0"
-        PVROOT_CONTAINERS_CORE = "pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi pv-avahi-browse pv-mqtt-sdk"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
         INHERIT += "rm_work"
+    mqtt-sdk: |
+        PANTAVISOR_CONFIG[PV_CONTROL_REMOTE]  = "0"
+        PANTAVISOR_CONFIG[PV_LOG_PUSH]        = "0"
+        PVROOT_CONTAINERS_CORE = "pv-pvr-sdk pv-alpine-connman pvwificonnect pv-avahi pv-avahi-browse pv-mqtt-sdk"
 machine: raspberrypi
 defaults:
     repos:
