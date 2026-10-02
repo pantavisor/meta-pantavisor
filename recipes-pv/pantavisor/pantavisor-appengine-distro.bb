@@ -28,7 +28,7 @@ PVTEST_HOST_DIR = "${DEPLOY_DIR_IMAGE}/pvtest/host"
 
 WORKDIR_FILES ?= "test.docker.sh test.native.sh device.txt"
 
-PVTEST_HOST_FILES ?= "tarball-README.md workspace-README.md native-README.md host-common"
+PVTEST_HOST_FILES ?= "docker-README.md workspace-README.md native-README.md host-common"
 
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"
 
@@ -54,14 +54,15 @@ do_create_tarball() {
     
     # Add files from DEPLOY_DIR_IMAGE
     if [ -n "${DEPLOY_FILES}" ]; then
+        mkdir -p "${STAGING_DIR}/images"
         for pattern in ${DEPLOY_FILES}; do
             found_files=""
             for file in ${DEPLOY_DIR_IMAGE}/${pattern}; do
                 if [ -e "$file" ]; then
                     found_files="yes"
                     basename_file=$(basename "$file")
-                    echo "Adding deploy file: $file as $basename_file"
-                    cp -v "$file" "${STAGING_DIR}/"
+                    echo "Adding deploy file: $file as images/$basename_file"
+                    cp -v "$file" "${STAGING_DIR}/images/"
                 fi
             done
             if [ -z "$found_files" ]; then
@@ -85,7 +86,7 @@ do_create_tarball() {
     done
     chmod 0755 "${STAGING_DIR}/test.docker.sh" "${STAGING_DIR}/test.native.sh"
 
-    install -m 0644 "${PVTEST_HOST_DIR}/tarball-README.md"   "${STAGING_DIR}/README.md"
+    install -m 0644 "${PVTEST_HOST_DIR}/docker-README.md"    "${STAGING_DIR}/README.md"
     install -m 0644 "${PVTEST_HOST_DIR}/workspace-README.md" "${STAGING_DIR}/workspace-README.md"
     install -D -m 0644 "${PVTEST_HOST_DIR}/host-common"      "${STAGING_DIR}/pvtest/host-common"
 

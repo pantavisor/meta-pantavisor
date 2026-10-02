@@ -136,7 +136,7 @@ do_install() {
 # gets from the pantavisor-pvtest package. The host half and the suites are
 # plain files and come straight from ${S}.
 PVTEST_HOST_SCRIPTS = "test.docker.sh test.native.sh"
-PVTEST_HOST_DATA = "host-common device.txt tarball-README.md workspace-README.md native-README.md"
+PVTEST_HOST_DATA = "host-common device.txt docker-README.md workspace-README.md native-README.md"
 
 do_deploy() {
 	install -d ${DEPLOYDIR}/pvtest
