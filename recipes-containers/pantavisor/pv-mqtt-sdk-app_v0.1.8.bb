@@ -20,8 +20,8 @@ SRC_URI = " \
 "
 
 # From pv-mqtt-sdk.${PV}.sha256 in the release assets.
-SRC_URI[src.sha256sum] = "66db008d57fcb9338bf9997bf272457e657efa7899be6a6dc00c04f495597fea"
-SRC_URI[vendor.sha256sum] = "7e25ea6e9fb4bfdf65ec08ff94ec071859a22e6810c0db8a043d6dd8330d44c6"
+SRC_URI[src.sha256sum] = "4a48341797592914681ef73dc230d89f35fead587b6fc170ad437464b3e1b5c9"
+SRC_URI[vendor.sha256sum] = "155b9b1a8327bd484ad554d690739e6fe15adfea97849776aab58e6d4f80c27d"
 
 GO_IMPORT = "github.com/pantavisor/pv-mqtt-sdk"
 export GO111MODULE = "on"
