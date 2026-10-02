@@ -112,8 +112,18 @@ fi
 echo "${devtype} root selected = ${pv_mmcdev}:${pv_mmcdata}"
 
 echo Loading uboot.txt
-echo ${pv_load_data} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
-${pv_load_data} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+# Boards whose storage mount puts pantavisor's boot directory on the boot
+# partition (pv_boot_env_on_bootpart=1 in their u-boot environment, e.g. the
+# Orange Pi i96 with PV_STORAGE_MNTTYPE=bootvfat) read uboot.txt there: a
+# vfat file reads back as written, while u-boot reads ext4 without replaying
+# its journal and could see a uboot.txt pantavisor had since rewritten.
+if test "${pv_boot_env_on_bootpart}" = "1" && ${pv_load_boot} ${envloadaddr} ${pv_root}uboot.txt; then
+	echo uboot.txt from the boot partition
+	setenv uboot_txt_size ${filesize}
+else
+	echo ${pv_load_data} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+	${pv_load_data} ${envloadaddr} /boot/uboot.txt; setenv uboot_txt_size ${filesize}
+fi
 
 echo Loading pantavisor uboot.txt
 setenv pv_try; env import ${envloadaddr} ${uboot_txt_size}
