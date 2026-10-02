@@ -43,14 +43,27 @@ jobs:
          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
 
+      # Private source repositories (pv-mqtt-sdk) are fetched over HTTPS with
+      # a read-only token; kas copies NETRC_FILE into the build's HOME.
+      - name: git credentials
+        env:
+          PRIVATE_REPOS_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN }}
+        run: |
+          umask 077
+          : > /home/builder/.netrc
+          if [ -n "$PRIVATE_REPOS_TOKEN" ]; then
+            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > /home/builder/.netrc
+          fi
+          chown builder:builder /home/builder/.netrc
+
       - name: build
         run: |
          BUILD_TARGET="${{ inputs.build_target }}"
-         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
+         su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
       - name: build-sdk
         run: |
            if [ "${{ inputs.sdk }}" = 1 ]; then
-             su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
+             su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
            fi
       # Organize file for upload.sh
       - name: copy files
@@ -102,3 +115,6 @@ jobs:
            ${{ github.ref_name }} \
            ${{ inputs.machine_name }} \
 
+      - name: remove git credentials
+        if: always()
+        run: rm -f /home/builder/.netrc

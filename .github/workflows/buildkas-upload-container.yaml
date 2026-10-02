@@ -44,12 +44,25 @@ jobs:
       # All containers for this machine in one bitbake run; -k keeps one
       # broken recipe from blocking the rest, and the upload step below
       # still publishes whatever did build.
+      # Private source repositories (pv-mqtt-sdk) are fetched over HTTPS with
+      # a read-only token; kas copies NETRC_FILE into the build's HOME.
+      - name: git credentials
+        env:
+          PRIVATE_REPOS_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN }}
+        run: |
+          umask 077
+          : > /home/builder/.netrc
+          if [ -n "$PRIVATE_REPOS_TOKEN" ]; then
+            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > /home/builder/.netrc
+          fi
+          chown builder:builder /home/builder/.netrc
+
       - name: build
         run: |
          TARGETS=$(.github/scripts/container-targets --workflow "$WORKFLOW" "$MACHINE")
          [ -n "$TARGETS" ] || { echo "::error::no $WORKFLOW containers list $MACHINE"; exit 1; }
          # --target must precede the config for kas to accept "-- -k".
-         su - builder -c "cd $GITHUB_WORKSPACE && env && kas build $TARGETS ${{ inputs.configs }} -- -k"
+         su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas build $TARGETS ${{ inputs.configs }} -- -k"
 
       - name: copy files
         if: always()
@@ -83,3 +96,7 @@ jobs:
             fi
           done
           exit $rc
+
+      - name: remove git credentials
+        if: always()
+        run: rm -f /home/builder/.netrc

@@ -57,6 +57,19 @@ jobs:
           su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $EFFECTIVE_REF && git reset --hard $EFFECTIVE_REF && rm -rf build/ && git clean -f -f -d -x "
           git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
 
+      # Private source repositories (pv-mqtt-sdk) are fetched over HTTPS with
+      # a read-only token; kas copies NETRC_FILE into the build's HOME.
+      - name: git credentials
+        env:
+          PRIVATE_REPOS_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN }}
+        run: |
+          umask 077
+          : > /home/builder/.netrc
+          if [ -n "$PRIVATE_REPOS_TOKEN" ]; then
+            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > /home/builder/.netrc
+          fi
+          chown builder:builder /home/builder/.netrc
+
       - name: build
         run: |
            TARGETS=""
@@ -64,12 +77,12 @@ jobs:
            KEEP_GOING="${{ inputs.keep_going && ' -- -k' || '' }}"
            # --target must precede the config: kas' argparse rejects "-- -k"
            # once options follow the config positional.
-           su - builder -c "cd $GITHUB_WORKSPACE && env && kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
+           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
 
       - name: build with sdk
         if: inputs.sdk == 1
         run: |
-           su - builder -c "cd $GITHUB_WORKSPACE && env && kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
+           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
 
       - name: prepare files for distribution
         if: always()
@@ -113,3 +126,7 @@ jobs:
           name: build-${{ inputs.machine_name }}
           path: dist/
           if-no-files-found: ignore
+
+      - name: remove git credentials
+        if: always()
+        run: rm -f /home/builder/.netrc

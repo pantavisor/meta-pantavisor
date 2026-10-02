@@ -10,18 +10,11 @@ inherit pvgo_mod
 
 S = "${WORKDIR}"
 
-# Tarballs are attached to the GitHub release of tag ${PV} by CI
-# (.github/workflows/ci.yml, scripts/source-package.sh).
-PV_MQTT_SDK_RELEASES = "https://github.com/pantavisor/pv-mqtt-sdk/releases/download/${PV}"
-
-SRC_URI = " \
-    ${PV_MQTT_SDK_RELEASES}/pv-mqtt-sdk.${PV}.src.tar.gz;name=src \
-    ${PV_MQTT_SDK_RELEASES}/pv-mqtt-sdk.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
-"
-
-# From pv-mqtt-sdk.${PV}.sha256 in the release assets.
-SRC_URI[src.sha256sum] = "f9e75acd3836e12700eebeddc7f95fb35b7e94f56b21af22883a66b6ffdf98e7"
-SRC_URI[vendor.sha256sum] = "eecc3c0202aab633b398b5f649359a6d151ab3bb7e8b27763b5e01b8b48a0338"
+# The repository is private: the fetch authenticates with a GitHub token in
+# ~/.netrc (CI writes one from a secret). vendor/ is committed, so the build
+# needs no module download. The tag is resolved with git ls-remote when the
+# recipe is parsed.
+SRC_URI = "git://github.com/pantavisor/pv-mqtt-sdk.git;protocol=https;branch=main;tag=${PV};destsuffix=src/${GO_IMPORT}"
 
 GO_IMPORT = "github.com/pantavisor/pv-mqtt-sdk"
 export GO111MODULE = "on"
@@ -31,12 +24,6 @@ GO_LINKSHARED = ""
 GO_EXTRA_LDFLAGS:append = " -X ${GO_IMPORT}/pkg/config.Version=${PV}"
 
 GO_INSTALL = "${GO_IMPORT}"
-
-do_unpack[cleandirs] += "${S}/src/${GO_IMPORT}"
-relocate_source() {
-    cp -fr ${S}/pv-mqtt-sdk/* ${S}/src/${GO_IMPORT}
-}
-do_patch[postfuncs] += "relocate_source"
 
 # The agent verifies the Hub's TLS certificate with the system bundle.
 RDEPENDS:${PN} += "ca-certificates"
