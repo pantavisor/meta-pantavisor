@@ -1,8 +1,9 @@
 #!/bin/sh
 
 # PID 1 of the container. Replaces the SDK's OpenRC image: one-shots first,
-# then the long-running daemons. If any daemon dies the script exits, and
-# Pantavisor restarts the whole container (PV_RESTART_POLICY=system).
+# then the long-running daemons, each in its own respawn loop. The restart
+# policy is `system`, so PID 1 exiting reboots the device; a daemon dying must
+# therefore never end this script, only restart that daemon.
 
 rm -rf /var/pvr-sdk/tmp/*
 
@@ -16,41 +17,28 @@ export CURL_CMD=curl
 /usr/bin/pv-httpd
 /usr/bin/pv-socat
 
-pids=""
-start() {
-	"$@" &
-	pids="$pids $!"
+# Run "$@" forever. The pause keeps a daemon that fails at once (a bad config,
+# a busy port) from spinning; pvr-auto-follow runs under set -e and is expected
+# to exit on any failing command, which this turns into a retry.
+supervise() {
+	(
+		while true; do
+			"$@"
+			echo "pv-pvr-sdk-start: $1 exited ($?), restarting" >&2
+			sleep 2
+		done
+	) &
 }
 
-stop_all() {
-	# shellcheck disable=SC2086
-	kill $pids 2>/dev/null
-	exit 0
-}
-trap stop_all TERM INT
+# kill 0 signals the whole process group: the loops and the daemons under them.
+trap 'trap "" TERM INT; kill 0; exit 0' TERM INT
 
-start /usr/sbin/dropbear -F -E -R -p :22
-start /usr/bin/pv-user-meta-sync
-start /usr/bin/pvr-sdk-httpd
+supervise /usr/sbin/dropbear -F -E -R -p :22
+supervise /usr/bin/pv-user-meta-sync
+supervise /usr/bin/pvr-sdk-httpd
+supervise /usr/bin/pvr-auto-follow
 
-# pvr-auto-follow runs under set -e and exits on any failing command. Under
-# OpenRC that was a logged service failure; watched directly it would stop the
-# container and reboot the device (restart policy system). So the retry loop is
-# what gets watched, not the script.
-(
-	while true; do
-		/usr/bin/pvr-auto-follow
-		sleep 30
-	done
-) &
-pids="$pids $!"
-
+# Blocks for as long as the loops run, and lets a signal reach the trap.
 while true; do
-	for pid in $pids; do
-		if ! kill -0 "$pid" 2>/dev/null; then
-			echo "pv-pvr-sdk-start: pid $pid exited, stopping container" >&2
-			stop_all
-		fi
-	done
-	sleep 2
+	wait
 done
