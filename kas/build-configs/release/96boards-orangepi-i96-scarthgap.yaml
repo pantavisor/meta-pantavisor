@@ -4,7 +4,7 @@ _source_dir: .
 repos:
     meta-orangepi-i96:
         branch: main
-        commit: d0c03012c6cf24f18f2c73739dc83385aa62a1ba
+        commit: 6bb78cc1fda32f36afd2f9c27f788685bf27b526
         path: layers/meta-orangepi-i96
         url: https://github.com/pantavisor/meta-orangepi-i96
     poky:
