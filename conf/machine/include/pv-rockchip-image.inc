@@ -19,4 +19,11 @@ WKS_FILE = "pv-rockchip-gptdisk.wks.in"
 # The wks only labels the rootfs inside the .wic. The standalone ext4 that
 # gen_rkupdateimg packs into update.img is built separately and needs the
 # same LABEL=root, or pv_mount_init() dies with "could not mount '(null)'".
-EXTRA_IMAGECMD:ext4:append:pn-pantavisor-starter = " -L root"
+EXTRA_IMAGECMD:ext4:append:pn-pantavisor-starter = " -L root ${PV_RK_EXT4_FEATURES}"
+
+# u-boot-rockchip writes pv.env (the try-once flag) to this rootfs, which is
+# also /storage. Its ext4 writer predates metadata_csum and orphan_file and
+# does not refuse them, so it would leave bad checksums behind. Keep both mkfs
+# paths (wic above, update.img's ext4) on features it handles.
+PV_RK_EXT4_FEATURES = "-O ^metadata_csum,^metadata_csum_seed,^orphan_file"
+RK_ROOTFS_EXTRAOPTS = "-F -i 8192 -b 4096 ${PV_RK_EXT4_FEATURES}"
