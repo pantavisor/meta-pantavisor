@@ -17,6 +17,12 @@ SRC_URI += " \
 	file://0002-rockchip-common-run-distro-bootcmd.patch \
 	file://0003-cmd-source-zero-terminated-size-table.patch \
 	file://0004-distro-bootcmd-scan-all-partitions.patch \
+	file://pv.rockchip.cfg \
 "
 
-export PV_KCONFIG_FRAGS = "${WORKDIR}/pv.cfg ${WORKDIR}/pv.distroboot.cfg"
+# pv.rockchip.cfg: boot.cmd.pvgeneric saves pv_trying to pv.env on the ext4
+# rootfs; without ext4 write `save` silently fails and every boot retries
+# pv_try, so a failed try-boot never falls back to pv_rev. This writer
+# predates metadata_csum, so pv-rockchip-image.inc formats the rootfs
+# without it.
+export PV_KCONFIG_FRAGS = "${WORKDIR}/pv.cfg ${WORKDIR}/pv.distroboot.cfg ${WORKDIR}/pv.rockchip.cfg"

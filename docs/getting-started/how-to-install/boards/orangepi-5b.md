@@ -64,3 +64,7 @@ USB-C cable and re-attach power if it was only USB-powered.
   can be the SD card if one is present.
 - The build produces `.wic.gz` + `.wic.bmap`; only the `.wic.gz` is used by
   `flash.sh`.
+- Boards flashed before try-boot rollback worked on this machine must be
+  reflashed with the whole image to get it. Do not write only a newer
+  `uboot.img`: its ext4 writer would then write to a rootfs formatted with
+  `metadata_csum`, and leave bad checksums on `/storage`.

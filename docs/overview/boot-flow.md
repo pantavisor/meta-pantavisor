@@ -103,6 +103,12 @@ off `${devtype}` (see below).
    - The recorded state is written back with `save … pv.env`. **On UBI this
      `save` is skipped** — U-Boot's UBIFS driver is read-only, so try-boot
      rollback state is not persisted on NAND.
+   - **On MMC, `save` needs U-Boot write support for the data partition's
+     filesystem** (`CONFIG_CMD_EXT4_WRITE` for ext4). Without it `save` fails
+     silently and every boot tries `pv_try` again, so a failed revision never
+     falls back. The Rockchip vendor U-Boot enables it through `pv.rockchip.cfg`;
+     its ext4 writer cannot handle `metadata_csum` or `orphan_file`, so
+     `pv-rockchip-image.inc` formats the rootfs without them.
 
 7. **Boot the FIT.** Tries `/trails/${boot_rev}/bsp/pantavisor.fit`. If
    present, selects a config node (`name_fit_config`) and `bootm`s it. The
