@@ -4,7 +4,7 @@
         "mgmt"
     ],
     "PV_LXC_CAP_KEEP": [
-        "none"
+        "dac_read_search"
     ],
     "PV_RESTART_POLICY": "system",
     "PV_SECURITY_WITH_STORAGE": "yes",
