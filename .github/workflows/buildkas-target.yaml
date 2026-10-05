@@ -64,11 +64,11 @@ jobs:
           PRIVATE_REPOS_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN }}
         run: |
           umask 077
-          : > /home/builder/.netrc
+          : > ~builder/.netrc
           if [ -n "$PRIVATE_REPOS_TOKEN" ]; then
-            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > /home/builder/.netrc
+            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > ~builder/.netrc
           fi
-          chown builder:builder /home/builder/.netrc
+          chown builder:builder ~builder/.netrc
 
       - name: build
         run: |
@@ -77,12 +77,12 @@ jobs:
            KEEP_GOING="${{ inputs.keep_going && ' -- -k' || '' }}"
            # --target must precede the config: kas' argparse rejects "-- -k"
            # once options follow the config positional.
-           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
+           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
 
       - name: build with sdk
         if: inputs.sdk == 1
         run: |
-           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=/home/builder/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
+           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
 
       - name: prepare files for distribution
         if: always()
@@ -129,4 +129,4 @@ jobs:
 
       - name: remove git credentials
         if: always()
-        run: rm -f /home/builder/.netrc
+        run: rm -f ~builder/.netrc
