@@ -43,6 +43,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref || github.sha }}
+          # a persisted GITHUB_TOKEN header would shadow the private-repo .netrc
+          persist-credentials: false
       - name: Fetch tags
         run: |
           git config --global --add safe.directory '*'
