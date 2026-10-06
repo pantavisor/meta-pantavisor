@@ -45,8 +45,8 @@ MANUAL  (workflow_dispatch)
 SCHEDULED
   schedule-pvtests.yaml       daily 02:00
     ├── build docker-x86_64-scarthgap  → buildkas-target.yaml
-    ├── local                          → call-pvtests.yaml
-    └── remote                         → call-pvtests.yaml  (after local)
+    ├── pvtest (local)                 → call-pvtests.yaml  (volatile + persistent, prod)
+    └── pvtest (remote)                → call-pvtests.yaml  (volatile + persistent, prod + stage)
 
   schedule-updates.yaml       every 8 h
     └── check-and-update   bump SRCREVs via update-components.sh, open PR if changed

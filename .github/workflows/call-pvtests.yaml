@@ -147,8 +147,6 @@ jobs:
 
           if [[ -z "$TEST_TARGET" ]]; then
             ./test.docker.sh run -V -p "$PARALLEL" --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
-          elif [[ "$TEST_TARGET" == remote* ]]; then
-            ./test.docker.sh run "$TEST_TARGET" -V --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
           else
             ./test.docker.sh run "$TEST_TARGET" -V -p "$PARALLEL" --model "$MODEL" --fail-on-skip -w $PVTEST_WORKSPACE
           fi

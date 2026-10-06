@@ -362,6 +362,9 @@ In order to limit the time usage of the CI runners, we run the smallest set of t
 | `pantavisor-appengine-distro.bb`, `pantavisor-appengine-tester.bb` | ✓ | ✓ | ✓ | ✓ |
 | any other file outside `docs/` and `CHANGELOG/` | ✓ | | | |
 
+The nightly `schedule-pvtests.yaml` runs every scope and model. Remote tests run against both
+the prod and the stage Hub. Local tests never talk to the Hub, so they run against prod only.
+
 ## Component Auto-Updates
 
 `schedule-updates.yaml` runs `update-components.sh` every 8 hours. The script reads `.github/scripts/components.json`, which lists each tracked component with its recipe glob, upstream branch, and GitHub org. For each component:
