@@ -28,7 +28,9 @@ TAG PUSH  (0*  or  *-rc*)
 
 ON PUSH  (master)
   onpush-scarthgap.yaml
-    └── build × onpush machines  → buildkas-target.yaml  (kas build, artifacts only)
+    ├── build × onpush machines  → buildkas-target.yaml  (kas build, artifacts only)
+    ├── scope-docker               pick pvtest jobs from the changed files
+    └── pvtest-docker × jobs     → call-pvtests.yaml     (see builds.md "CI coverage")
 
 
 MANUAL  (workflow_dispatch)

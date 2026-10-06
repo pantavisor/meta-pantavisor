@@ -88,15 +88,21 @@ jobs:
       matrix:
         model: ${{ fromJSON(needs.validate.outputs.models) }}
         hub: ${{ fromJSON(needs.validate.outputs.hubs) }}
-    # model- and hub-scoped so concurrent jobs never share a workspace or an
-    # artifact name, whether they land on the same runner or different ones
-    env:
-      WORKSPACE: /tmp/workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
-      PVTEST_WORKSPACE: /tmp/pvtest-workspace-${{ github.run_id }}-${{ matrix.model }}-${{ matrix.hub }}
-      # runners pvtest-scw/-2/-3 share one docker daemon: tag images per job so a
-      # neighbouring job's cleanup can't untag or re-tag the images this job is using
-      PVTEST_IMAGE_TAG: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.model }}-${{ matrix.hub }}
     steps:
+      # keyed by test path, model and hub so concurrent jobs (onpush runs local and
+      # remote side by side) never share a workspace; runners pvtest-scw/-2/-3 share
+      # one docker daemon, so images are tagged per job too
+      - name: Set job keys
+        run: |
+          path="${{ inputs.test_path }}"
+          path="${path//\//-}"
+          key="${path:-all}-${{ matrix.model }}-${{ matrix.hub }}"
+          {
+            echo "WORKSPACE=/tmp/workspace-${{ github.run_id }}-$key"
+            echo "PVTEST_WORKSPACE=/tmp/pvtest-workspace-${{ github.run_id }}-$key"
+            echo "PVTEST_IMAGE_TAG=${{ github.run_id }}-${{ github.run_attempt }}-$key"
+          } >> "$GITHUB_ENV"
+
       - name: Download pvtest distro
         uses: actions/download-artifact@v7
         with:

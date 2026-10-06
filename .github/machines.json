@@ -119,7 +119,7 @@
 			"name": "docker-x86_64",
 			"display_name": "AppEngine test container (x86_64)",
 			"description": "Not a flashable board: an x86_64 container image that runs the Pantavisor AppEngine and the pvtest suite under Docker on CI and developer workstations.",
-			"pvtest": ["local"],
+			"pvtest": ["local", "remote"],
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{

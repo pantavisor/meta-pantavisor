@@ -36,6 +36,7 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | `build_target` | no | BitBake target (default: `pantavisor-starter`) |
 | `output` | no | Glob for artifacts to collect (default: `pantavisor-starter*.rootfs.wic*`) |
 | `sdk` | no | Set to `1` to also run `bitbake -c populate_sdk` |
+| `pvtest` | no | pvtest scopes (`local`, `remote`) onpush may run against this machine's build; see [CI coverage](builds.md#ci-coverage) |
 
 ## Workflow Types
 

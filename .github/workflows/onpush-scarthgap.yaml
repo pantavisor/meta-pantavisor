@@ -4,6 +4,13 @@
 #   .github/scripts/makeworkflows
 # Manual changes here will be overwritten on the next run.
 # ##############################################################################
+#
+# pvtest jobs are picked per changed file, and the run is their union:
+#   recipes-pv/pantavisor/pantavisor.inc (pin),
+#   recipes-containers/pv-examples/, recipes-pv/pvr/,
+#   pantavisor-appengine-{distro,tester}.bb   local + remote (volatile + persistent)
+#   anything else but docs/ and CHANGELOG/     local  (volatile)
+# See docs/overview/ci/builds.md "CI coverage".
 
 name: "onpush: scarthgap"
 
@@ -79,13 +86,84 @@ jobs:
       sdk: 0
     secrets: inherit
 
-  pvtest-local:
-    needs: build-docker
+  scope-docker:
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # lv/lp = local volatile/persistent, rv/rp = remote volatile/persistent
+          lv= lp= rv= rp=
+
+          pr='${{ github.event.pull_request.number }}'
+          if [ -n "$pr" ]; then
+            files=$(gh api --paginate \
+              "repos/${{ github.repository }}/pulls/$pr/files" --jq '.[].filename')
+          else
+            base='${{ github.event.before }}'
+            case "$base" in
+              ''|0000000000000000000000000000000000000000)
+                # new branch, or a force-push whose base is gone: no diff to
+                # trust, so run everything rather than silently skip any of it
+                files=everything ;;
+              *)
+                files=$(gh api "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" \
+                  --jq '.files[].filename')
+                if [ "$(printf '%s\n' "$files" | grep -c .)" -ge 300 ]; then
+                  files=everything
+                fi ;;
+            esac
+          fi
+
+          if [ "$files" = everything ]; then
+            lv=1 lp=1 rv=1 rp=1
+          else
+            while IFS= read -r f; do
+              case "$f" in
+                ''|docs/*|CHANGELOG/*) ;;
+                # the pantavisor pin, the pvtest fixtures, pvr and the pvtest assembly
+                recipes-pv/pantavisor/pantavisor.inc|recipes-containers/pv-examples/*|recipes-pv/pvr/*) lv=1 lp=1 rv=1 rp=1 ;;
+                recipes-pv/pantavisor/pantavisor-appengine-distro.bb|*/pantavisor-appengine-tester.bb) lv=1 lp=1 rv=1 rp=1 ;;
+                *) lv=1 ;;
+              esac
+            done <<< "$files"
+          fi
+
+          # only the scopes this machine is listed for in machines.json
+          case " local remote " in *" local "*) ;; *) lv= lp= ;; esac
+          case " local remote " in *" remote "*) ;; *) rv= rp= ;; esac
+
+          # never hand the pvtest job an empty matrix
+          if [ -z "$lv$lp$rv$rp" ]; then
+            lv=1
+          fi
+
+          matrix=$(printf '%s\n' ${lv:+local/volatile} ${lp:+local/persistent} \
+            ${rv:+remote/volatile} ${rp:+remote/persistent} \
+            | jq -Rnc '[inputs | split("/") | {scope: .[0], model: .[1]}]')
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "### pvtest matrix: \`$matrix\`" >> "$GITHUB_STEP_SUMMARY"
+
+  pvtest-docker:
+    needs: [build-docker, scope-docker]
+    name: "pvtest (${{ matrix.scope }}, ${{ matrix.model }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.scope-docker.outputs.matrix) }}
     uses: ./.github/workflows/call-pvtests.yaml
     with:
-      test_path: local
+      test_path: ${{ matrix.scope }}
       parallel: "6"
-      model: volatile
+      model: ${{ matrix.model }}
     secrets: inherit
 
   summary:

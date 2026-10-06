@@ -349,6 +349,19 @@ The `call-pvtests.yaml` reusable workflow:
 
 In `release.yaml`, `pvtest-remote` runs with `if: always()` so it executes even if `pvtest-local` fails, and its results don't block the `summary` job.
 
+### CI coverage
+
+In order to limit the time usage of the CI runners, we run the smallest set of tests
+(by scope) possible that ensures the right coverage based on the changes to be verified.
+
+| Changed files | local volatile | local persistent | remote volatile | remote persistent |
+|---|:-:|:-:|:-:|:-:|
+| `recipes-pv/pantavisor/pantavisor.inc` | ✓ | ✓ | ✓ | ✓ |
+| `recipes-containers/pv-examples/` | ✓ | ✓ | ✓ | ✓ |
+| `recipes-pv/pvr/` | ✓ | ✓ | ✓ | ✓ |
+| `pantavisor-appengine-distro.bb`, `pantavisor-appengine-tester.bb` | ✓ | ✓ | ✓ | ✓ |
+| any other file outside `docs/` and `CHANGELOG/` | ✓ | | | |
+
 ## Component Auto-Updates
 
 `schedule-updates.yaml` runs `update-components.sh` every 8 hours. The script reads `.github/scripts/components.json`, which lists each tracked component with its recipe glob, upstream branch, and GitHub org. For each component:
