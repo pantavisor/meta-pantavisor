@@ -18,11 +18,22 @@ jobs:
 
   pvtests:
     needs: build-docker-x86_64-scarthgap
+    name: "pvtest (${{ matrix.scope }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # local tests never talk to the Hub, so one Hub is enough
+          - scope: local
+            hub: prod
+          # nightly covers both Hubs, so a regression against either is caught
+          - scope: remote
+            hub: all
     uses: ./.github/workflows/call-pvtests.yaml
     with:
+      test_path: ${{ matrix.scope }}
       parallel: "6"
       # nightly covers both assignment models, so a regression in either is caught
       model: all
-      # nightly covers both Hubs, so a regression against either is caught
-      hub: all
+      hub: ${{ matrix.hub }}
     secrets: inherit
