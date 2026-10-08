@@ -1,0 +1,9 @@
+{
+    "Entrypoint": ["/usr/bin/pv-pvr-sdk-start"],
+    "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "PVR_DISABLE_SELF_UPGRADE=true",
+        "PVR_CONFIG_DIR=/var/pvr-sdk/.pvr"
+    ],
+    "WorkingDir": "/workspace"
+}
