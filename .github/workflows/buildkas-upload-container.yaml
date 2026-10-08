@@ -14,6 +14,21 @@ on:
         required: false
         type: string
         default: tag
+      containers:
+        description: 'Space-separated container names narrowing the workflow list; empty builds all of it'
+        required: false
+        type: string
+        default: ''
+      release:
+        description: 'Release to upload under; empty uses the pushed tag'
+        required: false
+        type: string
+        default: ''
+      version:
+        description: 'Version recorded per machine and appended to the pvrexport name; empty uses the release'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   build:
@@ -21,6 +36,9 @@ jobs:
      TMPDIR : "tmp-scarthgap"
      MACHINE: ${{ inputs.machine }}
      WORKFLOW: ${{ inputs.workflow }}
+     CONTAINERS: ${{ inputs.containers }}
+     RELEASE: ${{ inputs.release || github.ref_name }}
+     VERSION: ${{ inputs.version || inputs.release || github.ref_name }}
     runs-on: ["bsp-builder"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
@@ -62,7 +80,7 @@ jobs:
 
       - name: build
         run: |
-         TARGETS=$(.github/scripts/container-targets --workflow "$WORKFLOW" "$MACHINE")
+         TARGETS=$(.github/scripts/container-targets --workflow "$WORKFLOW" --container "$CONTAINERS" "$MACHINE")
          [ -n "$TARGETS" ] || { echo "::error::no $WORKFLOW containers list $MACHINE"; exit 1; }
          # --target must precede the config for kas to accept "-- -k".
          su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas build $TARGETS ${{ inputs.configs }} -- -k"
@@ -77,21 +95,22 @@ jobs:
       - name: Upload to S3
         if: always()
         run: |
-          echo "## Containers ($MACHINE)" >> $GITHUB_STEP_SUMMARY
+          echo "## Containers ($MACHINE, $VERSION)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Container | Result |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
           rc=0
           branch=$(jq -r .yocto_branch .github/containers.json)
-          for name in $(.github/scripts/container-targets --workflow "$WORKFLOW" --list name "$MACHINE"); do
+          for name in $(.github/scripts/container-targets --workflow "$WORKFLOW" --container "$CONTAINERS" --list name "$MACHINE"); do
             if .github/scripts/upload-container.sh \
                  ${{ secrets.AWS_ACCESS_KEY_ID }} \
                  ${{ secrets.AWS_SECRET_ACCESS_KEY }} \
                  ${{ secrets.AWS_S3_BUCKET }} \
-                 ${{ github.ref_name }} \
+                 "$RELEASE" \
                  "$name-$MACHINE-$branch" \
                  "$name" \
-                 "$MACHINE"; then
+                 "$MACHINE" \
+                 "$VERSION"; then
               echo "| $name | ✅ |" >> $GITHUB_STEP_SUMMARY
             else
               echo "| $name | ❌ |" >> $GITHUB_STEP_SUMMARY

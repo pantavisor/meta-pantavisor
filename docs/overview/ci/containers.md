@@ -54,7 +54,7 @@ It prints nothing when no container matches, so callers treat empty as an error.
 |---|---|---|---|
 | `manual-containers-scarthgap.yaml` | `workflow_dispatch` | `machine` + `container` (default `all`) | One artifact per container |
 | `release-containers.yaml` | tag push (via `tag-scarthgap.yaml`) | Every `tag` container, `docker-armv6`, then `docker-armv8`, then `docker-x86_64` | S3 + `containers-releases.json` |
-| `onpush-containers.yaml` | push / `ready_for_review` touching `recipes-containers/**` | Only the containers that changed, on every machine each supports | One artifact per container, no S3 |
+| `onpush-containers.yaml` | push / `ready_for_review` touching `recipes-containers/**` | Only the containers that changed, on every machine each supports | Branches/PRs: one artifact per container. `master`: S3 + `containers-releases.json` under the latest tag |
 
 All three build with `-k`, so one broken recipe doesn't block the rest, and still publish whatever built.
 
@@ -73,7 +73,7 @@ The build yields one combined artifact; a follow-up `split` job republishes each
 
 `release-containers.yaml` runs 3 jobs, serialised with `max-parallel: 1`. Each job uploads every container that built (`upload-container.sh`) and writes a per-container ✅/❌ table to the job summary. `docker-x86_64` is included, so x86_64-only containers such as `pv-debian-nm` are published too.
 
-`upload-container.sh` picks the file by the container's declared `output` (not the first pvrexport found) and exits non-zero if it is missing or the S3 copy fails, which marks that container ❌. Each uploaded container is recorded under its tag in `containers-releases.json` (at the root of the CI S3 bucket), with the pvrexport URL and sha256 per machine. The pvrexports themselves land under `containers/<tag>/<container>-<machine>-scarthgap/<container>-<arch>.pvrexport.tgz`.
+`upload-container.sh` picks the file by the container's declared `output` (not the first pvrexport found) and exits non-zero if it is missing or the S3 copy fails, which marks that container ❌. Each uploaded container is recorded under its tag in `containers-releases.json` (at the root of the CI S3 bucket), with the `version`, pvrexport URL and sha256 per machine. The pvrexports themselves land under `containers/<tag>/<container>-<machine>-scarthgap/<container>-<arch>.pvrexport.tgz`.
 
 ### On push
 
@@ -91,10 +91,24 @@ Rules:
 
 Branches with a draft PR are skipped, like `onpush-scarthgap`; run `gh pr ready` to build.
 
+On a push to `master` the changed containers are uploaded instead of kept as artifacts, through the same `buildkas-upload-container.yaml` as a tag release. They go under the latest release tag reachable from the commit, with version `<tag>-<short sha>`, and replace that tag's `containers-releases.json` entry for those machines; the other containers in the release stay as the tag built them. The tag-built pvrexport is not overwritten, as the new one carries the version in its name:
+
+```text
+containers/031-rc2/pv-avahi-docker-armv8-scarthgap/pv-avahi-armv8.pvrexport.tgz          # tag build
+containers/031-rc2/pv-avahi-docker-armv8-scarthgap/pv-avahi-armv8-031-rc2-1fa2225.pvrexport.tgz  # master push
+```
+
+To see which build a release currently points at:
+
+```bash
+aws s3 cp s3://$AWS_S3_BUCKET/containers-releases.json - \
+    | jq '.["release-candidate"]["031-rc2"].containers[] | select(.name == "pv-avahi") | .machines'
+```
+
 ## Reusable workflows
 
 | File | Role |
 |---|---|
 | `buildkas-containers.yaml` | Generated. `resolve` → `build` → `split`; called by the manual dispatch and `onpush-containers` |
 | `buildkas-target.yaml` | `build_target` takes a space-separated list (one `--target` each); `keep_going` adds `-k` |
-| `buildkas-upload-container.yaml` | Tag builds: kas build, S3 upload and summary table per machine |
+| `buildkas-upload-container.yaml` | Tag and `master` builds: kas build, S3 upload and summary table per machine; `containers`, `release` and `version` narrow it for `onpush-containers` |
