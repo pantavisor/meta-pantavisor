@@ -115,7 +115,7 @@
       "build_target": "pv-tailscale",
       "output": "pv-tailscale.pvrexport.tgz",
       "display_name": "Tailscale container",
-      "description": "Tailscale VPN container, fetched prebuilt from the ph-tailscale registry.",
+      "description": "Tailscale VPN container, fetched prebuilt from the ph-tailscale registry. Setup and configuration: https://docs.pantavisor.io/meta-pantavisor/getting-started/operate/device-access/tailscale",
       "workflows": ["manual", "tag"]
     },
     {
