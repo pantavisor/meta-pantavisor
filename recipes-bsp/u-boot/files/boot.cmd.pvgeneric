@@ -60,8 +60,18 @@ if test -z "${pv_bootpart}"; then
 	pv_bootpart=1
 fi
 
+# U-Boot's ext4 writer rejects relative paths ("Please supply Absolute
+# path"), so on an ext4 boot partition pv.env must be saved as /pv.env or
+# the try-boot state is never persisted. FAT and U-Boots without `fstype`
+# keep the relative name they have always used.
+setenv pv_env_save pv.env
 if test "${pv_is_ubi}" != "1"; then
 	setenv pv_load_boot "load ${devtype} ${pv_mmcdev}:${pv_bootpart}"
+	setenv pv_bootfs
+	fstype ${devtype} ${pv_mmcdev}:${pv_bootpart} pv_bootfs
+	if test "${pv_bootfs}" = "ext4"; then
+		setenv pv_env_save /pv.env
+	fi
 fi
 
 if test -z "${ramdisk_addr_r}"; then
@@ -128,13 +138,13 @@ if env exists pv_try; then
 		echo Pantavisor boots checkpoint revision ${pv_rev} after failed try-boot of revision: ${pv_try}
 		setenv pv_trying
 		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env ${pv_env_size}; fi
+		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
 		setenv boot_rev ${pv_rev}
 	else
 		echo Pantavisor boots try-boot revision: ${pv_try}
 		setenv pv_trying ${pv_try}
 		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} pv.env ${pv_env_size}; fi
+		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
 		setenv boot_rev ${pv_trying}
 	fi
 else
