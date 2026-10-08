@@ -108,7 +108,11 @@ off `${devtype}` (see below).
      silently and every boot tries `pv_try` again, so a failed revision never
      falls back. The Rockchip vendor U-Boot enables it through `pv.rockchip.cfg`;
      its ext4 writer cannot handle `metadata_csum` or `orphan_file`, so
-     `pv-rockchip-image.inc` formats the rootfs without them.
+     `pv-rockchip-image.inc` formats the rootfs without them. U-Boot's ext4
+     writer also rejects relative paths ("Please supply Absolute path"), so
+     the script saves to `/pv.env` when `fstype` reports `ext4`, and keeps
+     `pv.env` on FAT. To check on a board, `ls -l /storage/pv.env` after a
+     try-boot: the file is written by U-Boot and dated 1970.
 
 7. **Boot the FIT.** Tries `/trails/${boot_rev}/bsp/pantavisor.fit`. If
    present, selects a config node (`name_fit_config`) and `bootm`s it. The
