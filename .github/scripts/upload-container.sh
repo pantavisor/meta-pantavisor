@@ -7,6 +7,9 @@ TAG=$4
 MACHINE_NAME=$5
 CONTAINER_NAME=$6
 MACHINE=$7
+# Defaults to TAG. A master push passes "<tag>-<short sha>" to overlay a
+# rebuilt container onto the latest release without touching the tag build's file.
+VERSION=${8:-$TAG}
 
 AWS_S3_URL="https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/containers"
 
@@ -36,7 +39,11 @@ fi
 # MACHINE is "docker-x86_64"/"docker-armv6"/"docker-armv8"; strip the
 # "docker-" prefix so the uploaded name reads e.g. pv-avahi-x86_64.pvrexport.tgz.
 ARCH="${MACHINE#docker-}"
-PVREXPORT_NAME="${CONTAINER_NAME}-${ARCH}.pvrexport.tgz"
+if [ "$VERSION" = "$TAG" ]; then
+    PVREXPORT_NAME="${CONTAINER_NAME}-${ARCH}.pvrexport.tgz"
+else
+    PVREXPORT_NAME="${CONTAINER_NAME}-${ARCH}-${VERSION}.pvrexport.tgz"
+fi
 PVREXPORT_CSUM=$(sha256sum "$PVREXPORT_FILE" | cut -d' ' -f1)
 
 aws s3 cp "$PVREXPORT_FILE" "s3://$AWS_S3_BUCKET/containers/$TAG/$MACHINE_NAME/$PVREXPORT_NAME" || exit 1
@@ -64,6 +71,7 @@ jq --arg type "$RELEASE_TYPE" \
    --arg machine "$MACHINE" \
    --arg url "$AWS_S3_URL/$TAG/$MACHINE_NAME/$PVREXPORT_NAME" \
    --arg sha "$PVREXPORT_CSUM" \
+   --arg version "$VERSION" \
 '
     .[$type] //= {} |
     .[$type][$rname] //= {} |
@@ -77,7 +85,7 @@ jq --arg type "$RELEASE_TYPE" \
     .[$type][$rname].containers[$i].name = $cname |
     .[$type][$rname].containers[$i].display_name = $display |
     (if $desc != "" then .[$type][$rname].containers[$i].description = $desc else . end) |
-    .[$type][$rname].containers[$i].machines[$machine] = { pvrexport: { url: $url, sha256: $sha } }
+    .[$type][$rname].containers[$i].machines[$machine] = { version: $version, pvrexport: { url: $url, sha256: $sha } }
 
 ' "$RELEASE_FILE" > temp.json && mv temp.json "$RELEASE_FILE"
 

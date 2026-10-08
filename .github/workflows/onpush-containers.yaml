@@ -1,8 +1,10 @@
 name: "onpush: containers"
 
 # Builds only the containers whose recipes changed, one machine after
-# another, as per-container artifacts; nothing is uploaded to S3. The
-# path-to-container mapping lives in .github/scripts/changed-containers.
+# another. Branches and PRs get per-container artifacts; a push to master
+# instead uploads them to S3 under the latest release tag, as version
+# "<tag>-<short sha>", replacing that release's entry for those containers.
+# The path-to-container mapping lives in .github/scripts/changed-containers.
 on:
   push:
     branches:
@@ -24,6 +26,8 @@ jobs:
     outputs:
       containers: ${{ steps.detect.outputs.containers }}
       machines: ${{ steps.detect.outputs.machines }}
+      release: ${{ steps.detect.outputs.release }}
+      version: ${{ steps.detect.outputs.version }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -67,9 +71,17 @@ jobs:
           echo "containers=$containers" >> $GITHUB_OUTPUT
           echo "machines=$machines" >> $GITHUB_OUTPUT
 
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_NAME" = master ] && [ -n "$containers" ]; then
+            release=$(git describe --tags --abbrev=0 --match '[0-9][0-9][0-9]*' "$GITHUB_SHA")
+            version="$release-$(git rev-parse --short=7 "$GITHUB_SHA")"
+            echo "uploading as $version"
+            echo "release=$release" >> $GITHUB_OUTPUT
+            echo "version=$version" >> $GITHUB_OUTPUT
+          fi
+
   build:
     needs: detect
-    if: needs.detect.outputs.containers != ''
+    if: needs.detect.outputs.containers != '' && needs.detect.outputs.release == ''
     name: "build (${{ matrix.machine }})"
     strategy:
       fail-fast: false
@@ -83,4 +95,24 @@ jobs:
     with:
       machine: ${{ matrix.machine }}
       containers: ${{ needs.detect.outputs.containers }}
+    secrets: inherit
+
+  upload:
+    needs: detect
+    if: needs.detect.outputs.release != ''
+    name: "upload (${{ matrix.machine }})"
+    strategy:
+      fail-fast: false
+      # Also keeps the jobs from read-modify-writing containers-releases.json at once.
+      max-parallel: 1
+      matrix:
+        machine: ${{ fromJSON(needs.detect.outputs.machines) }}
+    uses: ./.github/workflows/buildkas-upload-container.yaml
+    with:
+      configs: kas/build-configs/release/containers/${{ matrix.machine }}-scarthgap.yaml:kas/build-configs/shared-vols.yaml
+      machine: ${{ matrix.machine }}
+      workflow: tag
+      containers: ${{ needs.detect.outputs.containers }}
+      release: ${{ needs.detect.outputs.release }}
+      version: ${{ needs.detect.outputs.version }}
     secrets: inherit
