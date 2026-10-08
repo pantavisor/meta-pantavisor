@@ -104,6 +104,10 @@ pvr post http://<device-ip>:12368
 ARM64 vs ARM32 examples); omit it and `pvr` will try to infer it from the
 target.
 
+Images built with this layer can include the `pv-tailscale` container instead,
+which is enabled and configured through user metadata. See
+[Tailscale VPN](../../operate/device-access/tailscale.md).
+
 ## Authenticating Against a Private Registry
 
 `pvr app add`/`pvr app update` resolve registry credentials the same way

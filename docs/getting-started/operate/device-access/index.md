@@ -14,6 +14,7 @@ A Pantavisor device exposes several access points depending on your connectivity
 | [Pantahub — remote](./remote-pantahub/) | OTA updates, log streaming, and device management from anywhere |
 | [Terminal in the browser](./web-ssh/) | A shell on the host or in a container from the device page, SSH end to end over the device's MQTT connection |
 | [Live logs](./live-logs/) | Stream any log file to the web UI while you watch, filtered on the device |
+| [Tailscale VPN](./tailscale/) | Reach the device over a Tailscale mesh VPN from anywhere, with the `pv-tailscale` container |
 
 ### Serial Console
 
