@@ -5,7 +5,7 @@ repos:
     meta-freescale:
         url: https://github.com/Freescale/meta-freescale.git
         path: layers/meta-freescale
-        commit: e82db4ef75d390cd9e4a06b8caf0f67668ddea94
+        commit: 114dda1a7639cac34e4e63c352e433d2d011a39c
     meta-freescale-3rdparty:
         url: https://github.com/Freescale/meta-freescale-3rdparty.git
         path: layers/meta-freescale-3rdparty
@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: ef9ae705c5c22e5772cc93b64f6dcd55600cf2b6
+        commit: 66a87c796d969380abe69f05a04480a9d956f7dc
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -33,7 +33,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 2a03434fe537c93e008ce31c664ebe174aa82340
+        commit: 68d4cb9e6793539e370db340d6e8935a48442df1
     meta-variscite-sdk-common:
         url: https://github.com/varigit/meta-variscite-sdk-common.git
         path: layers/meta-variscite-sdk-common
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 3a3d07f625aee7b87ea1026526b756447c357652
+        commit: 4fb7016a07507683359ebd620f1951fd5ea44bfa
     meta-pantavisor:
     meta-virtualization:
-        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
+        commit: c141b3cd60ad3a1bbab22b4884742d4c082beda6
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:

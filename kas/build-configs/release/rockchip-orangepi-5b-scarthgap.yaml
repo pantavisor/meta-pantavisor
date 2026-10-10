@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-rockchip:
-        commit: 0d2f157767af62c43acca2f82b8d51cb99aa257a
+        commit: 518e542a2287412899e9940515c00a2b3440c6d5
         path: layers/meta-rockchip
         url: https://github.com/JeffyCN/meta-rockchip
     meta-arm:
@@ -26,10 +26,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 3a3d07f625aee7b87ea1026526b756447c357652
+        commit: 4fb7016a07507683359ebd620f1951fd5ea44bfa
     meta-pantavisor:
     meta-virtualization:
-        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
+        commit: c141b3cd60ad3a1bbab22b4884742d4c082beda6
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
