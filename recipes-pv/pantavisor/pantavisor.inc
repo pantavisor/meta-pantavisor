@@ -1,5 +1,5 @@
-PANTAVISOR_BRANCH ??= "master"
+PANTAVISOR_BRANCH ??= "perf/claim_sync"
 PANTAVISOR_URI = "git://github.com/pantavisor/pantavisor.git;protocol=https"
-PANTAVISOR_SRCREV = "07ad1792933a4592f21a99a9c2aac6506f90597d"
+PANTAVISOR_SRCREV = "06d5c15d0b267199a3ed5546bc06182270d10f91"
 
 PV = "030+git0"
