@@ -92,18 +92,54 @@ off `${devtype}` (see below).
 
 5. **Load revision state.**
    - `/boot/uboot.txt` → `pv_rev` (the committed revision).
-   - `pv.env` → `pv_try` / `pv_trying` (try-boot markers).
+   - `pv_try` comes from `uboot.txt`; `pv_trying` (the "already attempted"
+     marker) comes from `pv.env` or, in saveenv mode, from U-Boot's saved
+     environment (see step 6).
 
 6. **Select `boot_rev` (try-boot / rollback).**
    - No `pv_try` → boot the committed `pv_rev`.
    - `pv_try` set and not yet attempted → boot `pv_try` and record it in
-     `pv.env` (first attempt of a new revision).
+     `pv_trying` (first attempt of a new revision).
    - `pv_try` set and already attempted (previous try failed) → fall back
      to the committed `pv_rev`.
-   - The recorded state is written back with `save … pv.env`. **On UBI this
-     `save` is skipped** — U-Boot's UBIFS driver is read-only, so try-boot
-     rollback state is not persisted on NAND.
-   - **On MMC, `save` needs U-Boot write support for the data partition's
+   - **Where `pv_trying` is stored** is `pv_trying_store`:
+
+     | Board | Default | Opt-in |
+     |-------|---------|--------|
+     | UBI (NAND) | `saveenv`: U-Boot's own environment | `pv_trying_store=` set explicitly always wins |
+     | mmc | `pv.env` file on the boot partition (`save`) | `saveenv` |
+
+     U-Boot cannot write UBIFS, so on UBI `pv.env` cannot work and `saveenv`
+     is the default. In saveenv mode `pv_trying` comes from the saved U-Boot
+     environment only (`pv.env` is not read), and `saveenv` runs only when
+     `pv_trying` changes (try-boot and fallback). If `saveenv` fails, the boot
+     continues. A garbage or erased environment only means `saveenv` never
+     ran, so `pv_trying` is simply unset.
+   - **Opting in on mmc**, in the machine or build config:
+
+     ```
+     PV_BOOT_TRYING_STORE = "saveenv"
+     ```
+
+     This renders `pv_trying_store=saveenv` into `oemEnv.txt` (only when the
+     variable is non-empty). A downstream U-Boot can instead set
+     `pv_trying_store` in its default environment; the script only reads it.
+   - **Telling pantavisor.** In `pv.env` mode the script passes
+     `PV_BOOTLOADER_TRYING_ENV=part:<n>:/pv.env` on the kernel command line.
+     In saveenv mode it passes nothing, because it cannot know the MTD name:
+     the BSP must add `PV_BOOTLOADER_TRYING_ENV=mtd:<name>` to
+     `PV_BOOT_OEMARGS` (or `pantavisor.config`) so pantavisor can edit
+     `pv_trying` in that U-Boot environment (for example a devmode reboot
+     re-arming a try). See the
+     [`PV_BOOTLOADER_TRYING_ENV` reference](../../pantavisor/reference/pantavisor-configuration.md).
+     colibri-imx6ull sets `PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env`.
+     To check on a board: `tr ' ' '\n' < /proc/cmdline | grep PV_BOOTLOADER_TRYING_ENV`.
+   - **Cost of saveenv.** The saved environment replaces U-Boot's built-in
+     default environment from then on, so a later U-Boot update with a new
+     default `bootcmd` is not picked up until the environment is erased
+     (`nand erase.part u-boot-env` on NAND; the colibri flash script already
+     does this).
+   - **In `pv.env` mode on MMC, `save` needs U-Boot write support for the data partition's
      filesystem** (`CONFIG_CMD_EXT4_WRITE` for ext4). Without it `save` fails
      silently and every boot tries `pv_try` again, so a failed revision never
      falls back. The Rockchip vendor U-Boot enables it through `pv.rockchip.cfg`;
@@ -113,12 +149,6 @@ off `${devtype}` (see below).
      the script saves to `/pv.env` when `fstype` reports `ext4`, and keeps
      `pv.env` on FAT. To check on a board, `ls -l /storage/pv.env` after a
      try-boot: the file is written by U-Boot and dated 1970.
-   - **Telling pantavisor.** On mmc the script passes
-     `PV_BOOTLOADER_TRYING_ENV=part:${pv_bootpart}:/pv.env` on the kernel
-     command line, so pantavisor can clear `pv_trying` in that file when a
-     devmode reboot re-arms a try (see the
-     [`PV_BOOTLOADER_TRYING_ENV` reference](../../pantavisor/reference/pantavisor-configuration.md)).
-     To check on a board: `tr ' ' '\n' < /proc/cmdline | grep PV_BOOTLOADER_TRYING_ENV`.
 
 7. **Boot the FIT.** Tries `/trails/${boot_rev}/bsp/pantavisor.fit`. If
    present, selects a config node (`name_fit_config`) and `bootm`s it. The
