@@ -71,7 +71,7 @@ then attaches UBI and Pantavisor mounts its storage from `ubi0:boot`. All of
 this is driven by `PV_BOOT_OEMARGS` → `oemEnv.txt` → `${oemargs}`:
 
 ```
-mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs
+mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env
 ```
 
 The `mtdparts=` entry is **required**: the colibri-imx6ull device tree declares
@@ -80,9 +80,14 @@ no NAND partitions, so without it the kernel has no partition named `ubi` and
 Toradex's stock boot supplies the same `mtdparts` via its `setup` env; the
 Pantavisor boot script bypasses that, so it is carried here instead.
 
-> **Note:** U-Boot's UBIFS driver is read-only, so the try-boot/rollback state
-> (`pv.env`) is not persisted across reboots on NAND; the boot script skips the
-> `save` step when booting from UBI.
+> **Note:** U-Boot's UBIFS driver is read-only, so on NAND the try-boot/rollback
+> marker `pv_trying` is kept in U-Boot's own environment (`saveenv`, into the
+> `u-boot-env` partition) instead of `pv.env`. This board passes
+> `PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env` in `PV_BOOT_OEMARGS` so Pantavisor
+> can edit it. The first `saveenv` stores the whole environment, which then
+> replaces U-Boot's built-in defaults; to get them back, erase it from the
+> U-Boot prompt: `nand erase.part u-boot-env`. See
+> [Boot flow, step 6](../../../overview/boot-flow.md).
 
 ## WiFi / Bluetooth device tree (FDT selection)
 
