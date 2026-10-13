@@ -83,14 +83,14 @@ fi
 # Toradex: fdtfile is imx6ull-colibri${variant}-${fdt_board}.dtb, but the
 # carrier board cannot be detected and the stock env says fdt_board=eval-v3.
 # While fdt_board is empty or still the stock value, use the build's default
-# carrier (oemEnv pv_default_fdt_board) and rebuild fdtfile, which preboot
-# already computed from the stock value. A fdt_board saved in the env wins.
+# carrier (oemEnv pv_default_fdt_board). A fdt_board saved in the env wins.
+# fdtfile is always rebuilt: a saved env keeps preboot's old value otherwise.
 if test -n "${pv_default_fdt_board}"; then
 	if test -z "${fdt_board}" -o "${fdt_board}" = "eval-v3"; then
 		setenv fdt_board ${pv_default_fdt_board}
-		setenv fdtfile imx6ull-colibri${variant}-${fdt_board}.dtb
-		echo "carrier ${fdt_board}: fdtfile ${fdtfile}"
 	fi
+	setenv fdtfile imx6ull-colibri${variant}-${fdt_board}.dtb
+	echo "carrier ${fdt_board}: fdtfile ${fdtfile}"
 fi
 
 # oemEnv.txt carries the partition table (mtdparts) so fitA/fitB resolve by name

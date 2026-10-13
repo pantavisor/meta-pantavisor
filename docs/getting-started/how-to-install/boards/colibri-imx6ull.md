@@ -197,10 +197,10 @@ PV_UBOOT_DEFAULT_FDT_BOARD = "aster"     # kas/machines/colibri-imx6ull.yaml
 ```
 
 It is written to `oemEnv.txt` as `pv_default_fdt_board=aster`. The boot script
-applies it only while `fdt_board` is empty or still the stock `eval-v3`: it sets
-`fdt_board`, rebuilds `fdtfile` (Toradex's `preboot` ran earlier with the stock
-value) and logs `carrier aster: fdtfile imx6ull-colibri-wifi-aster.dtb`. A
-`fdt_board` you saved in the environment wins.
+applies it only while `fdt_board` is empty or still the stock `eval-v3`. A
+`fdt_board` you saved in the environment wins. On every boot the script then
+rebuilds `fdtfile` from `variant` and `fdt_board` and logs it, e.g.
+`carrier aster: fdtfile imx6ull-colibri-wifi-aster.dtb`.
 
 | Carrier | `fdt_board` | Tree on a WiFi module |
 |---|---|---|
@@ -213,12 +213,10 @@ To change the carrier of one board (U-Boot console, interrupt autoboot):
 
 ```
 setenv fdt_board iris
-setenv fdtfile
 saveenv
 ```
 
-`setenv fdtfile` with no value clears the cached name so it is rebuilt on the
-next boot (`variant` is set at runtime). The Evaluation Board v3 is the stock
+`variant` is set at runtime, so the module needs no setting. The Evaluation Board v3 is the stock
 value and so follows the build default: to default a whole build to it, set
 `PV_UBOOT_DEFAULT_FDT_BOARD = "eval-v3"` (or empty to turn the default off) in the
 machine config and its mirror in the release build-config. A different
