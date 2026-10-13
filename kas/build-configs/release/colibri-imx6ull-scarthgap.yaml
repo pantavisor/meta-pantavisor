@@ -83,7 +83,7 @@ local_conf_header:
         IMAGE_CLASSES:remove = \" image_type_tezi\"\nIMAGE_FSTYPES:remove = \"teziimg\"\
         \nIMAGE_FSTYPES:pn-pantavisor-starter:append = \" ubifs\"\nMKUBIFS_ARGS =\
         \ \"-m 2048 -e 126976 -c 4096\"\nPV_BOOT_OEMARGS = \"mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi)\
-        \ ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs\"\n\n# WiFi/BT\
+        \ ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env\"\n\n# WiFi/BT\
         \ (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes\n# PV_UBOOT_AUTOFDT\
         \ pick the non-WiFi imx6ull-colibri-aster.dtb, which never\n# enables usdhc2,\
         \ so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio\n# loads but\

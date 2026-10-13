@@ -12,7 +12,7 @@ local_conf_header:
         IMAGE_FSTYPES:remove = "teziimg"
         IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
         MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
-        PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
+        PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env"
 
         # WiFi/BT (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes
         # PV_UBOOT_AUTOFDT pick the non-WiFi imx6ull-colibri-aster.dtb, which never
