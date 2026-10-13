@@ -152,7 +152,13 @@ else
 fi
 
 echo Loading pantavisor uboot.txt
+# in saveenv mode a pv_trying key in uboot.txt must not replace the saved one
+setenv pv_trying_saved ${pv_trying}
 setenv pv_try; env import ${envloadaddr} ${uboot_txt_size}
+if test "${pv_trying_store}" = "saveenv"; then
+	setenv pv_trying ${pv_trying_saved}
+fi
+setenv pv_trying_saved
 
 # In saveenv mode pv_trying comes from the saved U-Boot env only; pv.env is
 # not read and pv_trying is not wiped.
