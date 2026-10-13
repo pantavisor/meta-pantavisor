@@ -116,7 +116,7 @@ fit_size=<bytes>
 `boot.cmd.pvab` (`recipes-bsp/u-boot/files/boot.cmd.pvab`) does, in order:
 
 1. Reads `pv_rev`, `pv_try`, `pv_trying` from U-Boot's own environment (the
-   `u-boot-env` partition); `pv_rev` unset means revision `0`. A `pv_try`
+   `u-boot-env` partition); `pv_rev` unset means revision `0` and is saved once, so Pantavisor has an environment to edit in place. A `pv_try`
    that was already attempted (`pv_trying == pv_try`) means the try failed, so
    the checkpoint `pv_rev` boots and `pv_trying` is cleared; a fresh `pv_try`
    is booted and recorded in `pv_trying`. `saveenv` runs only when that state
@@ -126,7 +126,7 @@ fit_size=<bytes>
    `fit_rev` equals the revision to boot. No partition holds the try revision:
    the checkpoint revision boots instead. None holds `pv_rev`: `fitA` boots and
    the console says so.
-4. Loads that FIT with `nand read` (bad blocks are skipped) and `bootm`s the
+4. Loads header and FIT in one `nand read` from the partition start (bad blocks are skipped the same way Pantavisor's writer skips them; the FIT is at `+0x1000` in that stream) and `bootm`s the
    configuration named after `fdtfile`, with `pv_rev`, `pv_try`,
    `PV_BOOTLOADER_TYPE=uboot-ab` and `PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env` on
    the kernel command line.

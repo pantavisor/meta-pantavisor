@@ -14,8 +14,14 @@ echo "Pantavisor Starts (uboot-ab: BSP FIT in raw MTD partitions fitA/fitB)"
 # This runs first so saveenv does not persist anything the rest of the script
 # sets (oemEnv.txt values, the default carrier, scratch variables).
 # pv_rev missing (fresh flash, erased env) means revision 0.
+#
+# Seed the saved env once: pantavisor edits U-Boot's env in place and cannot
+# create one from scratch (it would lose the compiled-in defaults), so a
+# never-saved env would leave the first update unarmed.
 if test -z "${pv_rev}"; then
+	echo "pv_rev not set, seeding the U-Boot env with pv_rev=0"
 	setenv pv_rev 0
+	saveenv
 fi
 
 # saveenv only when a value changes; a failed saveenv must not stop the boot
