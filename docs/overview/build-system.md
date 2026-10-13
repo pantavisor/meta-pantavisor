@@ -144,6 +144,7 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `squash-lz4` | LZ4 squashfs compression |
 | `squash-zstd` | Zstd squashfs compression |
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
+| `pv-uboot-ab` | U-Boot A/B boot of the BSP FIT from raw MTD partitions `fitA`/`fitB` (raw NAND; on for colibri-imx6ull). Builds `boot.scr` from `boot.cmd.pvab` and adds `fitA.img` to the flash bundle; see [boot flow](boot-flow.md#the-ab-variant-pv-uboot-ab). Not a default |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
 | `lxc-next` | LXC 6.x (`lxc6-pv`) instead of the default LXC 3.x (`lxc-pv`); also available as the `kas/with-lxc-next.yaml` fragment |
 | `wakelocks` | PM wakelocks + autosleep — adds the `wakelock.cfg` kernel fragment (see [pantavisor wakelocks](/pantavisor/overview/wakelocks)) |

@@ -20,3 +20,5 @@ PANTAVISOR_FEATURES ??= " \
 # PANTAVISOR_FEATURES:append = " wakelocks"
 
 
+# U-Boot A/B boot of the BSP FIT from raw MTD partitions fitA/fitB (raw NAND)
+# PANTAVISOR_FEATURES:append = " pv-uboot-ab"

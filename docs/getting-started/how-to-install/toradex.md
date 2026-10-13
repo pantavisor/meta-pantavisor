@@ -171,7 +171,9 @@ by default. To target a different carrier board, update `UBOOT_DTB_NAME` in
   `FB: flash -raw2sparse` path does not decompress gzip input — passing `.wic.gz`
   directly corrupts the eMMC partition table.
 - **Colibri — NAND layout**: The `ubi` MTD partition starts at byte offset
-  `0x400000` (`512k(mx6ull-bcb) + 1536k(u-boot1) + 1536k(u-boot2) + 512k(u-boot-env)`).
+  `0x4400000` (`512k(mx6ull-bcb) + 1536k(u-boot1) + 1536k(u-boot2) + 512k(u-boot-env) + 32m(fitA) + 32m(fitB)`).
+  `fitA` holds the revision 0 FIT from `fitA.img`; see the
+  [board page](boards/colibri-imx6ull.md#nand-partition-layout).
   U-Boot raw writes use byte offsets to bypass the `ro` flag on `u-boot1`/`u-boot2`.
 - **Colibri — UBIFS geometry**: `MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"` —
   2KB page size, 126976-byte LEB (128KB block − 2 pages UBI overhead), 4096 max LEBs.

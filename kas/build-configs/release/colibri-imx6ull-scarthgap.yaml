@@ -79,43 +79,50 @@ local_conf_header:
         \ \\\n    meta-toradex-tezi/recipes-core/ \\\n    meta-toradex-tezi/recipes-kernel/\
         \ \\\n    meta-toradex-tezi/recipes-devtools/ \\\n    meta-toradex-tezi/recipes-support/\
         \ \\\n    \"\n"
-    platform-colibri-imx6ull: "include conf/machine/include/colibri-imx6ull.inc\n\
-        IMAGE_CLASSES:remove = \" image_type_tezi\"\nIMAGE_FSTYPES:remove = \"teziimg\"\
-        \nIMAGE_FSTYPES:pn-pantavisor-starter:append = \" ubifs\"\nMKUBIFS_ARGS =\
-        \ \"-m 2048 -e 126976 -c 4096\"\nPV_BOOT_OEMARGS = \"mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi)\
-        \ ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs\"\n\n# WiFi/BT\
-        \ (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes\n# PV_UBOOT_AUTOFDT\
-        \ pick the non-WiFi imx6ull-colibri-aster.dtb, which never\n# enables usdhc2,\
-        \ so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio\n# loads but\
-        \ binds nothing, no wlan0). Pin the WiFi device tree for the Aster\n# carrier\
-        \ and disable autofdt so it isn't overridden by the first DTB.\n# Other carriers:\
-        \ imx6ull-colibri-wifi-{eval-v3,iris,iris-v2}.dtb\n# NB: use a :colibri-imx6ull\
-        \ override to disable autofdt \u2014 a plain\n# PV_UBOOT_AUTOFDT = \"\" loses\
-        \ to the platform-toradex \"1\" emitted later\n# in local.conf; the machine\
-        \ override is applied at finalize and wins.\nPV_INITIAL_DTB = \"imx6ull-colibri-wifi-aster.dtb\"\
-        \nPV_UBOOT_AUTOFDT:colibri-imx6ull = \"\"\nMACHINE_FEATURES:append = \" wifi\"\
-        \n\n# Boot a single FIT (kernel + pantavisor initramfs + dtb) instead of\n\
-        # discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The machine\n# default\
-        \ is zImage, so override it here.\nKERNEL_CLASSES:append:colibri-imx6ull =\
-        \ \" kernel-fitimage\"\nKERNEL_IMAGETYPE:colibri-imx6ull = \"fitImage\"\n\
-        # Keep the FIT small: only the Aster WiFi device tree that PV_INITIAL_DTB\n\
-        # pins goes in (the mainline kernel lists them as nxp/imx/<name>). With a\n\
-        # single configuration the boot script's last 'bootm <fit>' picks it,\n# whatever\
-        \ fdtfile U-Boot sets.\nKERNEL_DEVICETREE:remove:colibri-imx6ull = \"nxp/imx/imx6ull-colibri-eval-v3.dtb\
-        \ nxp/imx/imx6ull-colibri-wifi-eval-v3.dtb nxp/imx/imx6ull-colibri-aster.dtb\
-        \ nxp/imx/imx6ull-colibri-iris.dtb nxp/imx/imx6ull-colibri-wifi-iris.dtb nxp/imx/imx6ull-colibri-iris-v2.dtb\
-        \ nxp/imx/imx6ull-colibri-wifi-iris-v2.dtb\"\n\n# 'dm-internal-secrets' uses\
-        \ the software 'dm-crypt-versatile' key type\n# (pantavisor-default-skel device-disks.json)\
-        \ so it works on OPEN devices.\n# Hardware-bound DCP needs a HAB-closed part:\
-        \ the mainline DCP trusted-key\n# backend rejects the zeroed OTP key on open\
-        \ devices. To enable it on a\n# secured device, set PANTAVISOR_FEATURES \"\
-        dcp\" (wires the DCP kernel\n# backport patches + dcp.cfg + keyutils) and\
-        \ 'trusted.source=dcp' here,\n# and switch the device-disks.json disk back\
-        \ to type dm-crypt-dcp.\nPV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull = \"file://pv.colibri-imx6ull.cfg\"\
-        \nUBOOT_CONFIG_BASENAME:colibri-imx6ull = \"colibri-imx6ull\"\nPANTAVISOR_MACHINE_FIRMWARE:pn-empty-image\
-        \ = \"${MACHINE_FIRMWARE}\"\nPV_FLASH_RECOVERY_MC = \"tezi-recovery\"\nPV_FLASH_RECOVERY_RECIPE\
-        \ = \"u-boot-toradex\"\nPV_FLASH_RECOVERY_IMAGE = \"u-boot.imx-recoverytezi\"\
-        \n"
+    platform-colibri-imx6ull: |
+        include conf/machine/include/colibri-imx6ull.inc
+        IMAGE_CLASSES:remove = " image_type_tezi"
+        IMAGE_FSTYPES:remove = "teziimg"
+        IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
+        MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
+        # NAND layout. fitA/fitB hold the BSP FIT for the pv-uboot-ab feature
+        # (see PANTAVISOR_FEATURES below); the same string goes to U-Boot (via
+        # oemEnv.txt) and to the kernel command line.
+        PV_UBOOT_MTDPARTS = "gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),32m(fitA),32m(fitB),-(ubi)"
+        PV_BOOT_OEMARGS = "mtdparts=${PV_UBOOT_MTDPARTS} ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
+
+        # WiFi/BT (Colibri iMX6ULL WB): the FIT carries every Colibri iMX6ULL
+        # device tree and U-Boot picks the one named by its own fdtfile
+        # (imx6ull-colibri${variant}-${fdt_board}.dtb; variant, e.g. -wifi, comes
+        # from the module config block). The carrier cannot be detected, so this
+        # is the default carrier used while the U-Boot env has no custom fdt_board
+        # (Toradex default: eval-v3). Others: eval-v3, iris, iris-v2.
+        PV_UBOOT_DEFAULT_FDT_BOARD = "aster"
+        FIT_CONF_DEFAULT_DTB = "imx6ull-colibri-wifi-aster.dtb"
+        MACHINE_FEATURES:append = " wifi"
+
+        # A/B boot: the BSP FIT lives in the raw NAND partitions fitA/fitB.
+        PANTAVISOR_FEATURES:append = " pv-uboot-ab"
+
+        # Boot a single FIT (kernel + pantavisor initramfs + all device trees)
+        # instead of discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The
+        # machine default is zImage, so override it here.
+        KERNEL_CLASSES:append:colibri-imx6ull = " kernel-fitimage"
+        KERNEL_IMAGETYPE:colibri-imx6ull = "fitImage"
+
+        # 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type
+        # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.
+        # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key
+        # backend rejects the zeroed OTP key on open devices. To enable it on a
+        # secured device, set PANTAVISOR_FEATURES "dcp" (wires the DCP kernel
+        # backport patches + dcp.cfg + keyutils) and 'trusted.source=dcp' here,
+        # and switch the device-disks.json disk back to type dm-crypt-dcp.
+        PV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull = "file://pv.colibri-imx6ull.cfg"
+        UBOOT_CONFIG_BASENAME:colibri-imx6ull = "colibri-imx6ull"
+        PANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = "${MACHINE_FIRMWARE}"
+        PV_FLASH_RECOVERY_MC = "tezi-recovery"
+        PV_FLASH_RECOVERY_RECIPE = "u-boot-toradex"
+        PV_FLASH_RECOVERY_IMAGE = "u-boot.imx-recoverytezi"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |

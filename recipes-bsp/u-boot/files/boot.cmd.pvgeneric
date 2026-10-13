@@ -96,6 +96,19 @@ if ${pv_load_boot} ${envloadaddr} ${pv_root}oemEnv.txt; then
 	env import ${envloadaddr} ${filesize}
 fi
 
+# Toradex: fdtfile is imx6ull-colibri${variant}-${fdt_board}.dtb, but the
+# carrier board cannot be detected and the stock env says fdt_board=eval-v3.
+# While fdt_board is empty or still the stock value, use the build's default
+# carrier (oemEnv pv_default_fdt_board) and rebuild fdtfile, which preboot
+# already computed from the stock value. A fdt_board saved in the env wins.
+if test -n "${pv_default_fdt_board}"; then
+	if test -z "${fdt_board}" -o "${fdt_board}" = "eval-v3"; then
+		setenv fdt_board ${pv_default_fdt_board}
+		setenv fdtfile imx6ull-colibri${variant}-${fdt_board}.dtb
+		echo "carrier ${fdt_board}: fdtfile ${fdtfile}"
+	fi
+fi
+
 if test "${pv_is_ubi}" = "1"; then
 	echo UBI: single ubifs volume, skipping MBR OEM-config probe
 else

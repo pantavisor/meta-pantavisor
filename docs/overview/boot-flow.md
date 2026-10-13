@@ -120,8 +120,7 @@ off `${devtype}` (see below).
    (`pv_plat_set_name_fit_config`), the board's `findfdt`, or `fdtfile`.
    If that named node is missing, the script retries `conf-<basename of
    fdtfile>` and finally the FIT's default configuration. Colibri iMX6ULL
-   relies on this last step: its FIT carries a single configuration (see
-   [Colibri iMX6ULL](../getting-started/how-to-install/boards/colibri-imx6ull.md#fit-image)).
+   X
 
 8. **Fallback to discrete images.** If no FIT, loads `pv-kernel.img`,
    `pv-initrd.img`, `pv-fdt.dtb` (plus any `pv-initrd.img.<n>` add-ons) from
@@ -147,7 +146,7 @@ Pantavisor reads `pv_`-prefixed cmdline keys as config overrides (e.g.
 `pv_storage.device`, `pv_storage.fstype`). Example for NAND/UBIFS:
 
 ```bitbake
-PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
+PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),32m(fitA),32m(fitB),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
 ```
 
 Here `ubi.mtd=ubi` tells the kernel to attach the UBI device named `ubi`, and
@@ -157,11 +156,41 @@ learns the partition layout (and thus the `ubi` partition) from a `mtdparts=`
 on the cmdline — without it `ubi.mtd=ubi` has nothing to attach. (On boards
 that define partitions in the DT, the `mtdparts=` is unnecessary.)
 
+## The A/B variant (pv-uboot-ab)
+
+With `pv-uboot-ab` in `PANTAVISOR_FEATURES`, `u-boot%.bbappend` builds
+`boot.scr` from `recipes-bsp/u-boot/files/boot.cmd.pvab` instead of
+`boot.cmd.pvgeneric` (`PV_UBOOT_BOOT_SCRIPT`). It is for raw NAND: the BSP FIT is
+not under `/trails/` but in the MTD partitions `fitA` and `fitB`, and the
+revision state is in U-Boot's own environment instead of `uboot.txt` / `pv.env`.
+
+| Step | `boot.cmd.pvgeneric` | `boot.cmd.pvab` |
+|------|----------------------|-----------------|
+| Revision state | `uboot.txt` (`pv_rev`, `pv_try`) and `pv.env` (`pv_trying`) | `pv_rev`, `pv_try`, `pv_trying` in the U-Boot env; `pv_rev` unset means `0` |
+| Persist | `save` to `pv.env` (not on UBI) | `saveenv`, only when the state changes; a failure does not stop the boot |
+| FIT source | `/trails/<rev>/bsp/pantavisor.fit` | `nand read` of `fitA` or `fitB`, whichever header has `fit_rev == <rev>` |
+| Missing revision | falls back to `pv_rev` after a failed try | no header has the try rev: boots `pv_rev`; none has `pv_rev`: boots `fitA` |
+| Kernel args | `pv_try`, `pv_rev` | adds `PV_BOOTLOADER_TYPE=uboot-ab PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env` |
+
+Partition header (text, NUL padded to 4096; the FIT starts at offset `0x1000`):
+
+```
+fit_rev=<revision>
+fit_size=<bytes>
+```
+
+The partition names come from `mtdparts` in `oemEnv.txt` (`PV_UBOOT_MTDPARTS`).
+The script does not use `fit_size` to size the read; it takes the size from the
+FIT's own header. Board walk-through, flashing and recovery:
+[Colibri iMX6ULL](../getting-started/how-to-install/boards/colibri-imx6ull.md#ab-boot-pv-uboot-ab).
+
 ## Customization knobs
 
 | Knob | Where | Purpose |
 |------|-------|---------|
 | `PV_BOOT_OEMARGS` | machine yaml / release build-config | Extra kernel cmdline args via `oemEnv.txt` |
+| `PV_UBOOT_DEFAULT_FDT_BOARD` | machine yaml / release build-config | Default carrier for Toradex U-Boots, written to `oemEnv.txt` as `pv_default_fdt_board` |
+| `PV_UBOOT_MTDPARTS` | machine yaml / release build-config | NAND partition table written to `oemEnv.txt` as U-Boot's `mtdparts` (needed by `pv-uboot-ab`) |
 | `PV_MACHINE_UBOOT_CONFIGS` | machine yaml / release build-config | Per-machine U-Boot `.cfg` fragments (e.g. a NAND `bootcmd`, extra commands) |
 | `pv_platargs` | U-Boot env | Platform-specific early args (default `earlyprintk`) |
 | `pv_plat_set_name_fit_config` | U-Boot env | Platform hook to choose the FIT config node |

@@ -1,7 +1,7 @@
 uuu_version 1.5.165
 
 # Factory flash for Pantavisor on Colibri iMX6ULL (NAND)
-# NAND layout: 512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi)
+# NAND layout: @MTDPARTS@
 # Fastboot buffer: 0x81100000  (CONFIG_FASTBOOT_BUF_ADDR)
 # Usage (from inside the extracted bundle directory):
 #   sudo ./uuu ./
@@ -20,6 +20,16 @@ FB: ucmd nand write.trimffs 0x81100000 0x200000 ${filesize}
 # pv.colibri-imx6ull.cfg mounts ubi0:boot and sources /boot/boot.scr; a
 # leftover env from a prior image would otherwise run a stale bootcmd.
 FB: ucmd nand erase 0x380000 0x80000
+# Tell the flashing U-Boot the layout above (its stock table has no fitA/fitB
+# and a larger ubi partition); the partition-name commands below use it.
+FB: ucmd setenv mtdparts 'mtdparts=@MTDPARTS@'
+# pv-uboot-ab only: the BSP FIT of revision 0 goes into the raw fitA partition
+# (4 KiB header + FIT, see fitA.img); fitB is left erased for the first update.
+# nand write skips bad blocks the same way the boot script's nand read does.
+#AB# FB: download -f @FITA_IMG@
+#AB# FB[-t 120000]: ucmd nand erase.part fitA
+#AB# FB[-t 120000]: ucmd nand write.trimffs 0x81100000 fitA ${filesize}
+#AB# FB[-t 120000]: ucmd nand erase.part fitB
 # Write UBIFS rootfs to the ubi MTD partition
 FB: download -f @UBIFS@
 FB[-t 120000]: ucmd nand erase.part ubi

@@ -12,31 +12,30 @@ local_conf_header:
         IMAGE_FSTYPES:remove = "teziimg"
         IMAGE_FSTYPES:pn-pantavisor-starter:append = " ubifs"
         MKUBIFS_ARGS = "-m 2048 -e 126976 -c 4096"
-        PV_BOOT_OEMARGS = "mtdparts=gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),-(ubi) ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
+        # NAND layout. fitA/fitB hold the BSP FIT for the pv-uboot-ab feature
+        # (see PANTAVISOR_FEATURES below); the same string goes to U-Boot (via
+        # oemEnv.txt) and to the kernel command line.
+        PV_UBOOT_MTDPARTS = "gpmi-nand:512k(mx6ull-bcb),1536k(u-boot1)ro,1536k(u-boot2)ro,512k(u-boot-env),32m(fitA),32m(fitB),-(ubi)"
+        PV_BOOT_OEMARGS = "mtdparts=${PV_UBOOT_MTDPARTS} ubi.mtd=ubi pv_storage.device=ubi0:boot pv_storage.fstype=ubifs"
 
-        # WiFi/BT (Colibri iMX6ULL WB): the default KERNEL_DEVICETREE order makes
-        # PV_UBOOT_AUTOFDT pick the non-WiFi imx6ull-colibri-aster.dtb, which never
-        # enables usdhc2, so the Marvell SD8997 SDIO chip is not probed (mwifiex_sdio
-        # loads but binds nothing, no wlan0). Pin the WiFi device tree for the Aster
-        # carrier and disable autofdt so it isn't overridden by the first DTB.
-        # Other carriers: imx6ull-colibri-wifi-{eval-v3,iris,iris-v2}.dtb
-        # NB: use a :colibri-imx6ull override to disable autofdt — a plain
-        # PV_UBOOT_AUTOFDT = "" loses to the platform-toradex "1" emitted later
-        # in local.conf; the machine override is applied at finalize and wins.
-        PV_INITIAL_DTB = "imx6ull-colibri-wifi-aster.dtb"
-        PV_UBOOT_AUTOFDT:colibri-imx6ull = ""
+        # WiFi/BT (Colibri iMX6ULL WB): the FIT carries every Colibri iMX6ULL
+        # device tree and U-Boot picks the one named by its own fdtfile
+        # (imx6ull-colibri${variant}-${fdt_board}.dtb; variant, e.g. -wifi, comes
+        # from the module config block). The carrier cannot be detected, so this
+        # is the default carrier used while the U-Boot env has no custom fdt_board
+        # (Toradex default: eval-v3). Others: eval-v3, iris, iris-v2.
+        PV_UBOOT_DEFAULT_FDT_BOARD = "aster"
+        FIT_CONF_DEFAULT_DTB = "imx6ull-colibri-wifi-aster.dtb"
         MACHINE_FEATURES:append = " wifi"
 
-        # Boot a single FIT (kernel + pantavisor initramfs + dtb) instead of
-        # discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The machine
-        # default is zImage, so override it here.
+        # A/B boot: the BSP FIT lives in the raw NAND partitions fitA/fitB.
+        PANTAVISOR_FEATURES:append = " pv-uboot-ab"
+
+        # Boot a single FIT (kernel + pantavisor initramfs + all device trees)
+        # instead of discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The
+        # machine default is zImage, so override it here.
         KERNEL_CLASSES:append:colibri-imx6ull = " kernel-fitimage"
         KERNEL_IMAGETYPE:colibri-imx6ull = "fitImage"
-        # Keep the FIT small: only the Aster WiFi device tree that PV_INITIAL_DTB
-        # pins goes in (the mainline kernel lists them as nxp/imx/<name>). With a
-        # single configuration the boot script's last 'bootm <fit>' picks it,
-        # whatever fdtfile U-Boot sets.
-        KERNEL_DEVICETREE:remove:colibri-imx6ull = "nxp/imx/imx6ull-colibri-eval-v3.dtb nxp/imx/imx6ull-colibri-wifi-eval-v3.dtb nxp/imx/imx6ull-colibri-aster.dtb nxp/imx/imx6ull-colibri-iris.dtb nxp/imx/imx6ull-colibri-wifi-iris.dtb nxp/imx/imx6ull-colibri-iris-v2.dtb nxp/imx/imx6ull-colibri-wifi-iris-v2.dtb"
 
         # 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type
         # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.

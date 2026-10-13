@@ -14,8 +14,22 @@ UBOOT_CONFIG:mc-tezi-recovery:colibri-imx6ull = "rawnand recoverytezi"
 
 PV_BOOT_OEMARGS ?= ""
 
+# Carrier board name for U-Boots that build fdtfile from fdt_board (Toradex).
+# Rendered into oemEnv.txt as pv_default_fdt_board; the boot scripts apply it
+# only while the U-Boot env has no custom fdt_board.
+PV_UBOOT_DEFAULT_FDT_BOARD ?= ""
+
+# NAND partition table (mtdparts syntax without the "mtdparts=" prefix). When
+# set it is rendered into oemEnv.txt as U-Boot's mtdparts so boot scripts can
+# address partitions by name (fitA/fitB for pv-uboot-ab).
+PV_UBOOT_MTDPARTS ?= ""
+
+# pv-uboot-ab boots the FIT from raw MTD partitions (boot.cmd.pvab); everything
+# else uses the generic script.
+PV_UBOOT_BOOT_SCRIPT = "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pv-uboot-ab', 'boot.cmd.pvab', 'boot.cmd.pvgeneric', d)}"
+
 SRC_URI += " \
-	file://boot.cmd.pvgeneric \
+	file://${PV_UBOOT_BOOT_SCRIPT} \
 	file://pv.cfg \
 	file://pv.distroboot.cfg \
 	file://oemEnv.txt \
@@ -24,16 +38,16 @@ SRC_URI += " \
 
 uboot_env:mc-default = "boot"
 uboot_env_src:mc-default = "boot.txt"
-uboot_env_src_frags:mc-default += " boot.cmd.pvgeneric "
+uboot_env_src_frags:mc-default += " ${PV_UBOOT_BOOT_SCRIPT} "
 uboot_env_suffix:mc-default ?= "scr"
 
 uboot_env_src:pvbsp = ""
 uboot_env:pvbsp = ""
-uboot_env_src_frags:pvbsp:remove = "boot.cmd.pvgeneric"
+uboot_env_src_frags:pvbsp:remove = "${PV_UBOOT_BOOT_SCRIPT}"
 uboot_env_suffix:pvbsp = ""
 
 uboot_env_src:pvapp = ""
-uboot_env_src_frags:pvapp:remove = "boot.cmd.pvgeneric"
+uboot_env_src_frags:pvapp:remove = "${PV_UBOOT_BOOT_SCRIPT}"
 uboot_env:pvapp = ""
 uboot_env_suffix:pvapp = ""
 
@@ -68,5 +82,11 @@ do_deploy:append() {
 	cat ${WORKDIR}/oemEnv.txt | \
 		sed -e 's/@@PV_BOOT_OEMARGS@@/${PV_BOOT_OEMARGS}/' \
 		> ${WORKDIR}/oemEnv.txt.final
+	if [ -n "${PV_UBOOT_DEFAULT_FDT_BOARD}" ]; then
+		echo "pv_default_fdt_board=${PV_UBOOT_DEFAULT_FDT_BOARD}" >> ${WORKDIR}/oemEnv.txt.final
+	fi
+	if [ -n "${PV_UBOOT_MTDPARTS}" ]; then
+		echo "mtdparts=mtdparts=${PV_UBOOT_MTDPARTS}" >> ${WORKDIR}/oemEnv.txt.final
+	fi
 	install -D -m 644 ${WORKDIR}/oemEnv.txt.final ${DEPLOYDIR}/oemEnv.txt
 }

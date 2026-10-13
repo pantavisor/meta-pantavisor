@@ -53,6 +53,17 @@ PV_FLASH_NAND_UBOOT:colibri-imx6ull = "u-boot.imx-rawnand"
 PV_FLASH_UBIFS ?= ""
 PV_FLASH_UBIFS:colibri-imx6ull = "${PV_FLASH_IMAGE}-${MACHINE}.rootfs.ubifs"
 
+# pv-uboot-ab: the bundle also carries fitA.img, the 4 KiB header (fit_rev=0,
+# fit_size=<bytes>) followed by revision 0's BSP FIT, flashed to the raw fitA
+# partition. PV_FLASH_FIT is the FIT in the main build's DEPLOY_DIR_IMAGE (the
+# file pantavisor-bsp packs as bsp/pantavisor.fit).
+PV_FLASH_FIT ?= ""
+PV_FLASH_FIT:colibri-imx6ull = "fitImage-pantavisor-initramfs-${MACHINE}-${MACHINE}"
+PV_FLASH_AB = "${@bb.utils.contains('PANTAVISOR_FEATURES', 'pv-uboot-ab', '1', '', d)}"
+
+# mtdparts string (without "mtdparts=") the flashing U-Boot is told.
+PV_FLASH_MTDPARTS ?= "${PV_UBOOT_MTDPARTS}"
+
 # SRC_URI entries for machine-specific script templates.
 PV_FLASH_UUU_SCRIPT_IN ?= ""
 PV_FLASH_UUU_SCRIPT_IN:verdin-imx8mm = "file://uuu.auto.in"
@@ -140,6 +151,17 @@ do_deploy() {
             "${bundle_dir}/${PV_FLASH_NAND_UBOOT}"
     fi
 
+    if [ "${PV_FLASH_AB}" = "1" ]; then
+        local fit="${DEPLOY_DIR_IMAGE}/${PV_FLASH_FIT}"
+        local fit_size=$(stat -L -c %s "${fit}")
+        # header: text NUL-padded to 4096, then the FIT, NUL-padded to 4096
+        # so nand write gets whole pages
+        printf 'fit_rev=0\nfit_size=%s\n' "${fit_size}" > "${bundle_dir}/fitA.img"
+        truncate -s 4096 "${bundle_dir}/fitA.img"
+        cat "${fit}" >> "${bundle_dir}/fitA.img"
+        truncate -s %4096 "${bundle_dir}/fitA.img"
+    fi
+
     if [ -n "${PV_FLASH_BOOT_IMAGE}" ]; then
         install -m 644 \
             $(ls ${DEPLOY_DIR_IMAGE}/${PV_FLASH_BOOT_IMAGE} | head -n1) \
@@ -170,7 +192,15 @@ do_deploy() {
             -e "s|@UBIFS@|${PV_FLASH_UBIFS}|g" \
             -e "s|@UBOOT_NAND@|${PV_FLASH_NAND_UBOOT}|g" \
             -e "s|@RECOVERY_IMAGE@|${PV_FLASH_RECOVERY_IMAGE}|g" \
+            -e "s|@MTDPARTS@|${PV_FLASH_MTDPARTS}|g" \
+            -e "s|@FITA_IMG@|fitA.img|g" \
             "${WORKDIR}/uuu.auto.in" > "${bundle_dir}/uuu.auto"
+        # lines marked "#AB# " are pv-uboot-ab only
+        if [ "${PV_FLASH_AB}" = "1" ]; then
+            sed -i -e 's/^#AB# //' "${bundle_dir}/uuu.auto"
+        else
+            sed -i -e '/^#AB# /d' "${bundle_dir}/uuu.auto"
+        fi
     fi
 
     if [ -f "${WORKDIR}/flash.sh.in" ]; then
@@ -180,6 +210,8 @@ do_deploy() {
             -e "s|@UBIFS@|${PV_FLASH_UBIFS}|g" \
             -e "s|@UBOOT_NAND@|${PV_FLASH_NAND_UBOOT}|g" \
             -e "s|@RECOVERY_IMAGE@|${PV_FLASH_RECOVERY_IMAGE}|g" \
+            -e "s|@MTDPARTS@|${PV_FLASH_MTDPARTS}|g" \
+            -e "s|@FITA_IMG@|fitA.img|g" \
             "${WORKDIR}/flash.sh.in" > "${bundle_dir}/flash.sh"
         chmod 755 "${bundle_dir}/flash.sh"
     fi
@@ -191,6 +223,8 @@ do_deploy() {
             -e "s|@UBIFS@|${PV_FLASH_UBIFS}|g" \
             -e "s|@UBOOT_NAND@|${PV_FLASH_NAND_UBOOT}|g" \
             -e "s|@RECOVERY_IMAGE@|${PV_FLASH_RECOVERY_IMAGE}|g" \
+            -e "s|@MTDPARTS@|${PV_FLASH_MTDPARTS}|g" \
+            -e "s|@FITA_IMG@|fitA.img|g" \
             "${WORKDIR}/README.md.in" > "${bundle_dir}/README.md"
     fi
 

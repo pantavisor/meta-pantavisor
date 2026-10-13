@@ -1,0 +1,181 @@
+echo "Pantavisor Starts (uboot-ab: BSP FIT in raw MTD partitions fitA/fitB)"
+
+# A/B boot for raw NAND. The BSP FIT does not live on a filesystem: it sits in
+# the MTD partitions fitA and fitB, each starting with a 4 KiB text header
+#   fit_rev=<rev>\nfit_size=<bytes>\n   (NUL padded)
+# followed by the FIT at offset 0x1000. Pantavisor writes a new revision's FIT
+# into the inactive partition and records pv_rev / pv_try / pv_trying in this
+# U-Boot's own environment (saveenv). There is no uboot.txt and no pv.env.
+#
+# The sourcing bootcmd has already run `ubi part / ubifsmount`, so oemEnv.txt
+# (oemargs, mtdparts, default carrier) is read from the UBIFS boot volume.
+
+# ---- which revision to boot: pv_rev / pv_try / pv_trying from U-Boot's env ----
+# This runs first so saveenv does not persist anything the rest of the script
+# sets (oemEnv.txt values, the default carrier, scratch variables).
+# pv_rev missing (fresh flash, erased env) means revision 0.
+if test -z "${pv_rev}"; then
+	setenv pv_rev 0
+fi
+
+# saveenv only when a value changes; a failed saveenv must not stop the boot
+if test -n "${pv_try}"; then
+	if test -n "${pv_trying}" && test "${pv_trying}" = "${pv_try}"; then
+		echo Pantavisor boots checkpoint revision ${pv_rev} after failed try-boot of revision: ${pv_try}
+		setenv pv_trying
+		saveenv
+		setenv boot_rev ${pv_rev}
+	else
+		echo Pantavisor boots try-boot revision: ${pv_try}
+		setenv pv_trying ${pv_try}
+		saveenv
+		setenv boot_rev ${pv_try}
+	fi
+else
+	echo Pantavisor boots revision: ${pv_rev}
+	setenv boot_rev ${pv_rev}
+	if test -n "${pv_trying}"; then
+		# leftover marker from a finished try; clear it so a later try of the same rev is not read as failed
+		setenv pv_trying
+		saveenv
+	fi
+fi
+
+if test -z "$pv_platargs"; then
+	setenv pv_platargs "earlyprintk"
+fi
+setenv pv_baseargs "panic=3 root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor"
+setenv pv_ctrl 2
+# tell pantavisor which bootloader flavour booted it and where its env lives
+setenv pv_uboot_ab_args "PV_BOOTLOADER_TYPE=uboot-ab PV_BOOTLOADER_TRYING_ENV=mtd:u-boot-env"
+
+setenv envloadaddr ${loadaddr}
+if test -z "${envloadaddr}"; then
+	setenv envloadaddr ${pxefile_addr_r}
+fi
+if test -z "${envloadaddr}"; then
+	setenv envloadaddr ${kernel_addr_r}
+fi
+
+if test ! -z "${console}" && test ! -z "${baudrate}"; then
+	setenv pv_baseargs ${pv_baseargs} console=${console},${baudrate}
+fi
+
+if test -z "${addr_fit}"; then
+	addr_fit=${kernel_comp_addr_r}
+fi
+if test -z "${addr_fit}"; then
+	addr_fit=${kernel_addr_r}
+fi
+
+echo Trying to load oemEnv.txt
+if ubifsload ${envloadaddr} /oemEnv.txt; then
+	echo Importing oemEnv.txt ...
+	env import ${envloadaddr} ${filesize}
+fi
+
+# Toradex: fdtfile is imx6ull-colibri${variant}-${fdt_board}.dtb, but the
+# carrier board cannot be detected and the stock env says fdt_board=eval-v3.
+# While fdt_board is empty or still the stock value, use the build's default
+# carrier (oemEnv pv_default_fdt_board) and rebuild fdtfile, which preboot
+# already computed from the stock value. A fdt_board saved in the env wins.
+if test -n "${pv_default_fdt_board}"; then
+	if test -z "${fdt_board}" -o "${fdt_board}" = "eval-v3"; then
+		setenv fdt_board ${pv_default_fdt_board}
+		setenv fdtfile imx6ull-colibri${variant}-${fdt_board}.dtb
+		echo "carrier ${fdt_board}: fdtfile ${fdtfile}"
+	fi
+fi
+
+# oemEnv.txt carries the partition table (mtdparts) so fitA/fitB resolve by name
+mtdparts
+
+# ---- which partition holds that revision: read both 4 KiB headers ----
+# Nothing below this line may be saved to the env (the header keys are scratch).
+setenv pv_rev_fitA
+setenv pv_rev_fitB
+setexpr pv_hdr_addr ${envloadaddr} + 0x10000
+for pv_p in fitA fitB; do
+	setenv fit_rev
+	setenv fit_size
+	# erased flash reads as 0xff; only text starting with 'f' (fit_rev=) is a header
+	if nand read ${pv_hdr_addr} ${pv_p} 0x1000; then
+		if itest.b *${pv_hdr_addr} -eq 0x66; then
+			env import -t ${pv_hdr_addr} 0x1000
+		fi
+	fi
+	setenv pv_rev_${pv_p} ${fit_rev}
+	echo "${pv_p}: rev '${fit_rev}' size '${fit_size}'"
+done
+
+# the try rev first, then the checkpoint rev
+setenv pv_part
+for pv_cand in ${boot_rev} ${pv_rev}; do
+	if test -z "${pv_part}"; then
+		if test "${pv_rev_fitA}" = "${pv_cand}"; then
+			setenv pv_part fitA
+		fi
+		if test -z "${pv_part}" && test "${pv_rev_fitB}" = "${pv_cand}"; then
+			setenv pv_part fitB
+		fi
+		if test -n "${pv_part}"; then
+			if test "${pv_cand}" != "${boot_rev}"; then
+				echo "no partition holds revision ${boot_rev}, falling back to revision ${pv_cand}"
+			fi
+			setenv boot_rev ${pv_cand}
+		fi
+	fi
+done
+
+if test -z "${pv_part}"; then
+	echo "no partition holds revision ${pv_rev}, booting fitA anyway"
+	setenv pv_part fitA
+	setenv boot_rev ${pv_rev}
+fi
+echo "Pantavisor revision ${boot_rev} from ${pv_part}"
+
+# ---- load the FIT: the header's 4 KiB sit just below addr_fit ----
+# The FIT's own header says how big it is (the same number as fit_size), which
+# avoids parsing a decimal fit_size with U-Boot's hex-only arithmetic.
+setexpr pv_raw_addr ${addr_fit} - 0x1000
+if nand read ${pv_raw_addr} ${pv_part} 0x1800; then
+	fdt addr ${addr_fit}
+	fdt header get pv_fit_total totalsize
+	setexpr pv_load_size ${pv_fit_total} + 0x1fff
+	setexpr pv_load_size ${pv_load_size} / 0x1000
+	setexpr pv_load_size ${pv_load_size} * 0x1000
+	echo "Loading ${pv_fit_total} bytes of FIT from ${pv_part}"
+	if nand read ${pv_raw_addr} ${pv_part} ${pv_load_size}; then
+		echo Successfully loaded pantavisor.fit. booting...
+		iminfo ${addr_fit}
+
+		if test -z "${fdtfile}"; then
+			setenv fdtfile ${fdt_file}
+		fi
+
+		echo Pantavisor bootargs: "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 ${fdtbootargs} ${configargs} ${oemargs} ${pv_uboot_ab_args} ${localargs}"
+		setenv bootargs "${pv_platargs} ${pv_baseargs} pv_try=${pv_try} pv_rev=${boot_rev} panic=2 pv_quickboot ${fdtbootargs} ${configargs} ${oemargs} ${pv_uboot_ab_args} ${localargs}"
+
+		# The configuration named after fdtfile first. kernel-fitimage.bbclass
+		# names it conf-<dtb basename>, or conf-<path with / -> _> when
+		# KERNEL_DTBVENDORED is set; fdtfile has no directory on Toradex so both
+		# are the same string there. bootm only returns on failure, so the
+		# FIT's default configuration is the last resort.
+		if test -n "${fdtfile}"; then
+			setexpr pv_fit_conf gsub / _ "${fdtfile}"
+			echo "bootm ${addr_fit}#conf-${pv_fit_conf}"
+			bootm ${addr_fit}#conf-${pv_fit_conf}
+			setexpr pv_fit_conf_base gsub "^.*/" "" "${fdtfile}"
+			echo "trying basename config: bootm ${addr_fit}#conf-${pv_fit_conf_base}"
+			bootm ${addr_fit}#conf-${pv_fit_conf_base}
+		fi
+		echo "trying default config: bootm ${addr_fit}"
+		bootm ${addr_fit}
+	else
+		echo "failed to read the FIT from ${pv_part}"
+	fi
+else
+	echo "failed to read ${pv_part}"
+fi
+
+echo "Failed to boot step, rebooting"; sleep 5; reset
