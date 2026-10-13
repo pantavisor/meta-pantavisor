@@ -118,6 +118,10 @@ off `${devtype}` (see below).
    present, selects a config node (`name_fit_config`) and `bootm`s it. The
    config node is resolved via, in order: a platform hook
    (`pv_plat_set_name_fit_config`), the board's `findfdt`, or `fdtfile`.
+   If that named node is missing, the script retries `conf-<basename of
+   fdtfile>` and finally the FIT's default configuration. Colibri iMX6ULL
+   relies on this last step: its FIT carries a single configuration (see
+   [Colibri iMX6ULL](../getting-started/how-to-install/boards/colibri-imx6ull.md#fit-image)).
 
 8. **Fallback to discrete images.** If no FIT, loads `pv-kernel.img`,
    `pv-initrd.img`, `pv-fdt.dtb` (plus any `pv-initrd.img.<n>` add-ons) from

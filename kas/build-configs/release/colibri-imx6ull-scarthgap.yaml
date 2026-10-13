@@ -94,17 +94,28 @@ local_conf_header:
         \ to the platform-toradex \"1\" emitted later\n# in local.conf; the machine\
         \ override is applied at finalize and wins.\nPV_INITIAL_DTB = \"imx6ull-colibri-wifi-aster.dtb\"\
         \nPV_UBOOT_AUTOFDT:colibri-imx6ull = \"\"\nMACHINE_FEATURES:append = \" wifi\"\
-        \n\n# 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type\n\
-        # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.\n\
-        # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key\n\
-        # backend rejects the zeroed OTP key on open devices. To enable it on a\n\
-        # secured device, set PANTAVISOR_FEATURES \"dcp\" (wires the DCP kernel\n\
-        # backport patches + dcp.cfg + keyutils) and 'trusted.source=dcp' here,\n\
-        # and switch the device-disks.json disk back to type dm-crypt-dcp.\nPV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull\
-        \ = \"file://pv.colibri-imx6ull.cfg\"\nUBOOT_CONFIG_BASENAME:colibri-imx6ull\
-        \ = \"colibri-imx6ull\"\nPANTAVISOR_MACHINE_FIRMWARE:pn-empty-image = \"${MACHINE_FIRMWARE}\"\
-        \nPV_FLASH_RECOVERY_MC = \"tezi-recovery\"\nPV_FLASH_RECOVERY_RECIPE = \"\
-        u-boot-toradex\"\nPV_FLASH_RECOVERY_IMAGE = \"u-boot.imx-recoverytezi\"\n"
+        \n\n# Boot a single FIT (kernel + pantavisor initramfs + dtb) instead of\n\
+        # discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The machine\n# default\
+        \ is zImage, so override it here.\nKERNEL_CLASSES:append:colibri-imx6ull =\
+        \ \" kernel-fitimage\"\nKERNEL_IMAGETYPE:colibri-imx6ull = \"fitImage\"\n\
+        # Keep the FIT small: only the Aster WiFi device tree that PV_INITIAL_DTB\n\
+        # pins goes in (the mainline kernel lists them as nxp/imx/<name>). With a\n\
+        # single configuration the boot script's last 'bootm <fit>' picks it,\n# whatever\
+        \ fdtfile U-Boot sets.\nKERNEL_DEVICETREE:remove:colibri-imx6ull = \"nxp/imx/imx6ull-colibri-eval-v3.dtb\
+        \ nxp/imx/imx6ull-colibri-wifi-eval-v3.dtb nxp/imx/imx6ull-colibri-aster.dtb\
+        \ nxp/imx/imx6ull-colibri-iris.dtb nxp/imx/imx6ull-colibri-wifi-iris.dtb nxp/imx/imx6ull-colibri-iris-v2.dtb\
+        \ nxp/imx/imx6ull-colibri-wifi-iris-v2.dtb\"\n\n# 'dm-internal-secrets' uses\
+        \ the software 'dm-crypt-versatile' key type\n# (pantavisor-default-skel device-disks.json)\
+        \ so it works on OPEN devices.\n# Hardware-bound DCP needs a HAB-closed part:\
+        \ the mainline DCP trusted-key\n# backend rejects the zeroed OTP key on open\
+        \ devices. To enable it on a\n# secured device, set PANTAVISOR_FEATURES \"\
+        dcp\" (wires the DCP kernel\n# backport patches + dcp.cfg + keyutils) and\
+        \ 'trusted.source=dcp' here,\n# and switch the device-disks.json disk back\
+        \ to type dm-crypt-dcp.\nPV_MACHINE_UBOOT_CONFIGS:colibri-imx6ull = \"file://pv.colibri-imx6ull.cfg\"\
+        \nUBOOT_CONFIG_BASENAME:colibri-imx6ull = \"colibri-imx6ull\"\nPANTAVISOR_MACHINE_FIRMWARE:pn-empty-image\
+        \ = \"${MACHINE_FIRMWARE}\"\nPV_FLASH_RECOVERY_MC = \"tezi-recovery\"\nPV_FLASH_RECOVERY_RECIPE\
+        \ = \"u-boot-toradex\"\nPV_FLASH_RECOVERY_IMAGE = \"u-boot.imx-recoverytezi\"\
+        \n"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
     rm_work: |

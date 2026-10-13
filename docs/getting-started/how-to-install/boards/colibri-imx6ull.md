@@ -80,6 +80,36 @@ no NAND partitions, so without it the kernel has no partition named `ubi` and
 Toradex's stock boot supplies the same `mtdparts` via its `setup` env; the
 Pantavisor boot script bypasses that, so it is carried here instead.
 
+### FIT image
+
+The kernel, the Pantavisor initramfs and the device tree are packed into one
+FIT, `bsp/pantavisor.fit`, instead of separate kernel/initrd/dtb files. The
+machine config (`kas/machines/colibri-imx6ull.yaml`) switches this on:
+
+```bitbake
+KERNEL_CLASSES:append:colibri-imx6ull = " kernel-fitimage"
+KERNEL_IMAGETYPE:colibri-imx6ull = "fitImage"
+```
+
+Only `imx6ull-colibri-wifi-aster.dtb` is built into the FIT, so it has a single
+boot configuration (the Toradex overlay `.dtbo` files add a few tiny
+overlay-only ones). The Toradex U-Boot sets `fdtfile` to a name like
+`imx6ull-colibri-eval-v3.dtb` (from `variant` and `fdt_board`), which matches
+no configuration; the boot script then falls through to `bootm <fit>`, which
+boots the FIT's default configuration (the Aster WiFi tree). For another
+carrier, change `KERNEL_DEVICETREE:remove` in the machine config so that the
+tree you need stays in the FIT, and set `PV_INITIAL_DTB` to match.
+
+After a build, list what went in:
+
+```bash
+mkimage -l build/tmp-*/deploy/images/colibri-imx6ull/fitImage-pantavisor-initramfs-colibri-imx6ull--*.bin
+```
+
+On the board, the boot script runs `iminfo` on the loaded FIT, so the console
+log shows the same listing (`CONFIG_CMD_IMI` is enabled in
+`pv.colibri-imx6ull.cfg`).
+
 > **Note:** U-Boot's UBIFS driver is read-only, so the try-boot/rollback state
 > (`pv.env`) is not persisted across reboots on NAND; the boot script skips the
 > `save` step when booting from UBI.
@@ -92,8 +122,9 @@ on the second SD/MMC controller (`usdhc2`). That interface is only enabled by th
 non-wireless SKU and leave `usdhc2` disabled. With the wrong DTB the kernel never
 probes the chip — `mwifiex_sdio` loads but binds nothing and no `wlan0` appears.
 
-Which DTB Pantavisor boots is decided at image-build time and baked into the BSP
-`run.json` (`"fdt": ...`). The Toradex platform sets `PV_UBOOT_AUTOFDT = "1"`,
+Which DTB Pantavisor boots is decided at image-build time. With the FIT it is the
+tree left in `KERNEL_DEVICETREE` (see [FIT image](#fit-image)); the settings below
+also keep `PV_INITIAL_DTB` consistent for the discrete-image fallback. The Toradex platform sets `PV_UBOOT_AUTOFDT = "1"`,
 which makes `pantavisor-bsp.bb` pick the **first** entry of `KERNEL_DEVICETREE`.
 For colibri-imx6ull that list starts with the non-WiFi `imx6ull-colibri-aster.dtb`,
 so autofdt would always select the wireless-less tree. To boot the WiFi DTB the
@@ -127,13 +158,14 @@ Pick the DTB that matches your carrier board:
 | Iris | `imx6ull-colibri-wifi-iris.dtb` |
 | Iris v2 | `imx6ull-colibri-wifi-iris-v2.dtb` |
 
-After building, confirm the BSP selected the WiFi tree before flashing:
+After building, confirm the FIT carries the WiFi tree (see [FIT image](#fit-image)):
 
 ```bash
-grep -o '"fdt":"[^"]*"' \
-  build/*/work/cortexa7t2hf-neon-poky-linux-musleabi/pantavisor-bsp/1.0/pvbspstate/bsp/run.json
-# Expected: "fdt":"imx6ull-colibri-wifi-aster.dtb"
-# A "nxp/imx/..." prefix means autofdt is still winning (non-WiFi tree selected).
+mkimage -l build/tmp-*/deploy/images/colibri-imx6ull/fitImage-pantavisor-initramfs-colibri-imx6ull--*.bin \
+  | grep -E 'Default Configuration|FDT:'
+# Expected:
+#  Default Configuration: 'conf-imx6ull-colibri-wifi-aster.dtb'
+#   FDT:          fdt-imx6ull-colibri-wifi-aster.dtb
 ```
 
 On the running board, `cat /sys/firmware/devicetree/base/model` reflects the

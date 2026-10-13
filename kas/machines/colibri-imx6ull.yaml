@@ -27,6 +27,17 @@ local_conf_header:
         PV_UBOOT_AUTOFDT:colibri-imx6ull = ""
         MACHINE_FEATURES:append = " wifi"
 
+        # Boot a single FIT (kernel + pantavisor initramfs + dtb) instead of
+        # discrete zImage/initrd/dtb files: bsp/pantavisor.fit. The machine
+        # default is zImage, so override it here.
+        KERNEL_CLASSES:append:colibri-imx6ull = " kernel-fitimage"
+        KERNEL_IMAGETYPE:colibri-imx6ull = "fitImage"
+        # Keep the FIT small: only the Aster WiFi device tree that PV_INITIAL_DTB
+        # pins goes in (the mainline kernel lists them as nxp/imx/<name>). With a
+        # single configuration the boot script's last 'bootm <fit>' picks it,
+        # whatever fdtfile U-Boot sets.
+        KERNEL_DEVICETREE:remove:colibri-imx6ull = "nxp/imx/imx6ull-colibri-eval-v3.dtb nxp/imx/imx6ull-colibri-wifi-eval-v3.dtb nxp/imx/imx6ull-colibri-aster.dtb nxp/imx/imx6ull-colibri-iris.dtb nxp/imx/imx6ull-colibri-wifi-iris.dtb nxp/imx/imx6ull-colibri-iris-v2.dtb nxp/imx/imx6ull-colibri-wifi-iris-v2.dtb"
+
         # 'dm-internal-secrets' uses the software 'dm-crypt-versatile' key type
         # (pantavisor-default-skel device-disks.json) so it works on OPEN devices.
         # Hardware-bound DCP needs a HAB-closed part: the mainline DCP trusted-key
