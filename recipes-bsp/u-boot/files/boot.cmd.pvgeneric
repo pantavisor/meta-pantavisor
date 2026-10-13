@@ -74,13 +74,6 @@ if test "${pv_is_ubi}" != "1"; then
 	fi
 fi
 
-# Tell pantavisor where pv.env lives so it can clear pv_trying to boot a
-# devmode revision again. pv_bootpart is the U-Boot partition number (hex)
-# on the same disk as the pantavisor storage partition. UBI never saves pv.env.
-if test "${pv_is_ubi}" != "1"; then
-	setenv pv_baseargs ${pv_baseargs} PV_BOOTLOADER_TRYING_ENV=part:${pv_bootpart}:/pv.env
-fi
-
 if test -z "${ramdisk_addr_r}"; then
 	ramdisk_addr_r=${initrd_addr}
 fi
@@ -101,6 +94,22 @@ echo Trying to load oemEnv.txt
 if ${pv_load_boot} ${envloadaddr} ${pv_root}oemEnv.txt; then
 	echo Importing oemEnv.txt ...
 	env import ${envloadaddr} ${filesize}
+fi
+
+# Where pv_trying is kept. UBI defaults to U-Boot's own env (saveenv): U-Boot
+# cannot write UBIFS, so pv.env cannot work there. On mmc it defaults to the
+# pv.env file; set pv_trying_store=saveenv (oemEnv.txt via PV_BOOT_TRYING_STORE,
+# or the U-Boot default env) to use saveenv instead. An explicit value wins.
+# In saveenv mode the BSP passes PV_BOOTLOADER_TRYING_ENV=mtd:<name> itself;
+# the script cannot know the MTD name. In pv.env mode pantavisor gets the
+# file's location (U-Boot partition number, hex).
+if test -z "${pv_trying_store}"; then
+	if test "${pv_is_ubi}" = "1"; then
+		setenv pv_trying_store saveenv
+	fi
+fi
+if test "${pv_trying_store}" != "saveenv"; then
+	setenv pv_baseargs ${pv_baseargs} PV_BOOTLOADER_TRYING_ENV=part:${pv_bootpart}:/pv.env
 fi
 
 if test "${pv_is_ubi}" = "1"; then
@@ -145,23 +154,36 @@ fi
 echo Loading pantavisor uboot.txt
 setenv pv_try; env import ${envloadaddr} ${uboot_txt_size}
 
-${pv_load_boot} ${envloadaddr} ${pv_root}pv.env; setenv pv_env_size ${filesize}
-echo Loading pv.env
-setenv pv_trying; env import ${envloadaddr} ${pv_env_size}
+# In saveenv mode pv_trying comes from the saved U-Boot env only; pv.env is
+# not read and pv_trying is not wiped.
+if test "${pv_trying_store}" != "saveenv"; then
+	${pv_load_boot} ${envloadaddr} ${pv_root}pv.env; setenv pv_env_size ${filesize}
+	echo Loading pv.env
+	setenv pv_trying; env import ${envloadaddr} ${pv_env_size}
+fi
 
 echo
 if env exists pv_try; then
 	if env exists pv_trying && test ${pv_trying} = ${pv_try}; then
 		echo Pantavisor boots checkpoint revision ${pv_rev} after failed try-boot of revision: ${pv_try}
 		setenv pv_trying
-		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
+		if test "${pv_trying_store}" = "saveenv"; then
+			# a failed saveenv (env stored nowhere) must not stop the boot
+			saveenv
+		else
+			env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
+			if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
+		fi
 		setenv boot_rev ${pv_rev}
 	else
 		echo Pantavisor boots try-boot revision: ${pv_try}
 		setenv pv_trying ${pv_try}
-		env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
-		if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
+		if test "${pv_trying_store}" = "saveenv"; then
+			saveenv
+		else
+			env export ${envloadaddr} pv_trying; setenv pv_env_size ${filesize};
+			if test "${pv_is_ubi}" != "1"; then save ${devtype} ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} ${pv_env_save} ${pv_env_size}; fi
+		fi
 		setenv boot_rev ${pv_trying}
 	fi
 else
