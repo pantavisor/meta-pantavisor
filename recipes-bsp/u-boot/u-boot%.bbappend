@@ -13,6 +13,9 @@ PV_MACHINE_UBOOT_CONFIGS:qemumips ?= "file://pv.qemumips.cfg"
 UBOOT_CONFIG:mc-tezi-recovery:colibri-imx6ull = "rawnand recoverytezi"
 
 PV_BOOT_OEMARGS ?= ""
+# Where the boot script keeps pv_trying: "saveenv" = U-Boot's saved env,
+# empty = the script's default (pv.env on mmc, saveenv on UBI).
+PV_BOOT_TRYING_STORE ?= ""
 
 SRC_URI += " \
 	file://boot.cmd.pvgeneric \
@@ -68,5 +71,10 @@ do_deploy:append() {
 	cat ${WORKDIR}/oemEnv.txt | \
 		sed -e 's/@@PV_BOOT_OEMARGS@@/${PV_BOOT_OEMARGS}/' \
 		> ${WORKDIR}/oemEnv.txt.final
+	# only when set: an empty pv_trying_store= would delete a value a
+	# downstream U-Boot already set
+	if [ -n "${PV_BOOT_TRYING_STORE}" ]; then
+		echo "pv_trying_store=${PV_BOOT_TRYING_STORE}" >> ${WORKDIR}/oemEnv.txt.final
+	fi
 	install -D -m 644 ${WORKDIR}/oemEnv.txt.final ${DEPLOYDIR}/oemEnv.txt
 }
