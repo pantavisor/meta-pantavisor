@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: e82db4ef75d390cd9e4a06b8caf0f67668ddea94
+        commit: 114dda1a7639cac34e4e63c352e433d2d011a39c
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -57,10 +57,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 3a3d07f625aee7b87ea1026526b756447c357652
+        commit: 4fb7016a07507683359ebd620f1951fd5ea44bfa
     meta-pantavisor:
     meta-virtualization:
-        commit: ee1ec1ee542389a3fc3692fdd232f9dd86c849a5
+        commit: c141b3cd60ad3a1bbab22b4884742d4c082beda6
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:
