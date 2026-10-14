@@ -115,6 +115,12 @@ off `${devtype}` (see below).
      `pv_trying` changes (try-boot and fallback). If `saveenv` fails, the boot
      continues. A garbage or erased environment only means `saveenv` never
      ran, so `pv_trying` is simply unset.
+
+     To see the current values, stop autoboot and run at the U-Boot prompt:
+
+     ```
+     printenv pv_trying_store pv_trying pv_try pv_rev
+     ```
    - **Opting in on mmc**, in the machine or build config:
 
      ```
