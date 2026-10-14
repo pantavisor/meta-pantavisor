@@ -113,6 +113,12 @@ off `${devtype}` (see below).
      the script saves to `/pv.env` when `fstype` reports `ext4`, and keeps
      `pv.env` on FAT. To check on a board, `ls -l /storage/pv.env` after a
      try-boot: the file is written by U-Boot and dated 1970.
+   - **Telling pantavisor.** On mmc the script passes
+     `PV_BOOTLOADER_TRYING_ENV=part:${pv_bootpart}:/pv.env` on the kernel
+     command line, so pantavisor can clear `pv_trying` in that file when a
+     devmode reboot re-arms a try (see the
+     [`PV_BOOTLOADER_TRYING_ENV` reference](../../pantavisor/reference/pantavisor-configuration.md)).
+     To check on a board: `tr ' ' '\n' < /proc/cmdline | grep PV_BOOTLOADER_TRYING_ENV`.
 
 7. **Boot the FIT.** Tries `/trails/${boot_rev}/bsp/pantavisor.fit`. If
    present, selects a config node (`name_fit_config`) and `bootm`s it. The
