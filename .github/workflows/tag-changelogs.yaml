@@ -16,7 +16,8 @@ name: "ontag: generate changelog and release notes"
 #      real download hashes instead of the tag's predicted URLs.
 #
 # The build artifacts are not attached to GitHub Releases — they live on S3
-# and the changelog Downloads table links to them.
+# and the changelog Downloads table links to them. The SDKs are the
+# exception: buildkas-sdk.yaml attaches them (creating the release if needed).
 #
 # Manual re-run via workflow_dispatch is supported for cases where S3 wasn't
 # yet populated when the workflow first fired.

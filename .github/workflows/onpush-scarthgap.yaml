@@ -58,19 +58,16 @@ jobs:
             configs: kas/build-configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 1
           - machine_name: radxa-rock5a-scarthgap
             configs: kas/build-configs/release/radxa-rock5a-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
     uses: ./.github/workflows/buildkas-target.yaml
     with:
       configs: ${{ matrix.configs }}
       machine_name: ${{ matrix.machine_name }}
       build_target: ${{ matrix.build_target }}
       output: ${{ matrix.output }}
-      sdk: ${{ matrix.sdk }}
     secrets: inherit
 
   build-docker:
@@ -83,7 +80,6 @@ jobs:
       machine_name: docker-x86_64-scarthgap
       build_target: pantavisor-appengine-distro
       output: "pantavisor-appengine-distro-*.tar.gz"
-      sdk: 0
     secrets: inherit
 
   scope-docker:

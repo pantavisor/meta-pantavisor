@@ -1,0 +1,6 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/docker.yaml
+
+machine: docker-armv7

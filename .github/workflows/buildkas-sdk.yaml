@@ -1,0 +1,111 @@
+name: 'Build SDK'
+
+on:
+  workflow_call:
+    inputs:
+      sdk_name:
+        description: 'Architecture the SDK targets (x86_64, armv8, armv7); names the installer'
+        required: true
+        type: string
+      configs:
+        required: true
+        type: string
+      publish:
+        description: 'Attach the installer to the GitHub Release named after the triggering tag'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    env:
+     TMPDIR : "tmp-scarthgap-sdk"
+    runs-on: ["bsp-builder"]
+    container:
+      image: ghcr.io/pantacor/kas/kas:next-v7
+      volumes:
+        - shared:/shared
+      options: --user root
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # a persisted GITHUB_TOKEN header would shadow the private-repo .netrc
+          persist-credentials: false
+      - name: Fetch tags
+        run: |
+          git config --global --add safe.directory '*'
+          git fetch --tags --force --depth=1
+      - name: setup workspace
+        run: |
+          chown -R builder:builder $RUNNER_WORKSPACE
+          chown -R builder:builder /__w
+          mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
+          su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $GITHUB_SHA && git reset --hard $GITHUB_SHA && rm -rf build/ && git clean -f -f -d -x "
+          git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      # Private source repositories (pv-mqtt-sdk) are fetched over HTTPS with
+      # a read-only token; kas copies NETRC_FILE into the build's HOME. Their
+      # SRCREVs resolve at parse time, so even this build needs it.
+      - name: git credentials
+        env:
+          PRIVATE_REPOS_TOKEN: ${{ secrets.PRIVATE_REPOS_TOKEN }}
+        run: |
+          umask 077
+          : > ~builder/.netrc
+          if [ -n "$PRIVATE_REPOS_TOKEN" ]; then
+            printf 'machine github.com login x-access-token password %s\n' "$PRIVATE_REPOS_TOKEN" > ~builder/.netrc
+          fi
+          chown builder:builder ~builder/.netrc
+
+      - name: build sdk
+        run: |
+          su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk pv-sdk'"
+
+      - name: collect installer
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          SDK_NAME: ${{ inputs.sdk_name }}
+        run: |
+          chmod -R 777 $GITHUB_WORKSPACE
+          mkdir -p sdk
+          installer=$(find build/${{ env.TMPDIR }}/deploy/sdk/ -name "pv-sdk-*.sh" | head -n 1)
+          [ -n "$installer" ] || { echo "no pv-sdk installer in deploy/sdk" >&2; exit 1; }
+          # Branch names may contain "/", which cannot appear in an asset name.
+          cp "$installer" "sdk/pv-sdk-${REF_NAME//\//-}-${SDK_NAME}.sh"
+          ls -l sdk
+
+      - name: Archive installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: pv-sdk-${{ inputs.sdk_name }}
+          path: sdk/
+
+      - name: remove git credentials
+        if: always()
+        run: rm -f ~builder/.netrc
+
+  publish:
+    needs: build
+    if: inputs.publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: pv-sdk-${{ inputs.sdk_name }}
+          path: sdk/
+      - name: Attach to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # tag-changelogs.yaml runs once the tag build finishes, so the
+          # release usually does not exist yet; it fills in the notes later.
+          # The other machines' publish jobs race to create it too: a lost
+          # race is harmless, and any real failure surfaces in the upload.
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "" || true
+          fi
+          gh release upload "$TAG" sdk/*.sh --repo "$GITHUB_REPOSITORY" --clobber

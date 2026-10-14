@@ -1,23 +1,23 @@
 ---
 title: Add Your Application
 sidebar_position: 21
-description: Two ways to turn an application into a Pantavisor container — pull an existing OCI image with pvr, or bake it into the BSP as a Yocto recipe.
+description: Three ways to turn an application into a Pantavisor container — pull an existing OCI image with pvr, cross-compile it with the container SDK, or bake it into the BSP as a Yocto recipe.
 ---
 
 Every Pantavisor app is an LXC container with a `run.json` manifest,
 versioned in the device's [revision trail](../../../overview/glossary.md#revision).
-There are two ways to get your application into that shape, and which one
+There are three ways to get your application into that shape, and which one
 you want depends on what you're starting from.
 
 ## Which route do I need?
 
-| | Already have a Docker/OCI image | Building the BSP image itself |
-|---|---|---|
-| **Route** | Pull it with `pvr` | Wrap it as a Yocto recipe |
-| **Needs Yocto?** | No | Yes |
-| **Speed** | Minutes | A full BitBake build |
-| **Where it lives** | Added to a device's revision trail directly | Part of the reproducible BSP build, tracked in this layer's git history |
-| **Use when** | You're deploying to a device you already have running | You're building/customizing images for a fleet, or the app must ship inside the initial image |
+| | Already have a Docker/OCI image | Have source code, no image | Building the BSP image itself |
+|---|---|---|---|
+| **Route** | Pull it with `pvr` | Cross-compile with the container SDK | Wrap it as a Yocto recipe |
+| **Needs Yocto?** | No | No (prebuilt SDK) | Yes |
+| **Speed** | Minutes | Minutes | A full BitBake build |
+| **Where it lives** | Added to a device's revision trail directly | A `.pvrexport.tgz` you deploy with `pvr` or pvtx | Part of the reproducible BSP build, tracked in this layer's git history |
+| **Use when** | You're deploying to a device you already have running | Your app is C/C++ (or anything with a Makefile) and not containerized yet | You're building/customizing images for a fleet, or the app must ship inside the initial image |
 
 <div style="display: flex; justify-content: center;">
 
@@ -61,7 +61,23 @@ pvr post http://<device-ip>:12368
 Full walkthrough, including scanning for the device, private-registry auth,
 and verifying the deploy: [Install with the pvr CLI](./install/local-pvr.md).
 
-## Route 2 — Bake it into the BSP as a Yocto recipe
+## Route 2 — Cross-compile with the container SDK
+
+Each release ships a prebuilt SDK per architecture (x86_64, aarch64, 32-bit
+ARM): a cross toolchain plus `pv-mkpvrexport`, which packs a rootfs
+directory into a signed `.pvrexport.tgz`.
+
+```bash
+. ~/pv-sdk-armv8/environment-setup-*
+mkdir -p rootfs/usr/bin
+$CC -o rootfs/usr/bin/myapp myapp.c
+pv-mkpvrexport --base rootfs myapp -- --config=Entrypoint=/usr/bin/myapp
+```
+
+Installing the SDK, every `pv-mkpvrexport` option, and deploying the result:
+[Build Containers with the SDK](./container-sdk.md).
+
+## Route 3 — Bake it into the BSP as a Yocto recipe
 
 If you're building this layer's images and want the app shipped as part of
 the reproducible BSP build (not added to a device after the fact), wrap it

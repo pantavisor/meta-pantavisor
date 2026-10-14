@@ -3,7 +3,7 @@ sidebar_position: 12
 ---
 # Pantavisor Development
 
-Use `kas/with-workspace.yaml` to develop pantavisor source locally while rebuilding through the Yocto layer.
+Use `kas/with-workspace.yaml` to develop pantavisor source locally while rebuilding through the Yocto layer. To only compile pantavisor, without a Yocto build, use the [Pantavisor SDK](pantavisor-sdk.md).
 
 ## Initial Setup
 

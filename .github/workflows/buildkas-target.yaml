@@ -21,9 +21,6 @@ on:
       output:
         required: false
         type: string
-      sdk:
-        required: false
-        type: number
       ref:
         description: 'Specific git ref (commit SHA, branch, tag) to build; defaults to the triggering SHA'
         required: false
@@ -81,11 +78,6 @@ jobs:
            # once options follow the config positional.
            su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas build${TARGETS} ${{ inputs.configs }}${KEEP_GOING}"
 
-      - name: build with sdk
-        if: inputs.sdk == 1
-        run: |
-           su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
-
       - name: prepare files for distribution
         if: always()
         run: |
@@ -108,8 +100,6 @@ jobs:
 
           find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.txt" -exec cp {} . \; 2>/dev/null || true
           find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.patch" -exec cp {} . \; 2>/dev/null || true
-
-          find build/${{ env.TMPDIR }}/deploy/sdk/ -name "panta*.sh" -exec cp {} . \; 2>/dev/null || true
           ls -l .
 
 ## File distribution

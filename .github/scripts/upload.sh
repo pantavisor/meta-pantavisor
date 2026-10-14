@@ -101,18 +101,6 @@ for FILE in "${FILES_BSP[@]}"; do
     fi
 done
 
-FILES_SDK=( sdk/panta*.sh )
-for FILE in "${FILES_SDK[@]}"; do
-    if [ -f "$FILE" ]; then
-        FILENAME=$(basename "$FILE")
-        echo "processing: $FILENAME"
-        
-		SDK_FILE="$FILENAME"
-        SDK_CSUM=$(sha256sum "$FILE" | cut -d' ' -f1)
-        aws s3 cp "$FILE" "s3://$AWS_S3_BUCKET/$TAG/$MACHINE_NAME/$FILENAME"
-    fi
-done
-
 RELEASE_TYPE=""
 if [[ "$TAG" == *"-rc"* ]]; then
     RELEASE_TYPE="release-candidate"
@@ -141,13 +129,6 @@ NEW_DEVICE=$(jq -n \
    + {full_image: {url: $url1, sha256: $IMAGES_CSUM},
    pvrexports: { url: $url2, sha256: $PVEXPORTS_CSUM },
    bsp: {url: $url3, sha256: $BSP_CSUM} }')
-
-if [ -n "$SDK_FILE" ]; then
-    NEW_DEVICE=$(echo "$NEW_DEVICE" | jq \
-      --arg url "$AWS_S3_URL/$TAG/$MACHINE_NAME/$SDK_FILE" \
-      --arg sha "$SDK_CSUM" \
-      '. + {sdk: {url: $url, sha256: $sha}}')
-fi
 
 TIMESTAMP=$(date -u --iso-8601=minutes)
 

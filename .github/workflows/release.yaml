@@ -21,84 +21,87 @@ jobs:
             configs: kas/build-configs/release/sunxi-orange-pi-3lts-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
           - machine_name: sunxi-orange-pi-r1-scarthgap
             configs: kas/build-configs/release/sunxi-orange-pi-r1-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
           - machine_name: sunxi-bananapi-m2-berry-scarthgap
             configs: kas/build-configs/release/sunxi-bananapi-m2-berry-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 1
           - machine_name: imx8qxp-b0-mek-scarthgap
             configs: kas/build-configs/release/imx8qxp-b0-mek-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-imx8qxp-b0-mek.tar.gz"
-            sdk: 0
           - machine_name: rpi-scarthgap
             configs: kas/build-configs/release/rpi-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
           - machine_name: rpi-mqtt-sdk-scarthgap
             configs: kas/build-configs/release/rpi-mqtt-sdk-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
           - machine_name: colibri-imx6ull-scarthgap
             configs: kas/build-configs/release/colibri-imx6ull-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-colibri-imx6ull.tar.gz"
-            sdk: 0
           - machine_name: radxa-rock5a-scarthgap
             configs: kas/build-configs/release/radxa-rock5a-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
           - machine_name: rockchip-orangepi-5b-scarthgap
             configs: kas/build-configs/release/rockchip-orangepi-5b-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-orangepi-5b.tar.gz"
-            sdk: 0
           - machine_name: imx8mn-var-som-scarthgap
             configs: kas/build-configs/release/imx8mn-var-som-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-imx8mn-var-som.tar.gz"
-            sdk: 0
           - machine_name: imx8mm-var-dart-scarthgap
             configs: kas/build-configs/release/imx8mm-var-dart-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-imx8mm-var-dart.tar.gz"
-            sdk: 0
           - machine_name: verdin-imx8mm-scarthgap
             configs: kas/build-configs/release/verdin-imx8mm-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: 
             output: "pv-flash-bundle-verdin-imx8mm.tar.gz"
-            sdk: 0
           - machine_name: docker-x86_64-scarthgap
             configs: kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-appengine-distro
             output: "pantavisor-appengine-distro-*.tar.gz"
-            sdk: 0
           - machine_name: docker-armv8-scarthgap
             configs: kas/build-configs/release/docker-armv8-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-appengine-distro
             output: "pantavisor-appengine-distro-*.tar.gz"
-            sdk: 0
           - machine_name: 96boards-orangepi-i96-scarthgap
             configs: kas/build-configs/release/96boards-orangepi-i96-scarthgap.yaml:kas/build-configs/shared-vols.yaml
             build_target: pantavisor-starter
             output: "pantavisor-starter*.rootfs.wic*"
-            sdk: 0
     uses: ./.github/workflows/buildkas-upload.yaml
     with:
       configs: ${{ matrix.configs }}
       machine_name: ${{ matrix.machine_name }}
       build_target: ${{ matrix.build_target }}
       output: ${{ matrix.output }}
-      sdk: ${{ matrix.sdk }}
+    secrets: inherit
+
+  build-sdk:
+    name: "sdk (${{ matrix.sdk_name }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sdk_name: x86_64
+            configs: kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
+          - sdk_name: armv8
+            configs: kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
+          - sdk_name: armv7
+            configs: kas/machines/docker-armv7.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
+    uses: ./.github/workflows/buildkas-sdk.yaml
+    with:
+      configs: ${{ matrix.configs }}
+      sdk_name: ${{ matrix.sdk_name }}
+      publish: true
     secrets: inherit
 
   pvtest-local:

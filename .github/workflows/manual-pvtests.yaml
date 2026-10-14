@@ -49,7 +49,6 @@ jobs:
       machine_name: docker-x86_64-scarthgap
       build_target: pantavisor-appengine-distro
       output: pantavisor-appengine-distro-*.tar.gz
-      sdk: 0
       ref: ${{ inputs.commit }}
     secrets: inherit
 

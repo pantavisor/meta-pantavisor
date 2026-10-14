@@ -38,10 +38,11 @@ committing to the Yocto/BitBake build guide below.
 9. [Managing Layers with repo](repo-manifest.md) — fold meta-pantavisor into an existing `repo`/`manifest.xml` multi-layer workflow
 10. [Supported Devices](supported-device.md) — machines supported and built by CI
 11. [Pantavisor Development](pantavisor-development.md) — build against a local pantavisor source checkout using the workspace overlay
-12. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
-13. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
-14. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
-15. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
+12. [Pantavisor SDK](pantavisor-sdk.md) — compile Pantavisor with the prebuilt SDK, no Yocto build
+13. [Container Development](container-development.md) — author and iterate on app containers: recipe structure, pvrexport, and local testing
+14. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
+15. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
+16. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
 
 ## Continuous Integration
 

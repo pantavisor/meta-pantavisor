@@ -14,12 +14,11 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
     {
       "name":         "raspberrypi-armv8",
       "display_name": "Raspberry Pi 3 / 4 (64-bit)",
-      "description":  "64-bit ARMv8 build for the Raspberry Pi 3 and 4. Ships an SDK.",
+      "description":  "64-bit ARMv8 build for the Raspberry Pi 3 and 4.",
       "config":       "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:...",
       "workflows":    ["manual", "tag", "onpush"],
       "build_target": "pantavisor-starter",
-      "output":       "pantavisor-starter*.rootfs.wic*",
-      "sdk":          1
+      "output":       "pantavisor-starter*.rootfs.wic*"
     }
   ]
 }
@@ -28,6 +27,7 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | Field | Required | Description |
 |---|---|---|
 | `yocto_branch` | yes | Yocto release name; used as a suffix in all generated file names |
+| `sdk_machines` | no | Top-level list of `docker-<arch>` machines to build the [SDK](builds.md#buildkas-sdkyaml--sdk) for, on tags (attached to the GitHub Release) and in `manual-sdk-scarthgap.yaml`. The SDK is named `<arch>`; the generators reject other machine names. They need no `machines` entry |
 | `name` | yes | Machine identifier; combined with `yocto_branch` in workflow jobs |
 | `display_name` | no | Human-readable board name for the [downloads list](../supported-device.md#downloading-images); copied into `releases.json` by `upload.sh` (falls back to the suffixed machine slug) |
 | `description` | no | One- to three-sentence board blurb for the downloads list; copied into `releases.json` by `upload.sh` when non-empty |
@@ -35,7 +35,6 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | `workflows` | yes | Which workflow types to generate: `manual`, `onpush`, `tag` |
 | `build_target` | no | BitBake target (default: `pantavisor-starter`) |
 | `output` | no | Glob for artifacts to collect (default: `pantavisor-starter*.rootfs.wic*`) |
-| `sdk` | no | Set to `1` to also run `bitbake -c populate_sdk` |
 | `pvtest` | no | pvtest scopes (`local`, `remote`) onpush may run against this machine's build; see [CI coverage](builds.md#ci-coverage) |
 
 ## Workflow Types
@@ -45,6 +44,8 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | `tag` | `release.yaml` | tag push via `tag-scarthgap.yaml` | `buildkas-upload.yaml` (build + S3) |
 | `onpush` | `onpush-scarthgap.yaml` | push to master | `buildkas-target.yaml` (build only) |
 | `manual` | `manual-scarthgap.yaml` | `workflow_dispatch` | `buildkas-target.yaml` (build only) |
+
+`sdk_machines` are added to `release.yaml` (job `build-sdk`) and to `manual-sdk-scarthgap.yaml`.
 
 Machines with only `["manual"]` are never built automatically. `colibri-imx6ull` is an example — its NAND flash workflow hasn't been integrated into automated release pipelines. `raspberrypi-armv8` is another: its ARMv8 coverage on `onpush` is provided by `radxa-rock5a` instead.
 

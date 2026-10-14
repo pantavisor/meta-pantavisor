@@ -39,7 +39,6 @@ jobs:
       configs: ${{ steps.lookup.outputs.configs }}
       build_target: ${{ steps.lookup.outputs.build_target }}
       output: ${{ steps.lookup.outputs.output }}
-      sdk: ${{ steps.lookup.outputs.sdk }}
     steps:
       - uses: actions/checkout@v6
       - id: lookup
@@ -47,11 +46,9 @@ jobs:
           machine="${{ inputs.machine }}"
           build_target=$(jq -r ".machines[] | select(.name == \"$machine\") | .build_target // \"pantavisor-starter\"" .github/machines.json)
           output=$(jq -r ".machines[] | select(.name == \"$machine\") | .output // \"pantavisor-starter*.rootfs.wic*\"" .github/machines.json)
-          sdk=$(jq -r ".machines[] | select(.name == \"$machine\") | if .sdk == 1 then 1 else 0 end" .github/machines.json)
           echo "configs=kas/build-configs/release/$machine-scarthgap.yaml:kas/build-configs/shared-vols.yaml" >> $GITHUB_OUTPUT
           echo "build_target=$build_target" >> $GITHUB_OUTPUT
           echo "output=$output" >> $GITHUB_OUTPUT
-          echo "sdk=$sdk" >> $GITHUB_OUTPUT
 
   build:
     needs: resolve
@@ -61,5 +58,4 @@ jobs:
       machine_name: ${{ inputs.machine }}-scarthgap
       build_target: ${{ needs.resolve.outputs.build_target }}
       output: ${{ needs.resolve.outputs.output }}
-      sdk: ${{ fromJSON(needs.resolve.outputs.sdk) }}
     secrets: inherit

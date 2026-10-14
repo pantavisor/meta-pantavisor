@@ -3,6 +3,14 @@
 
 import json
 
+
+def sdk_name(machine):
+    # SDK outputs are named after the architecture; the manual SDK workflow
+    # rebuilds the kas machine path as "docker-<arch>".
+    if not machine.startswith("docker-"):
+        raise SystemExit(f"sdk_machines: {machine} must be a docker-<arch> machine")
+    return machine[len("docker-"):]
+
 with open(".github/machines.json") as f:
     data = json.load(f)
 
@@ -88,13 +96,11 @@ for m in machines:
     name = m["name"]
     build_target = m.get("build_target", "pantavisor-starter")
     output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
-    sdk = 1 if m.get("sdk") == 1 else 0
     release_lines += [
         f"          - machine_name: {name}-{branch}",
         f"            configs: kas/build-configs/release/{name}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
         f"            build_target: {build_target}",
         f'            output: "{output}"',
-        f"            sdk: {sdk}",
     ]
 
 release_lines += [
@@ -104,9 +110,33 @@ release_lines += [
     "      machine_name: ${{ matrix.machine_name }}",
     "      build_target: ${{ matrix.build_target }}",
     "      output: ${{ matrix.output }}",
-    "      sdk: ${{ matrix.sdk }}",
     "    secrets: inherit",
 ]
+
+sdk_machines = data.get("sdk_machines", [])
+if sdk_machines:
+    release_lines += [
+        "",
+        "  build-sdk:",
+        '    name: "sdk (${{ matrix.sdk_name }})"',
+        "    strategy:",
+        "      fail-fast: false",
+        "      matrix:",
+        "        include:",
+    ]
+    for name in sdk_machines:
+        release_lines += [
+            f"          - sdk_name: {sdk_name(name)}",
+            f"            configs: kas/machines/{name}.yaml:kas/{branch}.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml",
+        ]
+    release_lines += [
+        "    uses: ./.github/workflows/buildkas-sdk.yaml",
+        "    with:",
+        "      configs: ${{ matrix.configs }}",
+        "      sdk_name: ${{ matrix.sdk_name }}",
+        "      publish: true",
+        "    secrets: inherit",
+    ]
 
 release_lines += PVTEST_JOBS
 release_lines += SUMMARY_JOB
