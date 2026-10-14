@@ -10,7 +10,8 @@ Containers are versioned as part of the device's **revision trail** (the `trails
 
 This section covers the complete lifecycle of managing applications on a Pantavisor device:
 
-*   **[Add Your Application](./add-application.md)**: Pick a path — pull an existing OCI image with `pvr`, or bake it into the BSP as a Yocto recipe.
+*   **[Add Your Application](./add-application.md)**: Pick a path — pull an existing OCI image with `pvr`, cross-compile it with the container SDK, or bake it into the BSP as a Yocto recipe.
+*   **[Build Containers with the SDK](./container-sdk.md)**: Install the prebuilt SDK for your device's architecture and pack your build into a signed pvrexport.
 *   **[Install Applications](./install/)**: Add containerized services to your device using the `pvr` CLI directly, through the pvtx local web UI, or remotely via Pantahub.
 *   **[Configure Applications](./configure/)**: Customize container behaviour by editing the `_config/<container>/` overlay tree in your local `pvr` repository, then deploying the new revision.
 *   **[View Applications](./view/)**: Monitor running containers, inspect health and auto-recovery state, and stream logs — on-device with `pvcontrol` and `lxc-ls`, or through the pvtx web UI.

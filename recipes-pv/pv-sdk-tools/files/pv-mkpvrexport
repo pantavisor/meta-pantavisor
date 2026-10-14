@@ -1,0 +1,176 @@
+#!/bin/sh
+# Mirrors IMAGE_CMD:pvrexportit in container-pvrexport.bbclass; keep the two in
+# step so a container packed here matches one built by the layer.
+set -e
+
+usage() {
+	cat <<EOF
+Usage: pv-mkpvrexport [options] <rootfs-dir> <name> [-- <extra pvr app add args>]
+
+Pack <rootfs-dir> as Pantavisor container <name>, signed, into
+<name>.pvrexport.tgz. <rootfs-dir> is not modified.
+
+Options:
+  -o, --output FILE        output file (default: ./<name>.pvrexport.tgz)
+  -b, --base               lay <rootfs-dir> over the SDK's base rootfs
+                           (busybox, libc, libgcc and libstdc++)
+      --args-json FILE     container args (pvr app add --arg-json)
+      --config-json FILE   container config (pvr app add --config-json)
+      --mdev-json FILE     mdev rules (default: every device 0:0 666)
+      --no-mdev            do not write the default mdev.json
+      --services-json FILE services.json for the container
+      --network-json FILE  merged into run.json as "network"
+      --group NAME         Pantavisor group (default: root)
+      --roles "R1 R2"      PV_ROLES for the container
+      --comp xz|lz4        squashfs compression (default: xz)
+      --keys FILE          pvs keys tarball to sign with (default: the
+                           Pantacor developer keys shipped in this SDK)
+  -h, --help
+
+Anything after "--" goes to "pvr app add", e.g.
+  pv-mkpvrexport -b ./rootfs myapp -- --config=Entrypoint=/usr/bin/myapp
+EOF
+}
+
+die() {
+	echo "pv-mkpvrexport: $*" >&2
+	exit 1
+}
+
+abspath() {
+	[ -e "$1" ] || die "no such file: $1"
+	echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+}
+
+datadir="$(cd "$(dirname "$0")/../share/pv-sdk" 2>/dev/null && pwd)" || datadir=""
+
+output=""
+base=0
+args_json=""
+config_json=""
+mdev_json=""
+auto_mdev=1
+services_json=""
+network_json=""
+group="root"
+roles=""
+comp="xz"
+keys="${datadir:+$datadir/pvs.defaultkeys.tar.gz}"
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-o|--output) output="$2"; shift 2 ;;
+	-b|--base) base=1; shift ;;
+	--args-json) args_json="$(abspath "$2")"; shift 2 ;;
+	--config-json) config_json="$(abspath "$2")"; shift 2 ;;
+	--mdev-json) mdev_json="$(abspath "$2")"; shift 2 ;;
+	--no-mdev) auto_mdev=0; shift ;;
+	--services-json) services_json="$(abspath "$2")"; shift 2 ;;
+	--network-json) network_json="$(abspath "$2")"; shift 2 ;;
+	--group) group="$2"; shift 2 ;;
+	--roles) roles="$2"; shift 2 ;;
+	--comp) comp="$2"; shift 2 ;;
+	--keys) keys="$(abspath "$2")"; shift 2 ;;
+	-h|--help) usage; exit 0 ;;
+	--) die "\"--\" must follow <rootfs-dir> <name>" ;;
+	-*) die "unknown option: $1 (see --help)" ;;
+	*) break ;;
+	esac
+done
+
+[ $# -ge 2 ] || { usage >&2; exit 2; }
+rootfs="$1"
+name="$2"
+shift 2
+if [ $# -gt 0 ]; then
+	[ "$1" = "--" ] || die "unexpected argument: $1"
+	shift
+fi
+
+[ -d "$rootfs" ] || die "not a directory: $rootfs"
+rootfs="$(abspath "$rootfs")"
+output="$(cd "$(dirname "${output:-./$name.pvrexport.tgz}")" && pwd)/$(basename "${output:-$name.pvrexport.tgz}")"
+
+case "$comp" in
+xz) format_opts="-comp xz" ;;
+lz4) format_opts="-comp lz4 -Xhc" ;;
+*) die "--comp must be xz or lz4" ;;
+esac
+
+[ -n "$keys" ] && [ -f "$keys" ] || die "no signing keys; pass --keys"
+if [ "$base" = 1 ]; then
+	[ -f "$datadir/base-rootfs.tar.gz" ] || die "this SDK ships no base rootfs"
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT INT TERM
+
+# Built as an unprivileged user, so the rootfs is staged in a copy (it gets
+# lxc's mountpoints added) and squashed with -all-root: inside the container
+# everything is owned by root, as it is when bitbake packs under pseudo.
+staging="$work/rootfs"
+mkdir -p "$staging"
+if [ "$base" = 1 ]; then
+	tar -C "$staging" -xzf "$datadir/base-rootfs.tar.gz" --no-same-owner
+fi
+cp -a "$rootfs/." "$staging/"
+mkdir -p "$staging/proc" "$staging/sys" "$staging/dev" "$staging/run" "$staging/tmp"
+chmod 1777 "$staging/tmp"
+
+export PVR_CONFIG_DIR="$work/pvrconfig"
+export PVR_DISABLE_SELF_UPGRADE=1
+mkdir -p "$PVR_CONFIG_DIR"
+tar -C "$PVR_CONFIG_DIR" -xzf "$keys" --no-same-owner
+
+if [ -n "$roles" ]; then
+	roles_array=$(echo "$roles" | tr ' ' '\n' | sed '/^$/d' | jq -R . | jq -s .)
+	if [ -n "$args_json" ]; then
+		jq --argjson r "$roles_array" '. + {"PV_ROLES": $r}' "$args_json" > "$work/args.json"
+	else
+		jq -n --argjson r "$roles_array" '{"PV_ROLES": $r}' > "$work/args.json"
+	fi
+	args_json="$work/args.json"
+fi
+
+mkdir "$work/state"
+cd "$work/state"
+pvr init
+pvr app add \
+	--force \
+	--type rootfs \
+	--from "$staging" \
+	--group "$group" \
+	${args_json:+--arg-json "$args_json"} \
+	${config_json:+--config-json "$config_json"} \
+	--format-options="$format_opts -all-root" \
+	"$@" \
+	"$name"
+pvr add
+pvr commit
+
+if [ -n "$mdev_json" ]; then
+	cp -f "$mdev_json" "$name/mdev.json"
+elif [ "$auto_mdev" = 1 ]; then
+	cat > "$name/mdev.json" <<EOF
+{
+    "rules": [
+        ".* 0:0 666"
+    ]
+ }
+EOF
+fi
+if [ -n "$services_json" ]; then
+	cp -f "$services_json" "$name/services.json"
+fi
+if [ -n "$network_json" ]; then
+	jq --slurpfile network "$network_json" '. + { "network": $network[0] }' \
+		"$name/run.json" > "$name/run.json.tmp"
+	mv "$name/run.json.tmp" "$name/run.json"
+fi
+pvr add
+pvr commit
+pvr sig add --noconfig --part "$name"
+pvr add
+pvr commit
+pvr export "$output"
+echo "pv-mkpvrexport: wrote $output"

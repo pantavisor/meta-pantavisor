@@ -15,9 +15,6 @@ on:
       output:
         required: false
         type: string
-      sdk:
-        required: false
-        type: number
 
 jobs:
   build:
@@ -63,11 +60,6 @@ jobs:
         run: |
          BUILD_TARGET="${{ inputs.build_target }}"
          su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas build ${{ inputs.configs }} ${BUILD_TARGET:+--target $BUILD_TARGET}"
-      - name: build-sdk
-        run: |
-           if [ "${{ inputs.sdk }}" = 1 ]; then
-             su - builder -c "cd $GITHUB_WORKSPACE && env && NETRC_FILE=\$HOME/.netrc kas shell ${{ inputs.configs }} -c 'bitbake -c populate_sdk ${{ inputs.build_target }}'"
-           fi
       # Organize file for upload.sh
       - name: copy files
         run: |
@@ -87,19 +79,6 @@ jobs:
          if [ -d "$UNPACKED_DIR" ]; then
            mkdir -p pvtest-distro
            cp -r "${UNPACKED_DIR}/." ./pvtest-distro/
-         fi
-
-
-         BUILD_SDK_DIR=$(ls -d build/${{ env.TMPDIR }}/deploy/sdk/ 2>/dev/null | head -n 1)
-
-         if [ -n "$BUILD_SDK_DIR" ] && [ -d "$BUILD_SDK_DIR" ]; then
-            FILES=$(find "$BUILD_SDK_DIR" -name "panta*.sh" 2>/dev/null)
-            if [ -n "$FILES" ]; then
-               mkdir -p sdk
-               echo "$FILES" | xargs -r -I {} cp {} sdk/
-            fi
-         else
-            echo "Warning: no sdk folder found - ignoring"
          fi
 
       - name: Archive pvtest distro (unpacked)

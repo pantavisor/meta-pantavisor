@@ -5,14 +5,14 @@ sidebar_position: 3
 
 ## Build Engines
 
-Two reusable workflows handle all builds. They share the same runner setup and KAS invocation but differ in what happens with the output.
+Two reusable workflows handle all image builds. They share the same runner setup and KAS invocation but differ in what happens with the output. A third, `buildkas-sdk.yaml`, builds the SDK.
 
 ### buildkas-target.yaml — development builds
 
 Used by `onpush-scarthgap.yaml`, `manual-scarthgap.yaml`, `schedule-pvtests.yaml`, and `manual-pvtests.yaml`.
 
 - Runs `kas build` inside the KAS container on a self-hosted runner.
-- Copies build artifacts to GitHub Actions artifacts (wic images, pvrexports, SDK, pvtest-distro).
+- Copies build artifacts to GitHub Actions artifacts (wic images, pvrexports, pvtest-distro).
 - **Does not upload to S3** and does not create a GitHub Release.
 
 ### buildkas-upload.yaml — release builds
@@ -21,6 +21,25 @@ Used by `release.yaml` (tag builds only).
 
 - Same build steps as `buildkas-target.yaml`.
 - Additionally calls `upload.sh` to push artifacts to S3 and update `releases.json`.
+
+### buildkas-sdk.yaml — SDK
+
+Used by `release.yaml` (tag builds, `publish: true`) and `manual-sdk-scarthgap.yaml` (`workflow_dispatch`, artifact only), for every machine in `sdk_machines` in `machines.json`.
+
+- Builds with `kas/machines/<machine>.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml`: the board distro (musl, board `PANTAVISOR_FEATURES`) on a board-less `docker-*` machine, in `build/tmp-scarthgap-sdk`.
+- Runs `bitbake -c populate_sdk pv-sdk` (recipe: `recipes-pv/images/pv-sdk.bb`).
+- Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv7`).
+- With `publish: true`, attaches it to the tag's GitHub Release, creating the release if `tag-changelogs.yaml` has not yet. SDKs never go to S3 or `releases.json`.
+
+Build one by hand from the Actions tab (**manual: sdk scarthgap**, choosing the `arch`), or locally:
+
+```bash
+./kas-container shell kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml \
+    -c "bitbake -c populate_sdk pv-sdk"
+ls build/tmp-scarthgap-sdk/deploy/sdk/pv-sdk-armv8-x86_64.sh
+```
+
+Using the SDK: [Build Containers with the SDK](../../getting-started/develop/application/container-sdk.md) and [Pantavisor SDK](../pantavisor-sdk.md).
 
 ### Runner environment
 
@@ -44,7 +63,7 @@ Every build produces some subset of the following:
 | `pantavisor-bsp-<machine>` | BSP pvrexport only | both |
 | `pvtest-distro-<machine>` | unpacked appengine distro directory | both |
 | `pv-flash-bundle-<machine>` | UUU factory flash bundle (`pv-flash-bundle-*.tar.gz`) — Toradex, Variscite, NXP MEK | both |
-| `sdk-artifact-<machine>` | Yocto SDK installer (`panta*.sh`) | both |
+| `pv-sdk-<arch>` | SDK installer (`pv-sdk-<ref>-<arch>.sh`) | `buildkas-sdk.yaml` |
 
 ## USB Factory-Flash Builds (Toradex, Variscite, NXP MEK, Rockchip)
 
@@ -145,11 +164,10 @@ Toradex flashing procedure, and
         {
           "name": "raspberrypi-armv8-scarthgap",
           "display_name": "Raspberry Pi 3 / 4 (64-bit)",
-          "description": "64-bit ARMv8 build for the Raspberry Pi 3 and 4. Ships an SDK.",
+          "description": "64-bit ARMv8 build for the Raspberry Pi 3 and 4.",
           "full_image": { "url": "https://.../029/raspberrypi-armv8-scarthgap/raspberrypi-armv8-scarthgap-029.tar.gz", "sha256": "<sha256>" },
           "pvrexports":  { "url": "https://.../pvexports-raspberrypi-armv8-scarthgap-029.tar.gz",                      "sha256": "<sha256>" },
-          "bsp":         { "url": "https://.../pantavisor-bsp-....pvrexport.tgz",                                      "sha256": "<sha256>" },
-          "sdk":         { "url": "https://.../panta-....sh",                                                           "sha256": "<sha256>" }
+          "bsp":         { "url": "https://.../pantavisor-bsp-....pvrexport.tgz",                                      "sha256": "<sha256>" }
         }
       ]
     }

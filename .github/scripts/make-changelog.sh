@@ -240,7 +240,7 @@ DOWNLOADS_SECTION="$(
         --arg type "$RELEASE_TYPE" --arg tag "$TAG" \
         --arg prev_type "$PREV_RELEASE_TYPE" --arg prev_tag "$PREV_TAG" \
         --arg shape_type "$SHAPE_RELEASE_TYPE" --arg shape_tag "$SHAPE_TAG" '
-        def render_row(predicted):
+        def render_row(predicted; sdk_col):
             "\n| " + .name +
             " | " + (
                 if (.full_image.url // "") != "" then
@@ -257,17 +257,22 @@ DOWNLOADS_SECTION="$(
                     "[" + (if predicted then "Pending" else "Download" end) + "](" + .bsp.url + ")" +
                     (if (.bsp.sha256 // "") != "" then "<br>`" + (.bsp.sha256[0:12]) + "…`" else "" end)
                 else "—" end) +
-            " | " + (
-                if (.sdk.url // "") != "" then
-                    "[" + (if predicted then "Pending" else "Download" end) + "](" + .sdk.url + ")" +
-                    (if (.sdk.sha256 // "") != "" then "<br>`" + (.sdk.sha256[0:12]) + "…`" else "" end)
-                else "—" end) +
+            (if sdk_col then
+                " | " + (
+                    if (.sdk.url // "") != "" then
+                        "[Download](" + .sdk.url + ")" +
+                        (if (.sdk.sha256 // "") != "" then "<br>`" + (.sdk.sha256[0:12]) + "…`" else "" end)
+                    else "—" end)
+            else "" end) +
             " |";
 
+        # CI stopped shipping SDKs; the column only appears when regenerating
+        # an older release whose releases.json entries still carry one.
         def render_table(entries; predicted):
-            "| Machine | Image | PV Exports | BSP | SDK |\n" +
-            "|---|---|---|---|---|" +
-            (entries | map(render_row(predicted)) | add // "");
+            ([entries[] | select((.sdk.url // "") != "")] | length > 0) as $sdk_col |
+            "| Machine | Image | PV Exports | BSP |" + (if $sdk_col then " SDK |" else "" end) + "\n" +
+            "|---|---|---|---|" + (if $sdk_col then "---|" else "" end) +
+            (entries | map(render_row(predicted; $sdk_col)) | add // "");
 
         def predicted_from(entries; from_tag):
             entries | map(
@@ -283,10 +288,6 @@ DOWNLOADS_SECTION="$(
                     },
                     bsp: {
                         url: (if (.bsp.url // "") != "" and ((.bsp.sha256 // "") != "") then (.bsp.url | gsub(from_tag; $tag)) else "" end),
-                        sha256: ""
-                    },
-                    sdk: {
-                        url: (if (.sdk.url // "") != "" then (.sdk.url | gsub(from_tag; $tag)) else "" end),
                         sha256: ""
                     }
                 }

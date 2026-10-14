@@ -46,7 +46,7 @@ For tag `T` (e.g. `028-rc7`):
 1. **Downloads** — every machine entry under `release-candidate.<T>` (or
    `stable.<T>`) in
    `https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json`,
-   rendered as a table with image, pvexports, BSP, and SDK download links plus
+   rendered as a table with image, pvexports, and BSP download links plus
    the first 12 chars of each `sha256`. Cells with empty URLs or hashes render
    as `—`. **In pre-tag mode** (see below) `releases.json` doesn't yet have an
    entry for `<T>`; the script falls back to the
@@ -302,9 +302,13 @@ to fall back on), the section renders as
 `_(no artifacts recorded in releases.json yet, and no previous release to predict from)_`.
 The script does not fail in either case.
 
-Note: BSP and SDK URLs from the predecessor carry forward unchanged in their
+Note: BSP URLs from the predecessor carry forward unchanged in their
 filename portion (those filenames don't embed the tag), so the predicted URL
-will be correct as long as the recipe's BSP/SDK output naming is stable
-across the release. If a release adds or removes a BSP/SDK output for a
+will be correct as long as the recipe's BSP output naming is stable
+across the release. If a release adds or removes a BSP output for a
 machine, regenerate the section in historical mode after the build to
 correct it.
+
+CI no longer builds or uploads SDKs, so new releases have no SDK column.
+Regenerating an older release whose `releases.json` entries still carry an
+`sdk` URL brings the column back for that table only.

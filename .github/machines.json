@@ -1,5 +1,6 @@
 {
 	"yocto_branch": "scarthgap",
+	"sdk_machines": ["docker-x86_64", "docker-armv8", "docker-armv7"],
 	"machines": [
 		{
 			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
@@ -19,9 +20,8 @@
 			"config": "kas/machines/sunxi-bananapi-m2-berry.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-bananapi-m2-berry",
 			"display_name": "Banana Pi M2 Berry",
-			"description": "Allwinner V40/A40i quad-core Cortex-A7 SBC with 1 GB RAM, Gigabit Ethernet, SATA and onboard Wi-Fi/Bluetooth. Ships a matching Yocto SDK. Boots Pantavisor from an SD card.",
-			"workflows": ["manual", "tag", "onpush"],
-			"sdk": 1
+			"description": "Allwinner V40/A40i quad-core Cortex-A7 SBC with 1 GB RAM, Gigabit Ethernet, SATA and onboard Wi-Fi/Bluetooth. Boots Pantavisor from an SD card.",
+			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
 			"config": "kas/machines/imx8qxp-b0-mek.yaml:kas/scarthgap.yaml:kas/scarthgap-nxp.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
@@ -37,9 +37,8 @@
 			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
 			"display_name": "Raspberry Pi 3 / 4 (64-bit)",
-			"description": "64-bit ARMv8 / AArch64 build for the Raspberry Pi 3 and 4. Ships a matching Yocto SDK. Boots Pantavisor from an SD card.",
-			"workflows": ["manual"],
-			"sdk": 1
+			"description": "64-bit ARMv8 / AArch64 build for the Raspberry Pi 3 and 4. Boots Pantavisor from an SD card.",
+			"workflows": ["manual"]
 		},
 		{
 			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",

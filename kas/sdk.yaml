@@ -1,0 +1,11 @@
+# Layered over a docker-* machine and bsp-base.yaml, so the SDK is built
+# with the board distro (musl, board PANTAVISOR_FEATURES): a pantavisor
+# compiled with it runs inside a board's initramfs.
+header:
+  version: 16
+
+local_conf_header:
+  # A separate TMPDIR: the docker machines' default build is the glibc
+  # appengine distro, and the two libcs cannot share one.
+  pv-sdk: |
+    TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-sdk"

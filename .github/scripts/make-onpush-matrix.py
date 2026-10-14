@@ -136,13 +136,11 @@ for m in hw_machines:
     name = m["name"]
     build_target = m.get("build_target", "pantavisor-starter")
     output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
-    sdk = 1 if m.get("sdk") == 1 else 0
     lines += [
         f"          - machine_name: {name}-{branch}",
         f"            configs: kas/build-configs/release/{name}-{branch}.yaml:kas/build-configs/shared-vols.yaml",
         f"            build_target: {build_target}",
         f'            output: "{output}"',
-        f"            sdk: {sdk}",
     ]
 
 lines += [
@@ -152,7 +150,6 @@ lines += [
     "      machine_name: ${{ matrix.machine_name }}",
     "      build_target: ${{ matrix.build_target }}",
     "      output: ${{ matrix.output }}",
-    "      sdk: ${{ matrix.sdk }}",
     "    secrets: inherit",
 ]
 
@@ -164,7 +161,6 @@ for m in pvtest_machines:
     name = m["name"]
     build_target = m.get("build_target", "pantavisor-starter")
     output = m.get("output", "pantavisor-starter*.rootfs.wic*").strip()
-    sdk = 1 if m.get("sdk") == 1 else 0
     job_id = "build-" + name.split("-")[0]
     pvtest_build_job_ids.append(job_id)
 
@@ -180,7 +176,6 @@ for m in pvtest_machines:
         f"      machine_name: {name}-{branch}",
         f"      build_target: {build_target}",
         f'      output: "{output}"',
-        f"      sdk: {sdk}",
         "    secrets: inherit",
     ]
 
