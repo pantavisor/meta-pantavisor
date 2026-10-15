@@ -74,6 +74,13 @@ if test "${pv_is_ubi}" != "1"; then
 	fi
 fi
 
+# Tell pantavisor where pv.env lives so it can clear pv_trying to boot a
+# devmode revision again. pv_bootpart is the U-Boot partition number (hex)
+# on the same disk as the pantavisor storage partition. UBI never saves pv.env.
+if test "${pv_is_ubi}" != "1"; then
+	setenv pv_baseargs ${pv_baseargs} PV_BOOTLOADER_TRYING_ENV=part:${pv_bootpart}:/pv.env
+fi
+
 if test -z "${ramdisk_addr_r}"; then
 	ramdisk_addr_r=${initrd_addr}
 fi
