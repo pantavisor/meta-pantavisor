@@ -10,7 +10,11 @@ IMAGE_CLASSES:remove = "image_populate_mfgtool"
 IMAGE_TYPES += " pvrexportit "
 IMAGE_FSTYPES:append = " pvrexportit "
 
-inherit pvr-ca dockerarch
+inherit pvr-ca dockerarch pv-trust
+
+do_image_pvrexportit[prefuncs] += "pv_trust_check"
+do_image_pvrexportit[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
+do_image_pvrexportit[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
 
 python __anonymous() {
     pn = d.getVar("PN")
@@ -180,6 +184,8 @@ EOF1
     fi
     pvr add
     pvr commit
+    # pv-trust: the OEM key (or the platform key), else the developer key
+    ${@pv_trust_sign_env(d, 'oem')}
     pvr sig add ${PVR_SIG_ADD_ARGS}
     pvr_extra_signatures
     pvr add
