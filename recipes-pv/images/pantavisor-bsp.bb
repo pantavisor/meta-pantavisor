@@ -1,7 +1,11 @@
 LICENSE = "MIT"
 LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-inherit deploy kernel-artifact-names pvr-ca image-artifact-names
+inherit deploy kernel-artifact-names pvr-ca image-artifact-names pv-trust
+
+do_compile[prefuncs] += "pv_trust_check"
+do_compile[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
+do_compile[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
 
 DEPENDS:append = " \
 	pvr-native \
@@ -274,6 +278,8 @@ EOF1
     if [ -f "${WORKDIR}/pvs/x5c.default.pem" ]; then
         export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
     fi
+    # pv-trust: the platform key, which ca-certificates.crt trusts
+    ${@pv_trust_sign_env(d, 'platform')}
 
     if [ "${UBOOT_SIGN_ENABLE}" = "1" -a -f "bsp/pantavisor.fit" ]; then
         pvr_extra_sig_args="--exclude bsp/pantavisor.fit"
