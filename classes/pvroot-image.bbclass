@@ -1,7 +1,7 @@
 #
 # pvroot image class
 #
-inherit image
+inherit image pv-trust
 
 cmd_tidy() {
 	rm -rf ${IMAGE_ROOTFS}/etc
@@ -177,6 +177,9 @@ do_rootfs[dirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 do_rootfs[cleandirs] += " ${WORKDIR}/tmp ${WORKDIR}/pvrrepo ${WORKDIR}/pvrconfig"
 
 addtask rootfs_pvroot after do_rootfs before do_image
+do_rootfs_pvroot[prefuncs] += "pv_trust_check"
+do_rootfs_pvroot[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
+do_rootfs_pvroot[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
 
 fakeroot python do_rootfs_pvroot(){
     from pathlib import Path
@@ -214,6 +217,11 @@ fakeroot python do_rootfs_pvroot(){
     altca = Path(d.getVar("WORKDIR") + "/pvs/ca-certificates.crt")
     if altca.is_file():
         my_env["PVR_SIG_CACERTS"] = altca.as_posix()
+    # pv-trust: the _pvskel signature takes the platform key
+    key, x5c, cacerts = pv_trust_sign_files(d, 'platform')
+    for var, value in (("PVR_SIG_KEY", key), ("PVR_X5C_PATH", x5c), ("PVR_SIG_CACERTS", cacerts)):
+        if value:
+            my_env[var] = value
 
     process = subprocess.run(
          ['pvr', 'checkout', '-c'],
