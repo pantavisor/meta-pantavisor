@@ -1,5 +1,9 @@
 
-inherit deploy pvr-ca dockerarch
+inherit deploy pvr-ca dockerarch pv-trust
+
+do_compile[prefuncs] += "pv_trust_check"
+do_compile[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
+do_compile[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
 
 REMOVE_LIBTOOL_LA = "0"
 
@@ -134,6 +138,8 @@ do_compile(){
 	if [ -f "${WORKDIR}/pvs/x5c.default.pem" ]; then
 		export PVR_X5C_PATH="${WORKDIR}/pvs/x5c.default.pem"
 	fi
+	# pv-trust: the OEM key (or the platform key), else the developer key
+	${@pv_trust_sign_env(d, 'oem')}
 	pvr add
 	pvr commit
 	pvr sig up

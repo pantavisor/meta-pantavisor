@@ -1,0 +1,20 @@
+# Build an image that trusts your own signing identity (classes/pv-trust.bbclass).
+# Export the variables you need, then add this file to the kas command:
+#
+#   pvr signing trust acme -o $PWD/trust          # or your own CA's bundles
+#   export PV_OEM_NAME=acme PV_TRUST_DIR=$PWD/trust PV_SECUREBOOT_MODE=strict
+#   export PV_SIGN_PLATFORM_KEY=... PV_SIGN_PLATFORM_X5C=...
+#   kas build kas/...:kas/with-oem-trust.yaml
+#
+# Paths must be absolute. Unset variables keep the developer defaults.
+header:
+  version: 16
+
+env:
+  PV_OEM_NAME: null
+  PV_SECUREBOOT_MODE: null
+  PV_TRUST_DIR: null
+  PV_SIGN_PLATFORM_KEY: null
+  PV_SIGN_PLATFORM_X5C: null
+  PV_SIGN_OEM_KEY: null
+  PV_SIGN_OEM_X5C: null
