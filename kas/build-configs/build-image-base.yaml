@@ -1,0 +1,15 @@
+header:
+  version: 16
+# The generic parts of a flashable image, before any signing identity is
+# applied: pvr image assemble (and Pantahub image builds) customise it.
+# Use with a machine using the rpi-tryboot layout and bsp-base, which brings
+# the pvgo layer (pvr built with Go 1.24), e.g.
+#   kas build kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-image-base.yaml
+local_conf_header:
+  image-base: |
+    # The base ships none of pv-mqtt-sdk, whose private repository bitbake
+    # would otherwise query when parsing: the base builds from public
+    # sources only.
+    BBMASK += "pv-mqtt-sdk"
+target:
+- pantavisor-image-base
