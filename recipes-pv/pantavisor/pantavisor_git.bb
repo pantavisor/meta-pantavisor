@@ -65,6 +65,11 @@ FILES:${PN}-config += "/etc/resolv.conf"
 PANTAVISOR_CONFIG ?= ""
 
 python () {
+    # pv-trust: the image's OEM name and signature mode, unless the
+    # recipe's PANTAVISOR_CONFIG already sets them.
+    for key in ('PV_OEM_NAME', 'PV_SECUREBOOT_MODE'):
+        if d.getVar(key) and not d.getVarFlag('PANTAVISOR_CONFIG', key):
+            d.setVarFlag('PANTAVISOR_CONFIG', key, d.getVar(key))
     overrides = []
     for key, val in sorted((d.getVarFlags('PANTAVISOR_CONFIG') or {}).items()):
         overrides.append("%s=%s" % (key, d.expand(val)))
@@ -99,7 +104,28 @@ FILES:${PN}-debug-hooks = "${libdir}/pantavisor/pv/hooks/system.d/00-hook-debug 
                            ${libdir}/pantavisor/pv/hooks-debug-conf/"
 RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug-hooks', '${PN}-debug-hooks', '', d)}"
 
-inherit cmake gitpkgv pantacor-component-docs deploy
+inherit cmake gitpkgv pantacor-component-docs deploy pv-trust
+
+# pv-trust: with PV_TRUST_DIR, the image's trust bundles are pantavisor's own
+# with the files PV_TRUST_DIR has in their place.
+PV_TRUST_BUILD_DIR = "${WORKDIR}/pvs-trust"
+EXTRA_OECMAKE += "${@'-DPANTAVISOR_PVS_DIR=${PV_TRUST_BUILD_DIR}' if d.getVar('PV_TRUST_DIR') else ''}"
+do_configure[prefuncs] += "pv_trust_check"
+do_configure[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SECUREBOOT_MODE"
+do_configure[file-checksums] += "${@' '.join('%s:True' % p for p in (pv_trust_bundle(d, n) for n in d.getVar('PV_TRUST_BUNDLES').split()) if p)}"
+
+do_configure:prepend() {
+	if [ -n "${PV_TRUST_DIR}" ]; then
+		rm -rf "${PV_TRUST_BUILD_DIR}"
+		mkdir -p "${PV_TRUST_BUILD_DIR}"
+		cp "${S}"/pvs/trust/*.crt "${PV_TRUST_BUILD_DIR}/"
+		for bundle in ${PV_TRUST_BUNDLES}; do
+			if [ -f "${PV_TRUST_DIR}/$bundle" ]; then
+				install -m 0644 "${PV_TRUST_DIR}/$bundle" "${PV_TRUST_BUILD_DIR}/$bundle"
+			fi
+		done
+	fi
+}
 
 EXTRA_OECMAKE += "${@bb.utils.contains('DISTRO_FEATURES', 'usrmerge', '-DPANTAVISOR_USRMERGE=ON', '', d)}"
 EXTRA_OECMAKE += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'debug', '-DPANTAVISOR_DEBUG=ON', '', d)}"
