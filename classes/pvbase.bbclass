@@ -35,3 +35,18 @@ def pv_lxc_recipe(d):
 
 PV_LXC_RECIPE = "${@pv_lxc_recipe(d)}"
 
+# cgroup layout requested from Pantavisor (PV_SYSTEM_CGROUP_VERSION): 1, 2 or
+# auto. lxc-deprecated (LXC 3) gets 1, lxc-next (LXC 7, no cgroup v1) gets 2,
+# lxc-stable gets auto. Override per machine with
+# PANTAVISOR_CGROUP_VERSION:<machine> = "1", or for everything with
+# PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] = "1".
+def pv_cgroup_version(d):
+    lxc = pv_lxc_recipe(d)
+    if lxc == 'lxc-pv':
+        return '1'
+    if lxc == 'lxc7-pv':
+        return '2'
+    return 'auto'
+
+PANTAVISOR_CGROUP_VERSION ??= "${@pv_cgroup_version(d)}"
+
