@@ -30,6 +30,12 @@
     "repo_org": "pantavisor"
   },
   {
+    "name": "lxc7-pv",
+    "recipe_glob": "recipes-pv/lxc7-pv/lxc7-pv*.bb",
+    "branch": "stable-v7.0.0",
+    "repo_org": "pantavisor"
+  },
+  {
     "name": "pantavisor",
     "recipe_glob": "recipes-pv/pantavisor/pantavisor.inc",
     "branch": "master",
