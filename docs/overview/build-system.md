@@ -181,6 +181,55 @@ or append the feature in a config: `PANTAVISOR_FEATURES:append = " lxc-next"`.
 `pantavisor` and `pv-sdk` depend on. `kas menu` offers the same choice under
 "Optional overlays".
 
+### Selecting the cgroup version
+
+Device images tell Pantavisor which cgroup layout to use through
+`PV_SYSTEM_CGROUP_VERSION` in `/etc/pantavisor.config`. The default follows
+the LXC runtime and comes from `PANTAVISOR_CGROUP_VERSION`
+(`classes/pvbase.bbclass`):
+
+| LXC runtime | Default | Why |
+|-------------|---------|-----|
+| `lxc-stable` (LXC 6) | `auto` | Pantavisor picks cgroup2 at boot if the kernel can do it, otherwise cgroup v1 with a deprecation warning |
+| `lxc-next` (LXC 7) | `2` | LXC 7 has no cgroup v1 support |
+| `lxc-deprecated` (LXC 3) | `1` | LXC 3 only supports the hybrid layout (deprecated) |
+
+The layer adds no kernel options for this; the kernel config stays the
+machine/BSP decision. cgroup2 device control needs a cgroup BPF program, so
+a kernel used with `2` must have `CONFIG_BPF_SYSCALL=y` and
+`CONFIG_CGROUP_BPF=y`. When the value resolves to `2`, the kernel build
+checks this after `do_configure` and stops if either is missing:
+
+```
+ERROR: linux-raspberrypi-6.6.x-r0 do_pv_check_cgroup_bpf: PV_SYSTEM_CGROUP_VERSION=2 needs cgroup BPF for container device control, but the kernel config lacks: CONFIG_BPF_SYSCALL=y, CONFIG_CGROUP_BPF=y.
+Either enable them in the BSP kernel config, or set PANTAVISOR_CGROUP_VERSION = "1" (or "auto").
+```
+
+Fix it by enabling the options in the BSP kernel config (for example a
+`.cfg` fragment in your kernel bbappend), or by choosing another version.
+Kernels that are not built (`linux-dummy`, used by the docker machines) are
+not checked. Change the version for one machine in a distro or machine
+config:
+
+```bitbake
+PANTAVISOR_CGROUP_VERSION:my-machine = "1"
+```
+
+or for every image, through the per-key override (it wins over the default):
+
+```bitbake
+PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] = "1"
+```
+
+Check the result in the built rootfs:
+
+```bash
+grep PV_SYSTEM_CGROUP_VERSION /etc/pantavisor.config
+```
+
+See [Pantavisor cgroups](../../pantavisor/overview/cgroups.md) for what each
+value does at boot. The appengine does not use this default.
+
 ### The `+=` vs `:append` Pitfall
 
 `pvbase.bbclass` sets defaults via `??=` (weak default operator):
