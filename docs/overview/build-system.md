@@ -40,7 +40,9 @@ meta-pantavisor/
 | `recipes-pv/images/pantavisor-bsp.bb` | BSP image (generates pvrexport bundles) |
 | `recipes-pv/images/pantavisor-starter.bb` | Flashable starter disk image (`.wic`) |
 | `recipes-pv/pvr/pvr_*.bb` | PVR CLI tool (Go-based) |
-| `recipes-pv/lxc-pv/lxc-pv_git.bb` | Pantavisor-specific LXC fork |
+| `recipes-pv/lxc6-pv/lxc6-pv_git.bb` | Pantavisor-specific LXC 6 fork (default, `lxc-stable`) |
+| `recipes-pv/lxc7-pv/lxc7-pv_git.bb` | Pantavisor-specific LXC 7 fork (`lxc-next`) |
+| `recipes-pv/lxc-pv/lxc-pv_git.bb` | Pantavisor-specific LXC 3 fork (`lxc-deprecated`) |
 
 ## BitBake Classes
 
@@ -145,7 +147,9 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `squash-zstd` | Zstd squashfs compression |
 | `rpi-tryboot` | Raspberry Pi A/B boot partition support |
 | `bootchartd` | Boot timing analysis (writes to `/`; use `rdinit=/sbin/bootchartd`) |
-| `lxc-next` | LXC 6.x (`lxc6-pv`) instead of the default LXC 3.x (`lxc-pv`); also available as the `kas/with-lxc-next.yaml` fragment |
+| `lxc-stable` | LXC 6.x (`lxc6-pv`), the default LXC runtime; on by default |
+| `lxc-next` | LXC 7.x (`lxc7-pv`) instead of LXC 6.x; needs Linux 5.12+ and a cgroup v2 host; also available as the `kas/with-lxc-next.yaml` fragment |
+| `lxc-deprecated` | The old LXC 3.x (`lxc-pv`) instead of LXC 6.x; wins over `lxc-next` if both are set; also available as the `kas/with-lxc-deprecated.yaml` fragment |
 | `wakelocks` | PM wakelocks + autosleep — adds the `wakelock.cfg` kernel fragment (see [pantavisor wakelocks](/pantavisor/overview/wakelocks)) |
 | `console-logging` | Boot console logging on Raspberry Pi images |
 | `automod` | Automatic kernel module loading (`kmod` in the initramfs) |
@@ -155,16 +159,34 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `appengine` | Container-hosted appengine build (`-DPANTAVISOR_APPENGINE=ON`); appended by the `panta-appengine` distro |
 | `pv-manifest-audit` / `pv-manifest-strict` | [Manifest audit](manifest-audit.md) of the built image; `strict` fails the build on a mismatch |
 
-**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev`
+**Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev lxc-stable`
 
 > **Caution**: `rngdaemon` appears in the default string, but nothing in the layer gates on that token — `pantavisor-initramfs.bb` checks for a feature named `rngd` instead. Append `rngd` explicitly if you need the RNG daemon.
+
+### Selecting the LXC runtime
+
+`lxc-stable` (LXC 6) is the default. To build with LXC 7 or the old LXC 3,
+add the matching fragment to the kas config chain:
+
+```bash
+# LXC 7 (lxc7-pv)
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-lxc-next.yaml
+
+# LXC 3 (lxc-pv)
+./kas-container build kas/build-configs/release/docker-x86_64-scarthgap.yaml:kas/with-lxc-deprecated.yaml
+```
+
+or append the feature in a config: `PANTAVISOR_FEATURES:append = " lxc-next"`.
+`classes/pvbase.bbclass` turns the feature into `PV_LXC_RECIPE`, which
+`pantavisor` and `pv-sdk` depend on. `kas menu` offers the same choice under
+"Optional overlays".
 
 ### The `+=` vs `:append` Pitfall
 
 `pvbase.bbclass` sets defaults via `??=` (weak default operator):
 
 ```bitbake
-PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev "
+PANTAVISOR_FEATURES ??= " dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev lxc-stable "
 ```
 
 In distro includes, you **must** use `:append` or `:remove` — never `+=`:

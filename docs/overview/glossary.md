@@ -80,7 +80,7 @@ a higher-priority layer's recipe wins.
 Linux Containers — the upstream OS-level container project
 ([linuxcontainers.org](https://linuxcontainers.org/lxc/introduction/)) that
 Pantavisor's own containers run under, via a Pantavisor-specific fork
-(`lxc-pv`). Not a Pantavisor invention. See [Container](#container).
+(`lxc6-pv` by default). Not a Pantavisor invention. See [Container](#container).
 
 ### Machine
 

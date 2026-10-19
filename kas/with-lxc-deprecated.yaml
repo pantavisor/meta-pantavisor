@@ -1,0 +1,6 @@
+header:
+  version: 14
+
+local_conf_header:
+  lxc-deprecated: |
+    PANTAVISOR_FEATURES:append = " lxc-deprecated"

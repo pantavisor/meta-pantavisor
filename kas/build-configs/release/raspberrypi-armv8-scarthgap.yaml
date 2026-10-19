@@ -69,8 +69,6 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " tailscale"
     pantavisor-debug: |
         PANTAVISOR_FEATURES:append = " debug"
-    lxc-next: |
-        PANTAVISOR_FEATURES:append = " lxc-next"
     __menu_config_locals: ''
     __menu_config_vars: |-
         EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
