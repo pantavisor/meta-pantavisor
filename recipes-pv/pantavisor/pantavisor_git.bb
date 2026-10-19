@@ -65,8 +65,11 @@ FILES:${PN}-config += "/etc/resolv.conf"
 PANTAVISOR_CONFIG ?= ""
 
 python () {
+    # an explicit PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] wins over the default
+    flags = dict(d.getVarFlags('PANTAVISOR_CONFIG') or {})
+    flags.setdefault('PV_SYSTEM_CGROUP_VERSION', d.getVar('PANTAVISOR_CGROUP_VERSION'))
     overrides = []
-    for key, val in sorted((d.getVarFlags('PANTAVISOR_CONFIG') or {}).items()):
+    for key, val in sorted(flags.items()):
         overrides.append("%s=%s" % (key, d.expand(val)))
     d.setVar('PANTAVISOR_CONFIG_OVERRIDES', ' '.join(overrides))
 }
