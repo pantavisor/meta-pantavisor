@@ -34,7 +34,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/raspberrypi-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "raspberrypi-armv8",
 			"display_name": "Raspberry Pi 3 / 4 (64-bit)",
 			"description": "64-bit ARMv8 / AArch64 build for the Raspberry Pi 3 and 4. Boots Pantavisor from an SD card.",
@@ -112,7 +112,7 @@
 			"workflows": ["manual", "tag"]
 		},
 		{
-			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
+			"config": "kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/build-configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-x86_64",
@@ -122,7 +122,7 @@
 			"workflows": ["manual", "tag", "onpush"]
 		},
 		{
-			"config": "kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-appengine-distro.yaml",
+			"config": "kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/appengine-base.yaml:kas/build-configs/build-appengine-distro.yaml",
 			"build_target": "pantavisor-appengine-distro",
 			"output": "pantavisor-appengine-distro-*.tar.gz",
 			"name": "docker-armv8",

@@ -90,7 +90,6 @@ kas/build-configs/build-base-starter.yaml  # image target and features
 Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
-- `kas/with-lxc-next.yaml` — LXC 6.x instead of LXC 3.x
 
 Every machine's chain ends in `build-base-starter.yaml`; a machine that needs
 more than `pantavisor-starter` built (the factory-flash machines, see below)

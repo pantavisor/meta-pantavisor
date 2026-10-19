@@ -102,13 +102,28 @@ config PVBSP_FIRMWARE_PKG
 
 menu "Optional overlays"
 
-config OVERLAY_LXC_NEXT
-	bool "lxc-next (LXC 6 runtime)"
-	default y if PLATFORM_DOCKER
+choice
+	prompt "LXC runtime"
+	default OVERLAY_LXC_STABLE
+
+config OVERLAY_LXC_STABLE
+	bool "lxc-stable (LXC 6 runtime)"
 	help
-	  Adds " lxc-next" to PANTAVISOR_FEATURES, selecting the LXC 6 fork
-	  instead of the 3.0 one. This is what the docker appengine machines
-	  build in CI, so leave it on to match them.
+	  The default LXC 6 fork (lxc6-pv), as built by every machine in CI.
+
+config OVERLAY_LXC_NEXT
+	bool "lxc-next (LXC 7 runtime)"
+	help
+	  Adds " lxc-next" to PANTAVISOR_FEATURES, selecting the LXC 7 fork
+	  (lxc7-pv). LXC 7 needs Linux 5.12 or newer and a cgroup v2 host.
+
+config OVERLAY_LXC_DEPRECATED
+	bool "lxc-deprecated (LXC 3 runtime)"
+	help
+	  Adds " lxc-deprecated" to PANTAVISOR_FEATURES, selecting the old
+	  LXC 3.0 fork (lxc-pv).
+
+endchoice
 
 config OVERLAY_PERF
 	bool "perf tooling (pv-perf container)"
@@ -652,6 +667,10 @@ config KAS_INCLUDE_MACHINE_RISCV_VISIONFIVE2
 config KAS_INCLUDE_OVERLAY_LXC_NEXT
 	string
 	default "kas/with-lxc-next.yaml" if OVERLAY_LXC_NEXT
+
+config KAS_INCLUDE_OVERLAY_LXC_DEPRECATED
+	string
+	default "kas/with-lxc-deprecated.yaml" if OVERLAY_LXC_DEPRECATED
 
 config KAS_INCLUDE_OVERLAY_PERF
 	string

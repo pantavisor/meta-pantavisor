@@ -6,10 +6,10 @@
 DESCRIPTION = "Pantavisor Next Gen System Runtime"
 SECTION = "base"
 DEPENDS = "cmake libevent libthttp picohttpparser mbedtls zlib pkgconfig-native \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
+	${PV_LXC_RECIPE} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi', '', d)} \
 	"
-RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} \
+RDEPENDS:${PN} += "${PV_LXC_RECIPE} \
 	e2fsprogs-e2fsck \
 	e2fsprogs-mke2fs \
 	cryptsetup \
@@ -19,7 +19,7 @@ RDEPENDS:${PN} += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs e2fsprogs-dumpe2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
 	"
-RDEPENDS:${PN}:qemumips += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv', 'lxc-pv', d)} libthttp-certs "
+RDEPENDS:${PN}:qemumips += "${PV_LXC_RECIPE} libthttp-certs "
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 

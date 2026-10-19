@@ -41,7 +41,7 @@ TOOLCHAIN_TARGET_TASK:append = " \
 	picohttpparser-staticdev \
 	zlib-dev \
 	zlib-staticdev \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'lxc-next', 'lxc6-pv-dev', 'lxc-pv-dev', d)} \
+	${PV_LXC_RECIPE}-dev \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi-dev', '', d)} \
 "
 
