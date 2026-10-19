@@ -79,6 +79,15 @@ Controls which optional Pantavisor components are compiled in and installed. Def
 | `appengine` | Container-hosted appengine build (`-DPANTAVISOR_APPENGINE=ON`); appended by the `panta-appengine` distro |
 | `pv-manifest-audit` / `pv-manifest-strict` | [Manifest audit](manifest-audit.md) of the built image; `strict` fails the build on a mismatch |
 
+The LXC choice also sets the cgroup layout: `lxc-stable` defaults to
+`PV_SYSTEM_CGROUP_VERSION=auto`, `lxc-next` to `2` and `lxc-deprecated` to
+`1`. The layer adds no kernel options; with `2` the kernel build fails unless
+the kernel has `CONFIG_BPF_SYSCALL=y` and `CONFIG_CGROUP_BPF=y`. To force a
+version, set `PANTAVISOR_CGROUP_VERSION:<machine> = "1"` or
+`PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] = "1"`. See
+[Selecting the cgroup version](build-system.md#selecting-the-cgroup-version)
+and [Pantavisor cgroups](../../pantavisor/overview/cgroups.md).
+
 **Default**: `dm-crypt dm-verity autogrow runc tailscale debug rngdaemon pvcontrol xconnect xconnect-dbus-systembus container-mdev lxc-stable`
 
 > **Caution**: `rngdaemon` appears in the default string, but nothing in the layer gates on that token — `pantavisor-initramfs.bb` checks for a feature named `rngd` instead. Append `rngd` explicitly if you need the RNG daemon.
