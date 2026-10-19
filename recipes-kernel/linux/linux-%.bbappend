@@ -76,3 +76,34 @@ uboot_env_suffix:pvbsp = ""
 UBOOT_ENV = "${uboot_env}"
 UBOOT_ENV_SUFFIX = "${uboot_env_suffix}"
 
+# With cgroup2 the container device rules are enforced by a cgroup BPF
+# program. The layer adds no kernel options for it, so fail the build if the
+# kernel config lacks them. Only real kernels (those inheriting kernel.bbclass)
+# get the check, which leaves linux-dummy alone.
+PV_KERNEL_CGROUP_VERSION = "${PANTAVISOR_CGROUP_VERSION}"
+
+python do_pv_check_cgroup_bpf() {
+    if d.getVar('PV_KERNEL_CGROUP_VERSION') != '2':
+        return
+    with open(d.expand('${B}/.config')) as f:
+        config = f.read().splitlines()
+    missing = [o for o in ('CONFIG_BPF_SYSCALL', 'CONFIG_CGROUP_BPF')
+               if '%s=y' % o not in config]
+    if missing:
+        bb.fatal("PV_SYSTEM_CGROUP_VERSION=2 needs cgroup BPF for container "
+                 "device control, but the kernel config lacks: %s=y.\n"
+                 "Either enable them in the BSP kernel config, or set "
+                 "PANTAVISOR_CGROUP_VERSION = \"1\" (or \"auto\")."
+                 % '=y, '.join(missing))
+}
+do_pv_check_cgroup_bpf[vardeps] += "PV_KERNEL_CGROUP_VERSION PANTAVISOR_CGROUP_VERSION"
+
+python () {
+    # an explicit PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] wins, as in pantavisor
+    version = d.getVarFlag('PANTAVISOR_CONFIG', 'PV_SYSTEM_CGROUP_VERSION')
+    if version:
+        d.setVar('PV_KERNEL_CGROUP_VERSION', d.expand(version))
+    if bb.data.inherits_class('kernel', d):
+        bb.build.addtask('do_pv_check_cgroup_bpf', 'do_compile', 'do_configure', d)
+}
+
