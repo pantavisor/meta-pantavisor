@@ -2,6 +2,7 @@ DEPENDS:append = " pvr-native \
 	squashfs-tools-native \
 	jq-native \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'squash-lz4', 'lz4-native', '', d)} \
+	${@oe.utils.conditional('PVR_DM_VERITY', '1', 'cryptsetup-native', '', d)} \
 "
 
 # Remove the mfgtool image class since it is not compatible with pvrexportit and is not needed for the pvrexportit image type
@@ -57,6 +58,14 @@ PVR_CONFIG_DIR = "${WORKDIR}/pvrconfig"
 PVR_APP_ADD_EXTRA_ARGS ??= "  --volume ovl:/var:permanent"
 PVR_APP_ADD_GROUP ??= "root"
 PVR_APP_ADD_ROLES ??= ""
+
+# Set PVR_DM_VERITY = "1" in a container recipe to protect the volumes in
+# PVR_DM_VERITY_VOLUMES with dm-verity: pvr writes a hash file next to each
+# volume and points run.json at it as "dm:<volume>", so pantavisor checks the
+# volume when it mounts it. The device needs a pantavisor built with the
+# dm-verity feature (on by default in PANTAVISOR_FEATURES).
+PVR_DM_VERITY ??= "0"
+PVR_DM_VERITY_VOLUMES ??= "root.squashfs"
 
 PVRIMAGE_AUTO_MDEV ??= "1"
 
@@ -160,6 +169,14 @@ EOF1
     if [ -n "${PV_CONFIG_OVERLAY_DIR}" ]; then
         mkdir -p _config
         cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PN}
+    fi
+    if [ "${PVR_DM_VERITY}" = "1" ]; then
+        for volume in ${PVR_DM_VERITY_VOLUMES}; do
+            if [ ! -f ${PN}/_dm/$volume.json ]; then
+                pvr dm-convert ${PN} $volume
+            fi
+        done
+        pvr dm-apply ${PN}/
     fi
     pvr add
     pvr commit
