@@ -37,6 +37,13 @@ PACKAGECONFIG[thread-support] = "--enable-thread-support,--disable-thread-suppor
 
 inherit autotools pkgconfig
 
+# The 2.2.1-alpha .pc.in files carry CMake's @CMAKE_DEBUG_POSTFIX@, which
+# autotools never substitutes, so pkg-config consumers (tmux) link against
+# -levent_core@CMAKE_DEBUG_POSTFIX@ and every configure link test fails.
+do_configure:prepend() {
+	sed -i 's/@CMAKE_DEBUG_POSTFIX@//g' ${S}/libevent_*.pc.in
+}
+
 PACKAGES_DYNAMIC = "^${PN}-.*$"
 python split_libevent_libs () {
     do_split_packages(d, '${libdir}', r'^libevent_([a-z]*)-.*\.so\..*', '${PN}-%s', '${SUMMARY} (%s)', prepend=True, allow_links=True)
