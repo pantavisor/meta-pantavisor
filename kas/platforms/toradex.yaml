@@ -35,6 +35,12 @@ repos:
 local_conf_header:
   platform-toradex: |
     PV_UBOOT_AUTOFDT = "1"
+  toradex-kernel-premirror: |
+    # A full clone of the kernel.org stable tree (linux-toradex-upstream) crawls
+    # at ~10 KiB/s and dies mid-transfer. Toradex's toradex-mirrors.bbclass
+    # (meta-toradex-distro, not used here) serves a git2 tarball of it; only that
+    # one repo is redirected. "7" is TDX_MAJOR for the scarthgap-7.x.y branches.
+    PREMIRRORS:prepend = "git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git https://artifacts.toradex.com/artifactory/tdxref-torizoncore-sources-frankfurt/7/ "
   tezi-recovery-multiconfig: |
     BBMULTICONFIG:append = " tezi-recovery"
     # meta-toradex-tezi recipes outside recipes-bsp/ require DISTRO = "tezi" to
