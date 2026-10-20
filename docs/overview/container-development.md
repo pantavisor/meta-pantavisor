@@ -81,6 +81,23 @@ PVR_DM_VERITY_VOLUMES = "root.squashfs"
 
 The flag also adds `cryptsetup-native` (which provides `veritysetup`) to the recipe's `DEPENDS`. The device needs a pantavisor built with the `dm-verity` feature, which is on by default in `PANTAVISOR_FEATURES`.
 
+The device only mounts `dm:` volumes through the dm-verity handler when `PV_SECUREBOOT_HANDLERS=1` in `/etc/pantavisor.config`. Without it the volume is loop-mounted and not checked. The layer sets it to `1` whenever `dm-verity` is in `PANTAVISOR_FEATURES` (the default) and to `0` otherwise. To turn it off, for example in your distro include or `local.conf`:
+
+```bitbake
+PANTAVISOR_CONFIG[PV_SECUREBOOT_HANDLERS] = "0"
+```
+
+The appengine configuration (`/etc/pantavisor-appengine.config`) keeps it off; this is not changed.
+
+`pv-example-verity` (`recipes-containers/pv-examples/pv-example-verity_1.0.bb`) is a minimal example: it sets `PVR_DM_VERITY = "1"` and signals READY once it runs.
+
+On a device, the dm-verity mount script (`scripts/volmount/verity/dm` in pantavisor) names the device `pv--dmverity--<container>-<volume>`. A protected root volume should therefore show up like this (taken from the script, not tested on a device):
+
+```bash
+mount | grep dmverity
+# /dev/mapper/pv--dmverity--<container>-root on /volumes/<container>/root.squashfs ...
+```
+
 To check the result, look at the container directory of the built state (`pvstate/<container>/` in the recipe work directory):
 
 ```bash
