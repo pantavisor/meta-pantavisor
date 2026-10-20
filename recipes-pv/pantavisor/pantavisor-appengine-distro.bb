@@ -11,7 +11,7 @@ PV_APPENGINE_CONTAINERS ?= "pantavisor-appengine pantavisor-appengine-netsim pan
 
 PVTEST_TARGET_TYPE ?= "appengine"
 
-PV_PVTEST_CONTAINERS ?= "pv-example-app pv-example-norole pv-example-ready pv-example-ready-timeout pv-example-mgmt pv-example-cgroup-dual pv-example-cgroup-v2 pv-example-cgroup-v1"
+PV_PVTEST_CONTAINERS ?= "pv-example-app pv-example-norole pv-example-ready pv-example-ready-timeout pv-example-mgmt pv-example-cgroup-dual pv-example-cgroup-v2 pv-example-cgroup-v1 pv-example-verity"
 PV_PVTEST_CONTAINERS_XCONNECT ?= "pv-example-system-dbus-server pv-example-system-dbus-server-collision pv-example-system-dbus-client pv-example-system-dbus-client-denied pv-avahi pv-avahi-browse"
 PV_PVTEST_CONTAINERS_ALL = "${PV_PVTEST_CONTAINERS} ${@bb.utils.contains('PANTAVISOR_FEATURES', 'xconnect-dbus-systembus', d.getVar('PV_PVTEST_CONTAINERS_XCONNECT'), '', d)}"
 
