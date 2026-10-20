@@ -78,6 +78,12 @@ INSANE_SKIP:${PN}-static += "already-stripped"
 # task that wrote to DEPLOY_DIR_TOOLS directly leaves the tools dir empty.
 do_deploy[sstate-outputdirs] = "${DEPLOY_DIR_TOOLS}"
 
+# deploy.bbclass scopes the deploy manifest to MACHINE_ARCH, but the native
+# tools land in the one DEPLOY_DIR_TOOLS every machine shares, so building a
+# second machine in the same TMPDIR trips sstate's overlap check. Scope the
+# native variant to the host arch instead; target pvr keeps the default.
+do_deploy[stamp-extra-info] = "${@'' if bb.data.inherits_class('native', d) else d.getVar('MACHINE_ARCH')}"
+
 do_deploy() {
         install -m 755 ${B}/${GO_BUILD_BINDIR}/pvr ${DEPLOYDIR}/pvr-${PACKAGE_ARCH}
         install -m 755 ${B}/pvr-static ${DEPLOYDIR}/pvr-static-${PACKAGE_ARCH}
