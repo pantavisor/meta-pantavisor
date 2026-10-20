@@ -57,9 +57,8 @@ ROOTFS_POSTPROCESS_COMMAND += "install_scripts; set_hostname; "
 # PVRIMAGE_AUTO_MDEV default because container-pvrexport prefers an explicit
 # ${PN}.mdev.json when one is in SRC_URI): reaching USB hubs, SD muxes,
 # DFU/fastboot endpoints, GPIO chips and tty devices on the host is the entire
-# point of this container. This plus the lxc.cgroup.devices.allow = a that
-# every Pantavisor container already gets is the whole device-access story -
-# no capability or cgroup tweaking needed (opi-gpio on the current lab
+# point of this container. This is the whole device-access story - no
+# capability or cgroup tweaking needed (opi-gpio on the current lab
 # controllers runs on exactly this). Add narrower rules to that file first
 # (mdev rule syntax: "<regex> <uid>:<gid> <mode>") if a tighter policy is ever
 # needed; the wildcard stays first-match unless reordered.
