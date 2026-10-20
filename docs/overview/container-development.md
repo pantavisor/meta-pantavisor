@@ -69,6 +69,32 @@ Set `PVR_APP_ADD_GROUP = "app"` in the recipe to inherit the group's default `au
 
 Output: `build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-foo.pvrexport.tgz`
 
+## Protecting Volumes with dm-verity
+
+Set `PVR_DM_VERITY = "1"` in a container recipe to protect its volumes with dm-verity. At build time pvr writes a hash file next to each volume and points `run.json` at it as `dm:<volume>`, so pantavisor checks the volume when it mounts it. By default only `root.squashfs` is protected; list other volumes in `PVR_DM_VERITY_VOLUMES`.
+
+```bitbake
+PVR_DM_VERITY = "1"
+# optional, default is "root.squashfs"
+PVR_DM_VERITY_VOLUMES = "root.squashfs"
+```
+
+The flag also adds `cryptsetup-native` (which provides `veritysetup`) to the recipe's `DEPENDS`. The device needs a pantavisor built with the `dm-verity` feature, which is on by default in `PANTAVISOR_FEATURES`.
+
+To check the result, look at the container directory of the built state (`pvstate/<container>/` in the recipe work directory):
+
+```bash
+grep root-volume run.json      # "root-volume":"dm:root.squashfs"
+cat _dm/root.squashfs.json     # type dm-verity, data_device, hash_device, root_hash, salt, uuid
+ls root.squashfs.hash          # the hash file
+```
+
+The container signature covers `_dm/root.squashfs.json` and `root.squashfs.hash`.
+
+:::note
+The work directory is removed after the build unless the recipe is listed in `RM_WORK_EXCLUDE`.
+:::
+
 ## Adding a New Example Container (full workflow)
 
 ```bash
