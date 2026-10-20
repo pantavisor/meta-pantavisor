@@ -3,7 +3,7 @@
 	"sdk_machines": ["docker-x86_64", "docker-armv8", "docker-armv7"],
 	"machines": [
 		{
-			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-deprecated.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "sunxi-orange-pi-3lts",
 			"display_name": "Orange Pi 3 LTS",
 			"description": "Allwinner H6 quad-core Cortex-A53 SBC with 2 GB RAM, Gigabit Ethernet and onboard Wi-Fi/Bluetooth. Boots Pantavisor from an SD card.",
@@ -41,7 +41,7 @@
 			"workflows": ["manual"]
 		},
 		{
-			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "rpi",
 			"display_name": "Raspberry Pi (all versions)",
 			"description": "Generic Raspberry Pi machine covering all targets: a multi-kernel multiconfig that builds for every board (Pi 1/2/3/4/5, Zero, Compute Module) across ARMv6, ARMv7 and ARMv8, both 32- and 64-bit. Boots Pantavisor from an SD card.",

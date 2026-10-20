@@ -90,12 +90,10 @@ kas/build-configs/build-base-starter.yaml  # image target and features
 Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
+- `kas/with-lxc-next.yaml` — LXC 7.x (`lxc7-pv`) on `rpi`; every other machine uses the default LXC 6.x
+- `kas/with-lxc-deprecated.yaml` — the old LXC 3.x (`lxc-pv`) on `sunxi-orange-pi-3lts`
 
-Optional fragments that no CI machine uses:
-- `kas/with-lxc-next.yaml` — LXC 7.x (`lxc7-pv`) instead of the default LXC 6.x
-- `kas/with-lxc-deprecated.yaml` — the old LXC 3.x (`lxc-pv`) instead of LXC 6.x
-
-To build with one of them, see [Selecting the LXC runtime](../build-system.md#selecting-the-lxc-runtime).
+To build any machine with one of these runtimes, see [Selecting the LXC runtime](../build-system.md#selecting-the-lxc-runtime).
 
 Every machine's chain ends in `build-base-starter.yaml`; a machine that needs
 more than `pantavisor-starter` built (the factory-flash machines, see below)
