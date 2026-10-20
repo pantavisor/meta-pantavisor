@@ -91,6 +91,12 @@ Some machines add extra fragments:
 - `kas/scarthgap-nxp.yaml` — NXP proprietary layer pins
 - `kas/scarthgap-var.yaml` — Variscite BSP pins
 
+Optional fragments that no CI machine uses:
+- `kas/with-lxc-next.yaml` — LXC 7.x (`lxc7-pv`) instead of the default LXC 6.x
+- `kas/with-lxc-deprecated.yaml` — the old LXC 3.x (`lxc-pv`) instead of LXC 6.x
+
+To build with one of them, see [Selecting the LXC runtime](../build-system.md#selecting-the-lxc-runtime).
+
 Every machine's chain ends in `build-base-starter.yaml`; a machine that needs
 more than `pantavisor-starter` built (the factory-flash machines, see below)
 declares the extra targets as `extra_targets` in its `machines.json` entry
