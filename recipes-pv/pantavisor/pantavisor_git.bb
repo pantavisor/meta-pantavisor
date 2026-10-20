@@ -63,6 +63,8 @@ FILES:${PN}-config += "/etc/resolv.conf"
 # Per-key overrides of the shipped /etc/pantavisor.config, e.g.:
 #   PANTAVISOR_CONFIG[PV_CONTROL_REMOTE] = "0"
 PANTAVISOR_CONFIG ?= ""
+# Mount dm: volumes through the dm-verity handler whenever the feature is on.
+PANTAVISOR_CONFIG[PV_SECUREBOOT_HANDLERS] ?= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '1', '0', d)}"
 
 python () {
     # an explicit PANTAVISOR_CONFIG[PV_SYSTEM_CGROUP_VERSION] wins over the default
