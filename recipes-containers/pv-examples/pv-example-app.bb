@@ -13,6 +13,9 @@ NO_RECOMMENDATIONS = "1"
 
 PVRIMAGE_AUTO_MDEV = "0"
 
+# keeps one test container on the plain loop-mount path
+PVR_DM_VERITY = "0"
+
 SRC_URI += "file://pv-app.sh file://pv-example-app.args.json"
 
 install_scripts() {
