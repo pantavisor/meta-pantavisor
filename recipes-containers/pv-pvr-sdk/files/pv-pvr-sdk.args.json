@@ -1,0 +1,6 @@
+{
+    "PV_LXC_EXTRA_CONF": "lxc.mount.entry = /volumes/_pv/addons/plymouth/text-io var/run/plymouth-io-sockets none bind,rw,optional,create=dir 0 0",
+    "PV_RESTART_POLICY": "system",
+    "PV_SECURITY_WITH_STORAGE": "yes",
+    "PV_STATUS_GOAL": "STARTED"
+}

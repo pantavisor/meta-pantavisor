@@ -230,7 +230,7 @@ build), `fetch_tags` (whether to fetch all tags first), and `artifact_name`
 4. Runs `kas build kas/build-configs/release/raspberrypi-armv8-scarthgap.yaml -- -c create_pantacor_docs pantavisor-starter`
    inside the KAS container. `raspberrypi-armv8-scarthgap.yaml` was chosen
    because `pantavisor-starter` is its primary target and it pulls in the full
-   set of components — including `pvr` (used by the pantabox container) — that
+   set of components — including `pvr` (shipped in the pvr-sdk container) — that
    need documentation. The `pantavisor-docs` image class triggers
    `do_create_component_docs` for every package in the image's dependency tree
    (via `[recrdeptask]`), collects the resulting per-component tarballs, adds

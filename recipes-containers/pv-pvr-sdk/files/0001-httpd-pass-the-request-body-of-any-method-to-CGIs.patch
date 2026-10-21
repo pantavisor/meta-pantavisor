@@ -1,0 +1,38 @@
+From efaaa6bfb380a61d5f3b3b08350b2544e2ac36c0 Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Wed, 21 Oct 2026 19:57:07 -0300
+Subject: [PATCH] httpd: pass the request body of any method to CGIs
+
+Commit 36e932abd ("httpd: cgi-bin support for DELETE, PUT, OPTIONS etc
+methods") lets CGIs handle these methods but only parses Content-Length
+for POST. For any other method POST_length stays 0, so httpd neither
+sets CONTENT_LENGTH nor forwards the body: the CGI only sees the bytes
+that arrived in the same read as the headers. A PUT of more than a few
+kilobytes reaches the CGI truncated.
+
+Parse Content-Length whatever the method. The CGI I/O loop already
+forwards POST_length bytes regardless of the method.
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ networking/httpd.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/networking/httpd.c b/networking/httpd.c
+index ffc58e1..9e75dbd 100644
+--- a/networking/httpd.c
++++ b/networking/httpd.c
+@@ -2473,8 +2473,8 @@ static void handle_incoming_and_exit(const len_and_sockaddr *fromAddr)
+ #endif
+ 		dbg("header:'%s'\n", iobuf);
+ #if ENABLE_FEATURE_HTTPD_CGI
+-		/* Only POST needs to know POST_length */
+-		if (prequest == request_POST && STRNCASECMP(iobuf, "Content-Length:") == 0) {
++		/* Any method can carry a body for a CGI (e.g. PUT) */
++		if (STRNCASECMP(iobuf, "Content-Length:") == 0) {
+ 			tptr = skip_whitespace(iobuf + sizeof("Content-Length:") - 1);
+ 			if (!tptr[0])
+ 				send_headers_and_exit(HTTP_BAD_REQUEST);
+-- 
+2.43.0
+

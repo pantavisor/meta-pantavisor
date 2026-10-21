@@ -62,7 +62,7 @@ The pvtx UI shows the current revision state, running containers, logs, and devi
 
 ## Security
 
-Use SSH public-key authentication. Writing `~/.ssh/authorized_keys` inside the container does not persist — the rootfs is a read-only squashfs and only `/etc/dropbear` is a volume. Instead, set the user-metadata key `pvr-sdk.authorized_keys`, either from the Pantahub UI or with the CLI:
+Use SSH public-key authentication. Writing `~/.ssh/authorized_keys` inside the container does not persist — the rootfs is a read-only squashfs, and the persistent volumes (`/var`, `/etc/dropbear`, `/home/pantavisor/.ssh`, `/var/dmcrypt/volume`) do not include `/root`. Instead, set the user-metadata key `pvr-sdk.authorized_keys` (the `pvr-sdk.` prefix is the same for both SDK builds), either from the Pantahub UI or with the CLI:
 
 ```bash
 pvr device set <device-id> pvr-sdk.authorized_keys="$(cat ~/.ssh/id_ed25519.pub)"

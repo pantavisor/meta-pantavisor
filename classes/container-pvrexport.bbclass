@@ -69,7 +69,10 @@ PVR_DM_VERITY_VOLUMES ??= "root.squashfs"
 
 PVRIMAGE_AUTO_MDEV ??= "1"
 
-PVR_SIG_ADD_ARGS ??= "--noconfig --part ${PN}"
+# Name of the app inside the pvrexport, if it must differ from the recipe's.
+PVR_APP_NAME ??= "${PN}"
+
+PVR_SIG_ADD_ARGS ??= "--noconfig --part ${PVR_APP_NAME}"
 
 # Image recipes can add metadata before the first commit and signature.
 pvr_app_postprocess() {
@@ -83,7 +86,7 @@ pvr_extra_signatures() {
 
 # Define a config overlay directory that the image recipe will make available
 # in ${WORKDIR} before the IMAGE_CMD task for ${PN} container.
-# This directory will be added to the pvrexport as _config/${PN}
+# This directory will be added to the pvrexport as _config/${PVR_APP_NAME}
 PV_CONFIG_OVERLAY_DIR ??= ""
 
 PSEUDO_IGNORE_PATHS .= ",${PVSTATE},${PVR_CONFIG_DIR}"
@@ -133,14 +136,14 @@ fakeroot IMAGE_CMD:pvrexportit(){
         --group ${PVR_APP_ADD_GROUP} \
         $args ${PVR_APP_ADD_EXTRA_ARGS} \
         --format-options="${PVR_FORMAT_OPTS} -e lib/modules -e lib/firmware " \
-        ${PN}
+        ${PVR_APP_NAME}
     pvr_app_postprocess
     pvr add
     pvr commit
     if [ -f ${WORKDIR}/${PN}.mdev.json ]; then
-        cp -f ${WORKDIR}/${PN}.mdev.json ./${PN}/mdev.json
+        cp -f ${WORKDIR}/${PN}.mdev.json ./${PVR_APP_NAME}/mdev.json
     elif [ "${PVRIMAGE_AUTO_MDEV}" = "1" ]; then
-       cat > ${PN}/mdev.json << EOF1
+       cat > ${PVR_APP_NAME}/mdev.json << EOF1
 {
     "rules": [
         ".* 0:0 666"
@@ -149,36 +152,36 @@ fakeroot IMAGE_CMD:pvrexportit(){
 EOF1
     fi
     if [ -f ${WORKDIR}/${PN}.services.json ]; then
-        cp -f ${WORKDIR}/${PN}.services.json ./${PN}/services.json
+        cp -f ${WORKDIR}/${PN}.services.json ./${PVR_APP_NAME}/services.json
     elif [ -f ${WORKDIR}/services.json ]; then
-        cp -f ${WORKDIR}/services.json ./${PN}/services.json
+        cp -f ${WORKDIR}/services.json ./${PVR_APP_NAME}/services.json
     fi
     if [ -f ${WORKDIR}/${PN}.network.json ]; then
-        cat ${PN}/run.json | jq --slurpfile network ${WORKDIR}/${PN}.network.json \
-            '. + { "network": $network[0] }' > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+        cat ${PVR_APP_NAME}/run.json | jq --slurpfile network ${WORKDIR}/${PN}.network.json \
+            '. + { "network": $network[0] }' > ${PVR_APP_NAME}/run.json.tmp && mv ${PVR_APP_NAME}/run.json.tmp ${PVR_APP_NAME}/run.json
     elif [ -f ${WORKDIR}/network.json ]; then
-        cat ${PN}/run.json | jq --slurpfile network ${WORKDIR}/network.json \
-            '. + { "network": $network[0] }' > ${PN}/run.json.tmp && mv ${PN}/run.json.tmp ${PN}/run.json
+        cat ${PVR_APP_NAME}/run.json | jq --slurpfile network ${WORKDIR}/network.json \
+            '. + { "network": $network[0] }' > ${PVR_APP_NAME}/run.json.tmp && mv ${PVR_APP_NAME}/run.json.tmp ${PVR_APP_NAME}/run.json
     fi
     if [ -n "${PV_CONFIG_OVERLAY_DIR}" ]; then
         mkdir -p _config
-        cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PN}
+        cp -rf ${WORKDIR}/${PV_CONFIG_OVERLAY_DIR} _config/${PVR_APP_NAME}
     fi
     if [ "${PVR_DM_VERITY}" = "1" ]; then
         for volume in ${PVR_DM_VERITY_VOLUMES}; do
-            if [ ! -f ${PN}/_dm/$volume.json ]; then
-                pvr dm-convert ${PN} $volume
+            if [ ! -f ${PVR_APP_NAME}/_dm/$volume.json ]; then
+                pvr dm-convert ${PVR_APP_NAME} $volume
             fi
         done
-        pvr dm-apply ${PN}/
+        pvr dm-apply ${PVR_APP_NAME}/
     fi
     # Flag local Yocto-built container so hub.pantacor.com can distinguish from
     # upstream docker-pulled builds (which set docker_source: "remote,local").
     # After dm-convert: it rewrites src.json from pvr's own struct, which has no
     # field for this key.
-    if [ -f ${PN}/src.json ]; then
+    if [ -f ${PVR_APP_NAME}/src.json ]; then
         jq '. + { pv_build_origin: "yocto" }' \
-            ${PN}/src.json > ${PN}/src.json.tmp && mv ${PN}/src.json.tmp ${PN}/src.json
+            ${PVR_APP_NAME}/src.json > ${PVR_APP_NAME}/src.json.tmp && mv ${PVR_APP_NAME}/src.json.tmp ${PVR_APP_NAME}/src.json
     fi
     pvr add
     pvr commit
