@@ -9,17 +9,20 @@ DEPENDS = "cmake libevent libthttp picohttpparser mbedtls zlib pkgconfig-native 
 	${PV_LXC_RECIPE} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi', '', d)} \
 	"
+# Any package that fills /etc/thttp/certs works here, e.g. libthttp-certs.
+VIRTUAL-RUNTIME_pantavisor_certs ??= "ca-certificates-pv"
+
 RDEPENDS:${PN} += "${PV_LXC_RECIPE} \
 	e2fsprogs-e2fsck \
 	e2fsprogs-mke2fs \
 	cryptsetup \
-	libthttp-certs \
+	${VIRTUAL-RUNTIME_pantavisor_certs} \
 	netcat-openbsd \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'runc', 'runc-opencontainers', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'autogrow', 'gptfdisk e2fsprogs-resize2fs e2fsprogs-dumpe2fs', '', d)} \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'appengine', 'bash', '', d)} \
 	"
-RDEPENDS:${PN}:qemumips += "${PV_LXC_RECIPE} libthttp-certs "
+RDEPENDS:${PN}:qemumips += "${PV_LXC_RECIPE} ${VIRTUAL-RUNTIME_pantavisor_certs} "
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
