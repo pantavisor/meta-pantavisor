@@ -13,7 +13,7 @@ SRC_URI:append:panta-appengine = " \
     file://0002-fix-avoid-infinite-loop-when-closing-inherited-fd.patch \
 "
 
-SRCREV = "c2017d421b28fb169ce62ba216b6df2fb07d10cb"
+SRCREV = "04fe2f99c299e253d2e63f16a38a5e891ff2f70f"
 
 PE = "1"
 PV = "6.0.5+git${SRCPV}"
