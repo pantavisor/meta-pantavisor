@@ -81,7 +81,7 @@ instead? The `/pv/` tree is mounted at `/pantavisor/` there — e.g.
 
 **Diagnosis**: Either the URL form is wrong, or the pvr-sdk endpoint on the device only binds localhost.
 
-**Fix**: Use `http://<device-ip>:12368` (and `http://<device-ip>:12368/cgi-bin` for clone). If the image binds the endpoint to localhost, open it with a `_config/pvr-sdk/etc/pvr-sdk/config.json` overlay setting `"listen": "0.0.0.0"` — see the [FAQ entry](/meta-pantavisor/getting-started/troubleshooting/faq#pvr-clone-fails-with-connection-refused) for the exact JSON.
+**Fix**: Use `http://<device-ip>:12368` (and `http://<device-ip>:12368/cgi-bin` for clone). The pvr-sdk container listens on `0.0.0.0` by default. If an image binds the endpoint to localhost, open it with a `_config/pvr-sdk/etc/pvr-sdk/config.json` overlay — see the [FAQ entry](/meta-pantavisor/getting-started/troubleshooting/faq#pvr-clone-fails-with-connection-refused) for the exact JSON.
 
 ## Build & layer pitfalls (for image builders)
 

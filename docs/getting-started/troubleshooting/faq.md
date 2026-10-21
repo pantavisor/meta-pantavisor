@@ -71,9 +71,20 @@ Pantavisor serves the state API on port **12368**. Confirm:
 - The device has a network address: `ip addr show`
 - The pvr-sdk (or network) container is running: `lxc-ls -f`
 - You are using the full URL: `pvr clone http://<device-ip>:12368/cgi-bin <dir>`
-- The endpoint is not bound to localhost only — on images where it is, expose it
-  with a `_config/pvr-sdk/etc/pvr-sdk/config.json` overlay setting
-  `"listen": "0.0.0.0"` (see [Local Network](/meta-pantavisor/getting-started/operate/device-access/local-network))
+- The endpoint is not bound to localhost only. pvr-sdk listens on `0.0.0.0`
+  by default; on images where it does not, expose it with an overlay at
+  `_config/pvr-sdk/etc/pvr-sdk/config.json` in your pvr checkout:
+
+  ```json
+  {
+    "httpd": {
+      "listen": "0.0.0.0",
+      "port": "12368"
+    }
+  }
+  ```
+
+  See [Local Network](/meta-pantavisor/getting-started/operate/device-access/local-network) for the other ways to reach the device.
 
 ---
 
