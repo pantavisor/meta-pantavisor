@@ -43,6 +43,7 @@ committing to the Yocto/BitBake build guide below.
 14. [Manifest Audit](manifest-audit.md) — audit rootfs content with `pv-manifest-audit` and enforce strict mode
 15. [Component Docs](component-docs.md) — generate per-component documentation tarballs from the build
 16. [Bootchartd](bootchartd.md) — enable boot performance profiling with bootchartd in Pantavisor images
+17. [TLS Truststore](truststore.md) — the root CA set Pantavisor trusts for HTTPS (`ca-certificates-pv`), and how to change it
 
 ## Continuous Integration
 
