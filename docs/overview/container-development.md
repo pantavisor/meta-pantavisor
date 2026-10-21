@@ -99,12 +99,16 @@ The appengine configuration (`/etc/pantavisor-appengine.config`) keeps it off; t
 
 `pv-example-verity` (`recipes-containers/pv-examples/pv-example-verity_1.0.bb`) is a minimal example: it sets `PVR_DM_VERITY = "1"` explicitly and signals READY once it runs. `pv-example-app` sets `PVR_DM_VERITY = "0"` and stays on the plain loop-mount path.
 
-On a device, the dm-verity mount script (`scripts/volmount/verity/dm` in pantavisor) names the device `pv--dmverity--<container>-<volume>`. A protected root volume should therefore show up like this (taken from the script, not tested on a device):
+On a device, the dm-verity mount script (`scripts/volmount/verity/dm` in pantavisor) names the device `pv--dmverity--<container>-<volume>`. On the device, a protected root volume is mounted from `/dev/mapper` and `dmsetup` reports it as verified (`V`):
 
 ```bash
 mount | grep dmverity
-# /dev/mapper/pv--dmverity--<container>-root on /volumes/<container>/root.squashfs ...
+# /dev/mapper/pv--dmverity--pv-example-verity-root on /volumes/pv-example-verity/root.squashfs type squashfs (ro,relatime,errors=continue)
+/usr/sbin/dmsetup status | grep verity
+# pv--dmverity--pv-example-verity-root: 0 12712 verity V
 ```
+
+A wrong root hash makes the mount fail with an I/O error (the kernel logs `device-mapper: verity: ... metadata block 1 is corrupted`), and the revision rolls back.
 
 To check the result, look at the container directory of the built state (`pvstate/<container>/` in the recipe work directory):
 
