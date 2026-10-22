@@ -11,7 +11,9 @@ PV = "1.24.13"
 
 inherit goarch
 
-SRC_URI = "https://golang.org/dl/go${PV}.src.tar.gz;name=main"
+SRC_URI = "https://golang.org/dl/go${PV}.src.tar.gz;name=main \
+           file://0001-crypto-x509-distrust-a-handful-of-intermediates.patch \
+           "
 S = "${WORKDIR}/go"
 B = "${S}"
 UPSTREAM_CHECK_REGEX = "(?P<pver>\d+(\.\d+)+)\.src\.tar"
