@@ -39,7 +39,7 @@ local_conf_header:
         #    PANTAVISOR_FEATURES += "appengine"
         # DISTRO_FEATURES += "staticdev"
     pvgo: |
-        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

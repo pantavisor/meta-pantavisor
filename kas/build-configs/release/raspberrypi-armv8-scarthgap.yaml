@@ -49,7 +49,7 @@ local_conf_header:
         ENABLE_UART = "1"
         PANTAVISOR_MACHINE_FIRMWARE = "linux-firmware-rpidistro-bcm43430 linux-firmware-rpidistro-bcm43455 linux-firmware-rpidistro-bcm43456 linux-firmware-rpidistro-bcm43436 linux-firmware-rpidistro-bcm43436s bluez-firmware-rpidistro-bcm4345c0-hcd bluez-firmware-rpidistro-bcm4345c5-hcd"
     pvgo: |
-        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

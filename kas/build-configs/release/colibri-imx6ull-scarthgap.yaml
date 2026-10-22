@@ -112,7 +112,7 @@ local_conf_header:
         \nPV_FLASH_RECOVERY_MC = \"tezi-recovery\"\nPV_FLASH_RECOVERY_RECIPE = \"\
         u-boot-toradex\"\nPV_FLASH_RECOVERY_IMAGE = \"u-boot.imx-recoverytezi\"\n"
     pvgo: |
-        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

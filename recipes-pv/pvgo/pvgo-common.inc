@@ -7,7 +7,7 @@ LICENSE = "BSD-3-Clause"
 # =============================================================
 # Go version - update this single line to bump the Go version
 # =============================================================
-PV = "1.24.13"
+PV = "1.26.10"
 
 inherit goarch
 
@@ -29,7 +29,7 @@ export CGO_ENABLED = "1"
 export GOHOSTOS ?= "${BUILD_GOOS}"
 export GOHOSTARCH ?= "${BUILD_GOARCH}"
 
-# Bootstrap from pvgo-bootstrap-native (Go 1.22.12), not Poky's go
+# Bootstrap from pvgo-bootstrap-native (Go 1.24.13), not Poky's go
 export GOROOT_BOOTSTRAP ?= "${STAGING_LIBDIR_NATIVE}/pvgo-bootstrap"
 
 export GOOS ?= "${TARGET_GOOS}"

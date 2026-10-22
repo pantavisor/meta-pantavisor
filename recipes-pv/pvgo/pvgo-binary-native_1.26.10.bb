@@ -1,5 +1,5 @@
-# Pre-built Go 1.24.13 binary for native use.
-# Provides pvgo-native so that native recipes (e.g. pvr-native) use Go 1.24.
+# Pre-built Go 1.26.10 binary for native use.
+# Provides pvgo-native so that native recipes (e.g. pvr-native) use Go 1.26.
 
 SUMMARY = "Go programming language compiler (pre-built binary for pvgo)"
 HOMEPAGE = "http://golang.org/"
@@ -10,9 +10,9 @@ PROVIDES = "pvgo-native"
 
 # Checksums from https://go.dev/dl/
 SRC_URI = "https://dl.google.com/go/go${PV}.${BUILD_GOOS}-${BUILD_GOARCH}.tar.gz;name=go_${BUILD_GOTUPLE}"
-SRC_URI[go_linux_amd64.sha256sum] = "1fc94b57134d51669c72173ad5d49fd62afb0f1db9bf3f798fd98ee423f8d730"
-SRC_URI[go_linux_arm64.sha256sum] = "c73a430388d8958d6db65bb2b1ef17581f9f9a4bcf4e7206dc891cbba89fff4b"
-SRC_URI[go_linux_ppc64le.sha256sum] = "3cb96891c877c9997d2a58c2c1a0823afeff96b1fc6184bafdbd957be8d52265"
+SRC_URI[go_linux_amd64.sha256sum] = "ccfe7ae822d2c2f41f4fe7c956199967a4dac22d0ee0d2b2bfdb440aab3b20c5"
+SRC_URI[go_linux_arm64.sha256sum] = "3f4227ce7b206a513e794f1393adb473a07b46e94d18bd15d1c684bbb7319797"
+SRC_URI[go_linux_ppc64le.sha256sum] = "4492031a19657de3bd7e4c48dce9d9e5aa7b668300f7c2c98e620b9ac0ee84ee"
 
 UPSTREAM_CHECK_URI = "https://golang.org/dl/"
 UPSTREAM_CHECK_REGEX = "go(?P<pver>\d+(\.\d+)+)\.linux"

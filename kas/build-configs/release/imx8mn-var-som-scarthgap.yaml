@@ -113,7 +113,7 @@ local_conf_header:
         # gates, a wakeup-capable RTC alarm to wake from it on schedule.
         PANTAVISOR_FEATURES:append = " wakelocks"
     pvgo: |
-        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |
