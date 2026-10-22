@@ -108,7 +108,7 @@ local_conf_header:
         PANTAVISOR_FEATURES:append = " caam-nxp"
         PV_UBOOT_AUTOFDT = "1"
     pvgo: |
-        PREFERRED_VERSION_pvgo-binary-native = "1.24.13"
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
         INHERIT += "rm_work"
     package_management: |

@@ -1,19 +1,19 @@
 # Bootstrap recipe for pvgo build chain.
-# Downloads a pre-built Go 1.22.12 binary to bootstrap Go 1.24 from source.
-# Go 1.24 requires Go 1.22.6+ for bootstrap.
+# Downloads a pre-built Go 1.24.13 binary to bootstrap Go 1.26 from source.
+# Go 1.26 requires Go 1.24.6+ for bootstrap.
 
 SUMMARY = "Go programming language compiler (binary bootstrap for pvgo)"
 HOMEPAGE = "http://golang.org/"
 LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=5d4950ecb7b26d2c5e4e7b4e0dd74707"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=7998cb338f82d15c0eff93b7004d272a"
 
 PROVIDES = "pvgo-bootstrap-native"
 
 # Checksums from https://go.dev/dl/
 SRC_URI = "https://dl.google.com/go/go${PV}.${BUILD_GOOS}-${BUILD_GOARCH}.tar.gz;name=go_${BUILD_GOTUPLE}"
-SRC_URI[go_linux_amd64.sha256sum] = "4fa4f869b0f7fc6bb1eb2660e74657fbf04cdd290b5aef905585c86051b34d43"
-SRC_URI[go_linux_arm64.sha256sum] = "fd017e647ec28525e86ae8203236e0653242722a7436929b1f775744e26278e7"
-SRC_URI[go_linux_ppc64le.sha256sum] = "9573d30003b0796717a99d9e2e96c48fddd4fc0f29d840f212c503b03d7de112"
+SRC_URI[go_linux_amd64.sha256sum] = "1fc94b57134d51669c72173ad5d49fd62afb0f1db9bf3f798fd98ee423f8d730"
+SRC_URI[go_linux_arm64.sha256sum] = "74d97be1cc3a474129590c67ebf748a96e72d9f3a2b6fef3ed3275de591d49b3"
+SRC_URI[go_linux_ppc64le.sha256sum] = "5f0dfab58ce15a84d824363c041246c76847a69d14f9ffac16bd5342299ecc14"
 
 UPSTREAM_CHECK_URI = "https://golang.org/dl/"
 UPSTREAM_CHECK_REGEX = "go(?P<pver>\d+(\.\d+)+)\.linux"
