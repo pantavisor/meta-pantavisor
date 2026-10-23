@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 20fe60bf4ed185c4cf6204df551deaae19e236ca
+        commit: d49ffa87f83269e8e5883f3ab7a0266b25a254fa
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -66,7 +66,7 @@ repos:
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
-        commit: 7da41c5f2eb58c95cf5b312cf0b34fdfc7bb1e4e
+        commit: d26b6c4055c5d020a915c07b629f9beb0bb1e814
     meta-security:
         url: https://git.yoctoproject.org/meta-security
         path: layers/meta-security
@@ -94,10 +94,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 4fb7016a07507683359ebd620f1951fd5ea44bfa
+        commit: 104772c5fd0653290cbb5e4b77813343957939cc
     meta-pantavisor:
     meta-virtualization:
-        commit: c141b3cd60ad3a1bbab22b4884742d4c082beda6
+        commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
 local_conf_header:

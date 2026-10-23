@@ -16,7 +16,7 @@ repos:
         url: https://github.com/Freescale/meta-freescale-distro.git
     meta-toradex-bsp-common:
         branch: scarthgap-7.x.y
-        commit: e99ec578177e51492f38a6a31abcb190ca195f2d
+        commit: ab2309b413af4d9cffe7329e4cd6a1464fb1d7ef
         path: layers/meta-toradex-bsp-common
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
@@ -47,10 +47,10 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 4fb7016a07507683359ebd620f1951fd5ea44bfa
+        commit: 104772c5fd0653290cbb5e4b77813343957939cc
     meta-pantavisor:
     meta-virtualization:
-        commit: c141b3cd60ad3a1bbab22b4884742d4c082beda6
+        commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
