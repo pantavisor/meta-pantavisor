@@ -59,12 +59,11 @@ PVR_APP_ADD_EXTRA_ARGS ??= "  --volume ovl:/var:permanent"
 PVR_APP_ADD_GROUP ??= "root"
 PVR_APP_ADD_ROLES ??= ""
 
-# Set PVR_DM_VERITY = "1" in a container recipe to protect the volumes in
-# PVR_DM_VERITY_VOLUMES with dm-verity: pvr writes a hash file next to each
-# volume and points run.json at it as "dm:<volume>", so pantavisor checks the
-# volume when it mounts it. The device needs a pantavisor built with the
-# dm-verity feature (on by default in PANTAVISOR_FEATURES).
-PVR_DM_VERITY ??= "0"
+# Containers are protected with dm-verity by default when the dm-verity feature
+# is on: pvr writes a hash file next to each volume in PVR_DM_VERITY_VOLUMES and
+# points run.json at it as "dm:<volume>", so pantavisor checks the volume when
+# it mounts it. A recipe opts out with PVR_DM_VERITY = "0".
+PVR_DM_VERITY ??= "${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-verity', '1', '0', d)}"
 PVR_DM_VERITY_VOLUMES ??= "root.squashfs"
 
 PVRIMAGE_AUTO_MDEV ??= "1"
