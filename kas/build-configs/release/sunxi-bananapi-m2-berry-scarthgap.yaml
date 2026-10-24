@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: 0e50ae7a40efcf4d00b57ce755e0aa7a790bdfd4
+        commit: 719c841f3b97ca3d15be11781219ab1285db3c54
         patches:
             wks-root-label:
                 path: patches/meta-sunxi/0001-wks-root-label.patch
