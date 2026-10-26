@@ -18,4 +18,7 @@ repos:
       update-rc-initscripts:
         repo: meta-pantavisor
         path: patches/poky/update-rc.patch
+      insane-ptest-scan-note:
+        repo: meta-pantavisor
+        path: patches/poky/0002-insane-fix-ptest-scan-note-format.patch
 
