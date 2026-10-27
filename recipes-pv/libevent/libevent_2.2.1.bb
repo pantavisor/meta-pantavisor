@@ -44,6 +44,11 @@ do_configure:prepend() {
 	sed -i 's/@CMAKE_DEBUG_POSTFIX@//g' ${S}/libevent_*.pc.in
 }
 
+# glibc >= 2.35 provides epoll_pwait2(), but the syscall needs Linux >= 5.11
+# and libevent has no runtime fallback; older BSP kernels (e.g. Jetson Nano
+# 4.9) get ENOSYS and the event loop dies. Use epoll_wait() + timerfd.
+CACHED_CONFIGUREVARS += "ac_cv_func_epoll_pwait2=no"
+
 PACKAGES_DYNAMIC = "^${PN}-.*$"
 python split_libevent_libs () {
     do_split_packages(d, '${libdir}', r'^libevent_([a-z]*)-.*\.so\..*', '${PN}-%s', '${SUMMARY} (%s)', prepend=True, allow_links=True)

@@ -1,0 +1,15 @@
+header:
+  version: 16
+
+repos:
+  meta-tegra:
+    url: https://github.com/OE4T/meta-tegra.git
+    path: layers/meta-tegra
+    branch: kirkstone-l4t-r32.7.x
+    commit: 94e3db3146dc273ec1df463426c0fcaeacc51b5f
+
+local_conf_header:
+  tegra-runtime: |
+    # NVIDIA's L4T userspace binaries require glibc.
+    TCLIBC = "glibc"
+    PANTAVISOR_CGROUP_VERSION = "1"
