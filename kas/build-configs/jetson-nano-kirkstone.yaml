@@ -1,0 +1,22 @@
+header:
+  version: 16
+  includes:
+    - kas/machines/jetson-nano-devkit.yaml
+    - kas/kirkstone.yaml
+    - kas/bsp-base.yaml
+    - kas/with-lxc-deprecated.yaml
+    - kas/build-configs/build-base-starter.yaml
+
+repos:
+  poky:
+    commit: 445a6223929b9a7a62b575093659e3d9e1aba982
+  meta-openembedded:
+    commit: ce8539c941f6fcbecaca4d16640ac105c0595589
+  meta-virtualization:
+    commit: 92b6abcdfb6f12c4931247f0f29aaf5331984525
+
+local_conf_header:
+  nano-local-build: |
+    # Bound local builds on workstations that also run other builds.
+    BB_NUMBER_THREADS ?= "4"
+    PARALLEL_MAKE ?= "-j4"

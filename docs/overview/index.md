@@ -52,6 +52,8 @@ committing to the Yocto/BitBake build guide below.
 
 - [Porting Pantavisor](port/index.md) — add support for a new board: platform
   and machine KAS files, CI registration, and building.
+- [Jetson Nano 4 GB bring-up](port/jetson-nano.md) — experimental local
+  image target with NVIDIA's CUDA runtime and GPU computation checks.
 - [Composable Firmware](composable-firmware.md) — what "composable firmware"
   actually means here.
 - [Examples](examples/index.md) — worked xconnect and pvwificonnect examples.

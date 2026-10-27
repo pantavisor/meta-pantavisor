@@ -12,9 +12,10 @@ S = "${WORKDIR}"
 
 # The repository is private: the fetch authenticates with a GitHub token in
 # ~/.netrc (CI writes one from a secret). vendor/ is committed, so the build
-# needs no module download. The tag is resolved with git ls-remote when the
-# recipe is parsed.
-SRC_URI = "git://github.com/pantavisor/pv-mqtt-sdk.git;protocol=https;branch=main;tag=${PV};destsuffix=src/${GO_IMPORT}"
+# needs no module download.
+SRC_URI = "git://github.com/pantavisor/pv-mqtt-sdk.git;protocol=https;branch=main;destsuffix=src/${GO_IMPORT}"
+# v0.1.13; pinned instead of tag=${PV}, which Kirkstone cannot resolve.
+SRCREV = "28edec0c1ddd94f59dbe2a2d52b4c896f4108472"
 
 GO_IMPORT = "github.com/pantavisor/pv-mqtt-sdk"
 export GO111MODULE = "on"
