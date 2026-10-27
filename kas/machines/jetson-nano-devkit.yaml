@@ -1,0 +1,25 @@
+header:
+  version: 16
+  includes:
+    - kas/platforms/tegra.yaml
+
+machine: jetson-nano-devkit
+
+local_conf_header:
+  jetson-nano: |
+    PVROOT_IMAGE_BSP = "pv-jetson-bsp"
+    PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-mqtt-sdk pv-jetson-cuda pv-unsloth"
+    # PVROOT_IMAGE_BSP set here masks pvrexportit for every non-BSP image.
+    IMAGE_TYPES_MASKED:remove:pn-pvwificonnect = "pvrexportit"
+    IMAGE_TYPES_MASKED:remove:pn-pv-mqtt-sdk = "pvrexportit"
+    # pv-mqtt-sdk holds the Pantahub link instead of pantavisor.
+    PANTAVISOR_CONFIG[PV_CONTROL_REMOTE] = "0"
+    PANTAVISOR_CONFIG[PV_LOG_PUSH] = "0"
+    # Preserve the CBoot-patched DTB, including NVIDIA memory reservations.
+    PV_INITIAL_DTB = ""
+    PV_UBOOT_AUTOFDT = ""
+    UBOOT_EXTLINUX = "0"
+    INITRAMFS_IMAGE_BUNDLE = "0"
+    # CUDA needs nvgpu firmware and the BSP's complete module set.
+    PV_BSP_DRIVERS = '{"all": {"nvidia": ["nvgpu"]}}'
+    PREFERRED_PROVIDER_virtual/kernel:pn-pantavisor-starter = "linux-tegra"

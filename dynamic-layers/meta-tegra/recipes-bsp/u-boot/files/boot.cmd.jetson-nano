@@ -1,0 +1,59 @@
+# Jetson Nano's QSPI firmware supplies a board-specific, patched DTB.
+# Keep it; replacing it with an unpatched kernel DTB breaks NVIDIA devices.
+echo "Pantavisor Jetson Nano"
+setenv pv_mmcdev ${devnum}
+if test -z "${pv_mmcdev}"; then setenv pv_mmcdev 0; fi
+setenv pv_bootpart ${distro_bootpart}
+if test -z "${pv_bootpart}"; then setenv pv_bootpart 1; fi
+setenv pv_load "load mmc ${pv_mmcdev}:${pv_bootpart}"
+setenv envloadaddr ${pxefile_addr_r}
+setenv pv_rev
+setenv pv_try
+setenv pv_trying
+
+if ${pv_load} ${envloadaddr} /oemEnv.txt; then
+    env import ${envloadaddr} ${filesize}
+fi
+
+if ${pv_load} ${envloadaddr} /boot/uboot.txt; then
+    env import ${envloadaddr} ${filesize}
+else
+    echo "Cannot read Pantavisor revision; resetting"
+    sleep 5
+    reset
+fi
+if ${pv_load} ${envloadaddr} /pv.env; then
+    env import ${envloadaddr} ${filesize}
+fi
+setenv boot_rev ${pv_rev}
+if env exists pv_try; then
+    if test "${pv_trying}" = "${pv_try}"; then
+        echo "Failed try-boot; returning to revision ${pv_rev}"
+        setenv pv_trying
+    else
+        setenv pv_trying ${pv_try}
+        setenv boot_rev ${pv_try}
+    fi
+    env export ${envloadaddr} pv_trying
+    if ext4write mmc ${pv_mmcdev}:${pv_bootpart} ${envloadaddr} /pv.env ${filesize}; then
+        echo "Saved try-boot state"
+    else
+        echo "Cannot persist try-boot state; resetting"
+        sleep 5
+        reset
+    fi
+fi
+
+if ${pv_load} ${kernel_addr_r} /trails/${boot_rev}/.pv/pv-kernel.img; then
+    if ${pv_load} ${ramdisk_addr_r} /trails/${boot_rev}/.pv/pv-initrd.img; then
+        setenv rd_size ${filesize}
+        if fdt addr ${fdt_addr} && fdt header get pv_dtb_size totalsize && fdt move ${fdt_addr} ${fdt_addr_r} ${pv_dtb_size}; then
+            # Put the initramfs root arguments last, overriding CBoot's disk root.
+            setenv bootargs "${cbootargs} ${oemargs} console=ttyS0,115200 root=/dev/ram rootfstype=ramfs rdinit=/usr/bin/pantavisor pv_rev=${boot_rev} pv_try=${pv_try} panic=3"
+            booti ${kernel_addr_r} ${ramdisk_addr_r}:${rd_size} ${fdt_addr_r}
+        fi
+    fi
+fi
+echo "Pantavisor boot failed; resetting"
+sleep 5
+reset

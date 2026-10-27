@@ -1,0 +1,6 @@
+{
+    "PV_GROUP": "app",
+    "PV_STATUS_GOAL": "READY",
+    "PV_RESTART_POLICY": "container",
+    "PV_DRIVERS_REQUIRED": ["nvidia"]
+}

@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+trap 'exit 0' TERM INT PWR
+
+echo "Checking CUDA from a Pantavisor container"
+/usr/bin/cuda-samples/deviceQuery
+/usr/bin/cuda-samples/vectorAdd
+echo "CUDA enumeration and GPU kernel execution passed"
+
+until pvcontrol signal ready; do
+    sleep 1
+done
+while :; do
+    sleep 5 &
+    wait "$!"
+done
