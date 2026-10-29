@@ -35,11 +35,31 @@ SRC_URI += "file://args.json \
 
 PV_CONFIG_OVERLAY_DIR = "pvwificonnect-config"
 
+# Optional pre-provisioned station network, written as the `network` block
+# of config.json: the device joins it on every boot before falling back to
+# its AP. Set both from an uncommitted local config, never in the layer.
+PVWIFICONNECT_NETWORK_SSID ?= ""
+PVWIFICONNECT_NETWORK_PASSWORD ?= ""
+
+ROOTFS_POSTPROCESS_COMMAND += "set_preset_network; "
+set_preset_network() {
+    [ -n "${PVWIFICONNECT_NETWORK_SSID}" ] || return 0
+    cfg=${WORKDIR}/${PV_CONFIG_OVERLAY_DIR}/var/pvwificonnect/config.json
+    jq --arg ssid "${PVWIFICONNECT_NETWORK_SSID}" \
+       --arg password "${PVWIFICONNECT_NETWORK_PASSWORD}" \
+       '. + { network: { ssid: $ssid, password: $password } }' \
+       $cfg > $cfg.new
+    mv -f $cfg.new $cfg
+}
+
 PVR_APP_ADD_EXTRA_ARGS += " \
     --volume ovl:/tmp:permanent \
 "
 
 PVR_APP_ADD_GROUP = "platform"
+# mgmt: pv-ctrl's /config2, /steps and /objects, to read a Wi-Fi network
+# preset in the revision's OEM config (PVWIFICONNECT_NETWORK_*).
+PVR_APP_ADD_ROLES = "mgmt"
 
 # Sign including config (override --noconfig default from container-pvrexport)
 PVR_SIG_ADD_ARGS = "--part ${PN}"
