@@ -8,9 +8,10 @@ machine: jetson-nano-devkit
 local_conf_header:
   jetson-nano: |
     PVROOT_IMAGE_BSP = "pv-jetson-bsp"
-    PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-mqtt-sdk pv-jetson-cuda pv-unsloth"
+    PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-avahi pv-mqtt-sdk pv-jetson-cuda pv-unsloth"
     # PVROOT_IMAGE_BSP set here masks pvrexportit for every non-BSP image.
     IMAGE_TYPES_MASKED:remove:pn-pvwificonnect = "pvrexportit"
+    IMAGE_TYPES_MASKED:remove:pn-pv-avahi = "pvrexportit"
     IMAGE_TYPES_MASKED:remove:pn-pv-mqtt-sdk = "pvrexportit"
     # pv-mqtt-sdk holds the Pantahub link instead of pantavisor.
     PANTAVISOR_CONFIG[PV_CONTROL_REMOTE] = "0"
@@ -21,5 +22,14 @@ local_conf_header:
     UBOOT_EXTLINUX = "0"
     INITRAMFS_IMAGE_BUNDLE = "0"
     # CUDA needs nvgpu firmware and the BSP's complete module set.
-    PV_BSP_DRIVERS = '{"all": {"nvidia": ["nvgpu"]}}'
+    # wifi/bluetooth are requested by the os container; the devkit's M.2
+    # card is usually an Intel 8265 (Bluetooth over USB).
+    PV_BSP_DRIVERS = '{"all": {"nvidia": ["nvgpu"], "wifi": ["iwlwifi", "iwlmvm"], "bluetooth": ["btintel", "btusb"]}}'
+    # The built-in xHCI driver loads its firmware before pantavisor mounts
+    # the BSP firmware, so the initramfs must carry it or USB stays down.
+    PACKAGE_INSTALL:append:pn-pantavisor-initramfs = " tegra-firmware-tegra210-xusb"
     PREFERRED_PROVIDER_virtual/kernel:pn-pantavisor-starter = "linux-tegra"
+    # Image base: the APP partition (NVIDIA's SD card layout) holds both
+    # /boot/boot.scr and pantavisor storage.
+    PV_IMAGE_BASE_LAYOUT = "uboot-gpt"
+    PV_IMAGE_BASE_PARTNAME = "APP"
