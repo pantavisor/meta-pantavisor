@@ -133,6 +133,9 @@ chmod 1777 "$staging/tmp"
 
 export PVR_CONFIG_DIR="$work/pvrconfig"
 export PVR_DISABLE_SELF_UPGRADE=1
+# pvr app add wants root or fakeroot, which the SDK does not ship; root is not
+# needed here, -all-root makes every file root-owned anyway.
+export PVR_NOFAKEROOT=1
 mkdir -p "$PVR_CONFIG_DIR"
 tar -C "$PVR_CONFIG_DIR" -xzf "$keys" --no-same-owner
 
