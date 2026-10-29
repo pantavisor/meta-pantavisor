@@ -149,6 +149,10 @@ do_compile(){
 do_deploy[dirs] += "${PVR_CONFIG_DIR} ${B}/pvrrepo"
 
 do_deploy(){
+	# The recipe's own pvr config, as in do_compile: the shared ~/.pvr is
+	# rewritten by pvr tasks running in parallel and reads back truncated.
+	export PVR_DISABLE_SELF_UPGRADE=true
+	export PVR_CONFIG_DIR="${PVR_CONFIG_DIR}"
 	cd ${B}/pvrrepo
 	pvr export ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz
 	ln -fsr ${DEPLOYDIR}/${BPN}-${PV}.pvrexport.tgz ${DEPLOYDIR}/${BPN}.pvrexport.tgz
