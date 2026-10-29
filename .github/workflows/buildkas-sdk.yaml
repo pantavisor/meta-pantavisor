@@ -97,11 +97,64 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # ghcr.io/<owner>/pv-sdk, pushed with this token
+      packages: write
     steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/sdk
+          persist-credentials: false
+          path: src
       - uses: actions/download-artifact@v7
         with:
           name: pv-sdk-${{ inputs.sdk_name }}
           path: sdk/
+      - name: Push the SDK image
+        id: image
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          SDK_NAME: ${{ inputs.sdk_name }}
+        run: |
+          set -euo pipefail
+          # ghcr names are lowercase; the owner may not be.
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/pv-sdk:${TAG//\//-}-${SDK_NAME}"
+          mkdir context
+          cp sdk/*.sh context/pv-sdk.sh
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          # The source label links the package to this repository.
+          docker build -f src/.github/sdk/Dockerfile \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.version=$TAG" \
+            -t "$image" context
+          docker push "$image"
+          echo "digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$image")" >> "$GITHUB_OUTPUT"
+          docker logout ghcr.io
+      - name: Write the catalog entry
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          SDK_NAME: ${{ inputs.sdk_name }}
+          IMAGE: ${{ steps.image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # One entry of pantahub-builder's PH_BUILDER_SDKS catalog.
+          case "$SDK_NAME" in
+          x86_64) platform=linux/amd64 ;;
+          armv8) platform=linux/arm64 ;;
+          armv6) platform=linux/arm/v6 ;;
+          *) echo "no builder platform for $SDK_NAME" >&2; exit 1 ;;
+          esac
+          installer=$(basename sdk/*.sh)
+          jq -n \
+            --arg release "$TAG" --arg platform "$platform" --arg arch "$SDK_NAME" \
+            --arg url "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$installer" \
+            --arg sha256 "$(sha256sum "sdk/$installer" | cut -d' ' -f1)" \
+            --arg image "$IMAGE" \
+            '{release: $release, platform: $platform, arch: $arch, url: $url, sha256: $sha256, image: $image}' \
+            > "sdk/${installer%.sh}.json"
+          cat "sdk/${installer%.sh}.json"
       - name: Attach to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,4 +167,4 @@ jobs:
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "" || true
           fi
-          gh release upload "$TAG" sdk/*.sh --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" sdk/*.sh sdk/*.json --repo "$GITHUB_REPOSITORY" --clobber
