@@ -114,6 +114,11 @@ fakeroot IMAGE_CMD:pvrexportit(){
     if [ -n "${PVR_APP_ADD_ROLES}" ]; then
         roles_array=$(echo "${PVR_APP_ADD_ROLES}" | tr ' ' '\n' | jq -R . | jq -s .)
         roles_src="${WORKDIR}/${PN}.args.json"
+        # A recipe's plain args.json is used when it has no ${PN}.args.json:
+        # add the roles there rather than shadow it with a roles-only file.
+        if [ ! -f "$roles_src" ] && [ -f "${WORKDIR}/args.json" ]; then
+            roles_src="${WORKDIR}/args.json"
+        fi
         if [ -f "$roles_src" ]; then
             jq --argjson r "$roles_array" '. + {"PV_ROLES": $r}' "$roles_src" > "${roles_src}.tmp" && mv "${roles_src}.tmp" "$roles_src"
         else
