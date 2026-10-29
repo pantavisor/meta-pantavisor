@@ -20,10 +20,14 @@ Each release attaches one installer per architecture to its
 |---|---|
 | `pv-sdk-<tag>-x86_64.sh` | x86_64 |
 | `pv-sdk-<tag>-armv8.sh` | 64-bit ARM (aarch64) |
-| `pv-sdk-<tag>-armv7.sh` | 32-bit ARM, armv7 hard-float |
+| `pv-sdk-<tag>-armv6.sh` | 32-bit ARM, soft-float |
 
 The installers run on x86_64 Linux hosts. The toolchain targets musl, the C
 library of the Pantavisor board images.
+
+The armv6 SDK builds soft-float binaries. They do not load on a hard-float
+32-bit board (one whose initramfs has `/lib/ld-musl-armhf.so.1`), which
+includes most armv7 boards; there is no hard-float 32-bit SDK for now.
 
 ## Install
 
@@ -33,7 +37,14 @@ sh ./pv-sdk-<tag>-armv8.sh -d ~/pv-sdk-armv8 -y
 ```
 
 Sourcing `environment-setup-*` puts the cross compiler (`$CC`, `$CXX`,
-`$CONFIGURE_FLAGS`, ...) and `pv-mkpvrexport` on `PATH` for this shell.
+`$CONFIGURE_FLAGS`, ...), `pv-mkpvrexport` and a host build of `pvr` on
+`PATH` for this shell. You don't need to install `pvr` separately, but it is
+only on `PATH` in a shell that sourced the script:
+
+```bash
+command -v pvr     # ~/pv-sdk-armv8/sysroots/x86_64-pokysdk-linux/usr/bin/pvr
+pvr --version
+```
 
 ## Build a container
 
@@ -62,7 +73,9 @@ For autotools, CMake or Meson projects, install with
 directory.
 
 `pv-mkpvrexport` never modifies `rootfs`. It copies it, adds the mountpoints
-LXC needs, makes every file owned by root, and signs the result with the
+LXC needs, makes every file owned by root, gives the container a persistent
+`/var` (`--volume ovl:/var:permanent`, as a container recipe does by default),
+and signs the result with the
 Pantacor developer keys shipped in the SDK (`--keys` to use your own
 `pvs` keys tarball). The options map to the files a container recipe
 provides:
@@ -78,8 +91,11 @@ provides:
 | `--roles "R1 R2"` | `PVR_APP_ADD_ROLES` |
 | `--comp lz4` | `PANTAVISOR_FEATURES` `squash-lz4` |
 | `-- <args>` | `PVR_APP_ADD_EXTRA_ARGS` |
+| `--no-var-volume` | `PVR_APP_ADD_EXTRA_ARGS` without its default `--volume ovl:/var:permanent` |
 
-`pv-mkpvrexport --help` lists them all.
+`pv-mkpvrexport --help` lists them all. Two recipe features have no
+equivalent: dm-verity volumes (`PVR_DM_VERITY`) and the `_config` overlay
+(`PV_CONFIG_OVERLAY_DIR`); build such containers with the layer.
 
 ## Deploy it
 

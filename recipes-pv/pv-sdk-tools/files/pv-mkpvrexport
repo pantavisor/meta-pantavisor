@@ -20,6 +20,8 @@ Options:
       --no-mdev            do not write the default mdev.json
       --services-json FILE services.json for the container
       --network-json FILE  merged into run.json as "network"
+      --no-var-volume      do not give the container a persistent /var
+                           (default: --volume ovl:/var:permanent)
       --group NAME         Pantavisor group (default: root)
       --roles "R1 R2"      PV_ROLES for the container
       --comp xz|lz4        squashfs compression (default: xz)
@@ -37,6 +39,10 @@ die() {
 	exit 1
 }
 
+needarg() {
+	[ $# -ge 2 ] || die "$1 needs a value"
+}
+
 abspath() {
 	[ -e "$1" ] || die "no such file: $1"
 	echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
@@ -52,12 +58,17 @@ mdev_json=""
 auto_mdev=1
 services_json=""
 network_json=""
+var_args="--volume ovl:/var:permanent"
 group="root"
 roles=""
 comp="xz"
 keys="${datadir:+$datadir/pvs.defaultkeys.tar.gz}"
 
 while [ $# -gt 0 ]; do
+	case "$1" in
+	-o|--output|--args-json|--config-json|--mdev-json|--services-json|\
+	--network-json|--group|--roles|--comp|--keys) needarg "$@" ;;
+	esac
 	case "$1" in
 	-o|--output) output="$2"; shift 2 ;;
 	-b|--base) base=1; shift ;;
@@ -67,6 +78,7 @@ while [ $# -gt 0 ]; do
 	--no-mdev) auto_mdev=0; shift ;;
 	--services-json) services_json="$(abspath "$2")"; shift 2 ;;
 	--network-json) network_json="$(abspath "$2")"; shift 2 ;;
+	--no-var-volume) var_args=""; shift ;;
 	--group) group="$2"; shift 2 ;;
 	--roles) roles="$2"; shift 2 ;;
 	--comp) comp="$2"; shift 2 ;;
@@ -89,7 +101,9 @@ fi
 
 [ -d "$rootfs" ] || die "not a directory: $rootfs"
 rootfs="$(abspath "$rootfs")"
-output="$(cd "$(dirname "${output:-./$name.pvrexport.tgz}")" && pwd)/$(basename "${output:-$name.pvrexport.tgz}")"
+output="${output:-./$name.pvrexport.tgz}"
+[ -d "$(dirname "$output")" ] || die "output directory does not exist: $(dirname "$output")"
+output="$(cd "$(dirname "$output")" && pwd)/$(basename "$output")"
 
 case "$comp" in
 xz) format_opts="-comp xz" ;;
@@ -142,7 +156,8 @@ pvr app add \
 	--group "$group" \
 	${args_json:+--arg-json "$args_json"} \
 	${config_json:+--config-json "$config_json"} \
-	--format-options="$format_opts -all-root" \
+	$var_args \
+	--format-options="$format_opts -all-root -e lib/modules -e lib/firmware" \
 	"$@" \
 	"$name"
 pvr add
@@ -166,6 +181,12 @@ if [ -n "$network_json" ]; then
 	jq --slurpfile network "$network_json" '. + { "network": $network[0] }' \
 		"$name/run.json" > "$name/run.json.tmp"
 	mv "$name/run.json.tmp" "$name/run.json"
+fi
+# container-pvrexport.bbclass marks its exports "yocto"; this lets the hub tell
+# SDK-packed containers apart from both those and docker-pulled ones.
+if [ -f "$name/src.json" ]; then
+	jq '. + { pv_build_origin: "sdk" }' "$name/src.json" > "$name/src.json.tmp"
+	mv "$name/src.json.tmp" "$name/src.json"
 fi
 pvr add
 pvr commit

@@ -6,6 +6,8 @@ header:
 
 local_conf_header:
   # A separate TMPDIR: the docker machines' default build is the glibc
-  # appengine distro, and the two libcs cannot share one.
+  # appengine distro, and the two libcs cannot share one. kas writes
+  # local_conf_header entries sorted by key, so this one lands after
+  # bsp-base.yaml's "panta-base" TMPDIR and wins; keep the key sorting later.
   pv-sdk: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-sdk"

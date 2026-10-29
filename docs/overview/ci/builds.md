@@ -28,7 +28,8 @@ Used by `release.yaml` (tag builds, `publish: true`) and `manual-sdk-scarthgap.y
 
 - Builds with `kas/machines/<machine>.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml`: the board distro (musl, board `PANTAVISOR_FEATURES`) on a board-less `docker-*` machine, in `build/tmp-scarthgap-sdk`.
 - Runs `bitbake -c populate_sdk pv-sdk` (recipe: `recipes-pv/images/pv-sdk.bb`).
-- Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv7`).
+- Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv6`).
+- Before uploading, runs `.github/scripts/sdk-smoke-test` on the installer: installs it, packs a container with `pv-mkpvrexport`, and builds pantavisor at `PANTAVISOR_SRCREV`.
 - With `publish: true`, attaches it to the tag's GitHub Release, creating the release if `tag-changelogs.yaml` has not yet. SDKs never go to S3 or `releases.json`.
 
 Build one by hand from the Actions tab (**manual: sdk scarthgap**, choosing the `arch`), or locally:

@@ -450,6 +450,15 @@ emit_changes() {
 CHANGES_SECTION="$(emit_changes)"
 
 # --- 4. Render section -----------------------------------------------------
+# SDK installers are GitHub Release assets, not releases.json entries, so the
+# table above cannot list them. 957ee86d is the commit that started building
+# them; an older tag regenerated here gets no line.
+if git merge-base --is-ancestor 957ee86d "$SOURCE_REV" 2>/dev/null; then
+    SDK_LINE=$'\n\n'"SDK installers (\`pv-sdk-${TAG}-<arch>.sh\`): attached to the [GitHub Release](https://github.com/${GH_REPO}/releases/tag/${TAG})."
+else
+    SDK_LINE=""
+fi
+
 if [ -n "$PREV_TAG" ]; then
     CHANGES_PREAMBLE="Changes since [\`${PREV_TAG}\`](https://github.com/${GH_REPO}/releases/tag/${PREV_TAG}):"$'\n'
 else
@@ -465,7 +474,7 @@ Released: ${RELEASE_DATE}
 
 ${DOWNLOADS_SECTION}
 
-Source: [\`releases.json\`](${RELEASES_JSON_URL}) (\`${RELEASE_TYPE}\` → \`${TAG}\`).
+Source: [\`releases.json\`](${RELEASES_JSON_URL}) (\`${RELEASE_TYPE}\` → \`${TAG}\`).${SDK_LINE}
 
 ### Component versions
 

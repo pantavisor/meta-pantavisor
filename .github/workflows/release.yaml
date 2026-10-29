@@ -95,8 +95,8 @@ jobs:
             configs: kas/machines/docker-x86_64.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
           - sdk_name: armv8
             configs: kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
-          - sdk_name: armv7
-            configs: kas/machines/docker-armv7.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
+          - sdk_name: armv6
+            configs: kas/machines/docker-armv6.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml:kas/build-configs/shared-vols.yaml
     uses: ./.github/workflows/buildkas-sdk.yaml
     with:
       configs: ${{ matrix.configs }}
