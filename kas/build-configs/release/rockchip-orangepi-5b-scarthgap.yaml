@@ -18,11 +18,11 @@ repos:
             fit-image-multiconfig:
                 path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
                 repo: meta-pantavisor
-            update-rc-initscripts:
-                path: patches/poky/update-rc.patch
-                repo: meta-pantavisor
             insane-ptest-scan-note:
                 path: patches/poky/0002-insane-fix-ptest-scan-note-format.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
                 repo: meta-pantavisor
         url: https://github.com/yoctoproject/poky.git
         path: layers/poky
