@@ -46,6 +46,24 @@ command -v pvr     # ~/pv-sdk-armv8/sysroots/x86_64-pokysdk-linux/usr/bin/pvr
 pvr --version
 ```
 
+### Or use the SDK image
+
+Each release also publishes the installed SDK as a container image,
+`ghcr.io/pantavisor/pv-sdk:<tag>-<arch>`, for a CI job or a host where you
+would rather not install anything. The SDK is in `/opt/pv-sdk`, with `make`
+beside it; mount your sources on `/src`:
+
+```bash
+docker run --rm -v "$PWD:/src" ghcr.io/pantavisor/pv-sdk:<tag>-armv8 sh -c '
+  . /opt/pv-sdk/environment-setup-*
+  mkdir -p rootfs/usr/bin
+  $CC -o rootfs/usr/bin/hello hello.c
+  pv-mkpvrexport --base rootfs hello -- --config=Entrypoint=/usr/bin/hello'
+```
+
+The image runs on x86_64 hosts, like the installer. To pin one, use the
+digest in the release's `pv-sdk-<tag>-<arch>.json`.
+
 ## Build a container
 
 Install your application into a directory laid out like the container's

@@ -31,6 +31,7 @@ Used by `release.yaml` (tag builds, `publish: true`) and `manual-sdk-scarthgap.y
 - Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv6`).
 - Before uploading, runs `.github/scripts/sdk-smoke-test` on the installer: installs it, packs a container with `pv-mkpvrexport`, and builds pantavisor at `PANTAVISOR_SRCREV`.
 - With `publish: true`, attaches it to the tag's GitHub Release, creating the release if `tag-changelogs.yaml` has not yet. SDKs never go to S3 or `releases.json`.
+- With `publish: true`, also pushes the installed SDK as `ghcr.io/pantavisor/pv-sdk:<tag>-<arch>` (from `.github/sdk/Dockerfile`, with the workflow's `GITHUB_TOKEN`), and attaches `pv-sdk-<tag>-<arch>.json` to the release: the installer's URL and sha256 and the image pinned by digest, one entry of pantahub-builder's `PH_BUILDER_SDKS` catalog.
 
 Build one by hand from the Actions tab (**manual: sdk scarthgap**, choosing the `arch`), or locally:
 
