@@ -1,0 +1,20 @@
+# Jetson Nano image base for 'pvr image assemble' and Pantahub image builds:
+#   ./kas-container build kas/build-configs/jetson-nano-image-base-kirkstone.yaml
+#   pvr build start --git-url https://github.com/pantavisor/meta-pantavisor --git-ref <ref> \
+#     --image-base kas/build-configs/jetson-nano-image-base-kirkstone.yaml ...
+header:
+  version: 16
+  includes:
+    - kas/machines/jetson-nano-devkit.yaml
+    - kas/kirkstone.yaml
+    - kas/bsp-base.yaml
+    - kas/with-lxc-deprecated.yaml
+    - kas/build-configs/build-image-base.yaml
+
+repos:
+  poky:
+    commit: 445a6223929b9a7a62b575093659e3d9e1aba982
+  meta-openembedded:
+    commit: ce8539c941f6fcbecaca4d16640ac105c0595589
+  meta-virtualization:
+    commit: 92b6abcdfb6f12c4931247f0f29aaf5331984525
