@@ -1,0 +1,51 @@
+#!/bin/bash
+# Install a pv-sdk installer and use it the way the docs tell users to:
+# pack a container with pv-mkpvrexport (container-sdk.md) and build
+# pantavisor at the release pin (pantavisor-sdk.md). Catches a sysroot that
+# fell out of step with pantavisor's DEPENDS, or a broken host tool, before
+# the installer is published.
+#
+# Usage: sdk-smoke-test <pv-sdk-*.sh> <pantavisor srcrev>
+
+set -euo pipefail
+
+installer="$(realpath "$1")"
+srcrev="$2"
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+sh "$installer" -d "$work/sdk" -y
+# environment-setup-* references unset variables
+set +u
+. "$work"/sdk/environment-setup-*
+set -u
+
+echo "== host tools"
+command -v pvr pv-mkpvrexport cmake
+pvr --version
+
+echo "== container"
+cd "$work"
+cat > hello.c <<'EOF'
+#include <stdio.h>
+int main(void) { puts("hello from the container SDK"); return 0; }
+EOF
+mkdir -p rootfs/usr/bin
+$CC -Wall -Werror -o rootfs/usr/bin/hello hello.c
+pv-mkpvrexport --base rootfs hello -- --config=Entrypoint=/usr/bin/hello
+mkdir export
+tar -C export -xzf hello.pvrexport.tgz
+jq -e '."hello/src.json".pv_build_origin == "sdk"' export/json
+jq -e '."hello/src.json".persistence."ovl:/var" == "permanent"' export/json
+jq -e '."_sigs/hello.json" != null' export/json
+
+echo "== pantavisor"
+# a full clone: the version string comes from git describe
+git clone -q https://github.com/pantavisor/pantavisor.git
+cd pantavisor
+git checkout -q "$srcrev"
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build -j"$(nproc)"
+DESTDIR="$PWD/pv-install" cmake --install build --strip
+$READELF -h pv-install/usr/bin/pantavisor | grep -E 'Class|Machine'

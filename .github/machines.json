@@ -1,6 +1,6 @@
 {
 	"yocto_branch": "scarthgap",
-	"sdk_machines": ["docker-x86_64", "docker-armv8", "docker-armv7"],
+	"sdk_machines": ["docker-x86_64", "docker-armv8", "docker-armv6"],
 	"machines": [
 		{
 			"config": "kas/machines/sunxi-orange-pi-3lts.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-deprecated.yaml:kas/build-configs/build-base-starter.yaml",

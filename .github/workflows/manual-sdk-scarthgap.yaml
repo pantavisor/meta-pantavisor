@@ -17,7 +17,7 @@ on:
         options:
           - x86_64
           - armv8
-          - armv7
+          - armv6
 
 jobs:
   build:

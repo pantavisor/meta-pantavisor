@@ -30,6 +30,9 @@ sh ./pv-sdk-<tag>-armv8.sh -d ~/pv-sdk-armv8 -y
 
 ## Build Pantavisor
 
+The environment script exports `CMAKE_TOOLCHAIN_FILE`, so a plain `cmake`
+cross-compiles for the device, in scripts as well as in the shell:
+
 ```bash
 git clone https://github.com/pantavisor/pantavisor.git
 cd pantavisor
@@ -55,5 +58,5 @@ file pv-install/usr/bin/pantavisor
 ```
 
 ```
-pv-install/usr/bin/pantavisor: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-x86_64.so.1, ...
+pv-install/usr/bin/pantavisor: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-aarch64.so.1, ...
 ```
