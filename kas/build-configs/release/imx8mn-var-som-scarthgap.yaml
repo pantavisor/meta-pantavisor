@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: d49ffa87f83269e8e5883f3ab7a0266b25a254fa
+        commit: 098d716e22044d121a1b5aaee04408975d11abbe
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -28,7 +28,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 9babc67e0be8b4458e5531ba963d2bbfc9ec315b
+        commit: ebe75312c4a34e444228f5a621fa44cf74fc49db
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
@@ -62,11 +62,11 @@ repos:
             meta-oe:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
-        commit: 0f00f8b9a21950640da8c5707343e5540133f86e
+        commit: 2db6aece32c7f8ebf6015b468e1b4e21de072e3b
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
-        commit: d26b6c4055c5d020a915c07b629f9beb0bb1e814
+        commit: d4208016c450295f3c8289267738905eef2f0b1a
     meta-security:
         url: https://git.yoctoproject.org/meta-security
         path: layers/meta-security
@@ -97,7 +97,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 104772c5fd0653290cbb5e4b77813343957939cc
+        commit: b6ae714a1d1bfae8384654a13da15996cac64712
     meta-pantavisor:
     meta-virtualization:
         commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819

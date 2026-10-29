@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: 0e50ae7a40efcf4d00b57ce755e0aa7a790bdfd4
+        commit: 719c841f3b97ca3d15be11781219ab1285db3c54
         patches:
             wks-root-label:
                 path: patches/meta-sunxi/0001-wks-root-label.patch
@@ -33,14 +33,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 104772c5fd0653290cbb5e4b77813343957939cc
+        commit: b6ae714a1d1bfae8384654a13da15996cac64712
     meta-pantavisor:
     meta-virtualization:
         commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 0f00f8b9a21950640da8c5707343e5540133f86e
+        commit: 2db6aece32c7f8ebf6015b468e1b4e21de072e3b
         layers:
             meta-filesystems:
             meta-networking:
