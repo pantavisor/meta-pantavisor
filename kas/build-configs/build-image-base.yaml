@@ -11,5 +11,6 @@ local_conf_header:
     # would otherwise query when parsing: the base builds from public
     # sources only.
     BBMASK += "pv-mqtt-sdk"
+    PVROOT_CONTAINERS_CORE:remove = "pv-mqtt-sdk"
 target:
 - pantavisor-image-base
