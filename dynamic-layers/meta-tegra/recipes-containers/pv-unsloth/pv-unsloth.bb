@@ -18,18 +18,20 @@ PVPKG_DESCRIPTION ?= "Unsloth LLM fine-tuning and inference engine with GPU acce
 PVPKG_PACKAGE_URL ?= "https://github.com/pantavisor/pv-unsloth"
 PVPKG_URL ?= "${PVPKG_PACKAGE_URL}"
 
-SRC_URI += "git://github.com/pantavisor/pv-unsloth.git;protocol=https;branch=main"
-SRCREV = "31d989ba386bdddf42ed8555bc417576a29313a2"
+# Unsloth itself needs PyTorch 2.x on CUDA 11.8+, which the Nano (sm_53,
+# CUDA 10.2) cannot run: serve the repository's API with the standard
+# library and the CUDA driver API instead of its FastAPI/torch server.py.
+SRC_URI += "file://pv-unsloth-server.py file://pv-unsloth.args.json file://pv-unsloth.mdev.json"
 
 PVRIMAGE_AUTO_MDEV = "0"
-PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/app/entrypoint.sh"
+# Application group: a crash restarts this container, not the whole revision;
+# after max_retries it is left stopped (backoff_policy never, args.json).
+PVR_APP_ADD_GROUP = "app"
+PVR_APP_ADD_EXTRA_ARGS += "--config=Entrypoint=/app/server.py"
 
 install_unsloth_files() {
     install -d ${IMAGE_ROOTFS}/app
     install -d ${IMAGE_ROOTFS}/models
-    install -m 0755 ${WORKDIR}/git/entrypoint.sh ${IMAGE_ROOTFS}/app/entrypoint.sh
-    install -m 0644 ${WORKDIR}/git/server.py ${IMAGE_ROOTFS}/app/server.py
-    install -m 0644 ${WORKDIR}/git/mdev.json ${IMAGE_ROOTFS}/mdev.json
-    install -m 0644 ${WORKDIR}/git/lxc.container.conf ${IMAGE_ROOTFS}/lxc.container.conf
+    install -m 0755 ${WORKDIR}/pv-unsloth-server.py ${IMAGE_ROOTFS}/app/server.py
 }
 ROOTFS_POSTPROCESS_COMMAND += "install_unsloth_files; "
