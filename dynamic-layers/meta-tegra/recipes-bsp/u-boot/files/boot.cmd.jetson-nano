@@ -16,7 +16,12 @@ if ${pv_load} ${envloadaddr} /oemEnv.txt; then
 fi
 
 if ${pv_load} ${envloadaddr} /boot/uboot.txt; then
-    env import ${envloadaddr} ${filesize}
+    # pantavisor rewrites uboot.txt '\0'-separated (pv_try after an update),
+    # which a text import stops reading at the first '\0'; the factory file
+    # is one 'pv_rev=0' text line, which the text import reads without the
+    # newline the binary import would keep in its value.
+    env import -b ${envloadaddr} ${filesize}
+    env import -t ${envloadaddr} ${filesize}
 else
     echo "Cannot read Pantavisor revision; resetting"
     sleep 5
