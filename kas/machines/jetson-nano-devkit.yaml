@@ -8,7 +8,7 @@ machine: jetson-nano-devkit
 local_conf_header:
   jetson-nano: |
     PVROOT_IMAGE_BSP = "pv-jetson-bsp"
-    PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-avahi pv-mqtt-sdk pv-jetson-cuda pv-unsloth"
+    PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-avahi pv-mqtt-sdk"
     # PVROOT_IMAGE_BSP set here masks pvrexportit for every non-BSP image.
     IMAGE_TYPES_MASKED:remove:pn-pvwificonnect = "pvrexportit"
     IMAGE_TYPES_MASKED:remove:pn-pv-avahi = "pvrexportit"
