@@ -5,6 +5,9 @@ repos:
     meta-sunxi:
         commit: 719c841f3b97ca3d15be11781219ab1285db3c54
         patches:
+            refresh-h6-4k60-patch:
+                path: patches/meta-sunxi/0002-linux-mainline-refresh-wip-fix-H6-4k-60-for-6.6.160.patch
+                repo: meta-pantavisor
             wks-root-label:
                 path: patches/meta-sunxi/0001-wks-root-label.patch
                 repo: meta-pantavisor

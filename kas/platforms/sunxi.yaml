@@ -16,6 +16,9 @@ repos:
       wks-root-label:
         repo: meta-pantavisor
         path: patches/meta-sunxi/0001-wks-root-label.patch
+      refresh-h6-4k60-patch:
+        repo: meta-pantavisor
+        path: patches/meta-sunxi/0002-linux-mainline-refresh-wip-fix-H6-4k-60-for-6.6.160.patch
 
   meta-arm:
     url: https://git.yoctoproject.org/meta-arm
