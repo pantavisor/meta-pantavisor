@@ -1,0 +1,51 @@
+From 03c0518a17bbadd3af4cbafbced1d7e0b475aa3f Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Tue, 3 Nov 2026 17:39:45 -0300
+Subject: [PATCH] linux-mainline: refresh wip-fix-H6-4k-60 for 6.6.160
+
+Stable 6.6.160 already carries the sun50i_h6_mpll_cfg 594 MHz value
+this patch set, so its sun8i_hdmi_phy.c hunk no longer applies and
+do_patch fails for orange-pi-3lts. Drop that hunk.
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ .../bsp/orange-pi-3lts/wip-fix-H6-4k-60.patch    | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
+
+diff --git a/recipes-kernel/linux/linux-mainline/sunxi-kmeta/bsp/orange-pi-3lts/wip-fix-H6-4k-60.patch b/recipes-kernel/linux/linux-mainline/sunxi-kmeta/bsp/orange-pi-3lts/wip-fix-H6-4k-60.patch
+index 1b956fb..0447702 100644
+--- a/recipes-kernel/linux/linux-mainline/sunxi-kmeta/bsp/orange-pi-3lts/wip-fix-H6-4k-60.patch
++++ b/recipes-kernel/linux/linux-mainline/sunxi-kmeta/bsp/orange-pi-3lts/wip-fix-H6-4k-60.patch
+@@ -7,8 +7,7 @@ Signed-off-by: Jernej Skrabec <jernej.skrabec@gmail.com>
+ ---
+  drivers/gpu/drm/bridge/synopsys/dw-hdmi.c | 7 +++++++
+  drivers/gpu/drm/bridge/synopsys/dw-hdmi.h | 4 ++++
+- drivers/gpu/drm/sun4i/sun8i_hdmi_phy.c    | 2 +-
+- 3 files changed, 12 insertions(+), 1 deletion(-)
++ 2 files changed, 11 insertions(+)
+ 
+ diff --git a/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c b/drivers/gpu/drm/bridge/synopsys/dw-hdmi.c
+ index f08d0fded61f..bcd839a3ce80 100644
+@@ -57,19 +56,6 @@ index 1999db05bc3b..05182418efbb 100644
+  /* FC_DBGFORCE field values */
+  	HDMI_FC_DBGFORCE_FORCEAUDIO = 0x10,
+  	HDMI_FC_DBGFORCE_FORCEVIDEO = 0x1,
+-diff --git a/drivers/gpu/drm/sun4i/sun8i_hdmi_phy.c b/drivers/gpu/drm/sun4i/sun8i_hdmi_phy.c
+-index b64d93da651d..b70bc9de761f 100644
+---- a/drivers/gpu/drm/sun4i/sun8i_hdmi_phy.c
+-+++ b/drivers/gpu/drm/sun4i/sun8i_hdmi_phy.c
+-@@ -90,7 +90,7 @@ static const struct dw_hdmi_mpll_config sun50i_h6_mpll_cfg[] = {
+- 		},
+- 	},  {
+- 		594000000, {
+--			{ 0x1a40, 0x0003 },
+-+			{ 0x1a7c, 0x0003 },
+- 			{ 0x3b4c, 0x0003 },
+- 			{ 0x5a64, 0x0003 },
+- 		},
+ -- 
+ 2.34.1
+ 
+-- 
+2.43.0
+
