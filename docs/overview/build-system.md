@@ -248,6 +248,37 @@ PANTAVISOR_FEATURES += "appengine"
 PANTAVISOR_FEATURES:append = " appengine"
 ```
 
+## TLS Trust Store
+
+Pantavisor checks the TLS certificates of the HTTPS servers it connects to,
+such as Pantahub, against the root certificates in `/etc/thttp/certs`
+(config key `PV_LIBTHTTP_CERTSDIR`). The `libthttp-certs` package fills that
+directory from the Mozilla bundle in `ca-certificates`, keeping only the roots
+of six large public CAs: Let's Encrypt (ISRG), DigiCert, Sectigo, GlobalSign,
+Google Trust Services and Amazon.
+
+The list is the `PV_TLS_CA_CERTS` variable in
+`recipes-pv/libthttp/libthttp_git.bb`. Each entry is a file name from
+`/usr/share/ca-certificates/mozilla/`, without `.crt`. To add a root, append
+it from a kas `local_conf_header` or a bbappend:
+
+```bitbake
+PV_TLS_CA_CERTS:append = " Microsoft_RSA_Root_Certificate_Authority_2017"
+```
+
+A name that is not in the bundle is skipped with a build warning, so a
+`ca-certificates` update that retires an old root does not break the build.
+Every file in the directory must parse with the mbedtls build Pantavisor uses
+(RSA, or ECDSA on P-256/P-384; no RSA-PSS): one bad file makes Pantavisor
+refuse the whole directory.
+
+To check what a device trusts:
+
+```sh
+ls /etc/thttp/certs
+grep truststore /pv/logs/<revision>/pantavisor/pantavisor.log
+```
+
 ## Raspberry Pi Tryboot (rpi-tryboot)
 
 The `rpi-tryboot` feature enables A/B boot partition support for Raspberry Pi, building a unified boot image supporting all RPi variants from a single build.
