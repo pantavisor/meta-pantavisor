@@ -136,6 +136,25 @@ if sdk_machines:
         "      sdk_name: ${{ matrix.sdk_name }}",
         "      publish: true",
         "    secrets: inherit",
+        "",
+        # After build as well as build-sdk: the machine jobs write releases.json
+        # too, with no lock, and this must not overlap them.
+        "  publish-sdks:",
+        "    needs: [build, build-sdk]",
+        "    if: ${{ !cancelled() }}",
+        "    runs-on: ubuntu-latest",
+        "    steps:",
+        "      - uses: actions/checkout@v6",
+        "        with:",
+        "          sparse-checkout: .github/scripts",
+        "          persist-credentials: false",
+        "      - name: List the SDKs in releases.json",
+        "        env:",
+        "          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}",
+        "          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}",
+        "          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}",
+        "          TAG: ${{ github.ref_name }}",
+        '        run: .github/scripts/upload-sdk.sh index "$AWS_S3_BUCKET" "$TAG"',
     ]
 
 release_lines += PVTEST_JOBS

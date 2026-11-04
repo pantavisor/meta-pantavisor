@@ -309,6 +309,8 @@ across the release. If a release adds or removes a BSP output for a
 machine, regenerate the section in historical mode after the build to
 correct it.
 
-CI no longer builds or uploads SDKs, so new releases have no SDK column.
-Regenerating an older release whose `releases.json` entries still carry an
-`sdk` URL brings the column back for that table only.
+SDK installers are per release, not per machine, so they get a line under the
+table, with links from the release's `sdks` list in `releases.json`. In pre-tag
+mode that list does not exist yet, and the line names the S3 directory instead.
+Regenerating an older release whose `devices` entries still carry an `sdk` URL
+brings back that table's SDK column.

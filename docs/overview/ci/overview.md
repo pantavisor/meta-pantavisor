@@ -88,6 +88,7 @@ SCHEDULED
 | `makecommit` | Audit layer changes and draft PR description |
 | `update-components.sh` | Fetch latest SRCREVs for tracked components |
 | `upload.sh` | Push build artifacts and update `releases.json` on S3 (machine `devices` entries) |
+| `upload-sdk.sh` | Push SDK installers to S3 (`upload`) and list them under a release's `sdks` in `releases.json` (`index`) |
 | `upload-docs.py` | Upload docs tarball to GitHub Release (`upload-asset` sub-command); separate `trigger-ingest` sub-command exists but the workflow notifies `docs.pantavisor` via a direct `curl` `repository_dispatch` instead |
 | `upload-badges` | Write per-machine badge JSON to S3 after a tag build |
 | `sync-pantavisor-tag.sh` | Push the tag to `pantavisor/pantavisor` via PAT |
