@@ -13,8 +13,10 @@ build of this layer. The same SDK also
 
 ## Pick the SDK for your device
 
-Each release attaches one installer per architecture to its
-[GitHub Release](https://github.com/pantavisor/meta-pantavisor/releases):
+Each release publishes one installer per architecture, listed with its sha256
+under `sdks` in
+[`releases.json`](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json)
+from `031-rc3` on:
 
 | Installer | Device CPU |
 |---|---|
@@ -31,6 +33,18 @@ includes most armv7 boards; there is no hard-float 32-bit SDK for now.
 
 ## Install
 
+Find and download the installer, checking its sha256. Release candidates are
+under `release-candidate`, final releases under `stable`:
+
+```bash
+curl -s https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json \
+  | jq -r '.["release-candidate"]["<tag>"].sdks[] | "\(.arch)  \(.sha256)  \(.url)"'
+curl -fLO https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/<tag>/sdk/pv-sdk-<tag>-armv8.sh
+echo "<sha256>  pv-sdk-<tag>-armv8.sh" | sha256sum -c
+```
+
+Then install it:
+
 ```bash
 sh ./pv-sdk-<tag>-armv8.sh -d ~/pv-sdk-armv8 -y
 . ~/pv-sdk-armv8/environment-setup-*
@@ -45,24 +59,6 @@ only on `PATH` in a shell that sourced the script:
 command -v pvr     # ~/pv-sdk-armv8/sysroots/x86_64-pokysdk-linux/usr/bin/pvr
 pvr --version
 ```
-
-### Or use the SDK image
-
-Each release also publishes the installed SDK as a container image,
-`ghcr.io/pantavisor/pv-sdk:<tag>-<arch>`, for a CI job or a host where you
-would rather not install anything. The SDK is in `/opt/pv-sdk`, with `make`
-beside it; mount your sources on `/src`:
-
-```bash
-docker run --rm -v "$PWD:/src" ghcr.io/pantavisor/pv-sdk:<tag>-armv8 sh -c '
-  . /opt/pv-sdk/environment-setup-*
-  mkdir -p rootfs/usr/bin
-  $CC -o rootfs/usr/bin/hello hello.c
-  pv-mkpvrexport --base rootfs hello -- --config=Entrypoint=/usr/bin/hello'
-```
-
-The image runs on x86_64 hosts, like the installer. To pin one, use the
-digest in the release's `pv-sdk-<tag>-<arch>.json`.
 
 ## Build a container
 

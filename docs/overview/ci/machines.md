@@ -27,7 +27,7 @@ All CI behavior is controlled by `.github/machines.json`. Adding, removing, or r
 | Field | Required | Description |
 |---|---|---|
 | `yocto_branch` | yes | Yocto release name; used as a suffix in all generated file names |
-| `sdk_machines` | no | Top-level list of `docker-<arch>` machines to build the [SDK](builds.md#buildkas-sdkyaml--sdk) for, on tags (attached to the GitHub Release) and in `manual-sdk-scarthgap.yaml`. The SDK is named `<arch>`; the generators reject other machine names. They need no `machines` entry |
+| `sdk_machines` | no | Top-level list of `docker-<arch>` machines to build the [SDK](builds.md#buildkas-sdkyaml--sdk) for, on tags (uploaded to S3 and listed in `releases.json`) and in `manual-sdk-scarthgap.yaml`. The SDK is named `<arch>`; the generators reject other machine names. They need no `machines` entry |
 | `name` | yes | Machine identifier; combined with `yocto_branch` in workflow jobs |
 | `display_name` | no | Human-readable board name for the [downloads list](../supported-device.md#downloading-images); copied into `releases.json` by `upload.sh` (falls back to the suffixed machine slug) |
 | `description` | no | One- to three-sentence board blurb for the downloads list; copied into `releases.json` by `upload.sh` when non-empty |

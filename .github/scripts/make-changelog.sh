@@ -450,13 +450,21 @@ emit_changes() {
 CHANGES_SECTION="$(emit_changes)"
 
 # --- 4. Render section -----------------------------------------------------
-# SDK installers are GitHub Release assets, not releases.json entries, so the
-# table above cannot list them. 957ee86d is the commit that started building
-# them; an older tag regenerated here gets no line.
+# SDKs are not per machine, so the table above cannot list them. 957ee86d is
+# the commit that started building them; an older tag regenerated here gets no
+# line. In pre-tag mode releases.json has no entry yet, so name where they land.
+SDK_LINE=""
 if git merge-base --is-ancestor 957ee86d "$SOURCE_REV" 2>/dev/null; then
-    SDK_LINE=$'\n\n'"SDK installers (\`pv-sdk-${TAG}-<arch>.sh\`): attached to the [GitHub Release](https://github.com/${GH_REPO}/releases/tag/${TAG})."
-else
-    SDK_LINE=""
+    SDK_LINKS="$(jq -r --arg tag "$TAG" '
+        [.stable[$tag]?, .["release-candidate"][$tag]?]
+        | map(select(. != null) | .sdks // []) | add // []
+        | map("[`\(.arch)`](\(.url))") | join(", ")
+    ' "$RELEASES_JSON")"
+    if [ -n "$SDK_LINKS" ]; then
+        SDK_LINE=$'\n\n'"SDK installers: ${SDK_LINKS}."
+    else
+        SDK_LINE=$'\n\n'"SDK installers: \`pv-sdk-${TAG}-<arch>.sh\`, under \`${RELEASES_JSON_URL%/*}/${TAG}/sdk/\`."
+    fi
 fi
 
 if [ -n "$PREV_TAG" ]; then

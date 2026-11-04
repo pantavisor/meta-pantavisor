@@ -30,8 +30,7 @@ Used by `release.yaml` (tag builds, `publish: true`) and `manual-sdk-scarthgap.y
 - Runs `bitbake -c populate_sdk pv-sdk` (recipe: `recipes-pv/images/pv-sdk.bb`).
 - Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv6`).
 - Before uploading, runs `.github/scripts/sdk-smoke-test` on the installer: installs it, packs a container with `pv-mkpvrexport`, and builds pantavisor at `PANTAVISOR_SRCREV`.
-- With `publish: true`, attaches it to the tag's GitHub Release, creating the release if `tag-changelogs.yaml` has not yet. SDKs never go to S3 or `releases.json`.
-- With `publish: true`, also pushes the installed SDK as `ghcr.io/pantavisor/pv-sdk:<tag>-<arch>` (from `.github/sdk/Dockerfile`, with the workflow's `GITHUB_TOKEN`), and attaches `pv-sdk-<tag>-<arch>.json` to the release: the installer's URL and sha256 and the image pinned by digest, one entry of pantahub-builder's `PH_BUILDER_SDKS` catalog.
+- With `publish: true`, uploads it to `s3://<BUCKET>/<tag>/sdk/` with `.github/scripts/upload-sdk.sh`, beside a `pv-sdk-<tag>-<arch>.json` entry. The `publish-sdks` job of `release.yaml` lists those entries in `releases.json` once the machine and SDK jobs are done.
 
 Build one by hand from the Actions tab (**manual: sdk scarthgap**, choosing the `arch`), or locally:
 
@@ -185,6 +184,27 @@ Toradex flashing procedure, and
 ```
 
 `release-date` is set by the first machine job to finish (using `//=`) and left unchanged by subsequent parallel jobs. The `docs` key is written later by `tag-docs-scarthgap.yaml`.
+
+`sdks` is written by the `publish-sdks` job, one entry per installer, and is absent from releases without SDKs (anything before `031-rc3`):
+
+```json
+"sdks": [
+  {
+    "release": "031-rc6",
+    "platform": "linux/arm64",
+    "arch": "armv8",
+    "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/031-rc6/sdk/pv-sdk-031-rc6-armv8.sh",
+    "sha256": "<sha256>"
+  }
+]
+```
+
+To publish an installer by hand, for example one from **manual: sdk scarthgap** or a tag whose `publish-sdks` job failed, run both steps with AWS credentials in the environment. `index` replaces the tag's whole `sdks` list with what is under `<tag>/sdk/`, and should not run while a tag build is uploading:
+
+```bash
+.github/scripts/upload-sdk.sh upload pantavisor-ci/meta-pantavisor <tag> armv8 pv-sdk-<tag>-armv8.sh
+.github/scripts/upload-sdk.sh index pantavisor-ci/meta-pantavisor <tag>
+```
 
 `display_name` and `description` are the friendly board label and blurb shown on
 the [downloads list](../supported-device.md#downloading-images). `upload.sh` reads

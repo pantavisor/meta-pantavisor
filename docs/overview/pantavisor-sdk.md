@@ -18,9 +18,8 @@ device, build it through the layer: see
 
 ## Install
 
-Download the installer for your device's CPU from the
-[GitHub Release](https://github.com/pantavisor/meta-pantavisor/releases)
-(table in [Build Containers with the SDK](../getting-started/develop/application/container-sdk.md#pick-the-sdk-for-your-device)),
+Download the installer for your device's CPU as shown in
+[Build Containers with the SDK](../getting-started/develop/application/container-sdk.md#install),
 then:
 
 ```bash
