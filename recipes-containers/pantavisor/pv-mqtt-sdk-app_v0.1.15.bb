@@ -8,6 +8,10 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7ca
 
 inherit pvgo_mod
 
+PVGO_PIE = "0"
+CGO_ENABLED = "0"
+GO_LINUXLOADER = ""
+
 S = "${WORKDIR}"
 
 # The repository is private: the fetch authenticates with a GitHub token in
@@ -19,7 +23,7 @@ S = "${WORKDIR}"
 # do_fetch. Keep it on the commit the ${PV} tag points to (the ^{} entry of
 # git ls-remote for an annotated tag).
 SRC_URI = "git://github.com/pantavisor/pv-mqtt-sdk.git;protocol=https;branch=main;destsuffix=src/${GO_IMPORT}"
-SRCREV = "28edec0c1ddd94f59dbe2a2d52b4c896f4108472"
+SRCREV = "c285dc971f21a70f0b2628a008c9d2bb6b7475fa"
 
 GO_IMPORT = "github.com/pantavisor/pv-mqtt-sdk"
 export GO111MODULE = "on"
