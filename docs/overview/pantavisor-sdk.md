@@ -59,3 +59,28 @@ file pv-install/usr/bin/pantavisor
 ```
 pv-install/usr/bin/pantavisor: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-aarch64.so.1, ...
 ```
+
+## Add a package to the SDK
+
+Libraries and headers for the SDK's sysroot go in `RDEPENDS:${PN}` in
+`recipes-pv/pv-sdk-tools/packagegroup-pv-sdk-target.bb`. List the `-dev`
+package, and `-staticdev` as well to link statically:
+
+```bitbake
+RDEPENDS:${PN} = " \
+    ...
+    zlib-dev \
+    zlib-staticdev \
+"
+```
+
+Tools that run on the host are `nativesdk-` packages: add those to `RDEPENDS` in
+`recipes-pv/pv-sdk-tools/nativesdk-pv-sdk-tools.bb`.
+
+Rebuild the SDK and check that the package landed in its sysroot:
+
+```bash
+./kas-container shell kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml \
+    -c "bitbake -c populate_sdk pv-sdk"
+grep zlib-dev build/tmp-scarthgap-sdk/deploy/sdk/pv-sdk-armv8-x86_64.target.manifest
+```
