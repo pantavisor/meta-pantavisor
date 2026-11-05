@@ -25,6 +25,9 @@ echo "== host tools"
 command -v pvr pv-mkpvrexport cmake
 pvr --version
 
+echo "== multimedia and GPIO libraries"
+pkg-config --exists --print-errors gstreamer-1.0 gstreamer-video-1.0 libcamera libgpiod libv4l2
+
 echo "== container"
 cd "$work"
 cat > hello.c <<'EOF'

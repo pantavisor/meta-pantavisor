@@ -86,6 +86,33 @@ For autotools, CMake or Meson projects, install with
 `make DESTDIR="$PWD/rootfs" install` (or the equivalent) into the same
 directory.
 
+### Use the SDK's libraries
+
+The SDK's sysroot also has libraries for GPIO, camera capture and video:
+
+| For | `pkg-config` name | Tools in the sysroot |
+|---|---|---|
+| GPIO | `libgpiod` | `gpiodetect`, `gpioset` |
+| Cameras | `libcamera`, `libv4l2` | `v4l2-ctl`, `media-ctl` |
+| Video processing and playback | `gstreamer-1.0`, `gstreamer-video-1.0` | `gst-launch-1.0`, `gst-inspect-1.0` |
+
+Compile against them with `pkg-config`. The base rootfs does not include them,
+so copy what the application needs at runtime from `$SDKTARGETSYSROOT` into
+`rootfs`:
+
+```bash
+mkdir -p rootfs/usr/bin rootfs/usr/lib
+$CC -o rootfs/usr/bin/gpio-app gpio-app.c $(pkg-config --cflags --libs libgpiod)
+cp -a "$SDKTARGETSYSROOT"/usr/lib/libgpiod.so.* rootfs/usr/lib/
+```
+
+GStreamer plugins are in `$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0`, including
+`libcamerasrc` (`libgstlibcamera.so`) and `kmssink` (`libgstkms.so`).
+
+The SDK decodes VP8, VP9, Theora and MJPEG in software. It has no software
+H.264 or H.265 decoder, so those formats need a hardware decoder on the board,
+through the V4L2 plugins (`libgstvideo4linux2.so`, `libgstv4l2codecs.so`).
+
 `pv-mkpvrexport` never modifies `rootfs`. It copies it, adds the mountpoints
 LXC needs, makes every file owned by root, gives the container a persistent
 `/var` (`--volume ovl:/var:permanent`, as a container recipe does by default),

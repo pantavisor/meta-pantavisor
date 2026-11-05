@@ -4,6 +4,12 @@
 header:
   version: 16
 
+repos:
+  meta-openembedded:
+    layers:
+      # libcamera, for packagegroup-pv-sdk-target
+      meta-multimedia:
+
 local_conf_header:
   # A separate TMPDIR: the docker machines' default build is the glibc
   # appengine distro, and the two libcs cannot share one. kas writes
@@ -11,3 +17,11 @@ local_conf_header:
   # bsp-base.yaml's "panta-base" TMPDIR and wins; keep the key sorting later.
   pv-sdk: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-sdk"
+    PACKAGECONFIG:append:pn-libcamera = " gst"
+    # The cam app needs libevent_pthreads; this layer's libevent is built
+    # without thread support to match what pantavisor links against.
+    EXTRA_OEMESON:append:pn-libcamera = " -Dcam=disabled"
+    # kmssink and hardware decoders for playback without a compositor; vpx is
+    # the software video decoder that needs no "commercial" license flag.
+    PACKAGECONFIG:append:pn-gstreamer1.0-plugins-bad = " kms v4l2codecs"
+    PACKAGECONFIG:append:pn-gstreamer1.0-plugins-good = " vpx"
