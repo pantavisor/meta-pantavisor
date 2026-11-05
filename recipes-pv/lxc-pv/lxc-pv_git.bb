@@ -41,8 +41,7 @@ FILES:${PN} += " /usr/lib/lxc"
 FILES:${PN} += " /usr/var"
 FILES:${PN} += " /lib"
 
-SRC_URI = "git://github.com/pantavisor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=fd977239e38e98e01b7e354e127baa11428db2cb \
-	file://0001-add-new-config-lxc.tty.min-as-lower-bound-of-tty-all.patch"
+SRC_URI = "git://github.com/pantavisor/lxc;protocol=https;branch=stable-3.0-BASE-2c5c780762981a5cfe699670c91397e29f6f6516;rev=06b49c1d39dd6aac393cf1a6c739d74fd634b77e"
 
 SRC_URI:append:panta-appengine = " \
 	file://0002-fix-avoid-infinite-loop-when-closing-inherited-fd.patch"
