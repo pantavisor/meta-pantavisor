@@ -27,23 +27,7 @@ NO_RECOMMENDATIONS = "1"
 IMAGE_FSTYPES = "tar.gz"
 IMAGE_FSTYPES:remove = "pvrexportit"
 
-# Keep in step with DEPENDS in pantavisor_git.bb. libevent, libthttp and
-# picohttpparser are built static-only; pvtx-static links the C library and
-# zlib statically.
-TOOLCHAIN_TARGET_TASK:append = " \
-	${TCLIBC}-staticdev \
-	libevent-dev \
-	libevent-staticdev \
-	libthttp-dev \
-	libthttp-staticdev \
-	mbedtls-dev \
-	picohttpparser-dev \
-	picohttpparser-staticdev \
-	zlib-dev \
-	zlib-staticdev \
-	${PV_LXC_RECIPE}-dev \
-	${@bb.utils.contains('PANTAVISOR_FEATURES', 'dm-crypt', 'libkcapi-dev', '', d)} \
-"
+TOOLCHAIN_TARGET_TASK:append = " packagegroup-pv-sdk-target"
 
 TOOLCHAIN_HOST_TASK:append = " nativesdk-pv-sdk-tools"
 # Named after the architecture: the docker-* machines are only build hosts
