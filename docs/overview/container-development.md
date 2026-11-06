@@ -71,15 +71,23 @@ Output: `build/tmp-scarthgap/deploy/images/docker-x86_64/pv-example-foo.pvrexpor
 
 ## Protecting Volumes with dm-verity
 
-Set `PVR_DM_VERITY = "1"` in a container recipe to protect its volumes with dm-verity. At build time pvr writes a hash file next to each volume and points `run.json` at it as `dm:<volume>`, so pantavisor checks the volume when it mounts it. By default only `root.squashfs` is protected; list other volumes in `PVR_DM_VERITY_VOLUMES`.
+Container volumes are protected with dm-verity by default whenever `dm-verity` is in `PANTAVISOR_FEATURES` (it is on by default). At build time pvr writes a hash file next to each volume and points `run.json` at it as `dm:<volume>`, so pantavisor checks the volume when it mounts it. By default only `root.squashfs` is protected; list other volumes in `PVR_DM_VERITY_VOLUMES`.
+
+To keep one container on the plain loop-mount path, opt out in its recipe:
 
 ```bitbake
-PVR_DM_VERITY = "1"
-# optional, default is "root.squashfs"
-PVR_DM_VERITY_VOLUMES = "root.squashfs"
+PVR_DM_VERITY = "0"
 ```
 
-The flag also adds `cryptsetup-native` (which provides `veritysetup`) to the recipe's `DEPENDS`. The device needs a pantavisor built with the `dm-verity` feature, which is on by default in `PANTAVISOR_FEATURES`.
+To opt out for every container that does not set the flag itself, put it in `local.conf` or your distro include:
+
+```bitbake
+PVR_DM_VERITY = "0"
+```
+
+A recipe that sets `PVR_DM_VERITY` itself (such as `pv-example-verity`, which sets `"1"`) still wins over this, because recipes are parsed after `local.conf`. To force the value everywhere, recipes included, use `PVR_DM_VERITY:forcevariable = "0"`. Dropping `dm-verity` from `PANTAVISOR_FEATURES` also turns the default off.
+
+When the flag is on, `cryptsetup-native` (which provides `veritysetup`) is added to the recipe's `DEPENDS`. The device needs a pantavisor built with the `dm-verity` feature, which is on by default in `PANTAVISOR_FEATURES`.
 
 The device only mounts `dm:` volumes through the dm-verity handler when `PV_SECUREBOOT_HANDLERS=1` in `/etc/pantavisor.config`. Without it the volume is loop-mounted and not checked. The layer sets it to `1` whenever `dm-verity` is in `PANTAVISOR_FEATURES` (the default) and to `0` otherwise. To turn it off, for example in your distro include or `local.conf`:
 
@@ -89,14 +97,18 @@ PANTAVISOR_CONFIG[PV_SECUREBOOT_HANDLERS] = "0"
 
 The appengine configuration (`/etc/pantavisor-appengine.config`) keeps it off; this is not changed.
 
-`pv-example-verity` (`recipes-containers/pv-examples/pv-example-verity_1.0.bb`) is a minimal example: it sets `PVR_DM_VERITY = "1"` and signals READY once it runs.
+`pv-example-verity` (`recipes-containers/pv-examples/pv-example-verity_1.0.bb`) is a minimal example: it sets `PVR_DM_VERITY = "1"` explicitly and signals READY once it runs. `pv-example-app` sets `PVR_DM_VERITY = "0"` and stays on the plain loop-mount path.
 
-On a device, the dm-verity mount script (`scripts/volmount/verity/dm` in pantavisor) names the device `pv--dmverity--<container>-<volume>`. A protected root volume should therefore show up like this (taken from the script, not tested on a device):
+On a device, the dm-verity mount script (`scripts/volmount/verity/dm` in pantavisor) names the device `pv--dmverity--<container>-<volume>`. On the device, a protected root volume is mounted from `/dev/mapper` and `dmsetup` reports it as verified (`V`):
 
 ```bash
 mount | grep dmverity
-# /dev/mapper/pv--dmverity--<container>-root on /volumes/<container>/root.squashfs ...
+# /dev/mapper/pv--dmverity--pv-example-verity-root on /volumes/pv-example-verity/root.squashfs type squashfs (ro,relatime,errors=continue)
+/usr/sbin/dmsetup status | grep verity
+# pv--dmverity--pv-example-verity-root: 0 12712 verity V
 ```
+
+A wrong root hash makes the mount fail with an I/O error (the kernel logs `device-mapper: verity: ... metadata block 1 is corrupted`), and the revision rolls back.
 
 To check the result, look at the container directory of the built state (`pvstate/<container>/` in the recipe work directory):
 
