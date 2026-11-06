@@ -120,7 +120,7 @@ def pv_bsp_packages(d):
 python pv_bsp_gen_src_json() {
     import json
 
-    gcc = d.getVar('CC').split() + ['-dumpfullversion']
+    compiler = d.getVar('CC').split() + ['--version']
     src = {
         '#spec': 'bsp-manifest-src@1',
         'pv_build_origin': 'yocto',
@@ -138,7 +138,8 @@ python pv_bsp_gen_src_json() {
             'versions': pv_bsp_kernel_versions(d),
         },
         'toolchain': {
-            'gcc': bb.process.run(gcc)[0].strip(),
+            'compiler_version': bb.process.run(compiler)[0].splitlines()[0],
+            'libc': d.getVar('TCLIBC'),
             'target': d.getVar('TARGET_SYS'),
         },
         'layers': pv_bsp_layers(d),
