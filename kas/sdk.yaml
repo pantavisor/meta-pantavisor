@@ -9,6 +9,24 @@ repos:
     layers:
       # libcamera, for packagegroup-pv-sdk-target
       meta-multimedia:
+  meta-arm:
+    url: "https://git.yoctoproject.org/meta-arm"
+    path: layers/meta-arm
+    layers:
+      meta-arm:
+      meta-arm-toolchain:
+  meta-qt6:
+    url: "https://code.qt.io/yocto/meta-qt6.git"
+    path: layers/meta-qt6
+    branch: "6.11"
+  meta-security:
+    url: "https://git.yoctoproject.org/meta-security"
+    path: layers/meta-security
+    layers:
+      meta-tpm:
+  meta-webkit:
+    url: "https://github.com/Igalia/meta-webkit.git"
+    path: layers/meta-webkit
 
 local_conf_header:
   # A separate TMPDIR: the docker machines' default build is the glibc
@@ -17,11 +35,15 @@ local_conf_header:
   # bsp-base.yaml's "panta-base" TMPDIR and wins; keep the key sorting later.
   pv-sdk: |
     TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}-sdk"
+    DISTRO_FEATURES:append = " tpm2"
+    # Applications here are Wayland clients. x11 would pull an X server into
+    # the SDK through weston's xwayland and OpenCV's GTK backend.
+    DISTRO_FEATURES:remove = "x11"
     PACKAGECONFIG:append:pn-libcamera = " gst"
     # The cam app needs libevent_pthreads; this layer's libevent is built
     # without thread support to match what pantavisor links against.
     EXTRA_OEMESON:append:pn-libcamera = " -Dcam=disabled"
     # kmssink and hardware decoders for playback without a compositor; vpx is
     # the software video decoder that needs no "commercial" license flag.
-    PACKAGECONFIG:append:pn-gstreamer1.0-plugins-bad = " kms v4l2codecs"
+    PACKAGECONFIG:append:pn-gstreamer1.0-plugins-bad = " kms v4l2codecs webrtc"
     PACKAGECONFIG:append:pn-gstreamer1.0-plugins-good = " vpx"
