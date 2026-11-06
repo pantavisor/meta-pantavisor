@@ -84,3 +84,20 @@ Rebuild the SDK and check that the package landed in its sysroot:
     -c "bitbake -c populate_sdk pv-sdk"
 grep zlib-dev build/tmp-scarthgap-sdk/deploy/sdk/pv-sdk-armv8-x86_64.target.manifest
 ```
+
+## Add commercial codecs
+
+`ffmpeg`, `x264`, `x265`, `gstreamer1.0-libav` and the GStreamer ugly plugins are
+only added to the SDK when the build accepts the `commercial` license flag. Check
+the licensing for your distribution, then set this in a `local_conf_header`
+entry of your KAS configuration:
+
+```bitbake
+LICENSE_FLAGS_ACCEPTED += "commercial"
+```
+
+## Add a vendor GPU or NPU library
+
+The SDK builds for generic `docker-*` machines, so its graphics stack is Mesa.
+Vendor EGL, GBM and NPU libraries are not included: add them for a specific board
+in that board's layer.
