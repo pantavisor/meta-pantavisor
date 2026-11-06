@@ -17,10 +17,10 @@ RCONFLICTS:${PN} = "openssh-sshd openssh"
 # conflict with each other
 RDEPENDS:${PN}-dev = ""
 
-SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/base-DROPBEAR_2026.91;protocol=https"
-SRCREV = "8c6a9d352533bd796ea15f36a55be289af3d4457"
+SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/base-DROPBEAR_2026.94;protocol=https"
+SRCREV = "711873f7eee6889de765c65888a5427df88fd45d"
 PE = "1"
-PV = "2026.91+git0+pv"
+PV = "2026.94+git0+pv"
 PKGV = "${PV}+${GITPKGV}"
 
 S = "${WORKDIR}/git"
