@@ -333,6 +333,46 @@ Build outputs are in `build/tmp-{codename}/deploy/images/{machine}/`:
 | `pantavisor-appengine-docker.tar` | Docker image for manual appengine testing |
 | `pantavisor-appengine-distro-docker-x86_64-*.tar.gz` | Self-contained test bundle: Docker images + `test.docker.sh` runner |
 
+### BSP metadata (`bsp/src.json`)
+
+`pantavisor-bsp.bb` records what a BSP was built from in the `bsp/src.json` of
+its state. Pantavisor does not act on this file and it is excluded from the BSP
+signature, so it is purely informational.
+
+| Key | Content |
+|-----|---------|
+| `#spec` | `bsp-manifest-src@1` |
+| `pv_build_origin` | `yocto` |
+| `bsp` | `name`, `machine`, `architecture`, `version` (`DISTRO_VERSION`), `distro`, `yocto_release`, `pantavisor_features` |
+| `kernel` | `provider` and `versions`: one entry per shipped kernel, so several on `rpi-tryboot` and none on `linux-dummy` |
+| `toolchain` | `gcc` version and `target` triplet |
+| `layers` | `branch`, `revision` and `modified` for each layer in `BBLAYERS` |
+| `packages` | Name and version of every package in the initramfs |
+| `updates` | `releases`, `source` and `docs` URLs |
+
+Read it from a build's export, or from a running device:
+
+```sh
+# on the build host
+tar xzOf build/tmp-scarthgap/deploy/images/<machine>/pantavisor-bsp-<machine>.pvrexport.tgz json \
+  | jq '."bsp/src.json".kernel'
+
+# on the device, inside the state.json of the running revision
+pvcontrol steps get current
+```
+
+```json
+{
+  "provider": "linux-toradex-upstream",
+  "versions": [
+    "6.6.157-0"
+  ]
+}
+```
+
+A downstream BSP points `updates` at its own release channel by setting
+`PV_BSP_UPDATES_RELEASES`, `PV_BSP_UPDATES_SOURCE` and `PV_BSP_UPDATES_DOCS`.
+
 ## Supported Yocto Releases
 
 | Release | Status |

@@ -3,7 +3,10 @@ LIC_FILES_CHKSUM ?= "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecd
 
 inherit deploy kernel-artifact-names pvr-ca image-artifact-names pv-trust
 
-do_compile[prefuncs] += "pv_trust_check"
+do_compile[prefuncs] += " \
+	pv_trust_check \
+	pv_bsp_gen_src_json \
+"
 do_compile[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
 do_compile[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
 
@@ -52,6 +55,7 @@ compile_depends = ' \
 	${PVROOT_IMAGE_BSP}:do_image_complete \
 	${VIRTUAL-RUNTIME_pantavisor_skel}:do_deploy \
 	virtual/kernel:do_deploy \
+	virtual/kernel:do_packagedata \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'rpi-boot-image:do_image_complete', '', d)} \
 	'
 do_compile[depends] += "${compile_depends}"
@@ -70,6 +74,85 @@ RPI_TRYBOOT_MCDEPENDS = "\
     ${@'rpi-kernel_2712' in (d.getVar('BBMULTICONFIG') or '').split() and ' mc::rpi-kernel_2712:linux-raspberrypi:do_deploy' or ''} \
 "
 do_compile[mcdepends] += "${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', d.getVar('RPI_TRYBOOT_MCDEPENDS'), '', d)}"
+
+# Downstream BSPs repoint these at their own release channel.
+PV_BSP_UPDATES_RELEASES ?= "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json"
+PV_BSP_UPDATES_SOURCE ?= "https://github.com/pantavisor/meta-pantavisor"
+PV_BSP_UPDATES_DOCS ?= "https://docs.pantavisor.io"
+
+def pv_bsp_layers(d):
+    # kas lists this layer as "${TOPDIR}/..", which oe.buildcfg names "..".
+    self_path = os.path.realpath(d.getVar('META_PANTAVISOR_BASE'))
+    layers = {}
+    for path, name, branch, revision, modified in oe.buildcfg.get_layer_revisions(d):
+        if os.path.realpath(path) == self_path:
+            name = 'meta-pantavisor'
+        layers[name] = {
+            'branch': branch,
+            'revision': revision,
+            'modified': bool(modified),
+        }
+    return layers
+
+def pv_bsp_kernel_versions(d):
+    # Written by the kernel's do_package; linux-dummy has none.
+    path = os.path.join(d.getVar('PKGDATA_DIR'), 'kernel-depmod', 'kernel-abiversion')
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return [f.read().strip()]
+
+def pv_bsp_packages(d):
+    manifest = os.path.join(d.getVar('INITRAMFS_DEPLOY_DIR_IMAGE'),
+                            d.getVar('INITRAMFS_IMAGE_NAME') + '.manifest')
+    # Metadata only: not worth failing a BSP build over.
+    if not os.path.exists(manifest):
+        bb.warn('%s not found, bsp/src.json will list no packages' % manifest)
+        return {}
+    packages = {}
+    with open(manifest) as f:
+        for line in f:
+            name, _arch, version = line.split()
+            packages[name] = version
+    return packages
+
+# No build timestamp: it would change the BSP state of otherwise identical builds.
+python pv_bsp_gen_src_json() {
+    import json
+
+    gcc = d.getVar('CC').split() + ['-dumpfullversion']
+    src = {
+        '#spec': 'bsp-manifest-src@1',
+        'pv_build_origin': 'yocto',
+        'bsp': {
+            'name': d.getVar('PN'),
+            'machine': d.getVar('MACHINE'),
+            'architecture': d.getVar('TARGET_ARCH'),
+            'version': d.getVar('DISTRO_VERSION'),
+            'distro': d.getVar('DISTRO'),
+            'yocto_release': d.getVar('DISTRO_CODENAME'),
+            'pantavisor_features': sorted(set((d.getVar('PANTAVISOR_FEATURES') or '').split())),
+        },
+        'kernel': {
+            'provider': d.getVar('PREFERRED_PROVIDER_virtual/kernel'),
+            'versions': pv_bsp_kernel_versions(d),
+        },
+        'toolchain': {
+            'gcc': bb.process.run(gcc)[0].strip(),
+            'target': d.getVar('TARGET_SYS'),
+        },
+        'layers': pv_bsp_layers(d),
+        # Everything installed in the initramfs, so also pantavisor, lxc and libc.
+        'packages': pv_bsp_packages(d),
+        'updates': {
+            'releases': d.getVar('PV_BSP_UPDATES_RELEASES'),
+            'source': d.getVar('PV_BSP_UPDATES_SOURCE'),
+            'docs': d.getVar('PV_BSP_UPDATES_DOCS'),
+        },
+    }
+    with open(d.expand('${WORKDIR}/bsp-src.json'), 'w') as f:
+        json.dump(src, f, indent=4, sort_keys=True)
+}
 
 fakeroot do_compile(){
 
@@ -157,6 +240,7 @@ fakeroot do_compile(){
 
        # Collect modules from each kernel multiconfig
        modules_arts=""
+       tryboot_kernels=""
        mc_base="${RPI_MC_DEPLOY_BASE}"
 
        # Map multiconfig names to machines
@@ -185,6 +269,7 @@ fakeroot do_compile(){
                    [ -d "$kver_dir" ] || continue
                    kver="$(basename $kver_dir)"
                    mod_squash="modules_${kver}.squashfs"
+                   tryboot_kernels="$tryboot_kernels $kver"
 
                    # Run depmod to generate modules.dep (kernel deploy tarball doesn't include it)
                    depmod -a -b "$mod_tmp" "$kver" || true
@@ -266,9 +351,13 @@ ${basearts}
     "initrd_config": ""
 `echo '}'`
 EOF
-    cat > ${PVBSPSTATE}/bsp/src.json << EOF1
-`echo '{}'`
-EOF1
+    cp ${WORKDIR}/bsp-src.json ${PVBSPSTATE}/bsp/src.json
+    # Tryboot ships the kernels of its multiconfigs, not the main config's virtual/kernel.
+    if [ "$rpi_tryboot" = "yes" ]; then
+        jq --arg kernels "$tryboot_kernels" \
+            '.kernel.versions = ($kernels | split(" ") | map(select(length > 0)))' \
+            ${WORKDIR}/bsp-src.json > ${PVBSPSTATE}/bsp/src.json
+    fi
 
     pvr add; pvr commit; pvr checkout -c
 
