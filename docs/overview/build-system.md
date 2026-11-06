@@ -345,7 +345,7 @@ signature, so it is purely informational.
 | `pv_build_origin` | `yocto` |
 | `bsp` | `name`, `machine`, `architecture`, `version` (`DISTRO_VERSION`), `distro`, `yocto_release`, `pantavisor_features` |
 | `kernel` | `provider` and `versions`: one entry per shipped kernel, so several on `rpi-tryboot` and none on `linux-dummy` |
-| `toolchain` | `gcc` version and `target` triplet |
+| `toolchain` | `compiler_version` (first line of `${CC} --version`), `libc` (`TCLIBC`) and `target` triplet |
 | `layers` | `branch`, `revision` and `modified` for each layer in `BBLAYERS` |
 | `packages` | Name and version of every package in the initramfs |
 | `updates` | `releases`, `source` and `docs` URLs |
