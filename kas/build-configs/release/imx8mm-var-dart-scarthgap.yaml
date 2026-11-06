@@ -110,6 +110,12 @@ local_conf_header:
         BB_DANGLINGAPPENDS_WARNONLY = "1"
         PANTAVISOR_FEATURES:append = " caam-nxp"
         PV_UBOOT_AUTOFDT = "1"
+    platform-imx8mm-var-dart: |
+        # UBOOT_DTB_NAME names U-Boot's own tree, which kept the unversioned filename
+        # when Variscite renamed the kernel DTBs per DART revision, so the recipe's
+        # default no longer matches a deployed kernel DTB. The first "fdt" key in
+        # run.json becomes .pv/pv-fdt.dtb, which every board then boots.
+        PV_INITIAL_DTB = "imx8mm-var-dart-2.x-dt8mcustomboard.dtb"
     pvgo: |
         PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
     rm_work: |
