@@ -11,13 +11,19 @@ SRC_URI += "file://pv-mkpvrexport"
 
 S = "${WORKDIR}"
 
-# cmake is not used by pv-mkpvrexport: it is here so the SDK can build
-# pantavisor.
+# Only jq, pvr and squashfs-tools are for pv-mkpvrexport: the rest are build
+# tools for pantavisor and for applications using the sysroot's libraries.
 RDEPENDS:${PN} = " \
 	nativesdk-cmake \
+	nativesdk-glib-2.0-utils \
 	nativesdk-jq \
+	nativesdk-meson \
+	nativesdk-ninja \
+	nativesdk-packagegroup-qt6-toolchain-host-essentials \
+	nativesdk-protobuf-compiler \
 	nativesdk-pvr \
 	nativesdk-squashfs-tools \
+	nativesdk-wayland-dev \
 "
 
 do_install() {

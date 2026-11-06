@@ -86,6 +86,44 @@ For autotools, CMake or Meson projects, install with
 `make DESTDIR="$PWD/rootfs" install` (or the equivalent) into the same
 directory.
 
+### Use the SDK's libraries
+
+The SDK's sysroot also has libraries for most embedded applications:
+
+| For | Examples (`pkg-config` names) | Tools in the sysroot |
+|---|---|---|
+| GPIO and buses | `libgpiod`, `libiio`, `libusb-1.0`, `libsocketcan` | `gpiodetect`, `gpioset`, `i2cdetect`, `candump` |
+| Fieldbus | `libmodbus`, `open62541` | |
+| Networking and security | `libcurl`, `openssl`, `libwebsockets`, `libmosquitto` | |
+| Cameras | `libcamera`, `libv4l2`, `opencv4` | `v4l2-ctl`, `media-ctl` |
+| Video processing and playback | `gstreamer-1.0`, `gstreamer-video-1.0`, `gstreamer-rtsp-server-1.0` | `gst-launch-1.0`, `gst-inspect-1.0` |
+| Graphics | `wayland-client`, `egl`, `glesv2`, `gbm`, `cairo` | `weston` |
+| User interfaces | `Qt6Quick`, `gtk4`, `sdl2`, `wpe-webkit-2.0` | `cog` |
+
+The full list is in
+[`packagegroup-pv-sdk-target.bb`](https://github.com/pantavisor/meta-pantavisor/blob/master/recipes-pv/pv-sdk-tools/packagegroup-pv-sdk-target.bb).
+The sysroot also has Python 3 with modules such as `numpy`, `pyserial`, `gpiod`
+and `paho-mqtt`.
+
+Compile against them with `pkg-config`. The base rootfs does not include them,
+so copy what the application needs at runtime from `$SDKTARGETSYSROOT` into
+`rootfs`:
+
+```bash
+mkdir -p rootfs/usr/bin rootfs/usr/lib
+$CC -o rootfs/usr/bin/gpio-app gpio-app.c $(pkg-config --cflags --libs libgpiod)
+cp -a "$SDKTARGETSYSROOT"/usr/lib/libgpiod.so.* rootfs/usr/lib/
+```
+
+GStreamer plugins are in `$SDKTARGETSYSROOT/usr/lib/gstreamer-1.0`, including
+`libcamerasrc` (`libgstlibcamera.so`) and `kmssink` (`libgstkms.so`).
+
+The SDK decodes VP8, VP9, Theora and MJPEG in software. It has no software
+H.264 or H.265 decoder, so those formats need a hardware decoder on the board,
+through the V4L2 plugins (`libgstvideo4linux2.so`, `libgstv4l2codecs.so`). A
+self-built SDK can add software decoders, as described in
+[Add commercial codecs](../../../overview/pantavisor-sdk.md#add-commercial-codecs).
+
 `pv-mkpvrexport` never modifies `rootfs`. It copies it, adds the mountpoints
 LXC needs, makes every file owned by root, gives the container a persistent
 `/var` (`--volume ovl:/var:permanent`, as a container recipe does by default),

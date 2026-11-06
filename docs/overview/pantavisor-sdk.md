@@ -59,3 +59,45 @@ file pv-install/usr/bin/pantavisor
 ```
 pv-install/usr/bin/pantavisor: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-aarch64.so.1, ...
 ```
+
+## Add a package to the SDK
+
+Libraries and headers for the SDK's sysroot go in `RDEPENDS:${PN}` in
+`recipes-pv/pv-sdk-tools/packagegroup-pv-sdk-target.bb`. List the `-dev`
+package, and `-staticdev` as well to link statically:
+
+```bitbake
+RDEPENDS:${PN} = " \
+    ...
+    zlib-dev \
+    zlib-staticdev \
+"
+```
+
+Tools that run on the host are `nativesdk-` packages: add those to `RDEPENDS` in
+`recipes-pv/pv-sdk-tools/nativesdk-pv-sdk-tools.bb`.
+
+Rebuild the SDK and check that the package landed in its sysroot:
+
+```bash
+./kas-container shell kas/machines/docker-armv8.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml \
+    -c "bitbake -c populate_sdk pv-sdk"
+grep zlib-dev build/tmp-scarthgap-sdk/deploy/sdk/pv-sdk-armv8-x86_64.target.manifest
+```
+
+## Add commercial codecs
+
+`ffmpeg`, `x264`, `x265`, `gstreamer1.0-libav` and the GStreamer ugly plugins are
+only added to the SDK when the build accepts the `commercial` license flag. Check
+the licensing for your distribution, then set this in a `local_conf_header`
+entry of your KAS configuration:
+
+```bitbake
+LICENSE_FLAGS_ACCEPTED += "commercial"
+```
+
+## Add a vendor GPU or NPU library
+
+The SDK builds for generic `docker-*` machines, so its graphics stack is Mesa.
+Vendor EGL, GBM and NPU libraries are not included: add them for a specific board
+in that board's layer.

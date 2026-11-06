@@ -25,6 +25,20 @@ echo "== host tools"
 command -v pvr pv-mkpvrexport cmake
 pvr --version
 
+echo "== application libraries"
+pkg-config --exists --print-errors \
+    Qt6Quick \
+    gstreamer-1.0 \
+    gstreamer-video-1.0 \
+    gtk4 \
+    libcamera \
+    libcurl \
+    libgpiod \
+    libmodbus \
+    libv4l2 \
+    openssl \
+    wayland-client
+
 echo "== container"
 cd "$work"
 cat > hello.c <<'EOF'
