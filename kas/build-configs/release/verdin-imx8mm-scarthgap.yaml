@@ -50,7 +50,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 2a6862e7ed4cb2f030f6341458df61282bf8a5ca
+        commit: 9517df0a9af21f1e0f9d6ba5a78c5ae1d7c83184
     meta-pantavisor:
     meta-virtualization:
         commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819
