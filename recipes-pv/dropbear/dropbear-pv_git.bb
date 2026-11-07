@@ -18,7 +18,7 @@ RCONFLICTS:${PN} = "openssh-sshd openssh"
 RDEPENDS:${PN}-dev = ""
 
 SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/base-DROPBEAR_2026.94;protocol=https"
-SRCREV = "711873f7eee6889de765c65888a5427df88fd45d"
+SRCREV = "a5052fd488a1071ae7b0ee0877f6b0e17bc2a216"
 PE = "1"
 PV = "2026.94+git0+pv"
 PKGV = "${PV}+${GITPKGV}"
