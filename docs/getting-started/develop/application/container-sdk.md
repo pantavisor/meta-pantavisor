@@ -98,7 +98,7 @@ The SDK's sysroot also has libraries for most embedded applications:
 | Cameras | `libcamera`, `libv4l2`, `opencv4` | `v4l2-ctl`, `media-ctl` |
 | Video processing and playback | `gstreamer-1.0`, `gstreamer-video-1.0`, `gstreamer-rtsp-server-1.0` | `gst-launch-1.0`, `gst-inspect-1.0` |
 | Graphics | `wayland-client`, `egl`, `glesv2`, `gbm`, `cairo` | `weston` |
-| User interfaces | `Qt6Quick`, `gtk4`, `sdl2`, `wpe-webkit-2.0` | `cog` |
+| User interfaces | `Qt6Quick`, `gtk4`, `sdl2` | |
 
 The full list is in
 [`packagegroup-pv-sdk-target.bb`](https://github.com/pantavisor/meta-pantavisor/blob/master/recipes-pv/pv-sdk-tools/packagegroup-pv-sdk-target.bb).
