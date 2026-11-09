@@ -333,15 +333,44 @@ Build outputs are in `build/tmp-{codename}/deploy/images/{machine}/`:
 | `pantavisor-appengine-docker.tar` | Docker image for manual appengine testing |
 | `pantavisor-appengine-distro-docker-x86_64-*.tar.gz` | Self-contained test bundle: Docker images + `test.docker.sh` runner |
 
-### BSP metadata (`bsp/src.json`)
+### BSP update source and build metadata (`bsp/src.json`, `bsp/build.json`)
 
-`pantavisor-bsp.bb` records what a BSP was built from in the `bsp/src.json` of
-its state. Pantavisor does not act on this file and it is excluded from the BSP
-signature, so it is purely informational.
+`pantavisor-bsp.bb` writes two informational files into the BSP state.
+Pantavisor skips both when it parses a revision.
+
+**`bsp/src.json`** says where to get a newer BSP. It is excluded from the BSP
+signature, and it holds `#spec` (`bsp-manifest-src@1`) plus, when
+`PV_BSP_SRC_PVR` is set, a `pvr` key pointing at a pvr repo that always holds
+the latest BSP for the machine, such as a Pantahub trail:
+
+```bitbake
+PV_BSP_SRC_PVR = "https://pvr.pantahub.com/<owner>/<trail>"
+```
+
+```json
+{
+    "#spec": "bsp-manifest-src@1",
+    "pvr": "https://pvr.pantahub.com/<owner>/<trail>#bsp,_sigs/bsp.json,device.json"
+}
+```
+
+The parts after `#` come from `PV_BSP_SRC_PVR_PARTS`. They include the BSP
+signature, so an update brings the signature that covers the new files. In a
+pvr checkout of a device, fetch the latest BSP from that source with:
+
+```sh
+pvr app update bsp
+```
+
+`PV_BSP_SRC_PVR` is empty by default, so `src.json` has no `pvr` key and there
+is nothing to update from until a release channel is published.
+
+**`bsp/build.json`** records what the BSP was built from. It is covered by the
+BSP signature. `pvr app update bsp` keeps only the keys it knows in `src.json`,
+which is why this lives in a separate file.
 
 | Key | Content |
 |-----|---------|
-| `#spec` | `bsp-manifest-src@1` |
 | `pv_build_origin` | `yocto` |
 | `bsp` | `name`, `machine`, `architecture`, `version` (`DISTRO_VERSION`), `distro`, `yocto_release`, `pantavisor_features` |
 | `kernel` | `provider` and `versions`: one entry per shipped kernel, so several on `rpi-tryboot` and none on `linux-dummy` |
@@ -355,7 +384,7 @@ Read it from a build's export, or from a running device:
 ```sh
 # on the build host
 tar xzOf build/tmp-scarthgap/deploy/images/<machine>/pantavisor-bsp-<machine>.pvrexport.tgz json \
-  | jq '."bsp/src.json".kernel'
+  | jq '."bsp/build.json".kernel'
 
 # on the device, inside the state.json of the running revision
 pvcontrol steps get current
