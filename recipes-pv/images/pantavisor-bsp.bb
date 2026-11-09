@@ -6,6 +6,7 @@ inherit deploy kernel-artifact-names pvr-ca image-artifact-names pv-trust
 do_compile[prefuncs] += " \
 	pv_trust_check \
 	pv_bsp_gen_src_json \
+	pv_bsp_gen_build_json \
 "
 do_compile[vardeps] += "PV_TRUST_DIR PV_OEM_NAME PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C PV_SIGN_OEM_KEY PV_SIGN_OEM_X5C"
 do_compile[file-checksums] += "${@' '.join('%s:True' % f for f in (d.getVar(v) for v in 'PV_SIGN_PLATFORM_KEY PV_SIGN_PLATFORM_X5C'.split()) if f)}"
@@ -80,6 +81,12 @@ PV_BSP_UPDATES_RELEASES ?= "https://pantavisor-ci.s3.amazonaws.com/meta-pantavis
 PV_BSP_UPDATES_SOURCE ?= "https://github.com/pantavisor/meta-pantavisor"
 PV_BSP_UPDATES_DOCS ?= "https://docs.pantavisor.io"
 
+# pvr repo that always holds the latest BSP for this machine, e.g. a Pantahub
+# trail; `pvr app update bsp` fetches from it. Empty until CI publishes one.
+PV_BSP_SRC_PVR ??= ""
+# The signed parts, so an update brings the signature that covers them.
+PV_BSP_SRC_PVR_PARTS ??= "bsp,_sigs/bsp.json,device.json"
+
 def pv_bsp_layers(d):
     # kas lists this layer as "${TOPDIR}/..", which oe.buildcfg names "..".
     self_path = os.path.realpath(d.getVar('META_PANTAVISOR_BASE'))
@@ -107,7 +114,7 @@ def pv_bsp_packages(d):
                             d.getVar('INITRAMFS_IMAGE_NAME') + '.manifest')
     # Metadata only: not worth failing a BSP build over.
     if not os.path.exists(manifest):
-        bb.warn('%s not found, bsp/src.json will list no packages' % manifest)
+        bb.warn('%s not found, bsp/build.json will list no packages' % manifest)
         return {}
     packages = {}
     with open(manifest) as f:
@@ -116,13 +123,24 @@ def pv_bsp_packages(d):
             packages[name] = version
     return packages
 
-# No build timestamp: it would change the BSP state of otherwise identical builds.
+# pvr rewrites src.json on update and keeps only the keys it knows, so it holds
+# just the update source; what the BSP was built from goes in build.json.
 python pv_bsp_gen_src_json() {
     import json
 
+    src = {'#spec': 'bsp-manifest-src@1'}
+    if d.getVar('PV_BSP_SRC_PVR'):
+        src['pvr'] = d.expand('${PV_BSP_SRC_PVR}#${PV_BSP_SRC_PVR_PARTS}')
+    with open(d.expand('${WORKDIR}/bsp-src.json'), 'w') as f:
+        json.dump(src, f, indent=4, sort_keys=True)
+}
+
+# No build timestamp: it would change the BSP state of otherwise identical builds.
+python pv_bsp_gen_build_json() {
+    import json
+
     compiler = d.getVar('CC').split() + ['--version']
-    src = {
-        '#spec': 'bsp-manifest-src@1',
+    build = {
         'pv_build_origin': 'yocto',
         'bsp': {
             'name': d.getVar('PN'),
@@ -151,8 +169,8 @@ python pv_bsp_gen_src_json() {
             'docs': d.getVar('PV_BSP_UPDATES_DOCS'),
         },
     }
-    with open(d.expand('${WORKDIR}/bsp-src.json'), 'w') as f:
-        json.dump(src, f, indent=4, sort_keys=True)
+    with open(d.expand('${WORKDIR}/bsp-build.json'), 'w') as f:
+        json.dump(build, f, indent=4, sort_keys=True)
 }
 
 fakeroot do_compile(){
@@ -353,11 +371,12 @@ ${basearts}
 `echo '}'`
 EOF
     cp ${WORKDIR}/bsp-src.json ${PVBSPSTATE}/bsp/src.json
+    cp ${WORKDIR}/bsp-build.json ${PVBSPSTATE}/bsp/build.json
     # Tryboot ships the kernels of its multiconfigs, not the main config's virtual/kernel.
     if [ "$rpi_tryboot" = "yes" ]; then
         jq --arg kernels "$tryboot_kernels" \
             '.kernel.versions = ($kernels | split(" ") | map(select(length > 0)))' \
-            ${WORKDIR}/bsp-src.json > ${PVBSPSTATE}/bsp/src.json
+            ${WORKDIR}/bsp-build.json > ${PVBSPSTATE}/bsp/build.json
     fi
 
     pvr add; pvr commit; pvr checkout -c
