@@ -180,6 +180,7 @@ RDEPENDS:${PN} += " \
     gtk4-dev \
     libadwaita-dev \
     libsdl2-dev \
+    lvgl-dev \
     libsoup-dev \
     pango-dev \
     qtbase-dev \

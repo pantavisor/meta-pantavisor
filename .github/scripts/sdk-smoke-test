@@ -36,6 +36,7 @@ pkg-config --exists --print-errors \
     libgpiod \
     libmodbus \
     libv4l2 \
+    lvgl \
     openssl \
     wayland-client
 

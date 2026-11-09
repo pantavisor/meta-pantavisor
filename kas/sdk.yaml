@@ -48,3 +48,6 @@ local_conf_header:
     # the software video decoder that needs no "commercial" license flag.
     PACKAGECONFIG:append:pn-gstreamer1.0-plugins-bad = " kms v4l2codecs webrtc"
     PACKAGECONFIG:append:pn-gstreamer1.0-plugins-good = " vpx"
+    # LVGL compiles its display backends into the library; fbdev on top of
+    # the default drm covers boards without a DRM driver.
+    PACKAGECONFIG:append:pn-lvgl = " fbdev"
