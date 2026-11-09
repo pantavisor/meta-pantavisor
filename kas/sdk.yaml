@@ -24,9 +24,6 @@ repos:
     path: layers/meta-security
     layers:
       meta-tpm:
-  meta-webkit:
-    url: "https://github.com/Igalia/meta-webkit.git"
-    path: layers/meta-webkit
 
 local_conf_header:
   # A separate TMPDIR: the docker machines' default build is the glibc
@@ -39,6 +36,10 @@ local_conf_header:
     # Applications here are Wayland clients. x11 would pull an X server into
     # the SDK through weston's xwayland and OpenCV's GTK backend.
     DISTRO_FEATURES:remove = "x11"
+    # meta-qt6 builds each module's test suite when DISTRO_FEATURES has ptest
+    # (a poky default); that alone took about 3 hours of task time in an
+    # armv8 SDK build, for tests the SDK never ships.
+    QT_PTEST_ENABLED = "0"
     PACKAGECONFIG:append:pn-libcamera = " gst"
     # The cam app needs libevent_pthreads; this layer's libevent is built
     # without thread support to match what pantavisor links against.

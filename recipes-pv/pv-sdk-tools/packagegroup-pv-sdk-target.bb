@@ -170,9 +170,10 @@ RDEPENDS:${PN} += " \
     xkeyboard-config \
 "
 
-# UI toolkits
+# UI toolkits. WPE WebKit and cog are left out for now: wpewebkit alone
+# compiles for more than 2 hours, which pushed the SDK build past the CI
+# job's 6-hour limit.
 RDEPENDS:${PN} += " \
-    cog \
     gdk-pixbuf-dev \
     gobject-introspection-dev \
     graphene-dev \
@@ -198,7 +199,6 @@ RDEPENDS:${PN} += " \
     qtsvg-dev \
     qtvirtualkeyboard-dev \
     qtwayland-dev \
-    wpewebkit-dev \
 "
 
 # Python
