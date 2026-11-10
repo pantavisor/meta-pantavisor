@@ -141,6 +141,11 @@ python pv_bsp_gen_build_json() {
 
     compiler = d.getVar('CC').split() + ['--version']
     build = {
+        # The pv-manifest CI's keys, which the Hub device page reads unguarded:
+        # without them it fails to render. do_compile adds pvrversion.
+        'gitdescribe': d.getVar('DISTRO_VERSION'),
+        'platform': d.getVar('MACHINE'),
+        'target': d.getVar('TARGET_SYS'),
         'pv_build_origin': 'yocto',
         'bsp': {
             'name': d.getVar('PN'),
@@ -371,13 +376,16 @@ ${basearts}
 `echo '}'`
 EOF
     cp ${WORKDIR}/bsp-src.json ${PVBSPSTATE}/bsp/src.json
-    cp ${WORKDIR}/bsp-build.json ${PVBSPSTATE}/bsp/build.json
+    # The Hub strips "pvr version " from this, but pvr itself prints "pvr version: N".
+    pvr_version=$(pvr --version | sed -n '1s/^pvr version:* *//p')
     # Tryboot ships the kernels of its multiconfigs, not the main config's virtual/kernel.
+    kernels_filter='.'
     if [ "$rpi_tryboot" = "yes" ]; then
-        jq --arg kernels "$tryboot_kernels" \
-            '.kernel.versions = ($kernels | split(" ") | map(select(length > 0)))' \
-            ${WORKDIR}/bsp-build.json > ${PVBSPSTATE}/bsp/build.json
+        kernels_filter='.kernel.versions = ($kernels | split(" ") | map(select(length > 0)))'
     fi
+    jq -S --arg pvr "pvr version $pvr_version" --arg kernels "$tryboot_kernels" \
+        ".pvrversion = \$pvr | $kernels_filter" \
+        ${WORKDIR}/bsp-build.json > ${PVBSPSTATE}/bsp/build.json
 
     pvr add; pvr commit; pvr checkout -c
 
