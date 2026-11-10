@@ -66,7 +66,7 @@ do_create_pantacor_docs() {
 
     # Version string shared by the HTML tarball name and the markdown tarball symlink
     git_hash=$(git -C "${META_PANTAVISOR_BASE}" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-    git_tag=$(git -C "${META_PANTAVISOR_BASE}" describe --exact-match HEAD 2>/dev/null || true)
+    git_tag=$(git -C "${META_PANTAVISOR_BASE}" describe --tags --match '[0-9][0-9][0-9]*' --exact-match HEAD 2>/dev/null || true)
     if [ -n "$git_tag" ]; then
         version_str="${git_hash}+${git_tag}"
     else

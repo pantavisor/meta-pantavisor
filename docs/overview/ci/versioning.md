@@ -7,16 +7,26 @@ sidebar_position: 5
 
 ## How it works
 
-The version strings for the different distro variants (e.g. `panta-distro`, `panta-appengine`) are defined in `conf/distro/*.conf` using OpenEmbedded's `get_metadata_git_describe` helper:
+All four distros (`panta-distro`, `panta-distro-bsp`, `panta-distro-app`,
+`panta-appengine`) take `DISTRO_VERSION` from one include,
+`conf/distro/panta-version.inc`, which runs `git describe` on this layer:
 
 ```bitbake
-DISTRO_VERSION = "${@oe.buildcfg.get_metadata_git_describe(os.path.dirname(os.path.dirname(d.getVar('FILE'))))}"
+DISTRO_VERSION = "${@bb.process.run(['git', 'describe', '--tags', '--match', '[0-9][0-9][0-9]*', '--always', '--dirty'], cwd=d.getVar('META_PANTAVISOR_BASE'))[0].strip()}"
+DISTRO_VERSION[vardepvalue] = "${DISTRO_VERSION}"
 ```
 
-During the parsing phase of a build, Yocto executes a `git describe` command against the `meta-pantavisor` repository.
+*   **If you build exactly on a tag:** `DISTRO_VERSION` is the tag name (e.g. `031-rc7`).
+*   **If you have commits on top of a tag:** the commit count and short hash are appended (e.g. `031-rc7-4-gabcdef12`).
+*   **If tracked files are modified:** `-dirty` is appended.
+*   **If no tag is reachable** (a shallow CI checkout of an untagged commit): it is the short hash.
 
-*   **If you build exactly on a tag:** Bitbake sets `DISTRO_VERSION` to the tag name (e.g., `028-rc10`).
-*   **If you have commits on top of a tag:** Bitbake appends the commit count and short hash dynamically (e.g., `028-rc10-4-gabcdef`).
+`--tags` matters: RC tags are lightweight, and without it `git describe` skips
+them and reports the last annotated tag (a build past `031-rc7` would say
+`030-rc3-…`). `[vardepvalue]` makes task signatures hash the resulting string
+rather than the expression, so any change of version rebuilds pantavisor,
+`os-release`, `base-files` and the images instead of reusing sstate stamped
+with the previous version.
 
 This ensures the `DISTRO_VERSION` passed into the `pantavisor` runtime accurately tracks the Yocto layer's state without requiring manual edits to the configuration files.
 
