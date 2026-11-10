@@ -278,7 +278,6 @@ Append an entry to [`components.json`](https://github.com/pantavisor/meta-pantav
 {
   "name": "<name>",
   "recipe_glob": "<recipe-glob>",
-  "branch": "<branch>",
   "repo_org": "<github-org>"
 }
 ```
