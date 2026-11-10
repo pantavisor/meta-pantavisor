@@ -371,6 +371,7 @@ which is why this lives in a separate file.
 
 | Key | Content |
 |-----|---------|
+| `gitdescribe`, `platform`, `target`, `pvrversion` | The keys the pv-manifest CI wrote: `DISTRO_VERSION`, `MACHINE`, `TARGET_SYS` and `pvr version <N>`. The Pantahub device page reads them, and fails to render a BSP without them |
 | `pv_build_origin` | `yocto` |
 | `bsp` | `name`, `machine`, `architecture`, `version` (`DISTRO_VERSION`), `distro`, `yocto_release`, `pantavisor_features` |
 | `kernel` | `provider` and `versions`: one entry per shipped kernel, so several on `rpi-tryboot` and none on `linux-dummy` |
