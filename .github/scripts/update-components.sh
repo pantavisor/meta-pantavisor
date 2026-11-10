@@ -1,11 +1,19 @@
 #!/bin/bash
 
-# Component list (recipe glob, branch, repo_org) is shared with
+# Component list (recipe glob, repo_org) is shared with
 # .github/scripts/make-changelog.sh; loaded from components.json so additions
-# only need to be made in one place.
+# only need to be made in one place. The tracked branch is read from the recipe.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPONENTS_JSON="$SCRIPT_DIR/components.json"
-mapfile -t COMPONENTS < <(jq -r '.[] | "\(.name)|\(.recipe_glob)|\(.branch)|\(.repo_org)"' "$COMPONENTS_JSON")
+mapfile -t COMPONENTS < <(jq -r '.[] | "\(.name)|\(.recipe_glob)|\(.repo_org)"' "$COMPONENTS_JSON")
+
+# branch= from SRC_URI, else a <NAME>_BRANCH default (pantavisor.inc)
+recipe_branch() {
+    local b
+    b=$(grep -oP 'branch=\K[^;"\s\\]+' "$1" | head -n 1)
+    [ -n "$b" ] || b=$(grep -oP '^\w+_BRANCH\s*\?{0,2}=\s*"\K[^"]+' "$1" | head -n 1)
+    echo "$b"
+}
 
 ORIG_PWD=$PWD
 # Use path from environment or fallback to a temp location
@@ -16,7 +24,7 @@ echo "" >> "$COMMIT_MSG_FILE"
 UPDATES_FOUND=0
 
 for ENTRY in "${COMPONENTS[@]}"; do
-    IFS="|" read -r COMPONENT RECIPE_GLOB BRANCH ORG <<< "$ENTRY"
+    IFS="|" read -r COMPONENT RECIPE_GLOB ORG <<< "$ENTRY"
 
     RECIPE=$(find . -path "./$RECIPE_GLOB" | head -n 1)
     if [ -z "$RECIPE" ]; then
@@ -30,6 +38,12 @@ for ENTRY in "${COMPONENTS[@]}"; do
     # Handle both pantavisor and pantacor orgs
     REPO_NAME=$(grep -oP "github.com/$ORG/\K[^; ]+" "$RECIPE" | sed 's/\.git//' | head -n 1)
     FULL_URL="https://github.com/$ORG/$REPO_NAME"
+
+    BRANCH=$(recipe_branch "$RECIPE")
+    if [ -z "$BRANCH" ] || [[ "$BRANCH" == *'$'* ]]; then
+        echo "  Warning: Could not read branch from $RECIPE ('$BRANCH')"
+        continue
+    fi
 
     echo "  Repo: $FULL_URL"
     echo "  Branch: $BRANCH"

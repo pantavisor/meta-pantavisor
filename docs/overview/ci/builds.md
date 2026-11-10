@@ -407,9 +407,9 @@ the prod and the stage Hub. Local tests never talk to the Hub, so they run again
 
 ## Component Auto-Updates
 
-`schedule-updates.yaml` runs `update-components.sh` every 8 hours. The script reads `.github/scripts/components.json`, which lists each tracked component with its recipe glob, upstream branch, and GitHub org. For each component:
+`schedule-updates.yaml` runs `update-components.sh` every 8 hours. The script reads `.github/scripts/components.json`, which lists each tracked component with its recipe glob and GitHub org. For each component:
 
-1. Fetches the latest commit SHA from the upstream branch via `git ls-remote`.
+1. Fetches the latest commit SHA via `git ls-remote` from the branch the recipe itself names: `branch=` in `SRC_URI`, or a `<NAME>_BRANCH` default such as `PANTAVISOR_BRANCH` in `pantavisor.inc`. Moving a recipe to a new branch is all it takes for the updater to follow it.
 2. If the SHA differs from the current `SRCREV` in the recipe, updates the recipe in-place.
 3. Appends a short git log to the commit message body for review.
 

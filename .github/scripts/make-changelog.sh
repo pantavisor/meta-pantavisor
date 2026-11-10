@@ -44,7 +44,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 COMPONENTS_JSON="$SCRIPT_DIR/components.json"
-mapfile -t COMPONENTS < <(jq -r '.[] | "\(.name)|\(.recipe_glob)|\(.branch)|\(.repo_org)"' "$COMPONENTS_JSON")
+mapfile -t COMPONENTS < <(jq -r '.[] | "\(.name)|\(.recipe_glob)|\(.repo_org)"' "$COMPONENTS_JSON")
 
 RELEASES_JSON_URL="${RELEASES_JSON_URL:-https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json}"
 # Base URL of the per-major S3 accumulator (CHANGELOG-<MAJOR>.md lives directly
@@ -329,7 +329,7 @@ build_components_section() {
     fi
 
     for entry in "${COMPONENTS[@]}"; do
-        IFS="|" read -r name glob _branch org <<< "$entry"
+        IFS="|" read -r name glob org <<< "$entry"
         cur_sha="$(parse_srcrev_at "$SOURCE_REV" "$glob")"
         [ -z "$cur_sha" ] && continue
 
