@@ -148,7 +148,7 @@ python pv_bsp_gen_build_json() {
         'target': d.getVar('TARGET_SYS'),
         'pv_build_origin': 'yocto',
         'bsp': {
-            'name': d.getVar('PN'),
+            'name': d.expand('${PN}-${MACHINE}-${TCLIBC}'),
             'machine': d.getVar('MACHINE'),
             'architecture': d.getVar('TARGET_ARCH'),
             'version': d.getVar('DISTRO_VERSION'),
