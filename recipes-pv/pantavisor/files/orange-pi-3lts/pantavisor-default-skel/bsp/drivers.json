@@ -9,7 +9,6 @@
         "bluetooth": [
             "bluetooth",
             "rfkill",
-            "uwe5622",
             "sprdbt_tty",
             "hci_uart"
         ],
@@ -22,7 +21,7 @@
             "sun8i-hdmi"
         ],
         "ethernet": [
-            "sun50i_gmac"
+            "dwmac-sun8i"
         ],
         "gpu": [
             "panfrost"
@@ -34,7 +33,6 @@
             "cedrus"
         ],
         "wifi": [
-            "uwe5622",
             "sprdwl_ng"
         ],
         "wireguard": [
