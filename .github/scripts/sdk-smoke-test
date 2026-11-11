@@ -38,7 +38,8 @@ pkg-config --exists --print-errors \
     libv4l2 \
     lvgl \
     openssl \
-    wayland-client
+    wayland-client \
+    wpe-webkit-2.0
 
 echo "== container"
 cd "$work"

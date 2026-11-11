@@ -24,6 +24,9 @@ repos:
     path: layers/meta-security
     layers:
       meta-tpm:
+  meta-webkit:
+    url: "https://github.com/Igalia/meta-webkit.git"
+    path: layers/meta-webkit
 
 local_conf_header:
   # A separate TMPDIR: the docker machines' default build is the glibc
