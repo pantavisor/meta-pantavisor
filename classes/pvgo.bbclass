@@ -165,9 +165,17 @@ FILES:${PN}-staticdev = "${libdir}/pvgo/pkg"
 
 INSANE_SKIP:${PN} += "ldflags"
 
+# Go builds position-independent executables by default. On 32-bit ARM that
+# lands every pointer through .data.rel.ro relocations, which the kernel never
+# shares and must copy-on-write as dirty pages at load. Recipes that build
+# CGO_ENABLED=0 static binaries set PVGO_PIE = "0": a non-PIE static image
+# maps straight from the (read-only) binary and trims ~0.5-0.6 MB of dirty
+# memory per process on the small hosts that run these containers.
+PVGO_PIE ?= "1"
+
 python() {
     if 'mips' in d.getVar('TARGET_ARCH') or 'riscv32' in d.getVar('TARGET_ARCH'):
         d.appendVar('INSANE_SKIP:%s' % d.getVar('PN'), " textrel")
-    else:
+    elif d.getVar('PVGO_PIE') == '1':
         d.appendVar('GOBUILDFLAGS', ' -buildmode=pie')
 }
