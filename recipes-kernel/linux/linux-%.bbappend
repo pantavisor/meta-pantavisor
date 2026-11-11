@@ -64,6 +64,12 @@ KERNEL_CONFIG_FRAGMENTS:append = " \
 	${@bb.utils.contains_any('DISTRO_FEATURES', 'pantavisor-system pantavisor-kernel', '${PANTAVISOR_KERNEL_FRAGMENTS}', '', d)} \
 "
 
+# Orange Pi 3 LTS: the BSP drivers.json "ethernet" alias is only loaded when a
+# container asks for it, so build the EMAC driver in and always get eth0.
+SRC_URI:append:orange-pi-3lts = " \
+	${@bb.utils.contains_any('DISTRO_FEATURES', 'pantavisor-system pantavisor-kernel', 'file://orange-pi-3lts-ethernet.cfg', '', d)} \
+"
+
 COMPATIBLE_MACHINE:qemuarm-pv = "qemuarm-pv"
 
 
