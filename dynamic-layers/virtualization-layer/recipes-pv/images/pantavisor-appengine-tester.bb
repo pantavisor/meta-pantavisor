@@ -21,6 +21,7 @@ CORE_IMAGE_EXTRA_INSTALL += " \
 	pantavisor-pvtest \
 	procps \
 	pvr \
+	tinyproxy \
 	util-linux \
 	valgrind \
 	vim-xxd \
