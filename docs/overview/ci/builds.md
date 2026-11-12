@@ -194,9 +194,25 @@ Toradex flashing procedure, and
     "platform": "linux/arm64",
     "arch": "armv8",
     "url": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/031-rc6/sdk/pv-sdk-031-rc6-armv8.sh",
-    "sha256": "<sha256>"
+    "sha256": "<sha256>",
+    "manifests": {
+      "target": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/031-rc6/sdk/pv-sdk-031-rc6-armv8.target.manifest",
+      "host": "https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/031-rc6/sdk/pv-sdk-031-rc6-armv8.host.manifest"
+    },
+    "contents": {
+      "toolchain": { "gcc": "<version>", "musl": "<version>", "...": "..." },
+      "host": { "cmake": "<version>", "pvr": "<version>", "...": "..." },
+      "target": { "openssl": "<version>", "qtbase": "<version>", "...": "..." }
+    }
   }
 ]
+```
+
+`contents` and `manifests` come from files `pv-sdk.bb` writes next to the installer. `contents` is a summary by recipe and upstream version: `toolchain` is the cross compilers and the C library, `host` what `nativesdk-pv-sdk-tools` pulls in, and `target` what `packagegroup-pv-sdk-target` pulls in (packagegroups are expanded). The two manifests list every installed package as `<package> <arch> <version>`, under the Debian-renamed package names (`libz-dev` for `zlib-dev`). Installers built before the summary existed (up to `031-rc8`) have neither key. To list a release's SDK contents:
+
+```bash
+curl -s https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json \
+  | jq '.["release-candidate"]["<tag>"].sdks[] | {arch, contents}'
 ```
 
 To publish an installer by hand, for example one from **manual: sdk scarthgap** or a tag whose `publish-sdks` job failed, run both steps with AWS credentials in the environment. `index` replaces the tag's whole `sdks` list with what is under `<tag>/sdk/`, and should not run while a tag build is uploading:

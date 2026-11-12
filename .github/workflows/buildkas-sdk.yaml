@@ -73,7 +73,11 @@ jobs:
           installer=$(find build/${{ env.BUILD_TMPDIR }}/deploy/sdk/ -name "pv-sdk-*.sh" | head -n 1)
           [ -n "$installer" ] || { echo "no pv-sdk installer in deploy/sdk" >&2; exit 1; }
           # Branch names may contain "/", which cannot appear in an asset name.
-          cp "$installer" "sdk/pv-sdk-${REF_NAME//\//-}-${SDK_NAME}.sh"
+          name="pv-sdk-${REF_NAME//\//-}-${SDK_NAME}"
+          cp "$installer" "sdk/$name.sh"
+          for ext in contents.json target.manifest host.manifest; do
+            cp "${installer%.sh}.$ext" "sdk/$name.$ext"
+          done
           ls -l sdk
 
       - name: smoke-test sdk

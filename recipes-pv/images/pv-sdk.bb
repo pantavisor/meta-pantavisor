@@ -47,6 +47,69 @@ install_container_base() {
 }
 POPULATE_SDK_POST_HOST_COMMAND:append = " install_container_base"
 
+# A summary of the SDK for releases.json, next to the installer: the toolchain
+# and the software the SDK ships on purpose (what packagegroup-pv-sdk-target
+# and nativesdk-pv-sdk-tools pull in directly), by recipe and upstream
+# version. The .target/.host.manifest beside it list every package.
+# Read from pkgdata rather than the manifests: those carry the Debian-renamed
+# package names (zlib-dev is libz-dev there), not the ones the recipes use.
+python write_sdk_contents () {
+    import json, re
+    from oe.packagedata import read_pkgdatafile
+
+    def subpkgdata(pkgdata_dir, pkg):
+        fn = os.path.join(pkgdata_dir, 'runtime', pkg)
+        if not os.path.exists(fn):
+            rprov = os.path.join(pkgdata_dir, 'runtime-rprovides', pkg)
+            providers = sorted(os.listdir(rprov)) if os.path.isdir(rprov) else []
+            if not providers:
+                return None
+            pkg = providers[0]
+            fn = os.path.join(pkgdata_dir, 'runtime', pkg)
+        return {k.replace(':' + pkg, ''): v for k, v in read_pkgdatafile(fn).items()}
+
+    # Packagegroups are expanded, not listed: their version says nothing.
+    def recipes(pkgdata_dir, root, strip=''):
+        found, seen, todo = {}, set(), [root]
+        while todo:
+            pkg = todo.pop()
+            if pkg in seen:
+                continue
+            seen.add(pkg)
+            data = subpkgdata(pkgdata_dir, pkg)
+            if data is None:
+                bb.warn("write_sdk_contents: no pkgdata for %s" % pkg)
+                continue
+            if pkg == root or data['PN'].startswith((strip + 'packagegroup-', 'packagegroup-')):
+                todo.extend(bb.utils.explode_deps(data.get('RDEPENDS', '')))
+                continue
+            found[data['PN'][len(strip):] if data['PN'].startswith(strip) else data['PN']] = data['PKGV']
+        return dict(sorted(found.items()))
+
+    # gcc-cross-canadian-aarch64 13.3.0-r0 -> gcc 13.3.0
+    toolchain = {}
+    with open(d.getVar('SDK_HOST_MANIFEST')) as f:
+        for line in f:
+            name, _, ver = line.split()
+            m = re.match(r'(.+)-cross-canadian-', name)
+            if m:
+                toolchain[m.group(1)] = re.sub(r'^\d+:|-r\d+.*$', '', ver)
+    libc = subpkgdata(d.getVar('PKGDATA_DIR'), d.getVar('TCLIBC'))
+    if libc:
+        toolchain[libc['PN']] = libc['PKGV']
+
+    contents = {
+        'toolchain': dict(sorted(toolchain.items())),
+        'host': recipes(d.getVar('PKGDATA_DIR_SDK'), 'nativesdk-pv-sdk-tools', 'nativesdk-'),
+        'target': recipes(d.getVar('PKGDATA_DIR'), 'packagegroup-pv-sdk-target'),
+    }
+    out = os.path.join(d.getVar('SDKDEPLOYDIR'), d.getVar('TOOLCHAIN_OUTPUTNAME') + '.contents.json')
+    with open(out, 'w') as f:
+        json.dump(contents, f, indent=1)
+        f.write('\n')
+}
+SDK_POSTPROCESS_COMMAND:append = " write_sdk_contents"
+
 # rm_work empties rootfs/ after do_image_complete; an image task re-run
 # without do_rootfs would then deploy an empty base rootfs into the SDK.
 RM_WORK_EXCLUDE += "${PN}"
