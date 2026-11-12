@@ -450,20 +450,32 @@ emit_changes() {
 CHANGES_SECTION="$(emit_changes)"
 
 # --- 4. Render section -----------------------------------------------------
-# SDKs are not per machine, so the table above cannot list them. 957ee86d is
-# the commit that started building them; an older tag regenerated here gets no
-# line. In pre-tag mode releases.json has no entry yet, so name where they land.
-SDK_LINE=""
+# SDKs are not per machine, so the table above cannot list them; they get a
+# table of their own. 957ee86d is the commit that started building them; an
+# older tag regenerated here gets none. Until publish-sdks has listed them in
+# releases.json (always the case in pre-tag mode), predict the URLs from the
+# sdk_machines the tag builds: upload-sdk.sh names them deterministically.
+SDK_SECTION=""
 if git merge-base --is-ancestor 957ee86d "$SOURCE_REV" 2>/dev/null; then
-    SDK_LINKS="$(jq -r --arg tag "$TAG" '
+    SDK_ROWS="$(jq -r --arg tag "$TAG" '
         [.stable[$tag]?, .["release-candidate"][$tag]?]
         | map(select(. != null) | .sdks // []) | add // []
-        | map("[`\(.arch)`](\(.url))") | join(", ")
+        | sort_by(.arch)[]
+        | "| \(.arch) | [Download](\(.url))"
+          + (if (.sha256 // "") != "" then "<br>`\(.sha256[0:12])…`" else "" end)
+          + " |"
     ' "$RELEASES_JSON")"
-    if [ -n "$SDK_LINKS" ]; then
-        SDK_LINE=$'\n\n'"SDK installers: ${SDK_LINKS}."
-    else
-        SDK_LINE=$'\n\n'"SDK installers: \`pv-sdk-${TAG}-<arch>.sh\`, under \`${RELEASES_JSON_URL%/*}/${TAG}/sdk/\`."
+    SDK_NOTE=""
+    if [ -z "$SDK_ROWS" ]; then
+        SDK_ROWS="$(git show "$SOURCE_REV:.github/machines.json" 2>/dev/null \
+            | jq -r '.sdk_machines // [] | map(sub("^docker-"; "")) | sort[]' \
+            | while read -r arch; do
+                echo "| ${arch} | [Pending](${RELEASES_JSON_URL%/*}/${TAG}/sdk/pv-sdk-${TAG}-${arch}.sh) |"
+            done)"
+        SDK_NOTE="_Predicted SDK installer URLs. They will 404 until the release build uploads the installers._"$'\n\n'
+    fi
+    if [ -n "$SDK_ROWS" ]; then
+        SDK_SECTION=$'\n\n'"${SDK_NOTE}| Arch | SDK |"$'\n'"|---|---|"$'\n'"${SDK_ROWS}"
     fi
 fi
 
@@ -480,9 +492,9 @@ Released: ${RELEASE_DATE}
 
 ### Downloads
 
-${DOWNLOADS_SECTION}
+${DOWNLOADS_SECTION}${SDK_SECTION}
 
-Source: [\`releases.json\`](${RELEASES_JSON_URL}) (\`${RELEASE_TYPE}\` → \`${TAG}\`).${SDK_LINE}
+Source: [\`releases.json\`](${RELEASES_JSON_URL}) (\`${RELEASE_TYPE}\` → \`${TAG}\`).
 
 ### Component versions
 

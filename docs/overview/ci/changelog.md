@@ -308,8 +308,25 @@ across the release. If a release adds or removes a BSP output for a
 machine, regenerate the section in historical mode after the build to
 correct it.
 
-SDK installers are per release, not per machine, so they get a line under the
-table, with links from the release's `sdks` list in `releases.json`. In pre-tag
-mode that list does not exist yet, and the line names the S3 directory instead.
-Regenerating an older release whose `devices` entries still carry an `sdk` URL
-brings back that table's SDK column.
+SDK installers are per release, not per machine, so they get a second table
+under the machine table, with one row per architecture:
+
+```markdown
+| Arch | SDK |
+|---|---|
+| armv6 | [Download](https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/031-rc8/sdk/pv-sdk-031-rc8-armv6.sh)<br>`3ec44c1b3d14…` |
+```
+
+The rows come from the release's `sdks` list in `releases.json`. Until the
+`publish-sdks` job of `release.yaml` has written that list (always the case in
+pre-tag mode), the rows are "Pending" links predicted from `sdk_machines` in
+`.github/machines.json` at the tagged commit, at the path `upload-sdk.sh`
+uploads to. Releases before SDKs were built (anything before `031-rc3`) get no
+SDK table. Regenerating an older release whose `devices` entries still carry an
+`sdk` URL brings back the machine table's SDK column instead.
+
+To preview the table for a tag:
+
+```bash
+.github/scripts/make-changelog.sh --stdout 031-rc8 | sed -n '/| Arch | SDK |/,/^$/p'
+```
