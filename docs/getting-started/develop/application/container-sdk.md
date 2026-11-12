@@ -27,6 +27,17 @@ from `031-rc3` on:
 The installers run on x86_64 Linux hosts. The toolchain targets musl, the C
 library of the Pantavisor board images.
 
+Each `sdks` entry also lists what that installer ships, by recipe and version,
+under `contents` (`toolchain`, `host` tools, `target` libraries), with links to
+the full package lists under `manifests`. For example, to check which Qt and
+GStreamer an armv8 SDK carries:
+
+```bash
+curl -s https://pantavisor-ci.s3.amazonaws.com/meta-pantavisor/releases.json \
+  | jq '.["release-candidate"]["<tag>"].sdks[] | select(.arch == "armv8")
+        | .contents.toolchain, (.contents.target | with_entries(select(.key | test("qtbase|gstreamer"))))'
+```
+
 The armv6 SDK builds soft-float binaries. They do not load on a hard-float
 32-bit board (one whose initramfs has `/lib/ld-musl-armhf.so.1`), which
 includes most armv7 boards; there is no hard-float 32-bit SDK for now.

@@ -5,6 +5,10 @@
 #   upload-sdk.sh upload <bucket> <tag> <arch> <installer>
 #   upload-sdk.sh index  <bucket> <tag>
 #
+# upload also publishes the <installer minus .sh>.contents.json,
+# .target.manifest and .host.manifest pv-sdk.bb writes beside the installer,
+# when present: the contents go into the entry, the manifests are linked.
+#
 # AWS credentials come from the environment. <bucket> is AWS_S3_BUCKET, as
 # upload.sh takes it, prefix included.
 #
@@ -24,7 +28,8 @@ die() {
 
 upload() {
 	[ $# -eq 4 ] || die "usage: upload <bucket> <tag> <arch> <installer>"
-	local bucket=$1 tag=$2 arch=$3 installer=$4 platform name entry
+	local bucket=$1 tag=$2 arch=$3 installer=$4 platform name entry ext
+	local contents=${installer%.sh}.contents.json manifests='{}'
 
 	[ -f "$installer" ] || die "no installer at $installer"
 	case "$arch" in
@@ -39,15 +44,31 @@ upload() {
 	name="pv-sdk-$tag-$arch"
 	entry=$(mktemp)
 	trap 'rm -f "$entry"' RETURN
+	# Installers built before pv-sdk.bb wrote these have none.
+	[ -f "$contents" ] || contents=/dev/null
+	for ext in target host; do
+		[ -f "${installer%.sh}.$ext.manifest" ] || continue
+		manifests=$(jq -c --arg k "$ext" --arg v "$AWS_S3_URL/$tag/sdk/$name.$ext.manifest" \
+			'.[$k] = $v' <<<"$manifests")
+	done
 	jq -n \
 		--arg release "$tag" --arg platform "$platform" --arg arch "$arch" \
 		--arg url "$AWS_S3_URL/$tag/sdk/$name.sh" \
 		--arg sha256 "$(sha256sum "$installer" | cut -d' ' -f1)" \
-		'{release: $release, platform: $platform, arch: $arch, url: $url, sha256: $sha256}' \
+		--argjson manifests "$manifests" \
+		--slurpfile contents "$contents" \
+		'{release: $release, platform: $platform, arch: $arch, url: $url, sha256: $sha256}
+		+ (if $manifests != {} then {manifests: $manifests} else {} end)
+		+ (if $contents != [] then {contents: $contents[0]} else {} end)' \
 		>"$entry"
 
 	# The entry goes last: index treats it as the mark of a complete upload.
 	aws s3 cp --no-progress "$installer" "s3://$bucket/$tag/sdk/$name.sh"
+	for ext in target host; do
+		[ -f "${installer%.sh}.$ext.manifest" ] || continue
+		aws s3 cp --no-progress --content-type text/plain \
+			"${installer%.sh}.$ext.manifest" "s3://$bucket/$tag/sdk/$name.$ext.manifest"
+	done
 	aws s3 cp --no-progress "$entry" "s3://$bucket/$tag/sdk/$name.json"
 	cat "$entry"
 }
