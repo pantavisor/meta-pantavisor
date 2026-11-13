@@ -45,6 +45,7 @@
 			"name": "jetson-nano-devkit",
 			"display_name": "NVIDIA Jetson Nano (kirkstone)",
 			"description": "NVIDIA Jetson Nano developer kit. Built on Yocto kirkstone with meta-tegra L4T r32.7, as meta-tegra has no Nano support on scarthgap. Manual builds only.",
+			"output": "pantavisor-starter-jetson-nano-devkit-[0-9]*.sdcard.gz pantavisor-starter-jetson-nano-devkit-[0-9]*.tegraflash.tar.gz",
 			"workflows": ["manual"]
 		},
 		{
