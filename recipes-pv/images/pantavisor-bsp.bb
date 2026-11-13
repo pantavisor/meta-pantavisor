@@ -87,11 +87,35 @@ PV_BSP_SRC_PVR ??= ""
 # The signed parts, so an update brings the signature that covers them.
 PV_BSP_SRC_PVR_PARTS ??= "bsp,_sigs/bsp.json,device.json"
 
+def pv_layer_revisions(d):
+    try:
+        import oe.buildcfg
+        return oe.buildcfg.get_layer_revisions(d)
+    except ImportError:
+        pass
+    # kirkstone has no oe.buildcfg; same tuples from metadata_scm.bbclass.
+    import subprocess
+    revisions = []
+    for path in (d.getVar('BBLAYERS') or '').split():
+        try:
+            subprocess.check_output(
+                'cd %s; export PSEUDO_UNLOAD=1; set -e; '
+                'git diff --quiet --no-ext-diff; '
+                'git diff --quiet --no-ext-diff --cached' % path,
+                shell=True, stderr=subprocess.STDOUT)
+            modified = ''
+        except subprocess.CalledProcessError:
+            modified = ' -- modified'
+        revisions.append((path, os.path.basename(path),
+                          base_get_metadata_git_branch(path, d).strip(),
+                          base_get_metadata_git_revision(path, d), modified))
+    return revisions
+
 def pv_bsp_layers(d):
     # kas lists this layer as "${TOPDIR}/..", which oe.buildcfg names "..".
     self_path = os.path.realpath(d.getVar('META_PANTAVISOR_BASE'))
     layers = {}
-    for path, name, branch, revision, modified in oe.buildcfg.get_layer_revisions(d):
+    for path, name, branch, revision, modified in pv_layer_revisions(d):
         if os.path.realpath(path) == self_path:
             name = 'meta-pantavisor'
         layers[name] = {
