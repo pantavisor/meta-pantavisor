@@ -28,8 +28,6 @@ on:
 
 jobs:
   build:
-    env:
-     TMPDIR : "tmp-scarthgap"
     runs-on: ["bsp-builder"]
     container:
       image: ghcr.io/pantacor/kas/kas:next-v7
@@ -55,6 +53,21 @@ jobs:
           mkdir -p /shared/sstate && chown builder:builder /shared/sstate && mkdir -p /shared/dldir && chown builder:builder /shared/dldir
           su - builder -c "cd $GITHUB_WORKSPACE && git fetch origin $EFFECTIVE_REF && git reset --hard $EFFECTIVE_REF && rm -rf build/ && git clean -f -f -d -x "
           git config --global --add safe.directory /__w/meta-pantavisor/meta-pantavisor
+
+      # A build of an older ref has no release config for machines added
+      # later: take the missing config files from the commit that started
+      # this workflow.
+      - name: add config files missing at ref
+        if: ${{ inputs.ref != '' && inputs.ref != github.sha }}
+        run: |
+          git fetch --depth=1 origin ${{ github.sha }}
+          for f in $(echo "${{ inputs.configs }}" | tr ':' ' '); do
+            if [ ! -e "$f" ]; then
+              echo "taking $f from ${{ github.sha }}"
+              git checkout ${{ github.sha }} -- "$f"
+            fi
+          done
+          chown -R builder:builder $GITHUB_WORKSPACE
 
       # Private source repositories (pv-mqtt-sdk) are fetched over HTTPS with
       # a read-only token; kas copies NETRC_FILE into the build's HOME.
@@ -82,15 +95,19 @@ jobs:
         if: always()
         run: |
           chmod -R 777 $GITHUB_WORKSPACE
-          BUILD_BASE_DIR=$(echo build/${{ env.TMPDIR }}/deploy/images/*)
+          # tmp-<release> (e.g. tmp-scarthgap or tmp-kirkstone); the shortest
+          # match is the main build, longer ones are multiconfig dirs.
+          DEPLOY_DIR=$(ls -d build/tmp-*/deploy/images 2>/dev/null | awk '{print length, $0}' | sort -n | head -1 | cut -d' ' -f2-)
+          DEPLOY_DIR=${DEPLOY_DIR:-build/tmp-none/deploy/images}
+          BUILD_BASE_DIR=$(echo ${DEPLOY_DIR}/*)
           mkdir -p dist
           for pattern in ${{ inputs.output }}; do
             find "${BUILD_BASE_DIR}" -maxdepth 1 -name "$pattern" -exec cp {} . \; -exec cp {} dist/ \;
           done
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "*pvrexport.tgz" -exec cp {} . \; -exec cp {} dist/ \; 2>/dev/null || true
+          find ${DEPLOY_DIR}/ -name "*pvrexport.tgz" -exec cp {} . \; -exec cp {} dist/ \; 2>/dev/null || true
 
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
+          find ${DEPLOY_DIR}/ -name "test.docker.sh" -exec cp {} . \; 2>/dev/null || true
+          find ${DEPLOY_DIR}/ -name "pantavisor-appengine*-docker.tar" -exec cp {} . \; 2>/dev/null || true
 
           UNPACKED_DIR=$(find "${BUILD_BASE_DIR}" -maxdepth 1 -type d -name "pantavisor-appengine-distro-*" | head -1)
           if [ -d "$UNPACKED_DIR" ]; then
@@ -98,8 +115,8 @@ jobs:
             cp -r "${UNPACKED_DIR}/." ./pvtest-distro/
           fi
 
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.txt" -exec cp {} . \; 2>/dev/null || true
-          find build/${{ env.TMPDIR }}/deploy/images/ -name "*.manifest.patch" -exec cp {} . \; 2>/dev/null || true
+          find ${DEPLOY_DIR}/ -name "*.manifest.txt" -exec cp {} . \; 2>/dev/null || true
+          find ${DEPLOY_DIR}/ -name "*.manifest.patch" -exec cp {} . \; 2>/dev/null || true
           ls -l .
 
 ## File distribution

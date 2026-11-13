@@ -20,6 +20,7 @@ on:
           - sunxi-bananapi-m2-berry
           - imx8qxp-b0-mek
           - raspberrypi-armv8
+          - jetson-nano-devkit
           - rpi
           - rpi-mqtt-sdk
           - colibri-imx6ull
@@ -31,6 +32,11 @@ on:
           - docker-x86_64
           - docker-armv8
           - 96boards-orangepi-i96
+      ref:
+        description: 'Tag, branch or commit to build (default: the commit this workflow runs from)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   resolve:
@@ -58,4 +64,5 @@ jobs:
       machine_name: ${{ inputs.machine }}-scarthgap
       build_target: ${{ needs.resolve.outputs.build_target }}
       output: ${{ needs.resolve.outputs.output }}
+      ref: ${{ inputs.ref }}
     secrets: inherit
