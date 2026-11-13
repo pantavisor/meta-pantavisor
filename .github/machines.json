@@ -41,6 +41,13 @@
 			"workflows": ["manual"]
 		},
 		{
+			"config": "kas/machines/jetson-nano-devkit.yaml:kas/kirkstone.yaml:kas/bsp-base.yaml:kas/with-lxc-deprecated.yaml:kas/build-configs/build-base-starter.yaml:kas/build-configs/jetson-nano-kirkstone-pins.yaml",
+			"name": "jetson-nano-devkit",
+			"display_name": "NVIDIA Jetson Nano (kirkstone)",
+			"description": "NVIDIA Jetson Nano developer kit. Built on Yocto kirkstone with meta-tegra L4T r32.7, as meta-tegra has no Nano support on scarthgap. Manual builds only.",
+			"workflows": ["manual"]
+		},
+		{
 			"config": "kas/machines/rpi.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/with-lxc-next.yaml:kas/build-configs/build-base-starter.yaml",
 			"name": "rpi",
 			"display_name": "Raspberry Pi (all versions)",

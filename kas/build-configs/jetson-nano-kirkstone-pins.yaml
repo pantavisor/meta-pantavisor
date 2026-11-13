@@ -1,0 +1,11 @@
+# Layer commits known to build the Jetson Nano on kirkstone.
+header:
+  version: 16
+
+repos:
+  poky:
+    commit: 445a6223929b9a7a62b575093659e3d9e1aba982
+  meta-openembedded:
+    commit: ce8539c941f6fcbecaca4d16640ac105c0595589
+  meta-virtualization:
+    commit: 92b6abcdfb6f12c4931247f0f29aaf5331984525

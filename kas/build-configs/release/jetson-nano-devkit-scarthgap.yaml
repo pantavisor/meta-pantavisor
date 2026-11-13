@@ -1,0 +1,104 @@
+header:
+    version: 16
+_source_dir: .
+repos:
+    meta-tegra:
+        branch: kirkstone-l4t-r32.7.x
+        commit: 94e3db3146dc273ec1df463426c0fcaeacc51b5f
+        path: layers/meta-tegra
+        url: https://github.com/OE4T/meta-tegra.git
+    poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: 445a6223929b9a7a62b575093659e3d9e1aba982
+    meta-pantavisor:
+    meta-virtualization:
+        url: https://git.yoctoproject.org/meta-virtualization
+        path: layers/meta-virtualization
+        commit: 92b6abcdfb6f12c4931247f0f29aaf5331984525
+    meta-openembedded:
+        url: https://github.com/openembedded/meta-openembedded.git
+        path: layers/meta-openembedded
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        commit: ce8539c941f6fcbecaca4d16640ac105c0595589
+local_conf_header:
+    tegra-runtime: |
+        # NVIDIA's L4T userspace binaries require glibc.
+        TCLIBC = "glibc"
+        PANTAVISOR_CGROUP_VERSION = "1"
+    jetson-nano: |
+        PVROOT_IMAGE_BSP = "pv-jetson-bsp"
+        PVROOT_CONTAINERS_CORE = "pv-alpine-connman pvwificonnect pv-avahi pv-mqtt-sdk pv-jetson-cuda pv-unsloth"
+        # PVROOT_IMAGE_BSP set here masks pvrexportit for every non-BSP image.
+        IMAGE_TYPES_MASKED:remove:pn-pvwificonnect = "pvrexportit"
+        IMAGE_TYPES_MASKED:remove:pn-pv-avahi = "pvrexportit"
+        IMAGE_TYPES_MASKED:remove:pn-pv-mqtt-sdk = "pvrexportit"
+        # pv-mqtt-sdk holds the Pantahub link instead of pantavisor.
+        PANTAVISOR_CONFIG[PV_CONTROL_REMOTE] = "0"
+        PANTAVISOR_CONFIG[PV_LOG_PUSH] = "0"
+        # Preserve the CBoot-patched DTB, including NVIDIA memory reservations.
+        PV_INITIAL_DTB = ""
+        PV_UBOOT_AUTOFDT = ""
+        UBOOT_EXTLINUX = "0"
+        INITRAMFS_IMAGE_BUNDLE = "0"
+        # CUDA needs nvgpu firmware and the BSP's complete module set.
+        # wifi/bluetooth are requested by the os container; the devkit's M.2
+        # card is usually an Intel 8265 (Bluetooth over USB).
+        PV_BSP_DRIVERS = '{"all": {"nvidia": ["nvgpu"], "wifi": ["iwlwifi", "iwlmvm"], "bluetooth": ["btintel", "btusb"]}}'
+        # The built-in xHCI driver loads its firmware before pantavisor mounts
+        # the BSP firmware, so the initramfs must carry it or USB stays down.
+        PACKAGE_INSTALL:append:pn-pantavisor-initramfs = " tegra-firmware-tegra210-xusb"
+        PREFERRED_PROVIDER_virtual/kernel:pn-pantavisor-starter = "linux-tegra"
+        # Image base: the APP partition (NVIDIA's SD card layout) holds both
+        # /boot/boot.scr and pantavisor storage.
+        PV_IMAGE_BASE_LAYOUT = "uboot-gpt"
+        PV_IMAGE_BASE_PARTNAME = "APP"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    lxc-deprecated: |
+        PANTAVISOR_FEATURES:append = " lxc-deprecated"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+machine: jetson-nano-devkit
+defaults:
+    repos:
+        branch: kirkstone
+target:
+- pantavisor-starter
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:
