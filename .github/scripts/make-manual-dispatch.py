@@ -40,6 +40,11 @@ on:
         type: choice
         options:
 {options}
+      ref:
+        description: 'Tag, branch or commit to build (default: the commit this workflow runs from)'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   resolve:
@@ -67,6 +72,7 @@ jobs:
       machine_name: ${{{{ inputs.machine }}}}-{branch}
       build_target: ${{{{ needs.resolve.outputs.build_target }}}}
       output: ${{{{ needs.resolve.outputs.output }}}}
+      ref: ${{{{ inputs.ref }}}}
     secrets: inherit
 """
 
