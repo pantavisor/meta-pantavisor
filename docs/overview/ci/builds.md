@@ -27,7 +27,7 @@ Used by `release.yaml` (tag builds only).
 Used by `release.yaml` (tag builds, `publish: true`) and `manual-sdk-scarthgap.yaml` (`workflow_dispatch`, artifact only), for every machine in `sdk_machines` in `machines.json`.
 
 - Builds with `kas/machines/<machine>.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/sdk.yaml`: the board distro (musl, board `PANTAVISOR_FEATURES`) on a board-less `docker-*` machine, in `build/tmp-scarthgap-sdk`.
-- Runs `bitbake -c populate_sdk pv-sdk` (recipe: `recipes-pv/images/pv-sdk.bb`).
+- Runs `bitbake -c populate_sdk pv-sdk` (recipe: `dynamic-layers/qt6-layer/recipes-pv/images/pv-sdk.bb`, parsed only when meta-qt6 is in the build, as `kas/sdk.yaml` adds it).
 - Uploads the installer as the `pv-sdk-<arch>` Actions artifact, renamed `pv-sdk-<ref>-<arch>.sh`, where `<arch>` is the machine without its `docker-` prefix (`x86_64`, `armv8`, `armv6`).
 - Before uploading, runs `.github/scripts/sdk-smoke-test` on the installer: installs it, packs a container with `pv-mkpvrexport`, and builds pantavisor at `PANTAVISOR_SRCREV`.
 - With `publish: true`, uploads it to `s3://<BUCKET>/<tag>/sdk/` with `.github/scripts/upload-sdk.sh`, beside a `pv-sdk-<tag>-<arch>.json` entry. The `publish-sdks` job of `release.yaml` lists those entries in `releases.json` once the machine and SDK jobs are done.
