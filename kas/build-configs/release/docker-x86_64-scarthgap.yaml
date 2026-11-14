@@ -19,7 +19,7 @@ repos:
                 repo: meta-pantavisor
         url: https://github.com/yoctoproject/poky.git
         path: layers/poky
-        commit: 2a6862e7ed4cb2f030f6341458df61282bf8a5ca
+        commit: 6b7c1066f778db5a6b3e35400617b10342988fa8
     meta-pantavisor:
     meta-virtualization:
         commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819

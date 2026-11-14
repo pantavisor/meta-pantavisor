@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 114dda1a7639cac34e4e63c352e433d2d011a39c
+        commit: 44fb1b899a0405586f576a9ab21c7fe4bc5234c0
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -21,7 +21,7 @@ repos:
         url: https://git.toradex.com/meta-toradex-bsp-common.git
     meta-toradex-nxp:
         branch: scarthgap-7.x.y
-        commit: d1e2818c702c4ae78474a88698959639eed1615c
+        commit: bd3d7d5f6ec423162d52242a230556336367df30
         path: layers/meta-toradex-nxp
         url: https://git.toradex.com/meta-toradex-nxp.git
     meta-toradex-tezi:
@@ -50,7 +50,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 2a6862e7ed4cb2f030f6341458df61282bf8a5ca
+        commit: 6b7c1066f778db5a6b3e35400617b10342988fa8
     meta-pantavisor:
     meta-virtualization:
         commit: 6e8e75775f1c73c7d5e8ffa9b1eb6040f7d10819
