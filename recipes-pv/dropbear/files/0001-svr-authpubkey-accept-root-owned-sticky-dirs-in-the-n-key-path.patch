@@ -1,0 +1,67 @@
+From ce587bd4f335b94bc07ea4b76f05a597c8eac5b8 Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Mon, 16 Nov 2026 13:07:17 -0300
+Subject: [PATCH] svr-authpubkey: accept root-owned sticky dirs in the -n key
+ path
+
+With -n, Pantavisor keeps the authorized_keys file below /run, a tmpfs
+with mode 1777. checkpubkeyperms() walks every directory up to / and
+refuses any that is group- or other-writable, so every key is rejected:
+
+  /run must be owned by user or root, and not writable by group or others
+  Exit before auth from <...>: (user 'pvr-sdk', 0 fails)
+
+In -n mode, let root-owned directories with the sticky bit pass: other
+users can add entries there but cannot rename or replace root's. The
+keys file itself and every other directory are still checked, and
+without -n nothing changes.
+
+Upstream-Status: Pending
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ src/svr-authpubkey.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/src/svr-authpubkey.c b/src/svr-authpubkey.c
+index f4e0600..5991843 100644
+--- a/src/svr-authpubkey.c
++++ b/src/svr-authpubkey.c
+@@ -80,6 +80,7 @@ static int checkpubkey(const char* keyalgo, unsigned int keyalgolen,
+ 		const unsigned char* keyblob, unsigned int keybloblen,
+ 		struct PubKeyOptions **ret_options);
+ static int checkpubkeyperms(void);
++static int is_root_sticky_dir(const char *path);
+ static void send_msg_userauth_pk_ok(const char* sigalgo, unsigned int sigalgolen,
+ 		const unsigned char* keyblob, unsigned int keybloblen);
+ static int checkfileperm(char * filename);
+@@ -594,7 +595,11 @@ static int checkpubkeyperms() {
+ 			sep++;
+ 		}
+ 		*sep = '\0';
+-		if (checkfileperm(path) != DROPBEAR_SUCCESS) {
++		if (svr_opts.anyuser && is_root_sticky_dir(path)) {
++			/* -n keys live below /run (1777 tmpfs): others can add
++			 * entries there, but not rename or replace root's */
++			TRACE(("checkpubkeyperms: root-owned sticky dir %s", path))
++		} else if (checkfileperm(path) != DROPBEAR_SUCCESS) {
+ 			TRACE(("checkpubkeyperms: bad perm on %s", path))
+ 			ret = DROPBEAR_FAILURE;
+ 		}
+@@ -610,6 +615,13 @@ static int checkpubkeyperms() {
+ 	return ret;
+ }
+ 
++static int is_root_sticky_dir(const char *path) {
++	struct stat st;
++
++	return stat(path, &st) == 0 && S_ISDIR(st.st_mode)
++		&& st.st_uid == 0 && (st.st_mode & S_ISVTX);
++}
++
+ /* Checks that a file is owned by the user or root, and isn't writable by
+  * group or other */
+ /* returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
+-- 
+2.43.0
+

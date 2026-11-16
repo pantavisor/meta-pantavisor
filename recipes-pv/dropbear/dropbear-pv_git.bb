@@ -17,7 +17,10 @@ RCONFLICTS:${PN} = "openssh-sshd openssh"
 # conflict with each other
 RDEPENDS:${PN}-dev = ""
 
-SRC_URI = "git://github.com/pantacor/dropbear-pv;branch=pv/base-DROPBEAR_2026.94;protocol=https"
+SRC_URI = " \
+	git://github.com/pantacor/dropbear-pv;branch=pv/base-DROPBEAR_2026.94;protocol=https \
+	file://0001-svr-authpubkey-accept-root-owned-sticky-dirs-in-the-n-key-path.patch \
+"
 SRCREV = "711873f7eee6889de765c65888a5427df88fd45d"
 PE = "1"
 PV = "2026.94+git0+pv"
