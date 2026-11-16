@@ -313,10 +313,33 @@ curl -X POST -H 'Content-Type: application/json' \
      http://192.168.0.1/connections
 ```
 
-Both `ssid` and `password` are required — the portal rejects an empty password
-with `400`, so open networks cannot be joined this way. When the hotspot is up, the POST returns immediately and the join
+`ssid` is required (1 to 32 bytes). Since pvwificonnect v1.13.0 the password may
+be empty, for an open network, a hidden open network or one the device already
+has credentials for; a visible, secured network the device has no credentials
+for is still refused with `400` before the hotspot is touched. When the hotspot
+is up, the POST returns immediately and the join
 happens in the background, because answering after the AP has been torn down
 would never reach the client.
+
+## Forgetting saved networks
+
+Before handing a device to someone else, clear its Wi-Fi credentials from a
+device shell:
+
+```bash
+pvwificonnect-cli stored                 # list saved networks
+pvwificonnect-cli remove --ssid OldNet   # forget one network
+pvwificonnect-cli remove --all           # forget every saved network (asks first; --yes to skip)
+```
+
+`remove --all` (pvwificonnect v1.13.0 and later) never touches the device's own
+hotspot, prints what it forgot and what it kept, and exits non-zero if anything
+was kept. Forgetting the network the device is on disconnects it, and the setup
+hotspot comes back. With NetworkManager every saved profile is removed, in range
+or not. ConnMan can only forget networks it currently sees: saved networks out
+of range are reported as kept. A network preset (the `network` block of
+`config.json`, or `PVWIFICONNECT_NETWORK_SSID` in the OEM configuration) is
+joined again on the next boot until it is removed from that configuration.
 
 ## Building
 
