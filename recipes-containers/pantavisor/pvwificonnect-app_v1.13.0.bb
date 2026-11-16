@@ -12,8 +12,8 @@ SRC_URI = " \
     https://gitlab.com/api/v4/projects/pantacor%2Fpvwificonnect/packages/generic/pvwificonnect/${PV}/pvwificonnect.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
 "
 
-SRC_URI[src.sha256sum] = "2c08bc56e410520ac72cf61e850ce2a71eb267be80bb8b21a31e44a2e56066e8"
-SRC_URI[vendor.sha256sum] = "7acd8b23a87cf3e35c6d1f034c50e1081840e556017408d0a7d004349693eca3"
+SRC_URI[src.sha256sum] = "8accab4f8ded9b1e9bdb21ba477249615a0da133230c6aaf4fdcbfe4b0bb2570"
+SRC_URI[vendor.sha256sum] = "8a93e633ddd4b10310881fe549eeef4b517128dd9ebd4e1d1fa9a32df2a71846"
 
 GO_IMPORT = "gitlab.com/pantacor/pvwificonnect"
 export GO111MODULE = "on"
