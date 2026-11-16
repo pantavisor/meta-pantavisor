@@ -213,6 +213,17 @@ group, or root. Addresses are MACs (`AA:BB:CC:DD:EE:FF`), as printed by
 Claim material only exists after the device's first rendezvous with Pantacor
 Hub, so `claim-info` retries (default: every 5s for up to 60s) until it shows up.
 
+### Hidden networks
+
+A network that doesn't broadcast its SSID never shows up in `wifi-scan` or in
+the Hub's network picker, but `pvr wifi provision --ssid <name>` (and any
+Improv client that lets you type the SSID) still joins it: since pvwificonnect
+v1.12.0, an SSID that isn't in the scan results is tried as a hidden network,
+with NetworkManager or ConnMan. The network has to be in range, and the SSID
+must be 1 to 32 bytes. On the device, `pvwificonnect-cli connect --ssid <name>`
+and the wizard's `h` option do the same. The setup hotspot's captive portal
+only offers networks from the scan.
+
 ## Provisioning over the setup hotspot
 
 This is the path that needs nothing but a phone: the device puts up its own
