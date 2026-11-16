@@ -24,10 +24,10 @@ Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
  1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/util-linux/mdev.c b/util-linux/mdev.c
-index 68b0b0727..067db7ac0 100644
+index ee4c00dcc..45b61e04f 100644
 --- a/util-linux/mdev.c
 +++ b/util-linux/mdev.c
-@@ -726,7 +726,14 @@ static void make_device(char *device_name, char *path, int operation)
+@@ -731,7 +731,14 @@ static void make_device(char *device_name, char *path, int operation)
  		/* else: str_to_match = device_name */
  
  		if (rule->regex_compiled) {
@@ -43,7 +43,7 @@ index 68b0b0727..067db7ac0 100644
  			dbg3("regex_match for '%s':%d", str_to_match, regex_match);
  			//bb_error_msg("matches:");
  			//for (int i = 0; i < ARRAY_SIZE(off); i++) {
-@@ -855,7 +862,7 @@ static void make_device(char *device_name, char *path, int operation)
+@@ -861,7 +868,7 @@ static void make_device(char *device_name, char *path, int operation)
  
  		if (ENABLE_FEATURE_MDEV_EXEC && command) {
  			/* setenv will leak memory, use putenv/unsetenv/free */
