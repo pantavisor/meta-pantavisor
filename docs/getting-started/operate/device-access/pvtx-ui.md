@@ -160,3 +160,20 @@ curl -X POST -H "Content-Type: application/json" \
 ```
 
 The calls and their answers are the ones of `pvcontrol devmode` and `pvcontrol containers`, described in the Pantavisor reference `reference/pantavisor-commands.md`; the pvr-sdk container has the `mgmt` role that pv-ctrl asks for them.
+
+### Logs — `/cgi-bin/logs`
+
+The Logs page and `pvr devmode logs` read log files through `/cgi-bin/logs`, which is not part of the pass-through above. Its query takes:
+
+| Key | Meaning |
+|-----|---------|
+| `rev` | revision folder below `/pantavisor/logs`, with slashes as they are, for example `devmode/r/0`; `current` (the default) is the committed revision, not a running devmode revision |
+| `source` | log file below the revision, comma separated for several, for example `my-container/lxc/console.log`; `pantavisor/pantavisor.log` by default |
+| `tail=1`, `n=<lines>` | only the last `n` lines |
+| `follow=1` | keep the connection open for new lines (with `tail=1`) |
+
+It answers `text/plain`, `404` when no file matches and `400` when `rev` or `source` contains `..`. The last 50 lines of the console log of a container in the running devmode revision (its name is the `revision` of `GET /cgi-bin/pvctrl/devmode`):
+
+```bash
+curl "http://<device-ip>:12368/cgi-bin/logs?rev=devmode/r/0&source=my-container/lxc/console.log&tail=1&n=50"
+```
