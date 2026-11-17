@@ -35,10 +35,19 @@ Outputs are under `build/tmp-kirkstone/deploy/images/jetson-nano-devkit/`:
 
 - `pantavisor-starter-jetson-nano-devkit.sdcard.gz`: compressed whole-card
   image for a microSD card (16 GB or larger).
+- `pantavisor-starter-jetson-nano-devkit.sdcard.bmap`: block map of the
+  uncompressed `.sdcard`, so only the used blocks are written.
 - `pantavisor-starter-jetson-nano-devkit.tegraflash.tar.gz`: NVIDIA recovery
   flashing tools, QSPI firmware, partition layout, and the APP filesystem.
 - `pantavisor-bsp-jetson-nano-devkit.pvrexport.tgz`: Pantavisor BSP export.
 - `pv-jetson-cuda.pvrexport.tgz`: CUDA diagnostic container.
+
+Flash the card with the `.bmap` next to the image; pvflasher picks it up
+automatically:
+
+```bash
+sudo pvflasher copy pantavisor-starter-jetson-nano-devkit.sdcard.gz /dev/sdX
+```
 
 The tegraflash archive supplies `doflash.sh` for recovery flashing and
 `dosdcard.sh` for recreating a raw `.sdcard` image. A rootfs `.ext4` file is
