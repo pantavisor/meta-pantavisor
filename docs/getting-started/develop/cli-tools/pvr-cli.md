@@ -20,7 +20,7 @@ The fastest and easiest way to install the Pantavisor CLI (PVR) is via the offic
 
 ```bash
 # Install Pantavisor CLI (PVR)
-curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh | bash
+curl -sL https://raw.githubusercontent.com/pantavisor/pvr/main/install.sh | bash
 ```
 
 ### Quick Install (Windows)
@@ -28,7 +28,7 @@ curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh | bash
 For Windows users using PowerShell:
 
 ```powershell
-Invoke-WebRequest -Uri https://gitlab.com/pantacor/pvr/-/raw/master/install.ps1 -OutFile install.ps1; .\install.ps1
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/pantavisor/pvr/main/install.ps1 -OutFile install.ps1; .\install.ps1
 ```
 
 ### Advanced Install Script Usage
@@ -37,13 +37,13 @@ You can customize the installation using environment variables:
 
 ```bash
 # Install a specific version
-PVR_VERSION=046 bash <(curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh)
+PVR_VERSION=046 bash <(curl -sL https://raw.githubusercontent.com/pantavisor/pvr/main/install.sh)
 
 # Install from the develop channel (latest unstable features)
-PVR_CHANNEL=develop bash <(curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh)
+PVR_CHANNEL=develop bash <(curl -sL https://raw.githubusercontent.com/pantavisor/pvr/main/install.sh)
 
 # Install to a custom directory
-PVR_INSTALL_DIR=/usr/local/bin bash <(curl -sL https://gitlab.com/pantacor/pvr/-/raw/master/install.sh)
+PVR_INSTALL_DIR=/usr/local/bin bash <(curl -sL https://raw.githubusercontent.com/pantavisor/pvr/main/install.sh)
 ```
 
 Windows PowerShell equivalents:
@@ -60,14 +60,14 @@ $env:PVR_INSTALL_DIR="C:\tools\pvr"; .\install.ps1
 
 ### Pre-built Binaries
 
-Pre-built binaries are also available for various architectures on the [GitLab package registry](https://gitlab.com/pantacor/pvr/-/packages). You can download the binary suitable for your operating system and architecture, extract it, and place it in your system's PATH.
+Pre-built binaries are also available for various architectures on the [GitHub releases page](https://github.com/pantavisor/pvr/releases). You can download the binary suitable for your operating system and architecture, extract it, and place it in your system's PATH.
 
 ### Build from Source
 
 If you prefer to build `pvr` from source, ensure you have Go 1.21+ installed:
 
 ```bash
-git clone https://gitlab.com/pantacor/pvr.git
+git clone https://github.com/pantavisor/pvr.git
 cd pvr
 go build -o ~/bin/pvr ./cmd/pvr
 ```

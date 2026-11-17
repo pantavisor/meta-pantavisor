@@ -40,12 +40,12 @@ jobs:
           path: pantavisor
           sparse-checkout: docs
 
-      - name: Checkout pvr (master)
+      - name: Checkout pvr (main)
         run: |
-          git clone --depth 1 --branch master --no-checkout \
-            https://gitlab.com/pantacor/pvr.git pvr
+          git clone --depth 1 --branch main --no-checkout \
+            https://github.com/pantavisor/pvr.git pvr
           git -C pvr sparse-checkout set docs
-          git -C pvr checkout master
+          git -C pvr checkout main
 
       - name: Assemble docs staging
         run: |
