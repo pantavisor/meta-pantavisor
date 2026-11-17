@@ -192,7 +192,7 @@ Provisioning itself does not require a Hub login; claiming does.
 
 ### From the command line
 
-The Improv BLE client is built into [pvr](https://gitlab.com/pantacor/pvr) as
+The Improv BLE client is built into [pvr](https://github.com/pantavisor/pvr) as
 `pvr wifi` — one tool for both provisioning and everything else you do with a
 device:
 

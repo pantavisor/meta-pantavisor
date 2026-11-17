@@ -6,12 +6,11 @@ inherit pvgo_mod deploy pantacor-component-docs
 
 
 # pvr's release src.tar.gz only ever contains go.mod/go.sum/Makefile/*.go
-# (see pvr's .gitlab-ci.yml package-deploy job), so docs/ is fetched
-# separately via GitLab's repository archive API pinned to the same tag (see
-# DOCS_SRC_URI below) and relocated into ${S}/docs by relocate_source,
+# so docs/ is fetched separately from GitHub's tag archive pinned to the same
+# tag (see DOCS_SRC_URI below) and relocated into ${S}/docs by relocate_source,
 # matching pantacor-component-docs' default DOCS_SRC_DIR.
 DOCS_COMPONENT_NAME = "pvr"
-DOCS_SRC_URI = "https://gitlab.com/api/v4/projects/pantacor%2Fpvr/repository/archive.tar.gz?sha=${PV}&path=docs;name=docs;subdir=docs-src;downloadfilename=pvr.${PV}.docs.tar.gz"
+DOCS_SRC_URI = "https://github.com/pantavisor/pvr/archive/refs/tags/${PV}.tar.gz;name=docs;subdir=docs-src;downloadfilename=pvr.${PV}.docs.tar.gz"
 
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -19,15 +18,15 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 S = "${WORKDIR}"
 
 SRC_URI = " \
-        https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
-        https://gitlab.com/api/v4/projects/pantacor%2Fpvr/packages/generic/pvr/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
+        https://github.com/pantavisor/pvr/releases/download/${PV}/pvr.${PV}.src.tar.gz;name=pvr; \
+        https://github.com/pantavisor/pvr/releases/download/${PV}/pvr.${PV}.vendor.tar.gz;name=vendor;subdir=src/${GO_IMPORT} \
 "
 
-SRC_URI[pvr.sha256sum] = "df91c329acf90980a557711f9e62274261fa601c101b6212ce9714dc00052342"
-SRC_URI[vendor.sha256sum] = "6e0991fc95a0905fbfa43bb1ac5578eff6bc8fef6db133b63e684658c4147b7c"
-SRC_URI[docs.sha256sum] = "7fc9ac2b3dac19f61bd7bd42709cb2905a4086d77e5b7a66d549bf76a7c080c2"
+SRC_URI[pvr.sha256sum] = "82bf42251f074a50ea4ec18d9255dcc97900d58cfcd1e1b25c4c5f74eb34c379"
+SRC_URI[vendor.sha256sum] = "68d926ff823cdacae5a23f2753560e7c18636a6a62f753db54da79d9201ab809"
+SRC_URI[docs.sha256sum] = "fe9c22d46fdf59982bdd18d8e43bbb09fe21813dfa21a6809e2a9a3fd731b316"
 
-GO_IMPORT = "gitlab.com/pantacor/pvr"
+GO_IMPORT = "github.com/pantavisor/pvr"
 export GO111MODULE="on"
 
 GOBUILDFLAGS += "-mod=vendor"
@@ -36,7 +35,7 @@ GOBUILDFLAGS += "-mod=vendor"
 # that and only upstream's Makefile injects it. Revision is deliberately left
 # at NA: there is no git checkout here, and the version printer omits it when
 # it is unset rather than printing a bogus one.
-GO_EXTRA_LDFLAGS += "-X gitlab.com/pantacor/pvr/cmd.Version=${PV}"
+GO_EXTRA_LDFLAGS += "-X github.com/pantavisor/pvr/cmd.Version=${PV}"
 GO_LINKSHARED = ""
 GO_LINKMODE:class-nativesdk = ""
 GO_LINKMODE:class-native = ""
@@ -60,7 +59,7 @@ do_compile:append() {
         export TMPDIR="${GOTMPDIR}"
         cd ${B}/src/${GO_IMPORT}
         CGO_ENABLED=0 ${GO} build -mod=vendor -trimpath \
-                -ldflags "-X gitlab.com/pantacor/pvr/cmd.Version=${PV}" \
+                -ldflags "-X github.com/pantavisor/pvr/cmd.Version=${PV}" \
                 -o ${B}/pvr-static .
 }
 
