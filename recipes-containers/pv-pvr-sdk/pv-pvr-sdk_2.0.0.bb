@@ -37,6 +37,7 @@ SRC_URI += "git://gitlab.com/pantacor/pv-platforms/pvr-sdk;protocol=https;branch
     file://pv-pvr-sdk-config \
     file://pv-pvr-sdk-start.sh \
     file://pv-pvr-sdk-prompt.sh \
+    file://pvctrl \
     file://0001-pvr-auto-follow-fix-shell-syntax-errors.patch;apply=no \
 "
 
@@ -77,6 +78,9 @@ install_sdk() {
     install -m 0755 ${WORKDIR}/pv-pvr-sdk-start.sh ${IMAGE_ROOTFS}${bindir}/pv-pvr-sdk-start
     install -d ${IMAGE_ROOTFS}${sysconfdir}/profile.d
     install -m 0644 ${WORKDIR}/pv-pvr-sdk-prompt.sh ${IMAGE_ROOTFS}${sysconfdir}/profile.d/prompt.sh
+
+    # Forwards devmode calls from pvr to pv-ctrl; see docs/getting-started/operate/device-access/pvtx-ui.md.
+    install -m 0755 ${WORKDIR}/pvctrl ${IMAGE_ROOTFS}/www/cgi-bin/pvctrl
 
     # The pvtx CGI scripts call the static build as `pvtx`.
     ln -sf pvtx-static ${IMAGE_ROOTFS}${bindir}/pvtx
