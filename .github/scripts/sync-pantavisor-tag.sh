@@ -7,8 +7,21 @@
 #   TAG_NAME  meta-pantavisor tag name (e.g. 030-rc1)
 #   GH_TOKEN  PAT with `repo` scope on github.com/pantavisor/pantavisor
 #
-# Idempotent: re-running on a tag that already points at the matching SHA is a
-# no-op. Aborts (non-zero) if the upstream tag exists at a different SHA.
+# RC tags (0NN-rcN) point straight at SRCREV.
+#
+# Stable tags (0NN) point at a finalize commit instead: pantavisor's
+# changelog-gate requires the tagged commit to carry CHANGELOG/CHANGELOG-0NN.md,
+# so the script clones upstream at SRCREV, runs
+# `.github/scripts/make-changelog.sh --finalize 0NN` (which commits only that
+# file), and pushes the resulting commit as the tag. The commit is a direct
+# child of SRCREV that adds one file, so the built source is unchanged. Nothing
+# is pushed to a branch, so branch protection on master is not involved. Run it
+# after every RC's tag-changelogs workflow has finished, so the S3 accumulator
+# holds all RC sections.
+#
+# Idempotent: re-running on a tag that already points at the matching SHA (for a
+# stable tag: SRCREV or its finalize child) is a no-op. Aborts (non-zero) if the
+# upstream tag exists at a different SHA.
 
 set -euo pipefail
 
@@ -34,6 +47,11 @@ SRCREV=$(grep -oP 'SRCREV = "\K[^"]+' "$RECIPE" | head -n 1)
 if [ -z "$SRCREV" ]; then
     echo "ERROR: could not parse SRCREV from $RECIPE" >&2
     exit 1
+fi
+
+STABLE=0
+if [[ "$TAG_NAME" =~ ^0[0-9]+$ ]]; then
+    STABLE=1
 fi
 
 echo "Tag:    $TAG_NAME"
@@ -62,8 +80,20 @@ fi
 
 UPSTREAM_TAG_URL="https://github.com/$UPSTREAM/releases/tag/$TAG_NAME"
 
+# A stable tag is in sync when it is SRCREV itself or the finalize commit
+# directly on top of it.
+IN_SYNC=0
 if [ -n "$EXISTING_SHA" ]; then
     if [ "$EXISTING_SHA" = "$SRCREV" ]; then
+        IN_SYNC=1
+    elif [ "$STABLE" -eq 1 ]; then
+        PARENT_SHA=$(gh api "repos/$UPSTREAM/commits/$EXISTING_SHA" --jq '.parents[0].sha // empty' 2>/dev/null || true)
+        [ "$PARENT_SHA" = "$SRCREV" ] && IN_SYNC=1
+    fi
+fi
+
+if [ -n "$EXISTING_SHA" ]; then
+    if [ "$IN_SYNC" -eq 1 ]; then
         echo "  Tag already in sync at $SRCREV. Nothing to do."
         RESULT="already in sync"
     else
@@ -86,10 +116,28 @@ if [ -n "$EXISTING_SHA" ]; then
     fi
 else
     echo "  Tag not present. Creating..."
-    gh api -X POST "repos/$UPSTREAM/git/refs" \
-        -f "ref=refs/tags/$TAG_NAME" \
-        -f "sha=$SRCREV" \
-        --silent
+    if [ "$STABLE" -eq 1 ]; then
+        WORKDIR=$(mktemp -d)
+        trap 'rm -rf "$WORKDIR"' EXIT
+        git -c credential.helper='!gh auth git-credential' \
+            clone --quiet "https://github.com/$UPSTREAM.git" "$WORKDIR/pantavisor"
+        cd "$WORKDIR/pantavisor"
+        git checkout --quiet --detach "$SRCREV"
+        export GIT_AUTHOR_NAME="github-actions[bot]" GIT_COMMITTER_NAME="github-actions[bot]"
+        export GIT_AUTHOR_EMAIL="github-actions[bot]@users.noreply.github.com"
+        export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
+        ./.github/scripts/make-changelog.sh --finalize "$TAG_NAME"
+        TAG_SHA=$(git rev-parse HEAD)
+        echo "  Finalize commit: $TAG_SHA (on top of $SRCREV)"
+        git -c credential.helper='!gh auth git-credential' \
+            push --quiet origin "$TAG_SHA:refs/tags/$TAG_NAME"
+        cd - >/dev/null
+    else
+        gh api -X POST "repos/$UPSTREAM/git/refs" \
+            -f "ref=refs/tags/$TAG_NAME" \
+            -f "sha=$SRCREV" \
+            --silent
+    fi
     echo "  Created."
     RESULT="created"
 fi
