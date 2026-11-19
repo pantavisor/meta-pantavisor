@@ -14,7 +14,7 @@ Where those sections live depends on the tag:
   `master`.
 - **The final stable** (`0NN`) is committed into
   [`CHANGELOG/CHANGELOG-<MAJOR>.md`](https://github.com/pantavisor/meta-pantavisor/tree/master/CHANGELOG)
-  by a maintainer running `make-changelog.sh --finalize` just before tagging,
+  by a maintainer running `make-changelog.sh --finalize` just before tagging (the pantavisor side is automated by [tag sync](tag-sync.md#stable-tags)),
   then refreshed on `master` by `tag-changelogs.yaml` once the release build
   has published its artifacts — so the version on `master` carries real
   download hashes rather than the tagged commit's predicted URLs. A
