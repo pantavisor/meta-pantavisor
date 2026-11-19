@@ -18,6 +18,7 @@ SRC_URI = " \
 	file://trim.cfg \
 	file://pantavisor.cfg \
 	file://debug.patch \
+	file://0002-mdev-don-t-match-name-rules-for-modalias-only-devices.patch \
 "
 SRC_URI += " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'bootchartd', 'file://0001-bootchartd_on_smm.patch', '', d)}"
 SRC_URI += " ${@bb.utils.contains('PANTAVISOR_FEATURES', 'bootchartd', 'file://enable_bootchartd.cfg', '', d)}"

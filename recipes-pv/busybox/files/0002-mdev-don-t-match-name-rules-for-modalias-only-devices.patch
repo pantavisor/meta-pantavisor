@@ -1,0 +1,54 @@
+From e1d512a23309571370f433c413793e8f31c475fd Mon Sep 17 00:00:00 2001
+From: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+Date: Mon, 16 Nov 2026 16:45:26 -0300
+Subject: [PATCH] mdev: don't match name rules for modalias-only devices
+
+The MODALIAS scan of "mdev -s" calls make_device() with OP_modalias for
+every PCI device, and a device without DEVNAME in its uevent keeps a
+NULL device name. A rule that matches on the device name then passes
+NULL to regexec(), and mdev segfaults as soon as mdev.conf has such a
+rule, for example "null 0:0 666":
+
+  Segmentation fault      mdev -s
+
+Skip name rules when there is no name. $envvar rules, such as
+$MODALIAS=..., and the final match-all rule still apply, so the scan
+still loads drivers. For the same reason, set MDEV to an empty string
+instead of passing NULL to printf.
+
+Upstream-Status: Pending
+
+Signed-off-by: Fernando Luiz Cola <fernando.luiz@pantacor.com>
+---
+ util-linux/mdev.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/util-linux/mdev.c b/util-linux/mdev.c
+index ee4c00dcc..45b61e04f 100644
+--- a/util-linux/mdev.c
++++ b/util-linux/mdev.c
+@@ -731,7 +731,14 @@ static void make_device(char *device_name, char *path, int operation)
+ 		/* else: str_to_match = device_name */
+ 
+ 		if (rule->regex_compiled) {
+-			int regex_match = regexec(&rule->match, str_to_match, ARRAY_SIZE(off), off, 0);
++			int regex_match;
++
++			/* OP_modalias for a device without DEVNAME has no
++			 * name to match: skip name rules, but not $envvar
++			 * rules or the final match-all rule */
++			if (!str_to_match)
++				continue;
++			regex_match = regexec(&rule->match, str_to_match, ARRAY_SIZE(off), off, 0);
+ 			dbg3("regex_match for '%s':%d", str_to_match, regex_match);
+ 			//bb_error_msg("matches:");
+ 			//for (int i = 0; i < ARRAY_SIZE(off); i++) {
+@@ -861,7 +868,7 @@ static void make_device(char *device_name, char *path, int operation)
+ 
+ 		if (ENABLE_FEATURE_MDEV_EXEC && command) {
+ 			/* setenv will leak memory, use putenv/unsetenv/free */
+-			char *s = xasprintf("%s=%s", "MDEV", node_name);
++			char *s = xasprintf("%s=%s", "MDEV", node_name ? node_name : "");
+ 			putenv(s);
+ 			dbg1("running: %s", command);
+ 			if (system(command) == -1)
