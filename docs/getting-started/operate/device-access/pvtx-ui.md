@@ -103,3 +103,77 @@ The **Logs** page streams Pantavisor runtime and container logs directly in the 
 - **Toolbar** (top-right of the log pane) — filter, search, pause/resume the live stream, download, copy, and full-screen.
 
 This view mirrors the on-device log files under `/pantavisor/logs` (configurable via the `log.dir` config key).
+
+---
+
+## pv-ctrl pass-through — `/cgi-bin/pvctrl`
+
+The same web server also forwards a few calls to pv-ctrl, Pantavisor's control socket. `pvr devmode` uses it to work on a device without SSH. A request to `/cgi-bin/pvctrl/<pv-ctrl path>` goes to pv-ctrl on `/pantavisor/pv-ctrl` with its method, query and body unchanged, and the status, `Content-Type` and body of the answer come back unchanged. Bodies are streamed, so file contents of any size and any bytes pass through.
+
+It needs:
+
+- the debug shell on, because the web server only starts then (`PV_DEBUG_SHELL`, on by default);
+- devmode allowed with `PV_DEVMODE_ALLOWED=true` in `pantavisor.config` or the OEM config, and a devmode revision running for `exec` and the file calls. Without that, pv-ctrl answers `403` or `409` and the CGI passes the answer on.
+
+This is not authenticated, like the pvtx calls above. The pvr-sdk container ships `/etc/pvr-sdk/config.json` with `"listen": "0.0.0.0"`, so anyone on the device's network can reach it while the debug shell is on:
+
+```bash
+curl http://<device-ip>:12368/cgi-bin/pvctrl/devmode
+```
+
+To keep it on the device, set `pvrsdk_httpd_listen=127.0.0.1` on the kernel command line (or `httpd.listen` in that file) and open a tunnel from your workstation:
+
+```bash
+ssh -L 12368:127.0.0.1:12368 root@<device-ip>
+```
+
+Only these calls are forwarded. Anything else answers `404` with `{"Error":"not forwarded"}`, and so does a path with a `..` segment.
+
+| Method | Path | What it does |
+|--------|------|--------------|
+| `GET`, `POST` | `/devmode` | devmode state; start a devmode revision |
+| `GET`, `PUT`, `POST`, `DELETE` | `/devmode/<anything below>` | files and inlay of a container, for example `/devmode/files/<container>/<path>` and `/devmode/containers/<container>` |
+| `GET` | `/containers` | state of each container |
+| `PUT` | `/containers/<name>` | start, stop or restart a container (`?reboot=1` as for `pvcontrol devmode apply --reboot`) |
+| `POST` | `/containers/<name>/exec` | run a command in a running container |
+| `GET` | `/config2` | the configuration, including `PV_DEVMODE_ALLOWED` |
+| `POST` | `/commands` | only with `"op":"LOCAL_RUN"` or `"op":"REBOOT_DEVICE"` in the body |
+
+Through the tunnel, state of devmode:
+
+```bash
+curl http://<device-ip>:12368/cgi-bin/pvctrl/devmode
+```
+
+Put a file into the devmode files of a container (`-T` sends the file as it is):
+
+```bash
+curl -X PUT -T ./my.conf "http://<device-ip>:12368/cgi-bin/pvctrl/devmode/files/my-container/etc/my.conf?mode=0644&uid=0&gid=0"
+```
+
+Run a command in a container (the answer carries `stdout_b64`, `stderr_b64` and `exit_code`):
+
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  --data '{"argv":["cat","/etc/os-release"],"timeout_s":10}' \
+  http://<device-ip>:12368/cgi-bin/pvctrl/containers/my-container/exec
+```
+
+The calls and their answers are the ones of `pvcontrol devmode` and `pvcontrol containers`, described in the Pantavisor reference `reference/pantavisor-commands.md`; the pvr-sdk container has the `mgmt` role that pv-ctrl asks for them.
+
+### Logs — `/cgi-bin/logs`
+
+The Logs page and `pvr devmode logs` read log files through `/cgi-bin/logs`, which is not part of the pass-through above. Its query takes:
+
+| Key | Meaning |
+|-----|---------|
+| `rev` | revision folder below `/pantavisor/logs`, with slashes as they are, for example `devmode/r/0`; `current` (the default) is the committed revision, not a running devmode revision |
+| `source` | log file below the revision, comma separated for several, for example `my-container/lxc/console.log`; `pantavisor/pantavisor.log` by default |
+| `tail=1`, `n=<lines>` | only the last `n` lines |
+| `follow=1` | keep the connection open for new lines (with `tail=1`) |
+
+It answers `text/plain`, `404` when no file matches and `400` when `rev` or `source` contains `..`. The last 50 lines of the console log of a container in the running devmode revision (its name is the `revision` of `GET /cgi-bin/pvctrl/devmode`):
+
+```bash
+curl "http://<device-ip>:12368/cgi-bin/logs?rev=devmode/r/0&source=my-container/lxc/console.log&tail=1&n=50"
+```
