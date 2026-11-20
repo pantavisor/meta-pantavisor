@@ -58,8 +58,13 @@ compile_depends = ' \
 	virtual/kernel:do_deploy \
 	virtual/kernel:do_packagedata \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'rpi-boot-image:do_image_complete', '', d)} \
+	${@'pv-uki:do_deploy' if d.getVar('PV_BSP_UKI') else ''} \
 	'
 do_compile[depends] += "${compile_depends}"
+
+# Deployed unified kernel image that a UKI-booted machine (sdboot) ships in
+# place of the kernel and initrd: it already bundles both.
+PV_BSP_UKI ??= ""
 
 compile_mcdepends = '\
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d)} \
@@ -336,6 +341,12 @@ fakeroot do_compile(){
 
        basearts="\"firmware\": \"firmware.squashfs\",${modules_arts}
     \"rpiab\": \"pantavisor-rpi.img.gz\","
+
+    elif [ -n "${PV_BSP_UKI}" ]; then
+       cp -fL ${DEPLOY_DIR_IMAGE}/${PV_BSP_UKI} ${PVBSPSTATE}/bsp/pantavisor.efi
+       basearts='"uki": "pantavisor.efi",
+    "firmware": "firmware.squashfs",
+    "modules": "modules.squashfs",'
 
     elif echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
