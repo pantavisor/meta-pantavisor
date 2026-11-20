@@ -51,6 +51,10 @@ local_conf_header:
         # a Hub request 30 min instead of 60 s, so a large object transfer is not
         # cut short.
         PANTAHUB_CONFIG[PH_LIBEVENT_HTTP_TIMEOUT] = "1800"
+    pv-group-timeout: |
+        # Containers start slowly from the i96's SD card: give each group 300 s
+        # to reach its status goal instead of the skel's 30 s.
+        PV_GROUP_TIMEOUT = "300"
     pv-flash-readme: |
         PV_FLASH_README = "docs/flashing/sdcard.md"
     pvgo: |
