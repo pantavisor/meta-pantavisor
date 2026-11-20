@@ -5,6 +5,10 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 inherit pvgo_mod
 
+PVGO_PIE = "0"
+CGO_ENABLED = "0"
+GO_LINUXLOADER = ""
+
 S = "${WORKDIR}"
 
 SRC_URI = " \
