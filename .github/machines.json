@@ -136,6 +136,13 @@
 			"display_name": "Orange Pi i96",
 			"description": "RDA8810PL quad-core Cortex-A5 96Boards IE board. BSP lives in meta-orangepi-i96; has no Bluetooth and no Wi-Fi AP mode. Boots Pantavisor from an SD card.",
 			"workflows": ["manual", "tag"]
+		},
+		{
+			"config": "kas/machines/nvidia-dgx-spark.yaml:kas/scarthgap.yaml:kas/bsp-base.yaml:kas/build-configs/build-base-starter.yaml",
+			"name": "nvidia-dgx-spark",
+			"display_name": "NVIDIA DGX Spark",
+			"description": "NVIDIA GB10 Grace Blackwell desktop (10x Cortex-X925 + 10x Cortex-A725, 128 GB unified LPDDR5X). UEFI/ACPI: boots Pantavisor from NVMe through systemd-boot and a unified kernel image, on NVIDIA's linux-nvidia kernel.",
+			"workflows": ["manual"]
 		}
 	]
 }
