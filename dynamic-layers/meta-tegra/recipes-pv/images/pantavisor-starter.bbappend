@@ -11,9 +11,13 @@ do_rootfs_boot_scr:append:jetson-nano-devkit() {
 
 # Build a whole-card image as well as the recovery bundle. NVIDIA's helper
 # can sign and assemble an image file without an attached board or root.
+# The block map lets pvflasher/bmaptool write only the used blocks.
+do_image_tegraflash[depends] += "bmap-tools-native:do_populate_sysroot"
 tegraflash_custom_post:append:jetson-nano-devkit() {
     ./dosdcard.sh ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard
+    bmaptool create ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard -o ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard.bmap
     gzip -n -c ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard > ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard.gz
     rm ${IMGDEPLOYDIR}/${IMAGE_NAME}.sdcard
     ln -sf ${IMAGE_NAME}.sdcard.gz ${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.sdcard.gz
+    ln -sf ${IMAGE_NAME}.sdcard.bmap ${IMGDEPLOYDIR}/${IMAGE_LINK_NAME}.sdcard.bmap
 }
