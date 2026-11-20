@@ -18,6 +18,10 @@ SRC_URI:append:mx7-generic-bsp    = " file://pv-imx-dcp/device-disks.json"
 # imx8m SoCs have CAAM crypto engine
 SRC_URI:append:mx8m-generic-bsp = " file://pv-imx-caam/device-disks.json"
 
+# Seconds every group in device.json gets to reach its status goal. Empty keeps
+# the 30 s in the skel; a slow board raises it from its machine config.
+PV_GROUP_TIMEOUT ?= ""
+
 DEVICE_DISKS_FRAGMENT = ""
 DEVICE_DISKS_FRAGMENT:mx6ul-generic-bsp  = "${WORKDIR}/pv-imx-dcp/device-disks.json"
 DEVICE_DISKS_FRAGMENT:mx6ull-generic-bsp = "${WORKDIR}/pv-imx-dcp/device-disks.json"
@@ -32,6 +36,12 @@ do_compile:append() {
             "${DEVICE_DISKS_FRAGMENT}" \
             device.json.new
         mv device.json.new device.json
+        pvr add device.json
+        pvr commit
+    fi
+    if [ -n "${PV_GROUP_TIMEOUT}" ]; then
+        cd ${B}/pvrrepo
+        ${PYTHON} ${THISDIR}/set-group-timeout.py device.json "${PV_GROUP_TIMEOUT}"
         pvr add device.json
         pvr commit
     fi
