@@ -1,0 +1,13 @@
+# short-description: Pantavisor UEFI disk booted by systemd-boot
+# long-description: GPT disk for UEFI machines. The ESP carries systemd-boot,
+# its loader.conf and the factory UKI (all from IMAGE_BOOT_FILES); the root
+# partition carries the pvr state (/trails/0) and is the one autogrow resizes,
+# so it stays last.
+#
+#   1 (ESP)  - vfat - EFI/BOOT/BOOTAA64.EFI, loader/loader.conf, EFI/Linux/pv-0.efi
+#   2 (root) - ext4 - /trails, /storage contents (PV_STORAGE_DEVICE=LABEL=root)
+
+part --source bootimg-partition --fstype=vfat --label ESP --part-name ESP --part-type C12A7328-F81F-11D2-BA4B-00A0C93EC93B --fixed-size 512M --align 4096
+part / --source rootfs --fstype=ext4 --label root --part-name root --align 4096
+
+bootloader --ptable gpt
