@@ -6,5 +6,9 @@ header:
 machine: orangepi-i96
 
 local_conf_header:
+  pv-group-timeout: |
+        # Containers start slowly from the i96's SD card: give each group 300 s
+        # to reach its status goal instead of the skel's 30 s.
+        PV_GROUP_TIMEOUT = "300"
   pv-flash-readme: |
         PV_FLASH_README = "docs/flashing/sdcard.md"
