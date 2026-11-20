@@ -15,6 +15,7 @@ Board-specific guides supplement the generic [install methods](../). Each page c
 3. [Variscite iMX8MN VAR-SOM](imx8mn-var-som.md) — UUU flash, boot-mode DIP switches, carrier board notes
 4. [Variscite iMX8MM VAR-DART](imx8mm-var-dart.md) — UUU flash, boot-mode DIP switches, carrier board notes
 5. [Orange Pi i96](orangepi-i96.md) — SD card flash, 921600 baud console, hybrid bootloader assembly, WiFi notes and known limitations
+6. [NVIDIA DGX Spark](nvidia-dgx-spark.md) — UEFI + systemd-boot + UKI on NVMe, Secure Boot off, bring-up status
 
 ## Don't See Your Board?
 
