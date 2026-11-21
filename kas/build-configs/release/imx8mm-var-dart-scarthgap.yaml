@@ -18,7 +18,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-bsp-imx.git
         path: layers/meta-variscite-bsp
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: 1811467813623ff34b859c0ffec5fa1dd6e9660a
+        commit: 3fd359452ff69e0f38bbd7d51a4ccfb4e896b1e0
     meta-variscite-hab:
         url: https://github.com/varigit/meta-variscite-hab.git
         path: layers/meta-variscite-hab
@@ -28,7 +28,7 @@ repos:
         url: https://github.com/varigit/meta-variscite-sdk.git
         path: layers/meta-variscite-sdk
         branch: scarthgap_6.6.52-2.2.2_var01
-        commit: e80e89ae0359c3972f600ed0c3e18c819b841c98
+        commit: f566d53877db0b6eb5973630c63d794fed62d2cb
     meta-variscite-bsp-common:
         url: https://github.com/varigit/meta-variscite-bsp-common.git
         path: layers/meta-variscite-bsp-common
@@ -66,7 +66,7 @@ repos:
     meta-swupdate:
         url: https://github.com/sbabic/meta-swupdate.git
         path: layers/meta-swupdate
-        commit: dbbfdc76dc93e4538e6f8ef87ea76aeb2120b5b1
+        commit: 1cbdea62ae377eff7dc6246c421f1758bb5612b7
     meta-security:
         url: https://git.yoctoproject.org/meta-security
         path: layers/meta-security
