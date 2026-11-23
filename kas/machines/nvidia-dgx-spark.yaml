@@ -15,3 +15,6 @@ local_conf_header:
     # The GSP firmware comes from NVIDIA's proprietary driver package; GB10's
     # GPU does not start without it.
     LICENSE_FLAGS_ACCEPTED += "nvidia-driver"
+    # NVIDIA's CUDA userspace (libcuda, NVML) is built for glibc only, and the
+    # GPU containers are built in this configuration.
+    TCLIBC = "glibc"
