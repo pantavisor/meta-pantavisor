@@ -84,14 +84,62 @@ boot the GPU with, both from driver release 580.178.04
 ```
 
 The CUDA userspace (`libcuda`, `libnvidia-ml`, `nvidia-smi`) is not in the
-BSP. It is glibc-only, so it belongs in the GPU container, for example an
-Ubuntu 24.04 arm64 image with NVIDIA's `580.178.04` packages pinned. It must be
+BSP. It is glibc-only, so it goes in the GPU container. It must be
 the exact release of the kernel modules, so update the BSP and the GPU container
 in the same revision. NGC CUDA images leave `libcuda` out, expecting
 nvidia-container-toolkit to inject it; there is no such injection here.
 
 `nvidia-peermem` is built but is an empty stub without MLNX OFED, so there is no
 alias for it; GPUDirect RDMA with the ConnectX-7 uses DMA-BUF instead.
+
+### The `pv-nvidia-cuda` container
+
+`pv-nvidia-cuda` carries that userspace. It is built from the same driver
+`.run` as the GSP firmware, so its release always matches the BSP's
+(`recipes-containers/nvidia/`). Because the userspace needs glibc, the DGX Spark
+configuration builds with glibc (`TCLIBC = "glibc"` in
+`kas/machines/nvidia-dgx-spark.yaml`) instead of the musl most Pantavisor
+machines use. It is not in the image by default. To add it to
+the initial trail, set this in `local.conf` or a kas `local_conf_header`:
+
+```bitbake
+PVROOT_CONTAINERS_CORE:append = " pv-nvidia-cuda"
+```
+
+Or build it alone and install the export with `pvr`:
+
+```bash
+./kas-container build kas/build-configs/release/nvidia-dgx-spark-scarthgap.yaml --target pv-nvidia-cuda
+# -> build/tmp-scarthgap/deploy/images/dgx-spark/pv-nvidia-cuda.pvrexport.tgz
+```
+
+At start it:
+
+1. Prints `/etc/dgx-os-release`, the DGX OS release it was built against.
+2. Runs `nvidia-dev-setup`. This creates `/dev/nvidiactl`, `/dev/nvidia<N>`
+   and `/dev/nvidia-uvm*`; the modules register char majors but no nodes. It
+   stops if the loaded module is from a different driver release than the
+   container.
+3. Runs `nvidia-smi`, then `cuda-probe`, which initialises the CUDA driver API
+   and creates a context on each GPU.
+
+Read the result in the container's log, from the `pvr-sdk` container:
+
+```bash
+cat /storage/logs/current/pv-nvidia-cuda/lxc/console.log
+```
+
+```
+CUDA driver API 13.0, 1 device(s)
+  0: NVIDIA GB10, sm_121, ... MiB
+pv-nvidia-cuda: GPU ready
+```
+
+A GPU application container needs the same pieces: `"PV_DRIVERS_REQUIRED":
+["nvidia"]` in its args, `nvidia-driver-userspace` (plus
+`nvidia-driver-userspace-smi` for `nvidia-smi`) and `pv-nvidia-utils` in
+`IMAGE_INSTALL`, and `nvidia-dev-setup` run before the application.
+`recipes-containers/nvidia/pv-nvidia-cuda.bb` is the template.
 
 ## Kernel, driver and CUDA versions
 
@@ -104,10 +152,10 @@ them. All the pins live in one file, `conf/machine/include/dgx-os.inc`:
 
 | Variable | Pinned | Used by |
 |---|---|---|
-| `DGX_OS_VERSION` | 7.6.0 | the pin itself |
+| `DGX_OS_VERSION` | 7.6.0 | `/etc/dgx-os-release` |
 | `DGX_OS_KERNEL_ABI`, `NV_KERNEL_TAG`, `NV_KERNEL_SRCREV` | 7.0.0-1019, `Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2` | `linux-nvidia-dgx` |
-| `NVIDIA_DRIVER_VERSION` | 580.178.04 | `nvidia-open-kernel-modules`, `nvidia-gsp-firmware` |
-| `DGX_OS_CUDA_VERSION` | 13.0.3 | the CUDA a toolkit in an app container should not exceed |
+| `NVIDIA_DRIVER_VERSION` | 580.178.04 | `nvidia-open-kernel-modules`, `nvidia-gsp-firmware`, `nvidia-driver-userspace` |
+| `DGX_OS_CUDA_VERSION` | 13.0.3 | `/etc/dgx-os-release`; the CUDA a toolkit in an app container should not exceed |
 
 Check the pins against the current DGX OS release:
 
@@ -134,7 +182,16 @@ annotations, reusing tarballs already in `build/downloads`:
 scripts/dgx-os-versions --update
 ```
 
-After an update, check that `dgx-spark.cfg` still applies, then rebuild the BSP.
+After an update, check that `dgx-spark.cfg` still applies, then rebuild the BSP
+and `pv-nvidia-cuda` and ship them in one revision.
+
+On the device, the running versions are in the container:
+
+```bash
+cat /etc/dgx-os-release          # what the container was built against
+cat /proc/driver/nvidia/version  # the loaded kernel module
+uname -r                         # the kernel
+```
 
 ## Flash
 
