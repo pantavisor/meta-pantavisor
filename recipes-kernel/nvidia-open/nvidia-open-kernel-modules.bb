@@ -10,14 +10,9 @@ require nvidia-open.inc
 inherit module
 
 SRC_URI = "https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${PV}.tar.gz;downloadfilename=open-gpu-kernel-modules-${PV}.tar.gz"
-SRC_URI[sha256sum] = "f30d4c20feda9f570a69084573a72423067e1e2d46c50ca58c391664872a9e01"
+SRC_URI[sha256sum] = "${NVIDIA_OPEN_SHA256}"
 
 S = "${WORKDIR}/open-gpu-kernel-modules-${PV}"
-
-python () {
-    if d.getVar('PV') != d.getVar('NVIDIA_DRIVER_VERSION'):
-        raise bb.parse.SkipRecipe('PV must equal NVIDIA_DRIVER_VERSION')
-}
 
 # The top-level Makefile first builds the OS-agnostic cores (nv-kernel.o,
 # nv-modeset-kernel.o) with plain CC/CXX, then kbuilds kernel-open/ around them.

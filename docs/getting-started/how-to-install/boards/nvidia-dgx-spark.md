@@ -93,6 +93,49 @@ nvidia-container-toolkit to inject it; there is no such injection here.
 `nvidia-peermem` is built but is an empty stub without MLNX OFED, so there is no
 alias for it; GPUDirect RDMA with the ConnectX-7 uses DMA-BUF instead.
 
+## Kernel, driver and CUDA versions
+
+NVIDIA validates GB10 software as a whole DGX OS release. Each release pins one
+kernel, one driver and one CUDA version. The
+[DGX Spark release notes](https://docs.nvidia.com/dgx/dgx-spark/release-notes.html)
+list them under "Current Software Versions". This layer follows that table,
+not the newest NV-Kernels tag: NVIDIA tags kernels well before DGX OS ships
+them. All the pins live in one file, `conf/machine/include/dgx-os.inc`:
+
+| Variable | Pinned | Used by |
+|---|---|---|
+| `DGX_OS_VERSION` | 7.6.0 | the pin itself |
+| `DGX_OS_KERNEL_ABI`, `NV_KERNEL_TAG`, `NV_KERNEL_SRCREV` | 7.0.0-1019, `Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2` | `linux-nvidia-dgx` |
+| `NVIDIA_DRIVER_VERSION` | 580.178.04 | `nvidia-open-kernel-modules`, `nvidia-gsp-firmware` |
+| `DGX_OS_CUDA_VERSION` | 13.0.3 | the CUDA a toolkit in an app container should not exceed |
+
+Check the pins against the current DGX OS release:
+
+```bash
+scripts/dgx-os-versions
+```
+
+```
+                         pinned (dgx-os.inc)                        DGX OS 7.6.0
+DGX_OS_VERSION           7.6.0                                      7.6.0
+DGX_OS_KERNEL_ABI        7.0.0-1019                                 7.0.0-1019
+...
+NV-Kernels already tags Ubuntu-nvidia-7.0-7.0.0-1026.27_24.04.1; DGX OS has not shipped it, so it is not followed.
+
+In sync with DGX OS 7.6.0.
+```
+
+It exits 1 when DGX OS has moved on. Then, `--update` rewrites `dgx-os.inc`
+with the new tag, commit, checksums and `LINUX_VERSION`. It also regenerates
+`recipes-kernel/linux/linux-nvidia-dgx/defconfig` from the new tag's Ubuntu
+annotations, reusing tarballs already in `build/downloads`:
+
+```bash
+scripts/dgx-os-versions --update
+```
+
+After an update, check that `dgx-spark.cfg` still applies, then rebuild the BSP.
+
 ## Flash
 
 Flashing erases DGX OS. Keep the

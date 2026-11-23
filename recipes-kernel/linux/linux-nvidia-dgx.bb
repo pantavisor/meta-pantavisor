@@ -8,19 +8,19 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 inherit kernel
 
-# Tag Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2, the DGX OS 7.6 kernel. Pin tag
-# commits: NVIDIA rewrites the 24.04_linux-nvidia-*-next branches on every
-# release. A tarball, because a git clone of NV-Kernels is several GB.
-NV_KERNEL_SRCREV = "ae07646a606b3f18707246b0762464452cb40cbe"
-LINUX_VERSION = "7.0.14"
-PV = "${LINUX_VERSION}+nvidia1019.19"
+# Kernel tag, commit and checksum come from conf/machine/include/dgx-os.inc,
+# pinned to a DGX OS release. A tarball, because a git clone of NV-Kernels is
+# several GB.
+LINUX_VERSION = "${NV_KERNEL_LINUX_VERSION}"
+# "Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2" -> "1019.19"
+PV = "${LINUX_VERSION}+nvidia${@d.getVar('NV_KERNEL_TAG').split('-')[-1].split('_')[0]}"
 
 SRC_URI = " \
 	https://github.com/NVIDIA/NV-Kernels/archive/${NV_KERNEL_SRCREV}.tar.gz;downloadfilename=nv-kernels-${NV_KERNEL_SRCREV}.tar.gz \
 	file://defconfig \
 	file://dgx-spark.cfg \
 "
-SRC_URI[sha256sum] = "3b304fb138d12075c8abf5b7d3ba3ec7b582c8a64c3751b73a232c8bfc829853"
+SRC_URI[sha256sum] = "${NV_KERNEL_SHA256}"
 
 S = "${WORKDIR}/NV-Kernels-${NV_KERNEL_SRCREV}"
 
