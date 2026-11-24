@@ -6,6 +6,10 @@ inject them from the host."
 
 require nvidia-driver-run.inc
 
+inherit deploy
+
+SRC_URI += "file://nvidia-dev-setup"
+
 # For the shlib dependencies on glibc and libgcc_s (the CUDA debugger
 # library); nothing is compiled.
 DEPENDS = " \
@@ -92,3 +96,19 @@ INSANE_SKIP:${PN}-smi = "already-stripped ldflags"
 INSANE_SKIP:${PN}-mps = "already-stripped ldflags"
 INSANE_SKIP:${PN}-persistenced = "already-stripped ldflags"
 INSANE_SKIP:${PN}-debugger = "already-stripped ldflags"
+
+# The BSP's nvidia driver volume (PV_BSP_DRIVER_VOLUMES), laid out for
+# /usr/local/nvidia: NVIDIA's CUDA images already put its lib64 and bin on
+# LD_LIBRARY_PATH and PATH, so they find libcuda there unchanged.
+do_deploy() {
+	vol=${WORKDIR}/driver-volume
+	rm -rf $vol
+	install -d $vol/lib64 $vol/bin $vol/share/nvidia
+	cp -a ${D}${libdir}/. $vol/lib64/
+	cp -a ${D}${bindir}/. $vol/bin/
+	install -m 0755 ${WORKDIR}/nvidia-dev-setup $vol/bin/
+	echo ${PV} > $vol/share/nvidia/driver-version
+	tar -C $vol --owner=0 --group=0 --numeric-owner \
+		-cf ${DEPLOYDIR}/pv-driver-volume-nvidia.tar .
+}
+addtask deploy after do_install before do_build

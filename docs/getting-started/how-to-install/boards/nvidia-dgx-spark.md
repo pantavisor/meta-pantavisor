@@ -83,24 +83,71 @@ boot the GPU with, both from driver release 580.178.04
 "PV_DRIVERS_REQUIRED": ["nvidia"]
 ```
 
-The CUDA userspace (`libcuda`, `libnvidia-ml`, `nvidia-smi`) is not in the
-BSP. It is glibc-only, so it goes in the GPU container. It must be
-the exact release of the kernel modules, so update the BSP and the GPU container
-in the same revision. NGC CUDA images leave `libcuda` out, expecting
-nvidia-container-toolkit to inject it; there is no such injection here.
+The CUDA driver userspace (`libcuda`, `libnvidia-ml`, `nvidia-smi`) must be the
+exact release of the kernel modules, so the BSP ships it too, as the `nvidia`
+[driver volume](../../../../pantavisor/reference/pantavisor-state-format-v2.md#driver-volumes)
+(`bsp/driver-nvidia.squashfs`, set by `PV_BSP_DRIVER_VOLUMES` in
+`conf/machine/dgx-spark.conf`). Pantavisor bind-mounts it read-only at
+`/usr/local/nvidia` in every container that lists the `nvidia` driver:
+
+```
+/usr/local/nvidia/
+├── lib64/                       libcuda.so.1, libnvidia-ml.so.1, ...
+├── bin/                         nvidia-smi, nvidia-dev-setup, ...
+└── share/nvidia/driver-version  580.178.04
+```
+
+NVIDIA's CUDA images (NGC, `nvidia/cuda`) already have `/usr/local/nvidia/lib64`
+on `LD_LIBRARY_PATH` and `/usr/local/nvidia/bin` on `PATH`, where the
+nvidia-container-toolkit used to put the host's driver, so they find `libcuda`
+there unchanged. A driver update is then a BSP update: GPU containers are not
+rebuilt.
 
 `nvidia-peermem` is built but is an empty stub without MLNX OFED, so there is no
 alias for it; GPUDirect RDMA with the ConnectX-7 uses DMA-BUF instead.
 
+### GPU application containers
+
+A container that uses the GPU, a vLLM server for example, needs:
+
+1. `"PV_DRIVERS_REQUIRED": ["nvidia"]` in its args, which loads the modules and
+   mounts the driver volume.
+2. A glibc userspace: NVIDIA's driver libraries do not run on musl. Ubuntu-based
+   CUDA images are fine.
+3. CUDA runtime libraries no newer than the driver supports: CUDA 13.0 for
+   580.178.04 (see [versions](#kernel-driver-and-cuda-versions)), built for
+   GB10 (`sm_121`).
+4. `/usr/local/nvidia/bin/nvidia-dev-setup` run before the application. The
+   modules register char majors but no device nodes, and each container has its
+   own `/dev`; the script creates `/dev/nvidiactl`, `/dev/nvidia<N>` and
+   `/dev/nvidia-uvm*` from `/proc/devices`, and stops if the volume and the
+   loaded module are from different releases.
+
+For an image that does not set the NVIDIA paths, export them first:
+
+```bash
+export PATH=/usr/local/nvidia/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/nvidia/lib64
+nvidia-dev-setup && exec vllm serve <model>
+```
+
+From inside a running container, check that it got the volume:
+
+```bash
+grep /usr/local/nvidia /proc/mounts
+cat /usr/local/nvidia/share/nvidia/driver-version
+```
+
 ### The `pv-nvidia-cuda` container
 
-`pv-nvidia-cuda` carries that userspace. It is built from the same driver
-`.run` as the GSP firmware, so its release always matches the BSP's
-(`recipes-containers/nvidia/`). Because the userspace needs glibc, the DGX Spark
-configuration builds with glibc (`TCLIBC = "glibc"` in
-`kas/machines/nvidia-dgx-spark.yaml`) instead of the musl most Pantavisor
-machines use. It is not in the image by default. To add it to
-the initial trail, set this in `local.conf` or a kas `local_conf_header`:
+`pv-nvidia-cuda` is a GPU check built as such an application container
+(`recipes-containers/nvidia/`), and the template for Yocto-built ones. Its
+rootfs only holds busybox, glibc and `cuda-probe`; the driver comes from the
+volume. Because it is built here and needs glibc, the DGX Spark configuration
+builds with glibc (`TCLIBC = "glibc"` in `kas/machines/nvidia-dgx-spark.yaml`)
+instead of the musl most Pantavisor machines use. It is not in the image by
+default. To add it to the initial trail, set this in `local.conf` or a kas
+`local_conf_header`:
 
 ```bitbake
 PVROOT_CONTAINERS_CORE:append = " pv-nvidia-cuda"
@@ -116,10 +163,8 @@ Or build it alone and install the export with `pvr`:
 At start it:
 
 1. Prints `/etc/dgx-os-release`, the DGX OS release it was built against.
-2. Runs `nvidia-dev-setup`. This creates `/dev/nvidiactl`, `/dev/nvidia<N>`
-   and `/dev/nvidia-uvm*`; the modules register char majors but no nodes. It
-   stops if the loaded module is from a different driver release than the
-   container.
+2. Puts `/usr/local/nvidia` on `PATH` and `LD_LIBRARY_PATH`, and runs
+   `nvidia-dev-setup`.
 3. Runs `nvidia-smi`, then `cuda-probe`, which initialises the CUDA driver API
    and creates a context on each GPU.
 
@@ -135,11 +180,8 @@ CUDA driver API 13.0, 1 device(s)
 pv-nvidia-cuda: GPU ready
 ```
 
-A GPU application container needs the same pieces: `"PV_DRIVERS_REQUIRED":
-["nvidia"]` in its args, `nvidia-driver-userspace` (plus
-`nvidia-driver-userspace-smi` for `nvidia-smi`) and `pv-nvidia-utils` in
-`IMAGE_INSTALL`, and `nvidia-dev-setup` run before the application.
-`recipes-containers/nvidia/pv-nvidia-cuda.bb` is the template.
+If it prints `no driver volume at /usr/local/nvidia`, the BSP was built without
+`PV_BSP_DRIVER_VOLUMES` or its Pantavisor predates driver volumes.
 
 ## Kernel, driver and CUDA versions
 

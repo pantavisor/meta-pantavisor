@@ -6,10 +6,12 @@
 #
 # It also refuses a userspace from another driver release than the loaded
 # module: libcuda fails such a pairing with an unhelpful CUDA_ERROR, so name it.
+# The release is read from beside this script, so the check holds wherever the
+# userspace is mounted (the BSP's driver volume at /usr/local/nvidia).
 
 set -e
 
-expected="$(cat /etc/nvidia-driver-version 2>/dev/null || true)"
+expected="$(cat "$(dirname "$0")/../share/nvidia/driver-version" 2>/dev/null || true)"
 
 if [ ! -r /proc/driver/nvidia/version ]; then
 	echo "nvidia-dev-setup: nvidia module not loaded; is \"nvidia\" in PV_DRIVERS_REQUIRED?" >&2
@@ -18,7 +20,7 @@ fi
 # "NVRM version: NVIDIA UNIX Open Kernel Module for aarch64  580.178.04  Release Build ..."
 loaded="$(awk '/^NVRM/ { for (i = 1; i <= NF; i++) if ($i ~ /^[0-9]+\.[0-9]+(\.[0-9]+)?$/) { print $i; exit } }' /proc/driver/nvidia/version)"
 if [ -n "$expected" ] && [ "$loaded" != "$expected" ]; then
-	echo "nvidia-dev-setup: kernel module is $loaded, this container's userspace is $expected; update the BSP and the container in the same revision" >&2
+	echo "nvidia-dev-setup: kernel module is $loaded, the driver userspace is $expected; they must come from the same BSP" >&2
 	exit 1
 fi
 

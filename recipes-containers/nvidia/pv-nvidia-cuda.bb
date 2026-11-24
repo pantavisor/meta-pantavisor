@@ -1,7 +1,7 @@
 SUMMARY = "NVIDIA CUDA driver container for DGX Spark"
-DESCRIPTION = "Carries the CUDA driver userspace of the release the BSP's \
-modules come from, creates the /dev/nvidia* nodes and checks the GPU with \
-nvidia-smi and the CUDA driver API. A base for GPU application containers."
+DESCRIPTION = "Checks the GPU with nvidia-smi and the CUDA driver API, using \
+the CUDA driver userspace the BSP mounts at /usr/local/nvidia, the way a GPU \
+application container does."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -16,8 +16,6 @@ IMAGE_INSTALL += " \
 	busybox \
 	base-files \
 	base-passwd \
-	nvidia-driver-userspace \
-	nvidia-driver-userspace-smi \
 	pv-nvidia-utils \
 "
 
