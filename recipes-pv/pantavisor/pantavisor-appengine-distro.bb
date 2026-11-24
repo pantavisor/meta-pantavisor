@@ -26,9 +26,9 @@ DEPLOY_FILES ?= "${@' '.join(['%s-docker.tar' % x for x in d.getVar('PV_APPENGIN
 # land under another name or path (see below).
 PVTEST_HOST_DIR = "${DEPLOY_DIR_IMAGE}/pvtest/host"
 
-WORKDIR_FILES ?= "test.docker.sh test.native.sh device.txt"
+WORKDIR_FILES ?= "test.docker.sh test.native.sh run.docker.sh device.txt"
 
-PVTEST_HOST_FILES ?= "docker-README.md workspace-README.md native-README.md host-common"
+PVTEST_HOST_FILES ?= "docker-README.md workspace-README.md native-README.md host-common host-docker templates/run.docker.json"
 
 BUILD_SUFFIX ?= "${@'-' + d.getVar('DISTRO_VERSION') if d.getVar('DISTRO_VERSION') else ''}"
 
@@ -84,11 +84,13 @@ do_create_tarball() {
         cp -v "${PVTEST_HOST_DIR}/$filename" "${STAGING_DIR}/"
         cp -v "${PVTEST_HOST_DIR}/$filename" "${DEPLOY_DIR_IMAGE}/"
     done
-    chmod 0755 "${STAGING_DIR}/test.docker.sh" "${STAGING_DIR}/test.native.sh"
+    chmod 0755 "${STAGING_DIR}/test.docker.sh" "${STAGING_DIR}/test.native.sh" "${STAGING_DIR}/run.docker.sh"
 
     install -m 0644 "${PVTEST_HOST_DIR}/docker-README.md"    "${STAGING_DIR}/README.md"
     install -m 0644 "${PVTEST_HOST_DIR}/workspace-README.md" "${STAGING_DIR}/workspace-README.md"
     install -D -m 0644 "${PVTEST_HOST_DIR}/host-common"      "${STAGING_DIR}/pvtest/host-common"
+    install -D -m 0644 "${PVTEST_HOST_DIR}/host-docker"      "${STAGING_DIR}/pvtest/host-docker"
+    install -D -m 0644 "${PVTEST_HOST_DIR}/templates/run.docker.json" "${STAGING_DIR}/templates/run.docker.json"
 
     # The tester half, for a run with no container runtime. Same three files the
     # tester image installs from the pantavisor-pvtest package.

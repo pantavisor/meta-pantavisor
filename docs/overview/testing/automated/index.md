@@ -6,7 +6,8 @@ description: "Building the pvtest appengine distro and its container fixtures. T
 # Building the pvtest distro
 
 pvtest — the automated integration suite — **lives in the pantavisor repo**, under `pvtest/`:
-the tester runner, the host orchestrators (`test.docker.sh`, `test.native.sh`) and the test data.
+the tester runner, the host orchestrators (`test.docker.sh`, `test.native.sh`), the standalone
+instance runner (`run.docker.sh`) and the test data.
 meta-pantavisor assembles those into the distro tarball you run, and owns the `pv-example-*`
 container fixtures the tests run against.
 
@@ -16,8 +17,10 @@ list — is in pantavisor:
 
 - [The pvtest Harness](../../../../pantavisor/testing/pvtest-harness.md) — architecture, execution
   models, file layout, reading a run
-- [Running and Authoring pvtests](../../../../pantavisor/testing/appengine.md) — the appengine pool,
-  debugging, adding tests and fixtures, authoring rules
+- [Running Against Appengine](../../../../pantavisor/testing/appengine.md) — the appengine pool,
+  debugging
+- [Authoring pvtests](../../../../pantavisor/testing/authoring.md) — adding tests and fixtures,
+  authoring rules
 - [Running Against a Real Device](../../../../pantavisor/testing/device.md) — manifest,
   setbootconfig, per-MACHINE tarballs, expected outcomes
 - [Running Without a Container Runtime](../../../../pantavisor/testing/native.md) — `test.native.sh`
@@ -96,7 +99,7 @@ kas shell kas/build-configs/release/docker-x86_64-scarthgap.yaml -c 'bitbake <na
 ```
 
 Drop the result into an already-installed distro with `./test.docker.sh install-tarballs` — see
-[Adding a new container for a test](../../../../pantavisor/testing/appengine.md#adding-a-new-container-for-a-test).
+[Adding a new container for a test](../../../../pantavisor/testing/authoring.md#adding-a-new-container-for-a-test).
 
 ## Building fixtures for another MACHINE
 

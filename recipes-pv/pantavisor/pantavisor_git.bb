@@ -166,8 +166,8 @@ do_install() {
 # from tester/ and shared/, and are the same three files the tester container
 # gets from the pantavisor-pvtest package. The host half and the suites are
 # plain files and come straight from ${S}.
-PVTEST_HOST_SCRIPTS = "test.docker.sh test.native.sh"
-PVTEST_HOST_DATA = "host-common device.txt docker-README.md workspace-README.md native-README.md"
+PVTEST_HOST_SCRIPTS = "test.docker.sh test.native.sh run.docker.sh"
+PVTEST_HOST_DATA = "host-common host-docker device.txt templates/run.docker.json docker-README.md workspace-README.md native-README.md"
 
 do_deploy() {
 	install -d ${DEPLOYDIR}/pvtest
@@ -180,7 +180,7 @@ do_deploy() {
 		install -m 0755 ${S}/pvtest/host/$f ${DEPLOYDIR}/pvtest/host/
 	done
 	for f in ${PVTEST_HOST_DATA}; do
-		install -m 0644 ${S}/pvtest/host/$f ${DEPLOYDIR}/pvtest/host/
+		install -D -m 0644 ${S}/pvtest/host/$f ${DEPLOYDIR}/pvtest/host/$f
 	done
 
 	# Suites, at the same DEPLOYDIR path the retired pantavisor-pvtests-{local,
