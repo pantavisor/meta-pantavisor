@@ -1,0 +1,79 @@
+header:
+    version: 16
+_source_dir: .
+machine: dgx-spark
+local_conf_header:
+    nvidia-dgx-spark: |
+        # The GSP firmware comes from NVIDIA's proprietary driver package; GB10's
+        # GPU does not start without it.
+        LICENSE_FLAGS_ACCEPTED += "nvidia-driver"
+        # NVIDIA's CUDA userspace (libcuda, NVML) is built for glibc only, and the
+        # GPU containers are built in this configuration.
+        TCLIBC = "glibc"
+    pvgo: |
+        PREFERRED_VERSION_pvgo-binary-native = "1.26.10"
+    rm_work: |
+        INHERIT += "rm_work"
+    package_management: |
+        PACKAGE_CLASSES = "package_rpm"
+    panta-base: |
+        TMPDIR = "${TOPDIR}/tmp-${DISTRO_CODENAME}"
+    pantavisor-system: |
+        DISTRO_FEATURES:append = " pantavisor-system "
+        PANTAVISOR_FEATURES:append = " dm-crypt"
+        PANTAVISOR_FEATURES:append = " dm-verity"
+        PANTAVISOR_FEATURES:append = " xconnect-dbus-systembus"
+        PANTAVISOR_FEATURES:append = " autogrow"
+        INITRAMFS_IMAGE = "pantavisor-initramfs"
+    pantavisor-runc: |
+        PANTAVISOR_FEATURES:append = " runc"
+    pantavisor-tailscale: |
+        PANTAVISOR_FEATURES:append = " tailscale"
+    pantavisor-debug: |
+        PANTAVISOR_FEATURES:append = " debug"
+    __menu_config_locals: ''
+    __menu_config_vars: |-
+        EXTRA_IMAGE_FEATURES:append = " debug-tweaks"
+        INHERIT += "rm_work"
+defaults:
+    repos:
+        branch: scarthgap
+repos:
+    poky:
+        patches:
+            fit-image-multiconfig:
+                path: patches/poky/0001-fit-image-multiconfig.scarthgap.patch
+                repo: meta-pantavisor
+            insane-ptest-scan-note:
+                path: patches/poky/0002-insane-fix-ptest-scan-note-format.patch
+                repo: meta-pantavisor
+            update-rc-initscripts:
+                path: patches/poky/update-rc.patch
+                repo: meta-pantavisor
+        url: https://github.com/yoctoproject/poky.git
+        path: layers/poky
+        layers:
+            meta:
+            meta-poky:
+        commit: 6b7c1066f778db5a6b3e35400617b10342988fa8
+    meta-pantavisor:
+    meta-virtualization:
+        commit: e0b994c8457be2b32acf7b904fcc5408156de57a
+        path: layers/meta-virtualization
+        url: https://git.yoctoproject.org/meta-virtualization
+    meta-openembedded:
+        commit: 2db6aece32c7f8ebf6015b468e1b4e21de072e3b
+        layers:
+            meta-filesystems:
+            meta-networking:
+            meta-oe:
+            meta-python:
+        path: layers/meta-openembedded
+        url: https://github.com/openembedded/meta-openembedded.git
+target:
+- pantavisor-starter
+build_system: oe
+distro: panta-distro
+env:
+    PVROOT_IMAGE_BSP:
+    PV_BOOT_OEMARGS:

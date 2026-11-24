@@ -31,6 +31,7 @@ on:
           - docker-x86_64
           - docker-armv8
           - 96boards-orangepi-i96
+          - nvidia-dgx-spark
 
 jobs:
   resolve:

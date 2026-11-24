@@ -293,6 +293,10 @@ config MACHINE_FILTER_RADXA
 config MACHINE_FILTER_96BOARDS
 	bool "96Boards"
 
+config MACHINE_FILTER_NVIDIA
+	bool "NVIDIA"
+	depends on CODENAME_SCARTHGAP
+
 endchoice
 
 config PLATFORM_CORAL
@@ -332,6 +336,9 @@ config PLATFORM_RADXA
 	bool
 
 config PLATFORM_96BOARDS
+	bool
+
+config PLATFORM_NVIDIA
 	bool
 
 choice
@@ -530,6 +537,12 @@ config MACHINE_ORANGEPI_I96
 	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_96BOARDS
 	select PLATFORM_96BOARDS
 
+config MACHINE_NVIDIA_DGX_SPARK
+	bool "NVIDIA DGX Spark"
+	depends on CODENAME_SCARTHGAP
+	depends on MACHINE_FILTER_ALL || MACHINE_FILTER_NVIDIA
+	select PLATFORM_NVIDIA
+
 endchoice
 
 config KAS_INCLUDE_MACHINE_QEMUX86_64
@@ -725,4 +738,8 @@ config KAS_INCLUDE_MACHINE_RADXA_ROCK5B
 config KAS_INCLUDE_MACHINE_ORANGEPI_I96
 	string
 	default "kas/machines/96boards-orange-pi-i96.yaml" if MACHINE_ORANGEPI_I96
+
+config KAS_INCLUDE_MACHINE_NVIDIA_DGX_SPARK
+	string
+	default "kas/machines/nvidia-dgx-spark.yaml" if MACHINE_NVIDIA_DGX_SPARK
 

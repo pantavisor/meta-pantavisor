@@ -58,8 +58,21 @@ compile_depends = ' \
 	virtual/kernel:do_deploy \
 	virtual/kernel:do_packagedata \
 	${@bb.utils.contains('PANTAVISOR_FEATURES', 'rpi-tryboot', 'rpi-boot-image:do_image_complete', '', d)} \
+	${@'pv-uki:do_deploy' if d.getVar('PV_BSP_UKI') else ''} \
 	'
 do_compile[depends] += "${compile_depends}"
+
+# Drivers whose userspace has to be the release of their kernel modules, one
+# "<alias>:<recipe>:<path>" per item. <recipe> deploys
+# pv-driver-volume-<alias>.tar, which ships as bsp/driver-<alias>.squashfs;
+# pantavisor bind-mounts it read-only at <path> in every container that lists
+# the driver.
+PV_BSP_DRIVER_VOLUMES ??= ""
+do_compile[depends] += "${@' '.join('%s:do_deploy' % e.split(':')[1] for e in d.getVar('PV_BSP_DRIVER_VOLUMES').split())}"
+
+# Deployed unified kernel image that a UKI-booted machine (sdboot) ships in
+# place of the kernel and initrd: it already bundles both.
+PV_BSP_UKI ??= ""
 
 compile_mcdepends = '\
 	${@oe.utils.conditional("INITRAMFS_MULTICONFIG", "", "", "mc::${INITRAMFS_MULTICONFIG}:${INITRAMFS_IMAGE}:do_image_complete", d)} \
@@ -268,6 +281,19 @@ fakeroot do_compile(){
     if ! ls ${PVBSP_fw} | wc -c | grep ^0; then
         mksquashfs ${PVBSP_fw} ${PVBSPSTATE}/bsp/firmware.squashfs ${PVR_FORMAT_OPTS}
     fi
+
+    driver_volumes='{}'
+    for dv in ${PV_BSP_DRIVER_VOLUMES}; do
+        alias=${dv%%:*}
+        path=${dv##*:}
+        tree=${WORKDIR}/pvbsp-driver-$alias
+        rm -rf $tree bsp/driver-$alias.squashfs
+        mkdir -p $tree
+        tar -C $tree -xf ${DEPLOY_DIR_IMAGE}/pv-driver-volume-$alias.tar
+        mksquashfs $tree ${PVBSPSTATE}/bsp/driver-$alias.squashfs ${PVR_FORMAT_OPTS}
+        driver_volumes=$(echo "$driver_volumes" | jq -c --arg a "$alias" \
+            --arg v "driver-$alias.squashfs" --arg p "$path" '.[$a] = {volume: $v, path: $p}')
+    done
     err=0
 
     basearts=
@@ -337,6 +363,12 @@ fakeroot do_compile(){
        basearts="\"firmware\": \"firmware.squashfs\",${modules_arts}
     \"rpiab\": \"pantavisor-rpi.img.gz\","
 
+    elif [ -n "${PV_BSP_UKI}" ]; then
+       cp -fL ${DEPLOY_DIR_IMAGE}/${PV_BSP_UKI} ${PVBSPSTATE}/bsp/pantavisor.efi
+       basearts='"uki": "pantavisor.efi",
+    "firmware": "firmware.squashfs",
+    "modules": "modules.squashfs",'
+
     elif echo ${KERNEL_IMAGETYPES} | grep -q fitImage > /dev/null; then
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-its-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_ITS_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.its
        cp -fL ${DEPLOY_DIR_IMAGE}/fitImage-${INITRAMFS_IMAGE_NAME}-${KERNEL_FIT_LINK_NAME}${PV_FIT_NAME_SUFFIX} ${PVBSPSTATE}/bsp/pantavisor.fit
@@ -399,6 +431,10 @@ ${basearts}
     "initrd_config": ""
 `echo '}'`
 EOF
+    if [ "$driver_volumes" != '{}' ]; then
+        jq --argjson dv "$driver_volumes" '.driver_volumes = $dv' bsp/run.json > bsp/run.json.tmp \
+            && mv bsp/run.json.tmp bsp/run.json
+    fi
     cp ${WORKDIR}/bsp-src.json ${PVBSPSTATE}/bsp/src.json
     # The Hub strips "pvr version " from this, but pvr itself prints "pvr version: N".
     pvr_version=$(pvr --version | sed -n '1s/^pvr version:* *//p')

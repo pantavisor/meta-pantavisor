@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+"""Keep the DGX Spark kernel, driver and CUDA pinned to a DGX OS release.
+
+NVIDIA validates GB10 software as a DGX OS release and lists it in the DGX
+Spark release notes' "Current Software Versions" table. This compares that
+table with conf/machine/include/dgx-os.inc.
+
+  scripts/dgx-os-versions            # report; exit 1 if behind DGX OS
+  scripts/dgx-os-versions --update   # rewrite dgx-os.inc and the defconfig
+
+--update downloads the NV-Kernels tarball (~260 MB) and the open kernel module
+tarball to checksum them, and regenerates the kernel defconfig from the new
+tag's Ubuntu annotations. Tarballs already in the BitBake download directory
+(build/downloads, or --dl-dir) are reused. The driver .run's checksum comes from
+NVIDIA's .sha256sum beside it.
+
+Exit status: 0 in sync, 1 out of sync (or updated), 2 on error.
+"""
+import argparse
+import hashlib
+import html
+import os
+import re
+import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.request
+
+LAYER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INC = os.path.join(LAYER, 'conf/machine/include/dgx-os.inc')
+DEFCONFIG = os.path.join(LAYER, 'recipes-kernel/linux/linux-nvidia-dgx/defconfig')
+ANNOTATIONS2CONFIG = os.path.join(LAYER, 'scripts/annotations2config.py')
+
+RELEASE_NOTES = 'https://docs.nvidia.com/dgx/dgx-spark/release-notes.html'
+NV_KERNELS = 'https://github.com/NVIDIA/NV-Kernels'
+DRIVER_RUN = ('https://download.nvidia.com/XFree86/Linux-aarch64/{v}/'
+              'NVIDIA-Linux-aarch64-{v}.run')
+OPEN_MODULES = ('https://github.com/NVIDIA/open-gpu-kernel-modules/archive/'
+                'refs/tags/{v}.tar.gz')
+KERNEL_TARBALL = NV_KERNELS + '/archive/{rev}.tar.gz'
+
+# Ubuntu annotations flavour for GB10's kernel (see annotations2config.py).
+ARCH, FLAVOUR = 'arm64', 'arm64-nvidia'
+
+# Release-notes row -> dgx-os.inc variable
+ROWS = {
+    'NVIDIA DGX OS': 'DGX_OS_VERSION',
+    'NVIDIA GPU Driver': 'NVIDIA_DRIVER_VERSION',
+    'NVIDIA CUDA Toolkit': 'DGX_OS_CUDA_VERSION',
+    'Canonical Kernel': 'DGX_OS_KERNEL_ABI',
+}
+
+ASSIGN = re.compile(r'^(\w+)\s*=\s*"([^"]*)"\s*$')
+
+
+def die(msg):
+    print('dgx-os-versions: ' + msg, file=sys.stderr)
+    sys.exit(2)
+
+
+def fetch(url):
+    req = urllib.request.Request(url, headers={'User-Agent': 'dgx-os-versions'})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return r.read().decode('utf-8', 'replace')
+
+
+def download(url, path):
+    """Download to path and return its sha256."""
+    h = hashlib.sha256()
+    req = urllib.request.Request(url, headers={'User-Agent': 'dgx-os-versions'})
+    with urllib.request.urlopen(req, timeout=300) as r, open(path, 'wb') as f:
+        while True:
+            chunk = r.read(1 << 20)
+            if not chunk:
+                break
+            h.update(chunk)
+            f.write(chunk)
+    return h.hexdigest()
+
+
+def read_inc():
+    pins = {}
+    with open(INC) as f:
+        for line in f:
+            m = ASSIGN.match(line)
+            if m:
+                pins[m.group(1)] = m.group(2)
+    return pins
+
+
+def write_inc(new):
+    with open(INC) as f:
+        lines = f.readlines()
+    with open(INC, 'w') as f:
+        for line in lines:
+            m = ASSIGN.match(line)
+            if m and m.group(1) in new:
+                line = '%s = "%s"\n' % (m.group(1), new[m.group(1)])
+            f.write(line)
+
+
+def release_notes():
+    """The "Current Software Versions" table, as {variable: version}."""
+    page = fetch(RELEASE_NOTES)
+    found = {}
+    for row in re.findall(r'<tr.*?</tr>', page, re.S):
+        cells = [html.unescape(re.sub(r'<[^>]+>', '', c)).strip()
+                 for c in re.findall(r'<t[hd].*?</t[hd]>', row, re.S)]
+        if len(cells) == 2 and cells[0] in ROWS:
+            found.setdefault(ROWS[cells[0]], cells[1])
+    missing = set(ROWS.values()) - set(found)
+    if missing:
+        die('%s: no %s in the versions table; has the page changed?'
+            % (RELEASE_NOTES, ', '.join(sorted(missing))))
+    return found
+
+
+def kernel_tags():
+    """{tag: peeled commit} for every Ubuntu-nvidia-* tag in NV-Kernels."""
+    out = subprocess.run(
+        ['git', 'ls-remote', '--tags', NV_KERNELS, 'refs/tags/Ubuntu-nvidia-*'],
+        check=True, capture_output=True, text=True).stdout
+    tags = {}
+    for line in out.splitlines():
+        rev, ref = line.split('\t')
+        name = ref[len('refs/tags/'):]
+        if name.endswith('^{}'):
+            tags[name[:-3]] = rev
+        else:
+            tags.setdefault(name, rev)
+    return tags
+
+
+def tag_key(tag):
+    """Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2 -> sortable (abi, upload, respin)."""
+    m = re.match(r'Ubuntu-nvidia-[\d.]+-([\d.]+)-(\d+)\.(\d+)_[\d.]+?\.(\d+)$', tag)
+    if not m:
+        return None
+    return (tuple(int(x) for x in m.group(1).split('.')), int(m.group(2)),
+            int(m.group(3)), int(m.group(4)))
+
+
+def tag_for_abi(tags, abi):
+    """The last respin NV-Kernels tagged for an Ubuntu ABI like 7.0.0-1019."""
+    hits = [t for t in tags if re.match(r'Ubuntu-nvidia-[\d.]+-%s\.' % re.escape(abi), t)
+            and tag_key(t)]
+    return max(hits, key=tag_key) if hits else None
+
+
+def newest_in_series(tags, tag):
+    series = re.match(r'(Ubuntu-nvidia-[\d.]+-)', tag).group(1)
+    same = [t for t in tags if t.startswith(series) and tag_key(t)]
+    return max(same, key=tag_key) if same else None
+
+
+def cached_or_download(url, name, dl_dir, workdir):
+    """(path, sha256) of url, from dl_dir if BitBake already fetched it."""
+    if dl_dir and os.path.exists(os.path.join(dl_dir, name)):
+        path = os.path.join(dl_dir, name)
+        h = hashlib.sha256()
+        with open(path, 'rb') as f:
+            for chunk in iter(lambda: f.read(1 << 20), b''):
+                h.update(chunk)
+        return path, h.hexdigest()
+    path = os.path.join(workdir, name)
+    print('downloading %s ...' % name, file=sys.stderr)
+    return path, download(url, path)
+
+
+def kernel_update(tag, rev, dl_dir, workdir):
+    """Fetch the kernel at rev; return (sha256, linux version, defconfig)."""
+    # Same name as linux-nvidia-dgx.bb's downloadfilename, to share DL_DIR.
+    tarball, sha = cached_or_download(KERNEL_TARBALL.format(rev=rev),
+                                      'nv-kernels-%s.tar.gz' % rev, dl_dir, workdir)
+
+    src = os.path.join(workdir, 'src')
+    with tarfile.open(tarball) as tf:
+        # Only the top Makefile and the debian*/config trees (annotations and
+        # whatever they include); the members are data, never executed.
+        want = [m for m in tf.getmembers()
+                if (m.isfile() or m.isdir())
+                and re.match(r'[^/]+/(Makefile$|debian[^/]*/config(/|$))', m.name)]
+        tf.extractall(src, members=want, filter='data')
+    top = os.path.join(src, os.listdir(src)[0])
+
+    mk = open(os.path.join(top, 'Makefile')).read()
+    ver = '.'.join(re.search(r'^%s = (\d+)' % k, mk, re.M).group(1)
+                   for k in ('VERSION', 'PATCHLEVEL', 'SUBLEVEL'))
+
+    # Ubuntu-nvidia-7.0-... is packaged from debian.nvidia-7.0
+    series = re.match(r'Ubuntu-(nvidia-[\d.]+)-', tag).group(1)
+    annotations = os.path.join(top, 'debian.' + series, 'config/annotations')
+    if not os.path.exists(annotations):
+        die('%s has no debian.%s/config/annotations' % (tag, series))
+    defconfig = subprocess.run(
+        [sys.executable, '-I', ANNOTATIONS2CONFIG, annotations, ARCH, FLAVOUR],
+        check=True, capture_output=True, text=True).stdout
+    header = ('# Generated by scripts/annotations2config.py from NV-Kernels\n'
+              '# %s, debian.%s/config/annotations,\n'
+              '# flavour %s. Pantavisor changes go in dgx-spark.cfg, not here.\n'
+              % (tag, series, FLAVOUR))
+    return sha, ver, header + defconfig
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        description=__doc__.split('\n')[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--update', action='store_true',
+                    help='rewrite dgx-os.inc and the kernel defconfig to match DGX OS')
+    ap.add_argument('--dl-dir', default=os.path.join(LAYER, 'build/downloads'),
+                    help='BitBake DL_DIR to reuse tarballs from (default: %(default)s)')
+    args = ap.parse_args()
+
+    pins = read_inc()
+    nv = release_notes()
+    tags = kernel_tags()
+
+    want_tag = tag_for_abi(tags, nv['DGX_OS_KERNEL_ABI'])
+    if not want_tag:
+        die('NV-Kernels has no tag for kernel %s' % nv['DGX_OS_KERNEL_ABI'])
+    target = dict(nv, NV_KERNEL_TAG=want_tag, NV_KERNEL_SRCREV=tags[want_tag])
+
+    print('%-24s %-42s %s' % ('', 'pinned (dgx-os.inc)', 'DGX OS ' + nv['DGX_OS_VERSION']))
+    drift = []
+    for var in ('DGX_OS_VERSION', 'DGX_OS_KERNEL_ABI', 'NV_KERNEL_TAG',
+                'NV_KERNEL_SRCREV', 'NVIDIA_DRIVER_VERSION', 'DGX_OS_CUDA_VERSION'):
+        mark = ''
+        if pins.get(var) != target[var]:
+            drift.append(var)
+            mark = '  <-'
+        print('%-24s %-42s %s%s' % (var, pins.get(var, '-'), target[var], mark))
+
+    ahead = newest_in_series(tags, want_tag)
+    if ahead and tag_key(ahead) > tag_key(want_tag):
+        print('\nNV-Kernels already tags %s; DGX OS has not shipped it, so it '
+              'is not followed.' % ahead)
+
+    if not drift:
+        print('\nIn sync with DGX OS %s.' % nv['DGX_OS_VERSION'])
+        return 0
+    if not args.update:
+        print('\nBehind DGX OS %s; run with --update.' % nv['DGX_OS_VERSION'])
+        return 1
+
+    new = dict(target)
+    drv = nv['NVIDIA_DRIVER_VERSION']
+    if drv != pins.get('NVIDIA_DRIVER_VERSION'):
+        line = fetch(DRIVER_RUN.format(v=drv) + '.sha256sum').split()
+        if not line or not re.fullmatch(r'[0-9a-f]{64}', line[0]):
+            die('no checksum published for driver %s' % drv)
+        new['NVIDIA_DRIVER_RUN_SHA256'] = line[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            new['NVIDIA_OPEN_SHA256'] = cached_or_download(
+                OPEN_MODULES.format(v=drv), 'open-gpu-kernel-modules-%s.tar.gz' % drv,
+                args.dl_dir, tmp)[1]
+
+    if target['NV_KERNEL_SRCREV'] != pins.get('NV_KERNEL_SRCREV'):
+        with tempfile.TemporaryDirectory() as tmp:
+            sha, ver, defconfig = kernel_update(
+                target['NV_KERNEL_TAG'], target['NV_KERNEL_SRCREV'], args.dl_dir, tmp)
+        new['NV_KERNEL_SHA256'] = sha
+        new['NV_KERNEL_LINUX_VERSION'] = ver
+        with open(DEFCONFIG, 'w') as f:
+            f.write(defconfig)
+
+    write_inc(new)
+    print('\nUpdated %s%s.' % (os.path.relpath(INC, LAYER),
+                               ' and the defconfig' if 'NV_KERNEL_SHA256' in new else ''))
+    print('Check dgx-spark.cfg still applies, rebuild the BSP and the GPU '
+          'containers, and ship them in one revision.')
+    return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
