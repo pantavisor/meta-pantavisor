@@ -1,0 +1,106 @@
+#!/bin/sh
+
+# Hands a request on to pv-ctrl, pantavisor's control socket, and sends the
+# answer back as it came. Only the calls listed in the case below go through.
+# Path after /cgi-bin/pvctrl is the pv-ctrl path, for example
+# /cgi-bin/pvctrl/devmode/files/my-app/etc/my.conf.
+
+SOCKET=/pantavisor/pv-ctrl
+MAX_COMMAND_BODY=1024
+
+reply() {
+	printf 'Status: %s\r\nContent-Type: application/json\r\n\r\n%s\n' "$1" "$2"
+	exit 0
+}
+
+not_forwarded() {
+	reply "404 Not Found" '{"Error":"not forwarded"}'
+}
+
+# httpd has already decoded PATH_INFO; encode it again so pv-ctrl gets a path
+# that is safe to parse, whatever bytes the name holds.
+encode_path() {
+	for hex in $(printf '%s' "$1" | od -An -v -tx1); do
+		case "$hex" in
+		2d|2e|2f|5f|7e|3[0-9]|4[1-9a-f]|5[0-9a]|6[1-9a-f]|7[0-9a])
+			# shellcheck disable=SC2059
+			printf "\\$(printf '%03o' "0x$hex")" ;;
+		*)
+			printf '%%%s' "$hex" ;;
+		esac
+	done
+}
+
+path="$PATH_INFO"
+[ -n "$path" ] || not_forwarded
+
+# a ".." segment would climb out of the allowed paths
+case "$path" in
+../*|*/../*|*/..|..) not_forwarded ;;
+esac
+
+body=-
+tmpfile=
+trap '[ -z "$tmpfile" ] || rm -f "$tmpfile"' EXIT
+
+case "$REQUEST_METHOD $path" in
+"GET /devmode"|"POST /devmode") ;;
+"GET /devmode/"*|"PUT /devmode/"*|"POST /devmode/"*|"DELETE /devmode/"*) ;;
+"GET /containers") ;;
+"GET /config2") ;;
+"PUT /containers/"*)
+	name="${path#/containers/}"
+	case "$name" in
+	''|*/*) not_forwarded ;;
+	esac
+	;;
+"POST /containers/"*"/exec")
+	name="${path#/containers/}"
+	name="${name%/exec}"
+	case "$name" in
+	''|*/*) not_forwarded ;;
+	esac
+	;;
+"POST /commands")
+	# the body is small; it is read first so only the two ops pvr sends pass
+	[ "${CONTENT_LENGTH:-0}" -le "$MAX_COMMAND_BODY" ] || not_forwarded
+	tmpfile=$(mktemp -t pvctrl.XXXXXX) || reply "500 Internal Server Error" '{"Error":"no temporary file"}'
+	head -c "${CONTENT_LENGTH:-0}" > "$tmpfile"
+	jq -e '.op == "LOCAL_RUN" or .op == "REBOOT_DEVICE"' "$tmpfile" > /dev/null 2>&1 || not_forwarded
+	body="$tmpfile"
+	;;
+*)
+	not_forwarded
+	;;
+esac
+
+# connect and hang up: tells a down pv-ctrl before curl has sent a status line
+if [ ! -S "$SOCKET" ] || ! socat -u /dev/null "UNIX-CONNECT:$SOCKET" 2> /dev/null; then
+	reply "502 Bad Gateway" '{"Error":"pv-ctrl not reachable"}'
+fi
+
+url="http://localhost$(encode_path "$path")"
+[ -z "$QUERY_STRING" ] || url="$url?$QUERY_STRING"
+
+# --include prints pv-ctrl's own status line and headers ahead of the body,
+# which httpd passes on as the CGI answer. --path-as-is and --globoff keep curl
+# from rewriting the url.
+set -- --silent --show-error --include --globoff --path-as-is \
+	--connect-timeout 5 --unix-socket "$SOCKET" -X "$REQUEST_METHOD" \
+	-H "Expect:"
+[ -z "$CONTENT_TYPE" ] || set -- "$@" -H "Content-Type: $CONTENT_TYPE"
+if [ "${CONTENT_LENGTH:-0}" -gt 0 ]; then
+	# curl streams stdin chunked unless told it is plain; pv-ctrl answers an
+	# upload with a short, unchunked body
+	set -- "$@" -H "Content-Length: $CONTENT_LENGTH" \
+		-H "Transfer-Encoding: identity" -T "$body"
+else
+	# HTTP/1.0 makes pv-ctrl answer a download unchunked, so the headers
+	# that --include prints stay true for the body
+	set -- "$@" --http1.0
+	case "$REQUEST_METHOD" in
+	POST|PUT) set -- "$@" -H "Content-Length: 0" ;;
+	esac
+fi
+
+curl "$@" "$url"
