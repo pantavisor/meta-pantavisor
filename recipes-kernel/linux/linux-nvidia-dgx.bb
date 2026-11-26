@@ -10,7 +10,9 @@ inherit kernel
 
 # Kernel tag, commit and checksum come from conf/machine/include/dgx-os.inc,
 # pinned to a DGX OS release. A tarball, because a git clone of NV-Kernels is
-# several GB.
+# several GB. Required here too because every machine parses this recipe, and
+# an unset LINUX_VERSION breaks the linux bbappends' parsing elsewhere.
+require conf/machine/include/dgx-os.inc
 LINUX_VERSION = "${NV_KERNEL_LINUX_VERSION}"
 # "Ubuntu-nvidia-7.0-7.0.0-1019.19_24.04.2" -> "1019.19"
 PV = "${LINUX_VERSION}+nvidia${@d.getVar('NV_KERNEL_TAG').split('-')[-1].split('_')[0]}"
