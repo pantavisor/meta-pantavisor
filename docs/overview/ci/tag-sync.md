@@ -20,6 +20,7 @@ release that shipped it.
 | Trigger  | `push: tags: ['0*', '*-rc*']` (mirrors `tag-scarthgap.yaml`) |
 | Tag name | identical to the meta-pantavisor tag (no prefix) |
 | Tag type | lightweight (just a ref) |
+| Tag target | RC: the `SRCREV`. Stable `0NN`: a finalize commit on top of the `SRCREV` |
 
 The workflow runs in parallel with `tag-scarthgap.yaml` and is independent of
 the build matrix — sync failures do not block image builds, and image-build
@@ -31,11 +32,30 @@ failures do not block tag sync.
 2. Verifies the SHA is reachable on `pantavisor/pantavisor` (fails if the
    recipe is pinned to an unpublished commit).
 3. Checks whether the tag already exists upstream:
-   - **Absent** → creates `refs/tags/$TAG_NAME` at the SRCREV.
-   - **Present at the same SHA** → no-op (idempotent re-runs are safe).
+   - **Absent** → creates `refs/tags/$TAG_NAME` at the SRCREV. For a stable
+     `0NN` tag it first [commits the changelog](#stable-tags).
+   - **Present at the same SHA** → no-op (idempotent re-runs are safe). A stable
+     tag also counts as in sync when it points at the finalize commit directly
+     on top of the SRCREV.
    - **Present at a different SHA** → fails. The script never overwrites an
      existing tag.
 4. Writes a one-line summary to `$GITHUB_STEP_SUMMARY`.
+
+## Stable tags
+
+pantavisor's `changelog-gate` rejects a stable tag whose commit lacks
+`CHANGELOG/CHANGELOG-<MAJOR>.md`. So for a stable `0NN` tag the script clones
+`pantavisor/pantavisor` at the SRCREV, runs `make-changelog.sh --finalize 0NN`
+(one commit that only adds that file) and pushes that commit as the tag. The
+source is identical to the SRCREV, and nothing is pushed to a branch, so
+`master` protection does not apply.
+
+Push the stable meta-pantavisor tag only after every RC's `tag-changelogs`
+workflow in pantavisor has finished: `--finalize` reads the S3 accumulator and
+the gate checks that all RC sections are in it.
+
+The finalize commit is reachable only through the tag. `master` does not carry
+`CHANGELOG-0NN.md`.
 
 ## Authentication
 
