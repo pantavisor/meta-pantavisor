@@ -17,7 +17,7 @@ NO_RECOMMENDATIONS = "1"
 
 PVRIMAGE_AUTO_MDEV = "0"
 
-# protect root.squashfs with dm-verity
+# always protect root.squashfs, even if a distro turns the default off
 PVR_DM_VERITY = "1"
 
 SRC_URI += "file://pv-ready.sh file://pv-example-verity.args.json"
