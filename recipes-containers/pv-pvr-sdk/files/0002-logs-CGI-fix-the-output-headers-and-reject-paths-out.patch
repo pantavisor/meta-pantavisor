@@ -1,0 +1,63 @@
+From 7f5cd32098d87e5308b8a90180dc79fad0c8e7db Mon Sep 17 00:00:00 2001
+From: Alexander Sack <asac@pantacor.com>
+Date: Tue, 17 Nov 2026 10:16:37 +0000
+Subject: [PATCH] logs CGI: fix the output headers and reject paths outside the
+ log tree
+
+The CGI printed the source name before its blank line, so the first
+body line ended up in the header block and no Content-Type was sent.
+Print a text/plain header instead, answer 404 when no log file
+matches (tail without files would wait on stdin), and answer 400 when
+rev or source holds "..". A rev with slashes such as devmode/r/0
+already works.
+---
+ files/www/cgi-bin/logs | 26 ++++++++++++++++++++++----
+ 1 file changed, 22 insertions(+), 4 deletions(-)
+
+diff --git a/files/www/cgi-bin/logs b/files/www/cgi-bin/logs
+index e53647c..8ee7bf8 100755
+--- a/files/www/cgi-bin/logs
++++ b/files/www/cgi-bin/logs
+@@ -33,8 +33,6 @@ for p in $params; do
+ 	esac
+ done
+ 
+-echo "$source"
+-
+ catcmd=
+ 
+ if [ -n "$tail" ]; then
+@@ -70,8 +68,28 @@ if [ -z $rev ]; then
+ 	exit 0
+ fi
+ 
+-echo
++# rev and source are joined into a path below /pantavisor/logs
++case "$rev $source" in
++	*..*)
++		echo "Status: 400 Bad Request (bad rev or source)"
++		echo
++		exit 0
++		;;
++esac
+ 
+ paths=`for s in $source; do echo "/pantavisor/logs/$rev/$s "; done`
+ 
+-$catcmd `find $paths -type f -prune ! -name *.gzip ! -name *.gz`
++files=`find $paths -type f -prune ! -name "*.gzip" ! -name "*.gz" 2>/dev/null`
++
++if [ -z "$files" ]; then
++	echo "Status: 404 Not Found"
++	echo "Content-Type: text/plain"
++	echo
++	echo "no log found for rev $rev, source $source"
++	exit 0
++fi
++
++echo "Content-Type: text/plain"
++echo
++
++$catcmd $files
+-- 
+2.34.1
+
