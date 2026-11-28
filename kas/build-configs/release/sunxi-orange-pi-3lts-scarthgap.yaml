@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-sunxi:
-        commit: 719c841f3b97ca3d15be11781219ab1285db3c54
+        commit: ac3df7d7aead84986024f87c48cb38d1991fe095
         patches:
             refresh-h6-4k60-patch:
                 path: patches/meta-sunxi/0002-linux-mainline-refresh-wip-fix-H6-4k-60-for-6.6.160.patch
@@ -36,14 +36,14 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 6b7c1066f778db5a6b3e35400617b10342988fa8
+        commit: 1397cd85032d1582fa4f2512a3f378d71ca39291
     meta-pantavisor:
     meta-virtualization:
         commit: e0b994c8457be2b32acf7b904fcc5408156de57a
         path: layers/meta-virtualization
         url: https://git.yoctoproject.org/meta-virtualization
     meta-openembedded:
-        commit: 2db6aece32c7f8ebf6015b468e1b4e21de072e3b
+        commit: 96c2c78e13ff1b954715ff3c6d26bddd50a02509
         layers:
             meta-filesystems:
             meta-networking:

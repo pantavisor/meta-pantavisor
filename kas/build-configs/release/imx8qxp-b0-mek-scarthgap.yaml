@@ -3,7 +3,7 @@ header:
 _source_dir: .
 repos:
     meta-freescale:
-        commit: 44fb1b899a0405586f576a9ab21c7fe4bc5234c0
+        commit: 945dcd1c0c8684e6482cbf44c6b52be3c1c9ef87
         path: layers/meta-freescale
         url: https://github.com/Freescale/meta-freescale.git
     meta-freescale-3rdparty:
@@ -23,7 +23,7 @@ repos:
             meta-python:
         url: https://github.com/openembedded/meta-openembedded.git
         path: layers/meta-openembedded
-        commit: 2db6aece32c7f8ebf6015b468e1b4e21de072e3b
+        commit: 96c2c78e13ff1b954715ff3c6d26bddd50a02509
     meta-imx:
         url: https://github.com/nxp-imx/meta-imx.git
         path: layers/meta-imx
@@ -60,7 +60,7 @@ repos:
         layers:
             meta:
             meta-poky:
-        commit: 6b7c1066f778db5a6b3e35400617b10342988fa8
+        commit: 1397cd85032d1582fa4f2512a3f378d71ca39291
     meta-pantavisor:
     meta-virtualization:
         commit: e0b994c8457be2b32acf7b904fcc5408156de57a
