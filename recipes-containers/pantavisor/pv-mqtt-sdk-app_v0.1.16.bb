@@ -23,7 +23,7 @@ S = "${WORKDIR}"
 # do_fetch. Keep it on the commit the ${PV} tag points to (the ^{} entry of
 # git ls-remote for an annotated tag).
 SRC_URI = "git://github.com/pantavisor/pv-mqtt-sdk.git;protocol=https;branch=main;destsuffix=src/${GO_IMPORT}"
-SRCREV = "c285dc971f21a70f0b2628a008c9d2bb6b7475fa"
+SRCREV = "f380a8bfef614a73588dacfb82074760b1132ff4"
 
 GO_IMPORT = "github.com/pantavisor/pv-mqtt-sdk"
 export GO111MODULE = "on"
